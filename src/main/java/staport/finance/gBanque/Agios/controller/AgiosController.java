@@ -144,7 +144,7 @@ public class AgiosController {
             @RequestParam(required = false) java.math.BigDecimal montant,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
 
-        AgiosSearchDto criteria = new AgiosSearchDto(banqueId, libelle, montant, null);
+        AgiosSearchDto criteria = new AgiosSearchDto(banqueId, libelle, montant, null, null, null, null, null, null, null);
         return ResponseEntity.ok(agiosService.getOutstandingAgios(criteria, pageable));
     }
 
@@ -157,7 +157,7 @@ public class AgiosController {
             @RequestParam(required = false) String libelle,
             @RequestParam(required = false) java.math.BigDecimal montant) {
 
-        AgiosSearchDto criteria = new AgiosSearchDto(banqueId, libelle, montant, null);
+        AgiosSearchDto criteria = new AgiosSearchDto(banqueId, libelle, montant, null, null, null, null, null, null, null);
         byte[] pdf = agiosService.exportOutstandingAgiosPdf(criteria, banqueId);
         String filename = "encours_agios_" + LocalDate.now() + ".pdf";
         HttpHeaders headers = new HttpHeaders();

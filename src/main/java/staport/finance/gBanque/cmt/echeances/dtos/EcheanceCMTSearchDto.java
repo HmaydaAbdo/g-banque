@@ -1,6 +1,9 @@
 package staport.finance.gBanque.cmt.echeances.dtos;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import staport.finance.gBanque.cmt.echeances.enums.StatutEcheanceCMT;
+
+import java.time.LocalDate;
 
 /**
  * DTO utilisé pour la recherche et le filtrage des échéances de crédits à moyen terme.
@@ -10,8 +13,12 @@ import staport.finance.gBanque.cmt.echeances.enums.StatutEcheanceCMT;
 public record EcheanceCMTSearchDto(
         Long creditMoyenTermeId,
         Integer numeroEcheance,
-        Integer month,
-        Integer year,
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateEcheanceDebut,
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateEcheanceFin,
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateOperationDebut,
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateOperationFin,
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateValeurDebut,
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateValeurFin,
         StatutEcheanceCMT statutPaiement
 ) {
 
@@ -27,6 +34,8 @@ public record EcheanceCMTSearchDto(
      * Les DTOs étant immuables, cette méthode remplace l'ancien {@code setCreditMoyenTermeId}.
      */
     public EcheanceCMTSearchDto withCreditMoyenTermeId(Long creditMoyenTermeId) {
-        return new EcheanceCMTSearchDto(creditMoyenTermeId, numeroEcheance, month, year, statutPaiement);
+        return new EcheanceCMTSearchDto(creditMoyenTermeId, numeroEcheance,
+                dateEcheanceDebut, dateEcheanceFin, dateOperationDebut, dateOperationFin,
+                dateValeurDebut, dateValeurFin, statutPaiement);
     }
 }

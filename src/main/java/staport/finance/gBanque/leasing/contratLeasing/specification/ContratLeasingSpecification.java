@@ -50,6 +50,13 @@ public class ContratLeasingSpecification {
                         ));
                 predicates.add(criteriaBuilder.exists(phaseSubquery));
             }
+            if (searchDTO.dateDebutMin() != null && searchDTO.dateDebutMax() != null) {
+                predicates.add(criteriaBuilder.between(root.get("dateDebut"), searchDTO.dateDebutMin(), searchDTO.dateDebutMax()));
+            } else if (searchDTO.dateDebutMin() != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("dateDebut"), searchDTO.dateDebutMin()));
+            } else if (searchDTO.dateDebutMax() != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateDebut"), searchDTO.dateDebutMax()));
+            }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };

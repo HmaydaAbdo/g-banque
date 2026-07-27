@@ -23,6 +23,7 @@ public interface TransactionMapper {
     @Mapping(target = "debit", expression = "java(zeroIfNull(transaction.getDebit()))")
     @Mapping(target = "credit", expression = "java(zeroIfNull(transaction.getCredit()))")
     @Mapping(target = "statutRapprochement", expression = "java(transaction.getRapprochement() != null ? transaction.getRapprochement().getStatut() : staport.finance.gBanque.rapprochement.enums.StatutRapprochement.EN_COURS)")
+    @Mapping(target = "rapprochementId", expression = "java(transaction.getRapprochement() != null ? transaction.getRapprochement().getId() : null)")
     @Mapping(target = "banqueDePrelevementId", expression = "java(transaction.getBanqueDePrelevement() != null ? transaction.getBanqueDePrelevement().getId() : null)")
     @Mapping(target = "banqueDePrelevementNom", expression = "java(transaction.getBanqueDePrelevement() != null ? toUpper(transaction.getBanqueDePrelevement().getNom()) : null)")
     TransactionResponseDto toDto(Transaction transaction);

@@ -518,8 +518,14 @@ public class CautionServiceImpl implements ICautionService {
                 lines.add("Marché : " + marcheService.findOrThrow(criteres.marcheId()).getNumero());
             } catch (ResourceNotFoundException ignored) { /* filtre obsolète — ignoré pour l'affichage */ }
         }
-        if (criteres.dateDePrise() != null)
-            lines.add("Date de prise : " + criteres.dateDePrise().format(DATE_FMT));
+        if (criteres.dateDePriseDebut() != null)
+            lines.add("Date de prise min : " + criteres.dateDePriseDebut().format(DATE_FMT));
+        if (criteres.dateDePriseFin() != null)
+            lines.add("Date de prise max : " + criteres.dateDePriseFin().format(DATE_FMT));
+        if (criteres.dateDeMainLeveeDebut() != null)
+            lines.add("Date main levée min : " + criteres.dateDeMainLeveeDebut().format(DATE_FMT));
+        if (criteres.dateDeMainLeveeFin() != null)
+            lines.add("Date main levée max : " + criteres.dateDeMainLeveeFin().format(DATE_FMT));
         if (criteres.montant() != null)
             lines.add("Montant : " + formatMontantPdf(criteres.montant()) + " MAD");
         if (criteres.actif() != null)

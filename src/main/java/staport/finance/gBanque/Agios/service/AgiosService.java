@@ -147,7 +147,7 @@ public class AgiosService implements IAgiosService {
                 .map(agiosMapper::toResponseDto)
                 .toList();
 
-        List<String> filterLines = buildFilterSummary(new AgiosSearchDto(banqueId, dto.libelle(), dto.montant(), null));
+        List<String> filterLines = buildFilterSummary(new AgiosSearchDto(banqueId, dto.libelle(), dto.montant(), null, null, null, null, null, null, null));
 
         return generateAgiosListPdf("Encours Agios", agios, filterLines, "encours");
     }
@@ -375,6 +375,24 @@ public class AgiosService implements IAgiosService {
         }
         if (dto.montant() != null) {
             lines.add("Montant : " + formatMontantAgios(dto.montant()));
+        }
+        if (dto.dateEmissionDebut() != null) {
+            lines.add("Date d'émission min : " + dto.dateEmissionDebut().format(DATE_FMT));
+        }
+        if (dto.dateEmissionFin() != null) {
+            lines.add("Date d'émission max : " + dto.dateEmissionFin().format(DATE_FMT));
+        }
+        if (dto.dateOperationDebut() != null) {
+            lines.add("Date d'opération min : " + dto.dateOperationDebut().format(DATE_FMT));
+        }
+        if (dto.dateOperationFin() != null) {
+            lines.add("Date d'opération max : " + dto.dateOperationFin().format(DATE_FMT));
+        }
+        if (dto.dateValeurDebut() != null) {
+            lines.add("Date de valeur min : " + dto.dateValeurDebut().format(DATE_FMT));
+        }
+        if (dto.dateValeurFin() != null) {
+            lines.add("Date de valeur max : " + dto.dateValeurFin().format(DATE_FMT));
         }
         return lines;
     }

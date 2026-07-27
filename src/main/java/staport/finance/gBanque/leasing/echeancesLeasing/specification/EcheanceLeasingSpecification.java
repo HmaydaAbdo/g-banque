@@ -1,8 +1,9 @@
 package staport.finance.gBanque.leasing.echeancesLeasing.specification;
 
 
-import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.leasing.contratCadre.entities.ContratCadre;
@@ -13,7 +14,6 @@ import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeas
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,44 +38,24 @@ public class EcheanceLeasingSpecification {
                 predicates.add(criteriaBuilder.equal(root.get("statutPaiement"), searchDTO.statutPaiement()));
             }
 
-            // Gestion du mois / année
-            Integer year = searchDTO.year();
-            Integer month = searchDTO.month();
-
-            if (year != null && month != null) {
-                // Cas mois + année
-                LocalDate start = LocalDate.now()
-                        .withYear(year).withMonth(month)
-                        .with(TemporalAdjusters.firstDayOfMonth())
-                        ;
-
-                LocalDate end = start.with(TemporalAdjusters.lastDayOfMonth())
-                        ;
-
-                predicates.add(criteriaBuilder.between(root.get("dateEcheance"), start, end));
-
-            } else if (year != null) {
-                // Cas année seule
-                LocalDate start = LocalDate.now()
-                        .withYear(year)
-                        .withMonth(1).with(TemporalAdjusters.firstDayOfMonth())
-                        ;
-
-                LocalDate end = LocalDate.now()
-                        .withYear(year)
-                        .withMonth(12).with(TemporalAdjusters.lastDayOfMonth())
-                        ;
-
-                predicates.add(criteriaBuilder.between(root.get("dateEcheance"), start, end));
-
-            } else if (month != null) {
-                Expression<Integer> monthExpr = criteriaBuilder.function("MONTH", Integer.class, root.get("dateEcheance"));
-
-                predicates.add(criteriaBuilder.equal(monthExpr, month));
-            }
+            // Prédicats pour les plages de dates
+            addDateRangePredicate(predicates, criteriaBuilder, root.get("dateEcheance"), searchDTO.dateEcheanceDebut(), searchDTO.dateEcheanceFin());
+            addDateRangePredicate(predicates, criteriaBuilder, root.get("dateOperation"), searchDTO.dateOperationDebut(), searchDTO.dateOperationFin());
+            addDateRangePredicate(predicates, criteriaBuilder, root.get("dateValeur"), searchDTO.dateValeurDebut(), searchDTO.dateValeurFin());
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    private static void addDateRangePredicate(List<Predicate> predicates, CriteriaBuilder builder,
+                                                Path<LocalDate> path, LocalDate debut, LocalDate fin) {
+        if (debut != null && fin != null) {
+            predicates.add(builder.between(path, debut, fin));
+        } else if (debut != null) {
+            predicates.add(builder.greaterThanOrEqualTo(path, debut));
+        } else if (fin != null) {
+            predicates.add(builder.lessThanOrEqualTo(path, fin));
+        }
     }
 
     // Les méthodes statiques spécifiques sont mises à jour ou conservées en fonction des besoins

@@ -445,6 +445,18 @@ public class CommissionService implements ICommissionService {
                 log.debug("Nature id={} introuvable pour le résumé de filtre export — ignorée", dto.natureId());
             }
         }
+        if (dto.dateEmissionDebut() != null)
+            lines.add("Date d'émission min : " + dto.dateEmissionDebut().format(DATE_FMT));
+        if (dto.dateEmissionFin() != null)
+            lines.add("Date d'émission max : " + dto.dateEmissionFin().format(DATE_FMT));
+        if (dto.dateOperationDebut() != null)
+            lines.add("Date d'opération min : " + dto.dateOperationDebut().format(DATE_FMT));
+        if (dto.dateOperationFin() != null)
+            lines.add("Date d'opération max : " + dto.dateOperationFin().format(DATE_FMT));
+        if (dto.dateValeurDebut() != null)
+            lines.add("Date de valeur min : " + dto.dateValeurDebut().format(DATE_FMT));
+        if (dto.dateValeurFin() != null)
+            lines.add("Date de valeur max : " + dto.dateValeurFin().format(DATE_FMT));
 
         return lines;
     }

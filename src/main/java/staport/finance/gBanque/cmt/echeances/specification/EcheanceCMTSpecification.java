@@ -1,7 +1,8 @@
 package staport.finance.gBanque.cmt.echeances.specification;
 
-import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.cmt.echeances.dtos.EcheanceCMTSearchDto;
@@ -12,7 +13,6 @@ import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,39 +42,25 @@ public class EcheanceCMTSpecification {
                 predicates.add(builder.equal(root.get("statutPaiement"), searchDto.statutPaiement()));
             }
 
-            // Prédicats pour le mois et l'année en utilisant une plage de dates pour plus de robustesse.
-            Integer year = searchDto.year();
-            Integer month = searchDto.month();
-
-            if (year != null && month != null) {
-                // Cas : Année + Mois
-                LocalDate startOfMonth = LocalDate.of(year, month, 1)
-                        .with(TemporalAdjusters.firstDayOfMonth());
-
-                LocalDate endOfMonth = startOfMonth
-                        .with(TemporalAdjusters.lastDayOfMonth());
-
-                predicates.add(builder.between(root.get("dateEcheance"), startOfMonth, endOfMonth));
-
-            } else if (year != null) {
-                // Cas : Année seule
-                LocalDate startOfYear = LocalDate.of(year, 1, 1);
-
-                LocalDate endOfYear = startOfYear
-                        .with(TemporalAdjusters.lastDayOfYear());
-
-                predicates.add(builder.between(root.get("dateEcheance"), startOfYear, endOfYear));
-
-            } else if (month != null) {
-                // Cas : Mois seul (toutes les années)
-                Expression<Integer> monthExpr = builder.function("MONTH", Integer.class, root.get("dateEcheance"));
-                predicates.add(builder.equal(monthExpr, month));
-            }
-
+            // Prédicats pour les plages de dates
+            addDateRangePredicate(predicates, builder, root.get("dateEcheance"), searchDto.dateEcheanceDebut(), searchDto.dateEcheanceFin());
+            addDateRangePredicate(predicates, builder, root.get("dateOperation"), searchDto.dateOperationDebut(), searchDto.dateOperationFin());
+            addDateRangePredicate(predicates, builder, root.get("dateValeur"), searchDto.dateValeurDebut(), searchDto.dateValeurFin());
 
             // Combine tous les prédicats avec un opérateur AND
             return builder.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    private static void addDateRangePredicate(List<Predicate> predicates, CriteriaBuilder builder,
+                                                Path<LocalDate> path, LocalDate debut, LocalDate fin) {
+        if (debut != null && fin != null) {
+            predicates.add(builder.between(path, debut, fin));
+        } else if (debut != null) {
+            predicates.add(builder.greaterThanOrEqualTo(path, debut));
+        } else if (fin != null) {
+            predicates.add(builder.lessThanOrEqualTo(path, fin));
+        }
     }
 
     /**

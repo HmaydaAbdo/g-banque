@@ -98,6 +98,38 @@ public class TransactionSpecifications {
             }
         };
     }
+
+    public static Specification<Transaction> hasDateEmissionBetween(LocalDate dateDebut, LocalDate dateFin) {
+        return (root, query, criteriaBuilder) -> {
+            if (dateDebut == null && dateFin == null) {
+                return criteriaBuilder.conjunction();
+            }
+
+            if (dateDebut != null && dateFin != null) {
+                return criteriaBuilder.between(root.get("dateEmission"), dateDebut, dateFin);
+            } else if (dateDebut != null) {
+                return criteriaBuilder.greaterThanOrEqualTo(root.get("dateEmission"), dateDebut);
+            } else {
+                return criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), dateFin);
+            }
+        };
+    }
+
+    public static Specification<Transaction> hasDateValeurBetween(LocalDate dateDebut, LocalDate dateFin) {
+        return (root, query, criteriaBuilder) -> {
+            if (dateDebut == null && dateFin == null) {
+                return criteriaBuilder.conjunction();
+            }
+
+            if (dateDebut != null && dateFin != null) {
+                return criteriaBuilder.between(root.get("dateValeur"), dateDebut, dateFin);
+            } else if (dateDebut != null) {
+                return criteriaBuilder.greaterThanOrEqualTo(root.get("dateValeur"), dateDebut);
+            } else {
+                return criteriaBuilder.lessThanOrEqualTo(root.get("dateValeur"), dateFin);
+            }
+        };
+    }
     /**
      * Combines multiple specifications with an 'AND' clause.
      * @param specifications a list of Specifications to combine

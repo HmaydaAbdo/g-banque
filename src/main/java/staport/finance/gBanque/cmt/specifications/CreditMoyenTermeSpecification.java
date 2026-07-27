@@ -44,6 +44,15 @@ public class CreditMoyenTermeSpecification {
                 predicates.add(builder.equal(root.get("completed"), searchDto.completed()));
             }
 
+            // Prédicat pour la plage de date de début
+            if (searchDto.dateDebutMin() != null && searchDto.dateDebutMax() != null) {
+                predicates.add(builder.between(root.get("dateDebut"), searchDto.dateDebutMin(), searchDto.dateDebutMax()));
+            } else if (searchDto.dateDebutMin() != null) {
+                predicates.add(builder.greaterThanOrEqualTo(root.get("dateDebut"), searchDto.dateDebutMin()));
+            } else if (searchDto.dateDebutMax() != null) {
+                predicates.add(builder.lessThanOrEqualTo(root.get("dateDebut"), searchDto.dateDebutMax()));
+            }
+
             // Combine tous les prédicats avec un opérateur AND
             return builder.and(predicates.toArray(new Predicate[0]));
         };

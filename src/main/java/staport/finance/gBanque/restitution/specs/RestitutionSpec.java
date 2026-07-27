@@ -46,11 +46,41 @@ public class RestitutionSpec {
         };
     }
 
+    public static Specification<Restitution> byDateRange(String field, LocalDate debut, LocalDate fin) {
+        return (root, query, cb) -> {
+            if (debut == null && fin == null) {
+                return cb.conjunction();
+            }
+            if (debut != null && fin != null) {
+                return cb.between(root.get(field), debut, fin);
+            } else if (debut != null) {
+                return cb.greaterThanOrEqualTo(root.get(field), debut);
+            } else {
+                return cb.lessThanOrEqualTo(root.get(field), fin);
+            }
+        };
+    }
+
+    public static Specification<Restitution> byDateEmissionRange(LocalDate debut, LocalDate fin) {
+        return byDateRange("dateEmission", debut, fin);
+    }
+
+    public static Specification<Restitution> byDateOperationRange(LocalDate debut, LocalDate fin) {
+        return byDateRange("dateOperation", debut, fin);
+    }
+
+    public static Specification<Restitution> byDateValeurRange(LocalDate debut, LocalDate fin) {
+        return byDateRange("dateValeur", debut, fin);
+    }
+
     public static Specification<Restitution> buildSpecification(RestitutionSearchDto dto) {
         return Specification
                 .where(hasBanque(dto.banqueId()))
                 .and(hasLibelle(dto.libelle()))
-                .and(hasStatus(dto.status()));
+                .and(hasStatus(dto.status()))
+                .and(byDateEmissionRange(dto.dateEmissionDebut(), dto.dateEmissionFin()))
+                .and(byDateOperationRange(dto.dateOperationDebut(), dto.dateOperationFin()))
+                .and(byDateValeurRange(dto.dateValeurDebut(), dto.dateValeurFin()));
     }
 
     public static Specification<Restitution> outstandingUntil(LocalDate until) {

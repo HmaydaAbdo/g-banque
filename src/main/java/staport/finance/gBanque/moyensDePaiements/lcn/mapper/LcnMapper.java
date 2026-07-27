@@ -28,6 +28,8 @@ public interface LcnMapper {
     @Mapping(target = "banqueId",    source = "banque.id")
     @Mapping(target = "libelle",     ignore = true)
     @Mapping(target = "observation", ignore = true)
+    @Mapping(target = "ligneFonctionnelleId",    source = "ligneFonctionnelle.id")
+    @Mapping(target = "ligneFonctionnelleLabel", source = "ligneFonctionnelle.natureLigneFonctionnelle.label")
     LcnResponseDTO toDto(Lcn lcn);
 
     /**

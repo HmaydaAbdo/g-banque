@@ -10,6 +10,9 @@ public class LcnResponseDTO {
 
     private String numero;
     private Long id;
+    private String idPaiement;
+    private Long ligneFonctionnelleId;
+    private String ligneFonctionnelleLabel;
     private LocalDate dateEmission ;
     private String beneficiaire;
     private LocalDate dateEcheance ;
@@ -112,5 +115,26 @@ public class LcnResponseDTO {
     }
     public void setNatureLcn(NatureLcn natureLcn) {
         this.natureLcn = natureLcn;
+    }
+
+    public String getIdPaiement() {
+        return idPaiement;
+    }
+    public void setIdPaiement(String idPaiement) {
+        this.idPaiement = idPaiement;
+    }
+
+    public Long getLigneFonctionnelleId() {
+        return ligneFonctionnelleId;
+    }
+    public void setLigneFonctionnelleId(Long ligneFonctionnelleId) {
+        this.ligneFonctionnelleId = ligneFonctionnelleId;
+    }
+
+    public String getLigneFonctionnelleLabel() {
+        return ligneFonctionnelleLabel;
+    }
+    public void setLigneFonctionnelleLabel(String ligneFonctionnelleLabel) {
+        this.ligneFonctionnelleLabel = ligneFonctionnelleLabel;
     }
 }

@@ -63,7 +63,32 @@ public class ImpotEtTaxeSpecifications {
                 .and(hasLibelle(dto.libelle()))
                 .and(hasMotif(dto.motif()))
                 .and(hasMontant(dto.montant()))
-                .and(hasStatus(dto.status()));
+                .and(hasStatus(dto.status()))
+                .and(byDateEmissionRange(dto.dateEmissionDebut(), dto.dateEmissionFin()))
+                .and(byDateOperationRange(dto.dateOperationDebut(), dto.dateOperationFin()))
+                .and(byDateValeurRange(dto.dateValeurDebut(), dto.dateValeurFin()));
+    }
+
+    /** Filtre générique par plage de dates sur un champ {@link LocalDate} de l'entité. */
+    private static Specification<ImpotEtTaxe> byDateRange(String field, LocalDate debut, LocalDate fin) {
+        return (root, query, cb) -> {
+            if (debut != null && fin != null) return cb.between(root.get(field), debut, fin);
+            if (debut != null) return cb.greaterThanOrEqualTo(root.get(field), debut);
+            if (fin != null) return cb.lessThanOrEqualTo(root.get(field), fin);
+            return null;
+        };
+    }
+
+    public static Specification<ImpotEtTaxe> byDateEmissionRange(LocalDate debut, LocalDate fin) {
+        return byDateRange("dateEmission", debut, fin);
+    }
+
+    public static Specification<ImpotEtTaxe> byDateOperationRange(LocalDate debut, LocalDate fin) {
+        return byDateRange("dateOperation", debut, fin);
+    }
+
+    public static Specification<ImpotEtTaxe> byDateValeurRange(LocalDate debut, LocalDate fin) {
+        return byDateRange("dateValeur", debut, fin);
     }
 
     public static Specification<ImpotEtTaxe> outstandingUntil(LocalDate until) {

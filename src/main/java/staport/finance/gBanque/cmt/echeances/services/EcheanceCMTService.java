@@ -181,7 +181,7 @@ public class EcheanceCMTService {
         BigDecimal montantRestantAPayer = montantTotalAPayer.subtract(montantTotalDejaPaye);
 
         EcheanceCMTSearchDto effectiveSearchDto = (searchDto == null
-                ? new EcheanceCMTSearchDto(creditId, null, null, null, null)
+                ? new EcheanceCMTSearchDto(creditId, null, null, null, null, null, null, null, null)
                 : searchDto.withCreditMoyenTermeId(creditId));
         Specification<EcheanceCMT> spec = EcheanceCMTSpecification.searchByCriteria(effectiveSearchDto);
 
@@ -409,7 +409,7 @@ public class EcheanceCMTService {
         BigDecimal montantRestantAPayer = montantTotalAPayer.subtract(montantTotalDejaPaye);
 
         EcheanceCMTSearchDto effectiveSearchDto = (searchDto == null
-                ? new EcheanceCMTSearchDto(credit.getId(), null, null, null, null)
+                ? new EcheanceCMTSearchDto(credit.getId(), null, null, null, null, null, null, null, null)
                 : searchDto.withCreditMoyenTermeId(credit.getId()));
         Specification<EcheanceCMT> spec = EcheanceCMTSpecification.searchByCriteria(effectiveSearchDto);
         List<EcheanceCMT> echeances = echeanceCmtRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "numeroEcheance"));
@@ -515,8 +515,12 @@ public class EcheanceCMTService {
         if (dto == null) return lines;
 
         if (dto.numeroEcheance() != null) lines.add("N° Échéance : " + dto.numeroEcheance());
-        if (dto.month() != null) lines.add("Mois : " + dto.month());
-        if (dto.year() != null) lines.add("Année : " + dto.year());
+        if (dto.dateEcheanceDebut() != null) lines.add("Date échéance min : " + dto.dateEcheanceDebut().format(DATE_FMT));
+        if (dto.dateEcheanceFin() != null) lines.add("Date échéance max : " + dto.dateEcheanceFin().format(DATE_FMT));
+        if (dto.dateOperationDebut() != null) lines.add("Date opération min : " + dto.dateOperationDebut().format(DATE_FMT));
+        if (dto.dateOperationFin() != null) lines.add("Date opération max : " + dto.dateOperationFin().format(DATE_FMT));
+        if (dto.dateValeurDebut() != null) lines.add("Date valeur min : " + dto.dateValeurDebut().format(DATE_FMT));
+        if (dto.dateValeurFin() != null) lines.add("Date valeur max : " + dto.dateValeurFin().format(DATE_FMT));
         if (dto.statutPaiement() != null) lines.add("Statut : " + dto.statutPaiement());
         return lines;
     }

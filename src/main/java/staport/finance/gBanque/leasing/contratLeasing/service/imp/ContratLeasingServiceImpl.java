@@ -542,6 +542,12 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         if (dto.typeContrat() != null) {
             lines.add("Type : " + dto.typeContrat().name());
         }
+        if (dto.dateDebutMin() != null) {
+            lines.add("Date début min : " + dto.dateDebutMin().format(DATE_FMT));
+        }
+        if (dto.dateDebutMax() != null) {
+            lines.add("Date début max : " + dto.dateDebutMax().format(DATE_FMT));
+        }
         return lines;
     }
 

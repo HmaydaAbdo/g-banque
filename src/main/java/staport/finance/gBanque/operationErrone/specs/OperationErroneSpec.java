@@ -56,12 +56,42 @@ public class OperationErroneSpec {
         };
     }
 
+    public static Specification<OperationErrone> byDateRange(String field, LocalDate debut, LocalDate fin) {
+        return (root, query, cb) -> {
+            if (debut == null && fin == null) {
+                return cb.conjunction();
+            }
+            if (debut != null && fin != null) {
+                return cb.between(root.get(field), debut, fin);
+            } else if (debut != null) {
+                return cb.greaterThanOrEqualTo(root.get(field), debut);
+            } else {
+                return cb.lessThanOrEqualTo(root.get(field), fin);
+            }
+        };
+    }
+
+    public static Specification<OperationErrone> byDateEmissionRange(LocalDate debut, LocalDate fin) {
+        return byDateRange("dateEmission", debut, fin);
+    }
+
+    public static Specification<OperationErrone> byDateOperationRange(LocalDate debut, LocalDate fin) {
+        return byDateRange("dateOperation", debut, fin);
+    }
+
+    public static Specification<OperationErrone> byDateValeurRange(LocalDate debut, LocalDate fin) {
+        return byDateRange("dateValeur", debut, fin);
+    }
+
     public static Specification<OperationErrone> buildSpecification(OperationErroneSearchDto dto) {
         return Specification
                 .where(hasBanque(dto.banqueId()))
                 .and(hasLibelle(dto.libelle()))
                 .and(hasStatus(dto.status()))
-                .and(hasMotif(dto.motif()));
+                .and(hasMotif(dto.motif()))
+                .and(byDateEmissionRange(dto.dateEmissionDebut(), dto.dateEmissionFin()))
+                .and(byDateOperationRange(dto.dateOperationDebut(), dto.dateOperationFin()))
+                .and(byDateValeurRange(dto.dateValeurDebut(), dto.dateValeurFin()));
     }
 
     public static Specification<OperationErrone> outstandingUntil(LocalDate until) {

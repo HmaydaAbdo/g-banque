@@ -20,7 +20,11 @@ public record TransactionSearchDto(
         String observation,
         StatutRapprochement statutRapprochement,
         BigDecimal montant,
+        LocalDate dateEmissionDebut,
+        LocalDate dateEmissionFin,
         LocalDate dateOperationDebut,
-        LocalDate dateOperationFin
+        LocalDate dateOperationFin,
+        LocalDate dateValeurDebut,
+        LocalDate dateValeurFin
 ) {
 }

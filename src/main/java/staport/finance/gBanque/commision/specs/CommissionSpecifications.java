@@ -79,7 +79,32 @@ public class CommissionSpecifications {
                 .and(hasOperation(dto.operation()))
                 .and(hasStatus(dto.status()))
                 .and(hasMontant(dto.montant()))
-                .and(hasNature(dto.natureId()));
+                .and(hasNature(dto.natureId()))
+                .and(byDateEmissionRange(dto.dateEmissionDebut(), dto.dateEmissionFin()))
+                .and(byDateOperationRange(dto.dateOperationDebut(), dto.dateOperationFin()))
+                .and(byDateValeurRange(dto.dateValeurDebut(), dto.dateValeurFin()));
+    }
+
+    /** Filtre générique par plage de dates sur un champ {@link LocalDate} de l'entité. */
+    private static Specification<Commission> byDateRange(String field, LocalDate debut, LocalDate fin) {
+        return (root, query, cb) -> {
+            if (debut != null && fin != null) return cb.between(root.get(field), debut, fin);
+            if (debut != null) return cb.greaterThanOrEqualTo(root.get(field), debut);
+            if (fin != null) return cb.lessThanOrEqualTo(root.get(field), fin);
+            return null;
+        };
+    }
+
+    public static Specification<Commission> byDateEmissionRange(LocalDate debut, LocalDate fin) {
+        return byDateRange("dateEmission", debut, fin);
+    }
+
+    public static Specification<Commission> byDateOperationRange(LocalDate debut, LocalDate fin) {
+        return byDateRange("dateOperation", debut, fin);
+    }
+
+    public static Specification<Commission> byDateValeurRange(LocalDate debut, LocalDate fin) {
+        return byDateRange("dateValeur", debut, fin);
     }
 
     public static Specification<Commission> outstandingUntil(LocalDate until) {

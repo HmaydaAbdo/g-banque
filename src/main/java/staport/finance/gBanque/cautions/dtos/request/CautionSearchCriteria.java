@@ -1,5 +1,7 @@
 package staport.finance.gBanque.cautions.dtos.request;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -26,8 +28,19 @@ public record CautionSearchCriteria(
     /* Filtre exact sur le marché associé. */
     Long marcheId,
 
-    /* Filtre exact sur la date de prise (égalité). */
-    LocalDate dateDePrise,
+    /* Filtre par plage sur la date de prise (bornes optionnelles). */
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    LocalDate dateDePriseDebut,
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    LocalDate dateDePriseFin,
+
+    /* Filtre par plage sur la date de main levée (bornes optionnelles). */
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    LocalDate dateDeMainLeveeDebut,
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    LocalDate dateDeMainLeveeFin,
 
     /* Filtre exact sur le montant (égalité). */
     BigDecimal montant,

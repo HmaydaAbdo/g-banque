@@ -31,6 +31,7 @@ public record TransactionResponseDto(
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
         StatutRapprochement statutRapprochement,
+        Long rapprochementId,
         Long referent
 ) {
 }

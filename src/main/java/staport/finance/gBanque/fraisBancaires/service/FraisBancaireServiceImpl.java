@@ -379,6 +379,24 @@ public class FraisBancaireServiceImpl implements IFraisBancaireService {
         if (dto.montant() != null) {
             lines.add("Montant : " + formatMontantFb(dto.montant()));
         }
+        if (dto.dateEmissionDebut() != null) {
+            lines.add("Date émission min : " + dto.dateEmissionDebut().format(DATE_FMT));
+        }
+        if (dto.dateEmissionFin() != null) {
+            lines.add("Date émission max : " + dto.dateEmissionFin().format(DATE_FMT));
+        }
+        if (dto.dateOperationDebut() != null) {
+            lines.add("Date opération min : " + dto.dateOperationDebut().format(DATE_FMT));
+        }
+        if (dto.dateOperationFin() != null) {
+            lines.add("Date opération max : " + dto.dateOperationFin().format(DATE_FMT));
+        }
+        if (dto.dateValeurDebut() != null) {
+            lines.add("Date valeur min : " + dto.dateValeurDebut().format(DATE_FMT));
+        }
+        if (dto.dateValeurFin() != null) {
+            lines.add("Date valeur max : " + dto.dateValeurFin().format(DATE_FMT));
+        }
         return lines;
     }
 

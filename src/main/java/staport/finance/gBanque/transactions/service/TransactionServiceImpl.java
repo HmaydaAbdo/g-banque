@@ -204,6 +204,18 @@ public class TransactionServiceImpl implements ITransactionService {
             specs.add(hasMontant(searchDto.montant()));
         }
 
+        if (searchDto.dateEmissionDebut() != null || searchDto.dateEmissionFin() != null) {
+            specs.add(hasDateEmissionBetween(searchDto.dateEmissionDebut(), searchDto.dateEmissionFin()));
+        }
+
+        if (searchDto.dateOperationDebut() != null || searchDto.dateOperationFin() != null) {
+            specs.add(hasDateOperationBetween(searchDto.dateOperationDebut(), searchDto.dateOperationFin()));
+        }
+
+        if (searchDto.dateValeurDebut() != null || searchDto.dateValeurFin() != null) {
+            specs.add(hasDateValeurBetween(searchDto.dateValeurDebut(), searchDto.dateValeurFin()));
+        }
+
         return withFilters(specs);
     }
 
@@ -294,8 +306,16 @@ public class TransactionServiceImpl implements ITransactionService {
             specs.add(hasMontant(searchDto.montant()));
         }
 
+        if (searchDto.dateEmissionDebut() != null || searchDto.dateEmissionFin() != null) {
+            specs.add(hasDateEmissionBetween(searchDto.dateEmissionDebut(), searchDto.dateEmissionFin()));
+        }
+
         if (searchDto.dateOperationDebut() != null || searchDto.dateOperationFin() != null) {
             specs.add(hasDateOperationBetween(searchDto.dateOperationDebut(), searchDto.dateOperationFin()));
+        }
+
+        if (searchDto.dateValeurDebut() != null || searchDto.dateValeurFin() != null) {
+            specs.add(hasDateValeurBetween(searchDto.dateValeurDebut(), searchDto.dateValeurFin()));
         }
 
         if (searchDto.transactionSources() != null && !searchDto.transactionSources().isEmpty()) {
@@ -318,11 +338,23 @@ public class TransactionServiceImpl implements ITransactionService {
         if (dto.montant() != null) {
             lines.add("Montant : " + formatMontantTx(dto.montant()));
         }
+        if (dto.dateEmissionDebut() != null) {
+            lines.add("Date émission min : " + dto.dateEmissionDebut().format(DATE_FMT));
+        }
+        if (dto.dateEmissionFin() != null) {
+            lines.add("Date émission max : " + dto.dateEmissionFin().format(DATE_FMT));
+        }
         if (dto.dateOperationDebut() != null) {
             lines.add("Date opération min : " + dto.dateOperationDebut().format(DATE_FMT));
         }
         if (dto.dateOperationFin() != null) {
             lines.add("Date opération max : " + dto.dateOperationFin().format(DATE_FMT));
+        }
+        if (dto.dateValeurDebut() != null) {
+            lines.add("Date valeur min : " + dto.dateValeurDebut().format(DATE_FMT));
+        }
+        if (dto.dateValeurFin() != null) {
+            lines.add("Date valeur max : " + dto.dateValeurFin().format(DATE_FMT));
         }
         if (dto.transactionSources() != null && !dto.transactionSources().isEmpty()) {
             lines.add("Source : " + dto.transactionSources());
@@ -635,8 +667,14 @@ public class TransactionServiceImpl implements ITransactionService {
         if (searchDto.montant() != null) {
             specs.add(hasMontant(searchDto.montant()));
         }
+        if (searchDto.dateEmissionDebut() != null || searchDto.dateEmissionFin() != null) {
+            specs.add(hasDateEmissionBetween(searchDto.dateEmissionDebut(), searchDto.dateEmissionFin()));
+        }
         if (searchDto.dateOperationDebut() != null || searchDto.dateOperationFin() != null) {
             specs.add(hasDateOperationBetween(searchDto.dateOperationDebut(), searchDto.dateOperationFin()));
+        }
+        if (searchDto.dateValeurDebut() != null || searchDto.dateValeurFin() != null) {
+            specs.add(hasDateValeurBetween(searchDto.dateValeurDebut(), searchDto.dateValeurFin()));
         }
         if (searchDto.transactionSources() != null && !searchDto.transactionSources().isEmpty()) {
             specs.add(hasTransactionSources(searchDto.transactionSources()));
@@ -687,7 +725,7 @@ public class TransactionServiceImpl implements ITransactionService {
     /**
      * Génère le PDF de l'historique des transactions filtré — mêmes colonnes que l'écran
      * "Historique des transactions" (ID, Banque, dates, débit/crédit, TVA, source, statut,
-     * libellé), plus un résumé des filtres appliqués et les totaux débit/crédit.
+     * libellé, observation), plus un résumé des filtres appliqués et les totaux débit/crédit.
      */
     private byte[] generateTransactionHistoryPdf(String title, List<TransactionResponseDto> transactions, List<String> filterLines) {
         BigDecimal totalDebit = transactions.stream()
@@ -725,7 +763,7 @@ public class TransactionServiceImpl implements ITransactionService {
                     sub.setSpacingAfter(8f);
                     doc.add(sub);
 
-                    float[] colWidths = {5f, 10f, 8f, 8f, 8f, 8f, 8f, 8f, 8f, 9f, 8f, 12f};
+                    float[] colWidths = {5f, 10f, 8f, 8f, 8f, 8f, 8f, 8f, 8f, 9f, 8f, 12f, 12f};
                     PdfPTable table = new PdfPTable(colWidths);
                     table.setWidthPercentage(100f);
                     table.setSpacingBefore(8f);
@@ -733,7 +771,7 @@ public class TransactionServiceImpl implements ITransactionService {
 
                     for (String h : new String[]{
                             "ID", "Banque", "Date émission", "Date opération", "Date valeur",
-                            "Débit (MAD)", "Crédit (MAD)", "TVA Déd.", "TVA Coll.", "Source", "Statut", "Libellé"}) {
+                            "Débit (MAD)", "Crédit (MAD)", "TVA Déd.", "TVA Coll.", "Source", "Statut", "Libellé", "Observation"}) {
                         PdfPCell c = new PdfPCell(new Phrase(h, hdrFont));
                         c.setBackgroundColor(MED_BLUE);
                         c.setPadding(4f);
@@ -759,6 +797,7 @@ public class TransactionServiceImpl implements ITransactionService {
                         addTxPdfCell(table, t.transactionSource() != null ? t.transactionSource().name() : "—", cellFont, rowBg, Element.ALIGN_CENTER);
                         addTxPdfCell(table, t.statutRapprochement() != null ? t.statutRapprochement().name() : "—", cellFont, rowBg, Element.ALIGN_CENTER);
                         addTxPdfCell(table, t.libelle(), cellFont, rowBg, Element.ALIGN_LEFT);
+                        addTxPdfCell(table, t.observation(), cellFont, rowBg, Element.ALIGN_LEFT);
                     }
 
                     PdfPCell totalLabel = new PdfPCell(
@@ -784,8 +823,8 @@ public class TransactionServiceImpl implements ITransactionService {
                     totalCreditVal.setBorderColor(MED_BLUE);
                     table.addCell(totalCreditVal);
 
-                    // colonnes restantes : TVA Déd., TVA Coll., Source, Statut, Libellé (5 colonnes)
-                    for (int j = 0; j < 5; j++) {
+                    // colonnes restantes : TVA Déd., TVA Coll., Source, Statut, Libellé, Observation (6 colonnes)
+                    for (int j = 0; j < 6; j++) {
                         PdfPCell empty = new PdfPCell(new Phrase(""));
                         empty.setBackgroundColor(LIGHT_BLUE);
                         empty.setBorderColor(MED_BLUE);
@@ -833,6 +872,24 @@ public class TransactionServiceImpl implements ITransactionService {
         }
         if (dto.montant() != null) {
             lines.add("Montant : " + formatMontantTx(dto.montant()));
+        }
+        if (dto.dateEmissionDebut() != null) {
+            lines.add("Date émission min : " + dto.dateEmissionDebut().format(DATE_FMT));
+        }
+        if (dto.dateEmissionFin() != null) {
+            lines.add("Date émission max : " + dto.dateEmissionFin().format(DATE_FMT));
+        }
+        if (dto.dateOperationDebut() != null) {
+            lines.add("Date opération min : " + dto.dateOperationDebut().format(DATE_FMT));
+        }
+        if (dto.dateOperationFin() != null) {
+            lines.add("Date opération max : " + dto.dateOperationFin().format(DATE_FMT));
+        }
+        if (dto.dateValeurDebut() != null) {
+            lines.add("Date valeur min : " + dto.dateValeurDebut().format(DATE_FMT));
+        }
+        if (dto.dateValeurFin() != null) {
+            lines.add("Date valeur max : " + dto.dateValeurFin().format(DATE_FMT));
         }
         return lines;
     }

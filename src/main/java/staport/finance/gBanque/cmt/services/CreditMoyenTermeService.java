@@ -386,6 +386,12 @@ public class CreditMoyenTermeService {
                 log.debug("Banque id={} introuvable pour le résumé de filtre export — ignorée", dto.banqueId());
             }
         }
+        if (dto.dateDebutMin() != null) {
+            lines.add("Date début min : " + dto.dateDebutMin().format(DATE_FMT));
+        }
+        if (dto.dateDebutMax() != null) {
+            lines.add("Date début max : " + dto.dateDebutMax().format(DATE_FMT));
+        }
         return lines;
     }
 

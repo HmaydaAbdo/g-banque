@@ -669,8 +669,12 @@ import java.math.BigDecimal;
             BigDecimal montantRestantAPayer = montantTotalAPayer.subtract(montantTotalDejaPaye);
 
             EcheanceLeasingSearchDTO effectiveSearchDto = (searchDTO == null
-                    ? new EcheanceLeasingSearchDTO(contrat.getId(), null, null, null, null)
-                    : new EcheanceLeasingSearchDTO(contrat.getId(), searchDTO.numeroEcheance(), searchDTO.month(), searchDTO.year(), searchDTO.statutPaiement()));
+                    ? new EcheanceLeasingSearchDTO(contrat.getId(), null, null, null, null, null, null, null, null)
+                    : new EcheanceLeasingSearchDTO(contrat.getId(), searchDTO.numeroEcheance(),
+                            searchDTO.dateEcheanceDebut(), searchDTO.dateEcheanceFin(),
+                            searchDTO.dateOperationDebut(), searchDTO.dateOperationFin(),
+                            searchDTO.dateValeurDebut(), searchDTO.dateValeurFin(),
+                            searchDTO.statutPaiement()));
             Specification<EcheanceLeasing> spec = EcheanceLeasingSpecification.searchByCriteria(effectiveSearchDto);
             List<EcheanceLeasing> echeances = echeanceLeasingRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "numeroEcheance"));
 
@@ -780,11 +784,23 @@ import java.math.BigDecimal;
             if (dto.statutPaiement() != null) {
                 lines.add("Statut : " + dto.statutPaiement().name());
             }
-            if (dto.month() != null) {
-                lines.add("Mois : " + dto.month());
+            if (dto.dateEcheanceDebut() != null) {
+                lines.add("Date échéance min : " + dto.dateEcheanceDebut().format(DATE_FMT));
             }
-            if (dto.year() != null) {
-                lines.add("Année : " + dto.year());
+            if (dto.dateEcheanceFin() != null) {
+                lines.add("Date échéance max : " + dto.dateEcheanceFin().format(DATE_FMT));
+            }
+            if (dto.dateOperationDebut() != null) {
+                lines.add("Date opération min : " + dto.dateOperationDebut().format(DATE_FMT));
+            }
+            if (dto.dateOperationFin() != null) {
+                lines.add("Date opération max : " + dto.dateOperationFin().format(DATE_FMT));
+            }
+            if (dto.dateValeurDebut() != null) {
+                lines.add("Date valeur min : " + dto.dateValeurDebut().format(DATE_FMT));
+            }
+            if (dto.dateValeurFin() != null) {
+                lines.add("Date valeur max : " + dto.dateValeurFin().format(DATE_FMT));
             }
             return lines;
         }

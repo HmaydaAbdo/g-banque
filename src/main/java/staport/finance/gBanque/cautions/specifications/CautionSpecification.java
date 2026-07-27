@@ -21,7 +21,8 @@ import java.util.List;
  *   <li>{@code banqueId}      — égalité exacte sur l'ID banque</li>
  *   <li>{@code natureId}      — égalité exacte sur l'ID nature</li>
  *   <li>{@code marcheId}      — égalité exacte sur l'ID marché</li>
- *   <li>{@code dateDePrise}   — égalité exacte sur la date de prise</li>
+ *   <li>{@code dateDePrise}      — filtre par plage (dateDePriseDebut/Fin)</li>
+ *   <li>{@code dateDeMainLevee}  — filtre par plage (dateDeMainLeveeDebut/Fin)</li>
  *   <li>{@code montant}       — égalité exacte sur le montant</li>
  *   <li>{@code actif}         — filtre booléen exact</li>
  * </ul>
@@ -85,11 +86,22 @@ public final class CautionSpecification {
                 );
             }
 
-            // ── Date de prise (égalité exacte) ────────────────────────────────
-            if (criteres.dateDePrise() != null) {
-                predicates.add(
-                    cb.equal(root.get("dateDePrise"), criteres.dateDePrise())
-                );
+            // ── Date de prise (plage) ──────────────────────────────────────────
+            if (criteres.dateDePriseDebut() != null && criteres.dateDePriseFin() != null) {
+                predicates.add(cb.between(root.get("dateDePrise"), criteres.dateDePriseDebut(), criteres.dateDePriseFin()));
+            } else if (criteres.dateDePriseDebut() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("dateDePrise"), criteres.dateDePriseDebut()));
+            } else if (criteres.dateDePriseFin() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("dateDePrise"), criteres.dateDePriseFin()));
+            }
+
+            // ── Date de main levée (plage) ─────────────────────────────────────
+            if (criteres.dateDeMainLeveeDebut() != null && criteres.dateDeMainLeveeFin() != null) {
+                predicates.add(cb.between(root.get("dateDeMainLevee"), criteres.dateDeMainLeveeDebut(), criteres.dateDeMainLeveeFin()));
+            } else if (criteres.dateDeMainLeveeDebut() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("dateDeMainLevee"), criteres.dateDeMainLeveeDebut()));
+            } else if (criteres.dateDeMainLeveeFin() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("dateDeMainLevee"), criteres.dateDeMainLeveeFin()));
             }
 
             // ── Montant (égalité exacte) ──────────────────────────────────────
