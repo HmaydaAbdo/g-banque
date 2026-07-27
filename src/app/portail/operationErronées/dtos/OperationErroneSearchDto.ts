@@ -7,4 +7,10 @@ export interface OperationErroneSearchDto {
   montant?: number;
   status?: Status;
   motif?: TransactionSource;
+  dateEmissionDebut?: Date;
+  dateEmissionFin?: Date;
+  dateOperationDebut?: Date;
+  dateOperationFin?: Date;
+  dateValeurDebut?: Date;
+  dateValeurFin?: Date;
 }

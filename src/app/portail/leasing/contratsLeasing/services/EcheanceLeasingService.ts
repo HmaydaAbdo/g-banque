@@ -8,6 +8,7 @@ import { TableauAmortissement } from "../dtos/table-amortissement";
 import { EcheanceLeasingSearchDTO } from "../dtos/echeance-leasing-search";
 import { EncoursLeasingRequestDTO } from "../dtos/encours-leasing-request.dto";
 import { EncoursLeasingResponseDTO } from "../dtos/encours-leasing-response.dto";
+import { toLocalDateString } from "../../../global/types/date.utils";
 
 
 @Injectable({
@@ -30,22 +31,7 @@ export class EcheanceLeasingService {
     sortBy?: string,
     sortDirection?: 'asc' | 'desc'
   ): Observable<TableauAmortissement> {
-    let params = new HttpParams();
-
-    if (searchCriteria) {
-      if (searchCriteria.numeroEcheance != null) {
-        params = params.set('numeroEcheance', searchCriteria.numeroEcheance.toString());
-      }
-      if (searchCriteria.month != null) {
-        params = params.set('month', searchCriteria.month.toString());
-      }
-      if (searchCriteria.year != null) {
-        params = params.set('year', searchCriteria.year.toString());
-      }
-      if (searchCriteria.statutPaiement != null) {
-        params = params.set('statutPaiement', searchCriteria.statutPaiement);
-      }
-    }
+    let params = this.buildFilterParams(searchCriteria);
 
     params = params.set('page', page.toString());
     params = params.set('size', size.toString());
@@ -64,25 +50,44 @@ export class EcheanceLeasingService {
    * {@link getTableauAmortissementForContrat}, sans pagination).
    */
   exportTableauAmortissementPdf(contratId: number, searchCriteria?: EcheanceLeasingSearchDTO): Observable<Blob> {
-    let params = new HttpParams();
-
-    if (searchCriteria) {
-      if (searchCriteria.numeroEcheance != null) {
-        params = params.set('numeroEcheance', searchCriteria.numeroEcheance.toString());
-      }
-      if (searchCriteria.month != null) {
-        params = params.set('month', searchCriteria.month.toString());
-      }
-      if (searchCriteria.year != null) {
-        params = params.set('year', searchCriteria.year.toString());
-      }
-      if (searchCriteria.statutPaiement != null) {
-        params = params.set('statutPaiement', searchCriteria.statutPaiement);
-      }
-    }
-
+    const params = this.buildFilterParams(searchCriteria);
     const url = `${this.apiUrl}/tableau-amortissement/${contratId}/export/pdf`;
     return this.http.get(url, { params, responseType: 'blob' });
+  }
+
+  /**
+   * Construit les paramètres de filtre (sans pagination) à partir du DTO de recherche.
+   */
+  private buildFilterParams(searchCriteria?: EcheanceLeasingSearchDTO): HttpParams {
+    let params = new HttpParams();
+    if (!searchCriteria) return params;
+
+    if (searchCriteria.numeroEcheance != null) {
+      params = params.set('numeroEcheance', searchCriteria.numeroEcheance.toString());
+    }
+    if (searchCriteria.statutPaiement != null) {
+      params = params.set('statutPaiement', searchCriteria.statutPaiement);
+    }
+    if (searchCriteria.dateEcheanceDebut) {
+      params = params.set('dateEcheanceDebut', toLocalDateString(searchCriteria.dateEcheanceDebut)!);
+    }
+    if (searchCriteria.dateEcheanceFin) {
+      params = params.set('dateEcheanceFin', toLocalDateString(searchCriteria.dateEcheanceFin)!);
+    }
+    if (searchCriteria.dateOperationDebut) {
+      params = params.set('dateOperationDebut', toLocalDateString(searchCriteria.dateOperationDebut)!);
+    }
+    if (searchCriteria.dateOperationFin) {
+      params = params.set('dateOperationFin', toLocalDateString(searchCriteria.dateOperationFin)!);
+    }
+    if (searchCriteria.dateValeurDebut) {
+      params = params.set('dateValeurDebut', toLocalDateString(searchCriteria.dateValeurDebut)!);
+    }
+    if (searchCriteria.dateValeurFin) {
+      params = params.set('dateValeurFin', toLocalDateString(searchCriteria.dateValeurFin)!);
+    }
+
+    return params;
   }
 
   /**

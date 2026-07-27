@@ -77,12 +77,64 @@
         </div>
 
         <div class="flex-shrink-0">
+          <button pButton pRipple type="button"
+                  [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+                  icon="pi pi-calendar"
+                  [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+                  (click)="toggleDatePanel()">
+          </button>
+        </div>
+
+        <div class="flex-shrink-0">
           <p-button icon="pi pi-times" severity="secondary"
                     (onClick)="clearFilters()" [style]="{'white-space': 'nowrap'}">
           </p-button>
         </div>
     </form>
   </div>
+
+  @if (showDatePanel) {
+  <div class="p-3 bg-white border-round shadow-1">
+    <form [formGroup]="filterForm" class="grid">
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Émission — du</label>
+        <p-calendar formControlName="dateEmissionDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"
+                    (onSelect)="applyFilters()" (onClear)="applyFilters()"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Émission — au</label>
+        <p-calendar formControlName="dateEmissionFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"
+                    (onSelect)="applyFilters()" (onClear)="applyFilters()"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Opération — du</label>
+        <p-calendar formControlName="dateOperationDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"
+                    (onSelect)="applyFilters()" (onClear)="applyFilters()"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Opération — au</label>
+        <p-calendar formControlName="dateOperationFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"
+                    (onSelect)="applyFilters()" (onClear)="applyFilters()"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Valeur — du</label>
+        <p-calendar formControlName="dateValeurDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"
+                    (onSelect)="applyFilters()" (onClear)="applyFilters()"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Valeur — au</label>
+        <p-calendar formControlName="dateValeurFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"
+                    (onSelect)="applyFilters()" (onClear)="applyFilters()"></p-calendar>
+      </div>
+    </form>
+  </div>
+  }
 
   <div class="pb-8">
     <p-table #dt [value]="restitutions" [paginator]="true" [rows]="10" [totalRecords]="totalRecords"
@@ -98,6 +150,9 @@
           <th pSortableColumn="banqueNom">Banque <p-sortIcon field="banqueNom"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
           <th pSortableColumn="dateEmission">Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
+          <th pSortableColumn="dateOperation">Date d'opération <p-sortIcon field="dateOperation"></p-sortIcon></th>
+          <th pSortableColumn="dateValeur">Date de valeur <p-sortIcon field="dateValeur"></p-sortIcon></th>
+          <th>Observation</th>
           <th pSortableColumn="status">Statut <p-sortIcon field="status"></p-sortIcon></th>
           <th style="width: 10rem;">Actions</th>
         </tr>
@@ -109,6 +164,9 @@
           <td>{{ restitution.banqueNom }}</td>
           <td>{{ restitution.montant | number:'1.2-2' }} MAD</td>
           <td>{{ restitution.dateEmission | date:'dd/MM/yyyy' }}</td>
+          <td>{{ restitution.dateOperation ? (restitution.dateOperation | date:'dd/MM/yyyy') : 'N/A' }}</td>
+          <td>{{ restitution.dateValeur ? (restitution.dateValeur | date:'dd/MM/yyyy') : 'N/A' }}</td>
+          <td>{{ restitution.observation }}</td>
           <td>
             <p-tag [value]="restitution.status" [severity]="getStatusSeverity(restitution.status)"></p-tag>
           </td>
@@ -135,11 +193,11 @@
       </ng-template>
 
       <ng-template pTemplate="emptyMessage">
-        <tr><td colspan="6">Aucune restitution trouvée.</td></tr>
+        <tr><td colspan="9">Aucune restitution trouvée.</td></tr>
       </ng-template>
 
       <ng-template pTemplate="loadingbody">
-        <tr><td colspan="6">Chargement...</td></tr>
+        <tr><td colspan="9">Chargement...</td></tr>
       </ng-template>
     </p-table>
   </div>

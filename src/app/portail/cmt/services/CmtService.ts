@@ -8,6 +8,7 @@ import { CreditMoyenTermeSearchDto } from "../dtos/CreditMoyenTermeSearchDto";
 import { PageResponse } from "../../global/types/PageResponse";
 import { CreditMoyenTermeRequestDto } from "../dtos/CreditMoyenTermeRequestDto";
 import { DeleteResponseDto } from "../dtos/DeleteResponseDto";
+import { toLocalDateString } from "../../global/types/date.utils";
 
 @Injectable({
   providedIn: 'root'
@@ -105,13 +106,7 @@ export class CmtService {
    * This centralizes the logic for pagination, sorting, and filters.
    */
   private buildSearchParams(searchDto: CreditMoyenTermeSearchDto): HttpParams {
-    let params = new HttpParams();
-    if (searchDto.designation) {
-      params = params.set('designation', searchDto.designation);
-    }
-    if (searchDto.banqueId) {
-      params = params.set('banqueId', searchDto.banqueId);
-    }
+    let params = this.buildFilterParams(searchDto);
     params = params.set('page', searchDto.page?.toString() || '0');
     params = params.set('size', searchDto.size?.toString() || '10');
     params = params.set('sort', searchDto.sort || 'id,asc');
@@ -129,6 +124,12 @@ export class CmtService {
     }
     if (searchDto.banqueId) {
       params = params.set('banqueId', searchDto.banqueId);
+    }
+    if (searchDto.dateDebutMin) {
+      params = params.set('dateDebutMin', toLocalDateString(searchDto.dateDebutMin)!);
+    }
+    if (searchDto.dateDebutMax) {
+      params = params.set('dateDebutMax', toLocalDateString(searchDto.dateDebutMax)!);
     }
     return params;
   }

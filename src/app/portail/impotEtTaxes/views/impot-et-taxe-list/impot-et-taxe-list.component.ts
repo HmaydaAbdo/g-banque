@@ -24,6 +24,7 @@ import { ImpotEtTaxeService } from "../../service/ImpotEtTaxeService";
 import { ToolbarModule } from "primeng/toolbar";
 import { TagModule } from "primeng/tag";
 import { InputSwitchModule } from "primeng/inputswitch";
+import { CalendarModule } from "primeng/calendar";
 
 @Component({
   selector: 'app-impot-et-taxe-list',
@@ -50,7 +51,8 @@ import { InputSwitchModule } from "primeng/inputswitch";
     InputTextModule,
     ToolbarModule,
     TagModule,
-    InputSwitchModule
+    InputSwitchModule,
+    CalendarModule
   ],
   templateUrl: './impot-et-taxe-list.component.html',
   providers: [MessageService, ConfirmationService]
@@ -75,8 +77,30 @@ export class ImpotEtTaxeListComponent implements OnInit {
     banque: [null],
     motif: [null],
     status: [null],
-    libelle: [null]
+    libelle: [null],
+    dateEmissionDebut: [null as Date | null],
+    dateEmissionFin: [null as Date | null],
+    dateOperationDebut: [null as Date | null],
+    dateOperationFin: [null as Date | null],
+    dateValeurDebut: [null as Date | null],
+    dateValeurFin: [null as Date | null],
   });
+
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut). */
+  showDatePanel = false;
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.filterForm.value;
+    let count = 0;
+    if (v.dateEmissionDebut || v.dateEmissionFin) count++;
+    if (v.dateOperationDebut || v.dateOperationFin) count++;
+    if (v.dateValeurDebut || v.dateValeurFin) count++;
+    return count;
+  }
 
   // Dropdown data sources
   banques: BanqueResponse[] = [];
@@ -165,7 +189,13 @@ export class ImpotEtTaxeListComponent implements OnInit {
       banqueId: formValue.banque?.id,
       motif: formValue.motif ?? undefined,
       status: formValue.status ?? undefined,
-      libelle: formValue.libelle ? formValue.libelle : undefined
+      libelle: formValue.libelle ? formValue.libelle : undefined,
+      dateEmissionDebut: formValue.dateEmissionDebut ?? undefined,
+      dateEmissionFin: formValue.dateEmissionFin ?? undefined,
+      dateOperationDebut: formValue.dateOperationDebut ?? undefined,
+      dateOperationFin: formValue.dateOperationFin ?? undefined,
+      dateValeurDebut: formValue.dateValeurDebut ?? undefined,
+      dateValeurFin: formValue.dateValeurFin ?? undefined,
     };
   }
 

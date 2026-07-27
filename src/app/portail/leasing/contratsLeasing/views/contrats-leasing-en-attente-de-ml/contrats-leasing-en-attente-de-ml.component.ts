@@ -27,6 +27,7 @@ import { TooltipModule } from "primeng/tooltip";
 import { InputNumberModule } from "primeng/inputnumber";
 import { LeasingContractWizardService } from "../../services/LeasingContractWizardService";
 import { parseLocalDate } from '../../../../global/types/date.utils';
+import { CalendarModule } from "primeng/calendar";
 
 @Component({
   selector: 'app-contrats-leasing-en-attente-de-ml',
@@ -49,7 +50,8 @@ import { parseLocalDate } from '../../../../global/types/date.utils';
     TooltipModule,
     NgClass,
     DecimalPipe,
-    InputNumberModule
+    InputNumberModule,
+    CalendarModule
   ],
   templateUrl: './contrats-leasing-en-attente-de-ml.component.html',
   styleUrl: './contrats-leasing-en-attente-de-ml.component.scss'
@@ -120,8 +122,22 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
       organismeLeasingId: [null],
       banqueDePrelevementId: [null],
       completed: [false],
-      montantEcheance: [null]
+      montantEcheance: [null],
+      dateDebutMin: [null as Date | null],
+      dateDebutMax: [null as Date | null]
     });
+  }
+
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut). */
+  showDatePanel = false;
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.searchForm.value;
+    return (v.dateDebutMin || v.dateDebutMax) ? 1 : 0;
   }
 
   loadDropdownOptions(): void {
@@ -165,7 +181,9 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
       typeContrat: this.searchForm.get('typeContrat')?.value || undefined,
       organismeLeasingId: this.searchForm.get('organismeLeasingId')?.value || undefined,
       banqueDePrelevementId: this.searchForm.get('banqueDePrelevementId')?.value || undefined,
-      montantEcheance: this.searchForm.get('montantEcheance')?.value || undefined
+      montantEcheance: this.searchForm.get('montantEcheance')?.value || undefined,
+      dateDebutMin: this.searchForm.get('dateDebutMin')?.value ?? undefined,
+      dateDebutMax: this.searchForm.get('dateDebutMax')?.value ?? undefined
     };
 
     this.contratLeasingService.getPendingLienReleaseContrats(
@@ -206,7 +224,9 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
       organismeLeasingId: null,
       banqueDePrelevementId: null,
       completed: null,
-      montantEcheance: null
+      montantEcheance: null,
+      dateDebutMin: null,
+      dateDebutMax: null
     });
 
     if (this.dt) {
@@ -226,7 +246,9 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
       typeContrat: this.searchForm.get('typeContrat')?.value || undefined,
       organismeLeasingId: this.searchForm.get('organismeLeasingId')?.value || undefined,
       banqueDePrelevementId: this.searchForm.get('banqueDePrelevementId')?.value || undefined,
-      montantEcheance: this.searchForm.get('montantEcheance')?.value || undefined
+      montantEcheance: this.searchForm.get('montantEcheance')?.value || undefined,
+      dateDebutMin: this.searchForm.get('dateDebutMin')?.value ?? undefined,
+      dateDebutMax: this.searchForm.get('dateDebutMax')?.value ?? undefined
     };
 
     this.contratLeasingService.exportPendingLienReleaseContratsPdf(searchCriteria).subscribe({

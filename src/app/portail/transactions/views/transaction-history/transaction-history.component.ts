@@ -14,6 +14,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { RouterLinkActive, RouterModule } from "@angular/router";
 import { Ripple } from "primeng/ripple";
+import { CalendarModule } from "primeng/calendar";
 
 // DTOs & Services
 import { TransactionResponseDto } from "../../dtos/TransactionResponseDto";
@@ -30,7 +31,7 @@ import {MultiSelectModule} from "primeng/multiselect";
     CommonModule, RouterModule, TableModule, ButtonModule, ToastModule,
     ToolbarModule, InputTextModule, ReactiveFormsModule,
     DropdownModule, TagModule, BreadcrumbModule, RouterLinkActive,
-    TooltipModule, Ripple, MultiSelectModule
+    TooltipModule, Ripple, MultiSelectModule, CalendarModule
   ],
   templateUrl: './transaction-history.component.html',
   styleUrl: './transaction-history.component.scss',
@@ -96,13 +97,22 @@ export class TransactionHistoryComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut). */
+  showDatePanel = false;
+
   initSearchForm(): void {
     this.searchForm = this.fb.group({
       libelle: [''],
       banqueId: [null],
       transactionSources: [null],
       montant:[null],
-      statutRapprochement: [null]
+      statutRapprochement: [null],
+      dateEmissionDebut: [null],
+      dateEmissionFin: [null],
+      dateOperationDebut: [null],
+      dateOperationFin: [null],
+      dateValeurDebut: [null],
+      dateValeurFin: [null]
     });
 
     const sub = this.searchForm.valueChanges
@@ -113,6 +123,19 @@ export class TransactionHistoryComponent implements OnInit, OnDestroy {
       .subscribe(() => this.onSearch());
 
     this.subscriptions.push(sub);
+  }
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.searchForm.value;
+    let count = 0;
+    if (v.dateEmissionDebut || v.dateEmissionFin) count++;
+    if (v.dateOperationDebut || v.dateOperationFin) count++;
+    if (v.dateValeurDebut || v.dateValeurFin) count++;
+    return count;
   }
 
   loadBanques(): void {

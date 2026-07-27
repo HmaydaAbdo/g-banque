@@ -10,4 +10,10 @@ export interface CommissionSearchDto {
   status?: Status;
   /** Filtre sur la nature de la ligne fonctionnelle de la caution d'origine. */
   natureId?: number;
+  dateEmissionDebut?: Date;
+  dateEmissionFin?: Date;
+  dateOperationDebut?: Date;
+  dateOperationFin?: Date;
+  dateValeurDebut?: Date;
+  dateValeurFin?: Date;
 }

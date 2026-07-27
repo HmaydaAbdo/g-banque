@@ -8,6 +8,7 @@ import { FraisBancaireResponseDto } from '../dtos/FraisBancaireResponseDto';
 import { FraisBancaireSearchDto } from '../dtos/FraisBancaireSearchDto';
 import { EncoursFraisBancaireDto } from '../dtos/EncoursFraisBancaireDto';
 import { PageResponse } from '../../global/types/PageResponse';
+import { toLocalDateString } from '../../global/types/date.utils';
 
 @Injectable({
   providedIn: 'root'
@@ -60,7 +61,26 @@ export class FraisBancaireService {
       .set('size', size.toString())
       .set('sort', sort);
 
-    return this.http.post<PageResponse<FraisBancaireResponseDto>>(`${this.apiUrl}/search`, searchDto, { params });
+    return this.http.post<PageResponse<FraisBancaireResponseDto>>(
+      `${this.apiUrl}/search`, this.toSearchPayload(searchDto), { params }
+    );
+  }
+
+  /**
+   * Convertit les champs {@code Date} de {@link FraisBancaireSearchDto} en chaînes `yyyy-MM-dd`
+   * avant envoi en corps JSON — un objet {@code Date} sérialisé nativement produit un datetime
+   * ISO complet que {@code LocalDate} côté backend ne sait pas parser.
+   */
+  private toSearchPayload(searchDto: FraisBancaireSearchDto): any {
+    return {
+      ...searchDto,
+      dateEmissionDebut: toLocalDateString(searchDto.dateEmissionDebut),
+      dateEmissionFin: toLocalDateString(searchDto.dateEmissionFin),
+      dateOperationDebut: toLocalDateString(searchDto.dateOperationDebut),
+      dateOperationFin: toLocalDateString(searchDto.dateOperationFin),
+      dateValeurDebut: toLocalDateString(searchDto.dateValeurDebut),
+      dateValeurFin: toLocalDateString(searchDto.dateValeurFin),
+    };
   }
 
   /**
@@ -82,8 +102,32 @@ export class FraisBancaireService {
     if (searchDto.status) {
       params = params.set('status', searchDto.status);
     }
+    params = this.appendDateRangeParams(params, searchDto);
 
     return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
+  }
+
+  /** Ajoute les 3 plages de dates (émission, opération, valeur) si renseignées. */
+  private appendDateRangeParams(params: HttpParams, searchDto: FraisBancaireSearchDto): HttpParams {
+    if (searchDto.dateEmissionDebut) {
+      params = params.set('dateEmissionDebut', toLocalDateString(searchDto.dateEmissionDebut)!);
+    }
+    if (searchDto.dateEmissionFin) {
+      params = params.set('dateEmissionFin', toLocalDateString(searchDto.dateEmissionFin)!);
+    }
+    if (searchDto.dateOperationDebut) {
+      params = params.set('dateOperationDebut', toLocalDateString(searchDto.dateOperationDebut)!);
+    }
+    if (searchDto.dateOperationFin) {
+      params = params.set('dateOperationFin', toLocalDateString(searchDto.dateOperationFin)!);
+    }
+    if (searchDto.dateValeurDebut) {
+      params = params.set('dateValeurDebut', toLocalDateString(searchDto.dateValeurDebut)!);
+    }
+    if (searchDto.dateValeurFin) {
+      params = params.set('dateValeurFin', toLocalDateString(searchDto.dateValeurFin)!);
+    }
+    return params;
   }
 
   /**

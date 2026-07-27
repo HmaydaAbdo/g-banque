@@ -14,6 +14,7 @@ import { RouterLink } from '@angular/router';
 import { TagModule } from 'primeng/tag';
 import { ToolbarModule } from 'primeng/toolbar';
 import { InputTextModule } from 'primeng/inputtext';
+import { CalendarModule } from 'primeng/calendar';
 
 import { AgiosService } from '../../service/agios.service';
 import { AgiosResponseDto } from '../../dtos/AgiosResponseDto';
@@ -45,6 +46,7 @@ import { AuthService } from '../../../../auth/services/auth.service';
     InputTextModule,
     TagModule,
     ToolbarModule,
+    CalendarModule,
   ],
   templateUrl: './agios-list.component.html',
   providers: [MessageService, ConfirmationService]
@@ -69,7 +71,29 @@ export class AgiosListComponent implements OnInit {
     banque:  [null as BanqueResponse | null],
     status:  [null as Status | null],
     libelle: [null as string | null],
+    dateEmissionDebut: [null as Date | null],
+    dateEmissionFin: [null as Date | null],
+    dateOperationDebut: [null as Date | null],
+    dateOperationFin: [null as Date | null],
+    dateValeurDebut: [null as Date | null],
+    dateValeurFin: [null as Date | null],
   });
+
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut). */
+  showDatePanel = false;
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.filterForm.value;
+    let count = 0;
+    if (v.dateEmissionDebut || v.dateEmissionFin) count++;
+    if (v.dateOperationDebut || v.dateOperationFin) count++;
+    if (v.dateValeurDebut || v.dateValeurFin) count++;
+    return count;
+  }
 
   banques: BanqueResponse[] = [];
   banquesTotal = 0;
@@ -93,11 +117,17 @@ export class AgiosListComponent implements OnInit {
     const sortField = event.sortField ?? 'dateEmission';
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
 
-    const { banque, status, libelle } = this.filterForm.getRawValue();
+    const { banque, status, libelle, dateEmissionDebut, dateEmissionFin, dateOperationDebut, dateOperationFin, dateValeurDebut, dateValeurFin } = this.filterForm.getRawValue();
     const searchCriteria: AgiosSearchDto = {
       banqueId: banque?.id,
       status:   status ?? undefined,
       libelle:  libelle ?? undefined,
+      dateEmissionDebut: dateEmissionDebut ?? undefined,
+      dateEmissionFin: dateEmissionFin ?? undefined,
+      dateOperationDebut: dateOperationDebut ?? undefined,
+      dateOperationFin: dateOperationFin ?? undefined,
+      dateValeurDebut: dateValeurDebut ?? undefined,
+      dateValeurFin: dateValeurFin ?? undefined,
     };
 
     this.agiosService.searchAgios(searchCriteria, page, size, `${sortField},${sortOrder}`)
@@ -142,11 +172,17 @@ export class AgiosListComponent implements OnInit {
 
   exportPdf(): void {
     this.exporting = true;
-    const { banque, status, libelle } = this.filterForm.getRawValue();
+    const { banque, status, libelle, dateEmissionDebut, dateEmissionFin, dateOperationDebut, dateOperationFin, dateValeurDebut, dateValeurFin } = this.filterForm.getRawValue();
     const searchCriteria: AgiosSearchDto = {
       banqueId: banque?.id,
       status:   status ?? undefined,
       libelle:  libelle ?? undefined,
+      dateEmissionDebut: dateEmissionDebut ?? undefined,
+      dateEmissionFin: dateEmissionFin ?? undefined,
+      dateOperationDebut: dateOperationDebut ?? undefined,
+      dateOperationFin: dateOperationFin ?? undefined,
+      dateValeurDebut: dateValeurDebut ?? undefined,
+      dateValeurFin: dateValeurFin ?? undefined,
     };
 
     this.agiosService.exportAgiosPdf(searchCriteria).subscribe({

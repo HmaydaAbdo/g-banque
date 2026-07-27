@@ -6,4 +6,10 @@ export interface FraisBancaireSearchDto {
   libelle?: string;
   montant?: Decimal;
   status?: Status;
+  dateEmissionDebut?: Date;
+  dateEmissionFin?: Date;
+  dateOperationDebut?: Date;
+  dateOperationFin?: Date;
+  dateValeurDebut?: Date;
+  dateValeurFin?: Date;
 }

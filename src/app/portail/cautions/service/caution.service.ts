@@ -150,7 +150,10 @@ export class CautionService {
     if (criteres.banqueId  != null) params = params.set('banqueId',      criteres.banqueId.toString());
     if (criteres.natureId  != null) params = params.set('natureId',      criteres.natureId.toString());
     if (criteres.marcheId  != null) params = params.set('marcheId',      criteres.marcheId.toString());
-    if (criteres.dateDePrise)       params = params.set('dateDePrise',   criteres.dateDePrise);
+    if (criteres.dateDePriseDebut)     params = params.set('dateDePriseDebut',     criteres.dateDePriseDebut);
+    if (criteres.dateDePriseFin)       params = params.set('dateDePriseFin',       criteres.dateDePriseFin);
+    if (criteres.dateDeMainLeveeDebut) params = params.set('dateDeMainLeveeDebut', criteres.dateDeMainLeveeDebut);
+    if (criteres.dateDeMainLeveeFin)   params = params.set('dateDeMainLeveeFin',   criteres.dateDeMainLeveeFin);
     if (criteres.montant   != null) params = params.set('montant',       criteres.montant.toString());
     if (criteres.actif     != null) params = params.set('actif',         criteres.actif.toString());
 

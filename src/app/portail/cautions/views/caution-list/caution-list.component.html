@@ -248,15 +248,15 @@
         [inputStyle]="{'width':'100%'}">
       </p-inputNumber>
 
-      <!-- Date de prise -->
-      <p-calendar
-        formControlName="dateDePrise"
-        placeholder="Date de prise"
-        dateFormat="dd/mm/yy"
-        [showClear]="true"
-        appendTo="body"
-        [style]="{'width':'155px'}">
-      </p-calendar>
+      <!-- Période -->
+      <div class="flex-shrink-0">
+        <button pButton pRipple type="button"
+                [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+                icon="pi pi-calendar"
+                [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+                (click)="toggleDatePanel()">
+        </button>
+      </div>
 
       <!-- Réinitialiser -->
       <div class="flex-shrink-0">
@@ -267,6 +267,33 @@
 
     </form>
   </div>
+
+  @if (showDatePanel) {
+  <div class="p-3 bg-white border-round shadow-1">
+    <form [formGroup]="filterForm" class="grid">
+      <div class="col-6 md:col-3">
+        <label class="block text-xs text-500 mb-1">Date de prise — du</label>
+        <p-calendar formControlName="dateDePriseDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-3">
+        <label class="block text-xs text-500 mb-1">Date de prise — au</label>
+        <p-calendar formControlName="dateDePriseFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-3">
+        <label class="block text-xs text-500 mb-1">Main levée — du</label>
+        <p-calendar formControlName="dateDeMainLeveeDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-3">
+        <label class="block text-xs text-500 mb-1">Main levée — au</label>
+        <p-calendar formControlName="dateDeMainLeveeFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+    </form>
+  </div>
+  }
 
   <!-- ═══ TABLE ════════════════════════════════════════════════════════════ -->
   <div class="surface-card border-round-xl border-1 surface-border"

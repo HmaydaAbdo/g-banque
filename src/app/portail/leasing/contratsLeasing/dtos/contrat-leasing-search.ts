@@ -8,4 +8,6 @@ export interface ContratLeasingSearchDTO {
   banqueDePrelevementId?: number;
   completed?: boolean;
   montantEcheance?:number;
+  dateDebutMin?: Date;
+  dateDebutMax?: Date;
 }

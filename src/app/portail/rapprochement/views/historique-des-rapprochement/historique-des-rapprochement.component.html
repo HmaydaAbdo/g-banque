@@ -102,7 +102,10 @@
           <th pSortableColumn="soldeFin">Solde Fin <p-sortIcon field="soldeFin"></p-sortIcon></th>
           <th pSortableColumn="totalDebit">Total Débit <p-sortIcon field="totalDebit"></p-sortIcon></th>
           <th pSortableColumn="totalCredit">Total Crédit <p-sortIcon field="totalCredit"></p-sortIcon></th>
+          <th pSortableColumn="tvaDeductible">TVA Déductible <p-sortIcon field="tvaDeductible"></p-sortIcon></th>
+          <th pSortableColumn="tvaCollectee">TVA Collectée <p-sortIcon field="tvaCollectee"></p-sortIcon></th>
           <th>TVA Due</th>
+          <th>Statut</th>
           <th style="width: 8rem;">Actions</th>
         </tr>
       </ng-template>
@@ -115,6 +118,8 @@
           <td><span class="num" [class.num-credit]="rapprochement.soldeFin >= 0" [class.num-debit]="rapprochement.soldeFin < 0">{{ rapprochement.soldeFin | number:'1.2-2' }}</span></td>
           <td><span class="num num-debit">{{ rapprochement.totalDebit | number:'1.2-2' }}</span></td>
           <td><span class="num num-credit">{{ rapprochement.totalCredit | number:'1.2-2' }}</span></td>
+          <td><span class="num num-neutral">{{ rapprochement.tvaDeductible | number:'1.2-2' }}</span></td>
+          <td><span class="num num-neutral">{{ rapprochement.tvaCollectee | number:'1.2-2' }}</span></td>
           <td>
             <span class="num font-bold" [ngClass]="{
                 'num-credit': rapprochement.tvaDue > 0,
@@ -123,6 +128,9 @@
               }">
               {{ rapprochement.tvaDue | number:'1.2-2' }}
             </span>
+          </td>
+          <td>
+            <p-tag [value]="rapprochement.statutRapprochement" [severity]="getStatutSeverity(rapprochement.statutRapprochement)"></p-tag>
           </td>
           <td>
             <div class="flex flex-row align-items-center gap-2">
@@ -143,7 +151,7 @@
 
       <ng-template pTemplate="emptyMessage">
         <tr>
-          <td [attr.colspan]="8">Aucun historique de rapprochement trouvé.</td>
+          <td [attr.colspan]="10">Aucun historique de rapprochement trouvé.</td>
         </tr>
       </ng-template>
     </p-table>

@@ -35,6 +35,7 @@ import { ProgressSpinnerModule } from "primeng/progressspinner";
 import { InputNumberModule } from "primeng/inputnumber";
 import { parseLocalDate } from '../../../../global/types/date.utils';
 import {AuthService} from "../../../../../auth/services/auth.service";
+import { CalendarModule } from "primeng/calendar";
 
 @Component({
   selector: 'app-contrat-leasing-list',
@@ -59,7 +60,8 @@ import {AuthService} from "../../../../../auth/services/auth.service";
     DividerModule,
     BreadcrumbModule,
     ProgressSpinnerModule,
-    InputNumberModule
+    InputNumberModule,
+    CalendarModule
   ],
   providers: [MessageService, DialogService, ConfirmationService]
 })
@@ -130,8 +132,22 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
       organismeLeasingId: [null],
       banqueDePrelevementId: [null],
       completed: [false],
-      montantEcheance: [null]
+      montantEcheance: [null],
+      dateDebutMin: [null as Date | null],
+      dateDebutMax: [null as Date | null]
     });
+  }
+
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut). */
+  showDatePanel = false;
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.searchForm.value;
+    return (v.dateDebutMin || v.dateDebutMax) ? 1 : 0;
   }
 
   loadDropdownOptions(): void {
@@ -175,7 +191,9 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
       typeContrat: this.searchForm.get('typeContrat')?.value || undefined,
       organismeLeasingId: this.searchForm.get('organismeLeasingId')?.value || undefined,
       banqueDePrelevementId: this.searchForm.get('banqueDePrelevementId')?.value || undefined,
-      montantEcheance: this.searchForm.get('montantEcheance')?.value || undefined
+      montantEcheance: this.searchForm.get('montantEcheance')?.value || undefined,
+      dateDebutMin: this.searchForm.get('dateDebutMin')?.value ?? undefined,
+      dateDebutMax: this.searchForm.get('dateDebutMax')?.value ?? undefined
     };
 
     this.contratLeasingService.getActiveContrats(
@@ -216,7 +234,9 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
       organismeLeasingId: null,
       banqueDePrelevementId: null,
       completed: null,
-      montantEcheance: null
+      montantEcheance: null,
+      dateDebutMin: null,
+      dateDebutMax: null
     });
 
     if (this.dt) {
@@ -236,7 +256,9 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
       typeContrat: this.searchForm.get('typeContrat')?.value || undefined,
       organismeLeasingId: this.searchForm.get('organismeLeasingId')?.value || undefined,
       banqueDePrelevementId: this.searchForm.get('banqueDePrelevementId')?.value || undefined,
-      montantEcheance: this.searchForm.get('montantEcheance')?.value || undefined
+      montantEcheance: this.searchForm.get('montantEcheance')?.value || undefined,
+      dateDebutMin: this.searchForm.get('dateDebutMin')?.value ?? undefined,
+      dateDebutMax: this.searchForm.get('dateDebutMax')?.value ?? undefined
     };
 
     this.contratLeasingService.exportActiveContratsPdf(searchCriteria).subscribe({

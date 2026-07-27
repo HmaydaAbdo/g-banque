@@ -6,6 +6,7 @@ import { ContratLeasingRequestDTO, ContratLeasingResponseDTO } from "../dtos/con
 import { PageResponse } from "../../../global/types/PageResponse";
 import { ContratLeasingSearchDTO } from "../dtos/contrat-leasing-search";
 import { environment } from "../../../../../environments/environment";
+import { toLocalDateString } from "../../../global/types/date.utils";
 
 
 
@@ -67,6 +68,12 @@ export class ContratLeasingService {
     if (searchDTO.montantEcheance !== undefined && searchDTO.montantEcheance !== null) {
       params = params.set('montantEcheance', searchDTO.montantEcheance.toString());
     }
+    if (searchDTO.dateDebutMin) {
+      params = params.set('dateDebutMin', toLocalDateString(searchDTO.dateDebutMin)!);
+    }
+    if (searchDTO.dateDebutMax) {
+      params = params.set('dateDebutMax', toLocalDateString(searchDTO.dateDebutMax)!);
+    }
 
     return params;
   }
@@ -95,6 +102,12 @@ export class ContratLeasingService {
     }
     if (searchDTO.montantEcheance !== undefined && searchDTO.montantEcheance !== null) {
       params = params.set('montantEcheance', searchDTO.montantEcheance.toString());
+    }
+    if (searchDTO.dateDebutMin) {
+      params = params.set('dateDebutMin', toLocalDateString(searchDTO.dateDebutMin)!);
+    }
+    if (searchDTO.dateDebutMax) {
+      params = params.set('dateDebutMax', toLocalDateString(searchDTO.dateDebutMax)!);
     }
 
     return params;

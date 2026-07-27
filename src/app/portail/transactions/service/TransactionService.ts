@@ -129,19 +129,29 @@ export class TransactionService {
       params = params.set('montant', searchDto.montant.toString());
     }
 
+    params = this.appendDateRangeParams(params, searchDto);
+    return params;
+  }
 
-    if (searchDto.dateOperationDebut) {
-      params = params.set(
-        'dateOperationDebut',
-        toLocalDateString(new Date(searchDto.dateOperationDebut))!
-      );
+  /** Ajoute les 3 plages de dates (émission, opération, valeur) si renseignées. */
+  private appendDateRangeParams(params: HttpParams, searchDto: TransactionSearchDto): HttpParams {
+    if (searchDto.dateEmissionDebut) {
+      params = params.set('dateEmissionDebut', toLocalDateString(new Date(searchDto.dateEmissionDebut))!);
     }
-
+    if (searchDto.dateEmissionFin) {
+      params = params.set('dateEmissionFin', toLocalDateString(new Date(searchDto.dateEmissionFin))!);
+    }
+    if (searchDto.dateOperationDebut) {
+      params = params.set('dateOperationDebut', toLocalDateString(new Date(searchDto.dateOperationDebut))!);
+    }
     if (searchDto.dateOperationFin) {
-      params = params.set(
-        'dateOperationFin',
-        toLocalDateString(new Date(searchDto.dateOperationFin))!
-      );
+      params = params.set('dateOperationFin', toLocalDateString(new Date(searchDto.dateOperationFin))!);
+    }
+    if (searchDto.dateValeurDebut) {
+      params = params.set('dateValeurDebut', toLocalDateString(new Date(searchDto.dateValeurDebut))!);
+    }
+    if (searchDto.dateValeurFin) {
+      params = params.set('dateValeurFin', toLocalDateString(new Date(searchDto.dateValeurFin))!);
     }
     return params;
   }

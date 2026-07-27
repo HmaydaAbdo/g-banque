@@ -8,6 +8,7 @@ import {CommissionSearchDto} from "../dtos/CommissionSearchDto";
 import {EncoursCommissionDto} from "../dtos/EncoursCommissionDto";
 import {CommissionFusionRequest} from "../dtos/CommissionFusionRequest";
 import {CommissionFusionResponse} from "../dtos/CommissionFusionResponse";
+import {toLocalDateString} from "../../global/types/date.utils";
 
 
 @Injectable({
@@ -42,7 +43,24 @@ export class CommissionService {
       .set('size', size.toString())
       .set('sort', sort);
 
-    return this.http.post<EncoursCommissionDto>(`${this.apiUrl}/search`, searchDto, { params });
+    return this.http.post<EncoursCommissionDto>(`${this.apiUrl}/search`, this.toSearchPayload(searchDto), { params });
+  }
+
+  /**
+   * Convertit les champs {@code Date} de {@link CommissionSearchDto} en chaînes `yyyy-MM-dd` avant
+   * envoi en corps JSON — un objet {@code Date} sérialisé nativement produit un datetime ISO
+   * complet que {@code LocalDate} côté backend ne sait pas parser.
+   */
+  private toSearchPayload(searchDto: CommissionSearchDto): any {
+    return {
+      ...searchDto,
+      dateEmissionDebut: toLocalDateString(searchDto.dateEmissionDebut),
+      dateEmissionFin: toLocalDateString(searchDto.dateEmissionFin),
+      dateOperationDebut: toLocalDateString(searchDto.dateOperationDebut),
+      dateOperationFin: toLocalDateString(searchDto.dateOperationFin),
+      dateValeurDebut: toLocalDateString(searchDto.dateValeurDebut),
+      dateValeurFin: toLocalDateString(searchDto.dateValeurFin),
+    };
   }
 
   // --- Update ---
@@ -108,8 +126,32 @@ export class CommissionService {
     if (searchDto.montant != null)  params = params.set('montant', searchDto.montant.toString());
     if (searchDto.status)           params = params.set('status', searchDto.status);
     if (searchDto.natureId != null) params = params.set('natureId', searchDto.natureId.toString());
+    params = this.appendDateRangeParams(params, searchDto);
 
     return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
+  }
+
+  /** Ajoute les 3 plages de dates (émission, opération, valeur) si renseignées. */
+  private appendDateRangeParams(params: HttpParams, searchDto: CommissionSearchDto): HttpParams {
+    if (searchDto.dateEmissionDebut) {
+      params = params.set('dateEmissionDebut', toLocalDateString(searchDto.dateEmissionDebut)!);
+    }
+    if (searchDto.dateEmissionFin) {
+      params = params.set('dateEmissionFin', toLocalDateString(searchDto.dateEmissionFin)!);
+    }
+    if (searchDto.dateOperationDebut) {
+      params = params.set('dateOperationDebut', toLocalDateString(searchDto.dateOperationDebut)!);
+    }
+    if (searchDto.dateOperationFin) {
+      params = params.set('dateOperationFin', toLocalDateString(searchDto.dateOperationFin)!);
+    }
+    if (searchDto.dateValeurDebut) {
+      params = params.set('dateValeurDebut', toLocalDateString(searchDto.dateValeurDebut)!);
+    }
+    if (searchDto.dateValeurFin) {
+      params = params.set('dateValeurFin', toLocalDateString(searchDto.dateValeurFin)!);
+    }
+    return params;
   }
 
   /**

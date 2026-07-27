@@ -5,4 +5,10 @@ export interface RestitutionSearchDto {
   libelle?: string;
   montant?: number;
   status?: Status;
+  dateEmissionDebut?: Date;
+  dateEmissionFin?: Date;
+  dateOperationDebut?: Date;
+  dateOperationFin?: Date;
+  dateValeurDebut?: Date;
+  dateValeurFin?: Date;
 }

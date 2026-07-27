@@ -23,6 +23,10 @@ export interface ContratLeasingResponseDTO {
   nomBanqueDePrelevement: string;
   organismeLeasingId: number;
   nomOrganismeLeasing: string;
+  /** ID du contrat cadre actif au moment de la signature. */
+  contratCadreId: number;
+  /** Plafond du contrat cadre au moment de la signature. */
+  plafond: number;
   immobilisation: string;
   montantAchatTTC: number;
   dateDebut: string;

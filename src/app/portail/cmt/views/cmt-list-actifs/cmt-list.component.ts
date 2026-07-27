@@ -15,6 +15,7 @@ import {TooltipModule} from 'primeng/tooltip';
 import {ConfirmDialogModule} from 'primeng/confirmdialog';
 import {RippleModule} from "primeng/ripple";
 import {DialogModule} from 'primeng/dialog';
+import {CalendarModule} from 'primeng/calendar';
 import {CreditMoyenTermeResponseDto} from "../../dtos/CreditMoyenTermeResponseDto";
 import {CmtService} from "../../services/CmtService";
 import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
@@ -42,7 +43,8 @@ import {AuthService} from "../../../../auth/services/auth.service";
     ConfirmDialogModule,
     RippleModule,
     DialogModule,
-    BreadcrumbModule
+    BreadcrumbModule,
+    CalendarModule
   ],
   providers: [MessageService, ConfirmationService]
 })
@@ -95,9 +97,15 @@ export class CmtListComponent implements OnInit, OnDestroy {
       .pipe(debounceTime(300), distinctUntilChanged())
       .subscribe(() => this.onSearch());
 
+    const dateDebutMinSub = this.searchForm.get('dateDebutMin')?.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe(() => this.onSearch());
 
+    const dateDebutMaxSub = this.searchForm.get('dateDebutMax')?.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe(() => this.onSearch());
 
-    this.subscriptions.push(designationSub!, banqueSub!);
+    this.subscriptions.push(designationSub!, banqueSub!, dateDebutMinSub!, dateDebutMaxSub!);
   }
 
   ngOnDestroy(): void {
@@ -108,7 +116,21 @@ export class CmtListComponent implements OnInit, OnDestroy {
     this.searchForm = this.fb.group({
       designation: [''],
       banqueId: [null],
+      dateDebutMin: [null as Date | null],
+      dateDebutMax: [null as Date | null],
     });
+  }
+
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut). */
+  showDatePanel = false;
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.searchForm.value;
+    return (v.dateDebutMin || v.dateDebutMax) ? 1 : 0;
   }
 
   loadDropdownOptions(): void {
@@ -139,6 +161,8 @@ export class CmtListComponent implements OnInit, OnDestroy {
     const searchCriteria: CreditMoyenTermeSearchDto = {
       designation: this.searchForm.get('designation')?.value,
       banqueId:this.searchForm.get('banqueId')?.value,
+      dateDebutMin: this.searchForm.get('dateDebutMin')?.value ?? undefined,
+      dateDebutMax: this.searchForm.get('dateDebutMax')?.value ?? undefined,
       page: currentPage,
       size: pageSize,
       sort: sort
@@ -172,6 +196,8 @@ export class CmtListComponent implements OnInit, OnDestroy {
     this.searchForm.reset({
       designation: '',
       banqueId: null,
+      dateDebutMin: null,
+      dateDebutMax: null,
     });
     if (this.dt) {
       this.dt.clear();
@@ -191,7 +217,9 @@ export class CmtListComponent implements OnInit, OnDestroy {
     this.exporting = true;
     const searchCriteria: CreditMoyenTermeSearchDto = {
       designation: this.searchForm.get('designation')?.value,
-      banqueId: this.searchForm.get('banqueId')?.value
+      banqueId: this.searchForm.get('banqueId')?.value,
+      dateDebutMin: this.searchForm.get('dateDebutMin')?.value ?? undefined,
+      dateDebutMax: this.searchForm.get('dateDebutMax')?.value ?? undefined,
     };
 
     this.cmtService.exportActiveCreditsPdf(searchCriteria).subscribe({

@@ -50,6 +50,15 @@
 
 
 
+    <div class="flex-shrink-0">
+      <button pButton pRipple type="button"
+              [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+              icon="pi pi-calendar"
+              [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+              (click)="toggleDatePanel()">
+      </button>
+    </div>
+
     <div>
       <p-button
         icon="pi pi-times"
@@ -60,6 +69,23 @@
     </div>
   </form>
 </div>
+
+  @if (showDatePanel) {
+  <div class="p-3 bg-white border-round shadow-1">
+    <form [formGroup]="searchForm" class="grid">
+      <div class="col-6 md:col-3">
+        <label class="block text-xs text-500 mb-1">Date début — du</label>
+        <p-calendar formControlName="dateDebutMin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-3">
+        <label class="block text-xs text-500 mb-1">Date début — au</label>
+        <p-calendar formControlName="dateDebutMax" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+    </form>
+  </div>
+  }
 
   <div class="pb-8">
     <p-table
@@ -90,6 +116,7 @@
           <th pSortableColumn="banque.nom">Banque <p-sortIcon field="banque.nom"></p-sortIcon></th>
           <th pSortableColumn="nominal">Nominal <p-sortIcon field="nominal"></p-sortIcon></th>
           <th pSortableColumn="taux">Taux <p-sortIcon field="taux"></p-sortIcon></th>
+          <th pSortableColumn="periodicite">Périodicité <p-sortIcon field="periodicite"></p-sortIcon></th>
           <th pSortableColumn="duree">Durée <p-sortIcon field="duree"></p-sortIcon></th>
           <th pSortableColumn="echeance">Montant Échéance <p-sortIcon field="echeance"></p-sortIcon></th>
           <th pSortableColumn="dateDebut">Date Début <p-sortIcon field="dateDebut"></p-sortIcon></th>
@@ -104,6 +131,7 @@
           <td>{{ credit.banque.nom }}</td>
           <td>{{ credit.nominal | number }} MAD</td>
           <td>{{ credit.taux | number }} %</td>
+          <td>{{ credit.periodicite }} mois</td>
           <td>{{ credit.duree }} mois</td>
           <td>{{ credit.echeance | number }} MAD</td>
           <td>{{ credit.dateDebut | date:'dd/MM/yyyy' }}</td>

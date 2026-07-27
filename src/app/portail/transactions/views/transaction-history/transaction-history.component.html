@@ -66,11 +66,54 @@
               class="p-button-outlined p-button-danger p-button-sm"
               [loading]="exporting" (click)="exportPdf()">
       </button>
+      <button pButton pRipple type="button"
+              [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+              icon="pi pi-calendar"
+              [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+              (click)="toggleDatePanel()">
+      </button>
       <p-button icon="pi pi-times" severity="secondary"
                 (onClick)="clearSearch()" [style]="{'white-space': 'nowrap'}">
       </p-button>
     </div>
   </div>
+
+  @if (showDatePanel) {
+  <div class="p-3 bg-white border-round shadow-1">
+    <form [formGroup]="searchForm" class="grid">
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Émission — du</label>
+        <p-calendar formControlName="dateEmissionDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Émission — au</label>
+        <p-calendar formControlName="dateEmissionFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Opération — du</label>
+        <p-calendar formControlName="dateOperationDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Opération — au</label>
+        <p-calendar formControlName="dateOperationFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Valeur — du</label>
+        <p-calendar formControlName="dateValeurDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Valeur — au</label>
+        <p-calendar formControlName="dateValeurFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+    </form>
+  </div>
+  }
 
   <div class="pb-8 px-1">
     <p-table #dt
@@ -104,6 +147,8 @@
           <th >Source</th>
           <th  class="text-center">Statut</th>
           <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
+          <th>Observation</th>
+          <th pSortableColumn="referent">Référent <p-sortIcon field="referent"></p-sortIcon></th>
 
         </tr>
       </ng-template>
@@ -138,16 +183,17 @@
           <td class="white-space-normal" style="max-width: 8rem;" >
             {{ transaction.libelle }}
           </td>
-
-
-
+          <td class="white-space-normal" style="max-width: 8rem;" >
+            {{ transaction.observation }}
+          </td>
+          <td>{{ transaction.referent ?? 'N/A' }}</td>
 
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptyMessage">
         <tr>
-          <td colspan="9" class="text-center p-4">Aucune transaction trouvée.</td>
+          <td colspan="14" class="text-center p-4">Aucune transaction trouvée.</td>
         </tr>
       </ng-template>
     </p-table>

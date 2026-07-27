@@ -106,15 +106,33 @@ export class CautionListComponent implements OnInit {
 
   // ── Reactive filter form ──────────────────────────────────────────────────
   filterForm: FormGroup = this.fb.group({
-    numeroCaution: [null],
-    organisme:     [null],
-    montant:       [null],
-    dateDePrise:   [null],
-    actif:         [null],
-    banque:        [null],
-    nature:        [null],
-    marcheId:      [null],
+    numeroCaution:         [null],
+    organisme:             [null],
+    montant:               [null],
+    actif:                 [null],
+    banque:                [null],
+    nature:                [null],
+    marcheId:              [null],
+    dateDePriseDebut:      [null],
+    dateDePriseFin:        [null],
+    dateDeMainLeveeDebut:  [null],
+    dateDeMainLeveeFin:    [null],
   });
+
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut). */
+  showDatePanel = false;
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.filterForm.value;
+    let count = 0;
+    if (v.dateDePriseDebut || v.dateDePriseFin) count++;
+    if (v.dateDeMainLeveeDebut || v.dateDeMainLeveeFin) count++;
+    return count;
+  }
 
   // ── Static options ────────────────────────────────────────────────────────
   banques:      any[] = [];
@@ -287,14 +305,17 @@ export class CautionListComponent implements OnInit {
   private buildFilterCriteres(): CautionSearchDto {
     const formVal = this.filterForm.value;
     return {
-      numeroCaution: formVal.numeroCaution  || undefined,
-      organisme:     formVal.organisme      || undefined,
-      montant:       formVal.montant        || undefined,
-      dateDePrise:   formVal.dateDePrise    ? toLocalDateString(formVal.dateDePrise) : undefined,
-      banqueId:      formVal.banque?.id,
-      natureId:      formVal.nature?.id,
-      marcheId:      formVal.marcheId       || undefined,
-      actif:         formVal.actif !== null ? formVal.actif : undefined,
+      numeroCaution:         formVal.numeroCaution         || undefined,
+      organisme:             formVal.organisme             || undefined,
+      montant:               formVal.montant               || undefined,
+      dateDePriseDebut:      formVal.dateDePriseDebut       ? toLocalDateString(formVal.dateDePriseDebut) : undefined,
+      dateDePriseFin:        formVal.dateDePriseFin         ? toLocalDateString(formVal.dateDePriseFin) : undefined,
+      dateDeMainLeveeDebut:  formVal.dateDeMainLeveeDebut   ? toLocalDateString(formVal.dateDeMainLeveeDebut) : undefined,
+      dateDeMainLeveeFin:    formVal.dateDeMainLeveeFin     ? toLocalDateString(formVal.dateDeMainLeveeFin) : undefined,
+      banqueId:              formVal.banque?.id,
+      natureId:              formVal.nature?.id,
+      marcheId:              formVal.marcheId              || undefined,
+      actif:                 formVal.actif !== null ? formVal.actif : undefined,
     };
   }
 

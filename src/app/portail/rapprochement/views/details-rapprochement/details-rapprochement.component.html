@@ -210,25 +210,13 @@
               class="w-12rem"
             ></p-multiSelect>
 
-            <!-- Date min -->
-            <p-calendar
-              formControlName="dateOperationDebut"
-              placeholder="Date min"
-              dateFormat="dd/mm/yy"
-              appendTo="body"
-              class="w-10rem"
-              [showClear]="true"
-            ></p-calendar>
-
-            <!-- Date max -->
-            <p-calendar
-              formControlName="dateOperationFin"
-              placeholder="Date max"
-              dateFormat="dd/mm/yy"
-              appendTo="body"
-              class="w-10rem"
-              [showClear]="true"
-            ></p-calendar>
+            <!-- Période -->
+            <button type="button" pButton pRipple
+                    [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+                    icon="pi pi-calendar"
+                    [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+                    (click)="toggleDatePanel()">
+            </button>
 
           </div>
 
@@ -242,6 +230,43 @@
 
       </div>
     </form>
+
+    @if (showDatePanel) {
+    <div class="p-3 bg-white border-round shadow-1 mb-3">
+      <form [formGroup]="searchForm" class="grid">
+        <div class="col-6 md:col-2">
+          <label class="block text-xs text-500 mb-1">Émission — du</label>
+          <p-calendar formControlName="dateEmissionDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                      [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+        </div>
+        <div class="col-6 md:col-2">
+          <label class="block text-xs text-500 mb-1">Émission — au</label>
+          <p-calendar formControlName="dateEmissionFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                      [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+        </div>
+        <div class="col-6 md:col-2">
+          <label class="block text-xs text-500 mb-1">Opération — du</label>
+          <p-calendar formControlName="dateOperationDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                      [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+        </div>
+        <div class="col-6 md:col-2">
+          <label class="block text-xs text-500 mb-1">Opération — au</label>
+          <p-calendar formControlName="dateOperationFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                      [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+        </div>
+        <div class="col-6 md:col-2">
+          <label class="block text-xs text-500 mb-1">Valeur — du</label>
+          <p-calendar formControlName="dateValeurDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                      [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+        </div>
+        <div class="col-6 md:col-2">
+          <label class="block text-xs text-500 mb-1">Valeur — au</label>
+          <p-calendar formControlName="dateValeurFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                      [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+        </div>
+      </form>
+    </div>
+    }
     <!-- Section Tableau des Transactions -->
     <div class="pb-8">
       <p-table #dt

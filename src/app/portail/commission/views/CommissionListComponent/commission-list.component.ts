@@ -24,6 +24,7 @@ import {AuthService} from '../../../../auth/services/auth.service';
 import {TagModule} from 'primeng/tag';
 import {ToolbarModule} from 'primeng/toolbar';
 import {InputSwitchModule} from 'primeng/inputswitch';
+import {CalendarModule} from 'primeng/calendar';
 
 @Component({
   selector: 'app-commission-list',
@@ -50,7 +51,8 @@ import {InputSwitchModule} from 'primeng/inputswitch';
     TagModule,
     ToolbarModule,
     InputSwitchModule,
-    FormsModule
+    FormsModule,
+    CalendarModule
   ],
   templateUrl: './commission-list.component.html',
   providers: [MessageService, ConfirmationService]
@@ -94,7 +96,13 @@ export class CommissionListComponent implements OnInit {
       operation: [null],
       status: [null],
       libelle: [null],
-      montant: [null]
+      montant: [null],
+      dateEmissionDebut: [null as Date | null],
+      dateEmissionFin: [null as Date | null],
+      dateOperationDebut: [null as Date | null],
+      dateOperationFin: [null as Date | null],
+      dateValeurDebut: [null as Date | null],
+      dateValeurFin: [null as Date | null],
     });
 
     this.loadOperationOptions();
@@ -103,6 +111,22 @@ export class CommissionListComponent implements OnInit {
 
   get searchCriteria(): CommissionSearchDto {
     return  this.filterForm.value as CommissionSearchDto;
+  }
+
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut). */
+  showDatePanel = false;
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.filterForm.value;
+    let count = 0;
+    if (v.dateEmissionDebut || v.dateEmissionFin) count++;
+    if (v.dateOperationDebut || v.dateOperationFin) count++;
+    if (v.dateValeurDebut || v.dateValeurFin) count++;
+    return count;
   }
 
   loadCommissions(event: TableLazyLoadEvent): void {

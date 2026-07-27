@@ -10,4 +10,10 @@ export interface ImpayeeSearchDto {
   montant?: number;
   status?: Status;
   type?:Type;
+  dateEmissionDebut?: Date;
+  dateEmissionFin?: Date;
+  dateOperationDebut?: Date;
+  dateOperationFin?: Date;
+  dateValeurDebut?: Date;
+  dateValeurFin?: Date;
 }

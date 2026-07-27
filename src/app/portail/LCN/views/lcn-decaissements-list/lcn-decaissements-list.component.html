@@ -150,12 +150,13 @@
       <ng-template pTemplate="header">
         <tr>
           <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
-          <th pSortableColumn="numero">N° LCN <p-sortIcon field="numero"></p-sortIcon></th>
           <th pSortableColumn="dateEmission">Date d'Émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
           <th pSortableColumn="dateEcheance">Date d'Échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
           <th pSortableColumn="beneficiaire">Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon></th>
           <th pSortableColumn="nomBanque">Banque <p-sortIcon field="nomBanque"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
+          <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
+          <th pSortableColumn="observation">Observation <p-sortIcon field="observation"></p-sortIcon></th>
           <th style="width: 8rem;">Statut</th>
           @if (isAdmin) {
             <th style="width: 8rem;">Action</th>
@@ -166,12 +167,13 @@
       <ng-template pTemplate="body" let-lcn>
         <tr>
           <td>{{ lcn.id }}</td>
-          <td>{{ lcn.numero }}</td>
           <td>{{ lcn.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>{{ lcn.dateEcheance ? (lcn.dateEcheance | date:'dd/MM/yyyy') : 'N/A' }}</td>
           <td>{{ lcn.beneficiaire }}</td>
           <td>{{ lcn.banqueName }}</td>
           <td>{{ lcn.montant | number:'1.2-2' }}</td>
+          <td>{{ lcn.libelle }}</td>
+          <td>{{ lcn.observation }}</td>
           <td>
             <p-tag [value]="getStatutLabel(lcn.statut)"
                    [severity]="getStatutSeverity(lcn.statut)">
@@ -195,10 +197,10 @@
       </ng-template>
 
       <ng-template pTemplate="emptyMessage">
-        <tr><td colspan="9">Aucun LCN trouvé.</td></tr>
+        <tr><td colspan="10">Aucun LCN trouvé.</td></tr>
       </ng-template>
       <ng-template pTemplate="loadingbody">
-        <tr><td colspan="9">Chargement des LCNs. Veuillez patienter...</td></tr>
+        <tr><td colspan="10">Chargement des LCNs. Veuillez patienter...</td></tr>
       </ng-template>
 
     </p-table>

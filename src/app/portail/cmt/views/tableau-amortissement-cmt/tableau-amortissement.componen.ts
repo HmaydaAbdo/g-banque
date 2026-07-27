@@ -74,7 +74,6 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
 
   searchForm!: FormGroup;
   statutOptions: { label: string, value: StatutEcheanceCMT }[] = [];
-  yearOptions: { label: string, value: number }[] = [];
 
   showEditDialog = false;
   editingEcheanceId: number | null = null;
@@ -131,8 +130,12 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
   initSearchForm(): void {
     this.searchForm = this.fb.group({
       numeroEcheance: [null],
-      month: [null],
-      year: [null],
+      dateEcheanceDebut: [null as Date | null],
+      dateEcheanceFin: [null as Date | null],
+      dateOperationDebut: [null as Date | null],
+      dateOperationFin: [null as Date | null],
+      dateValeurDebut: [null as Date | null],
+      dateValeurFin: [null as Date | null],
       statutPaiement: [null]
     });
 
@@ -151,11 +154,22 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
       { label: 'Payé', value: StatutEcheanceCMT.PAYE },
       { label: 'Prévu', value: StatutEcheanceCMT.PREVU }
     ];
+  }
 
-    const currentYear = new Date().getFullYear();
-    for (let i = currentYear - 5; i <= currentYear + 10; i++) {
-      this.yearOptions.push({ label: i.toString(), value: i });
-    }
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut). */
+  showDatePanel = false;
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.searchForm.value;
+    let count = 0;
+    if (v.dateEcheanceDebut || v.dateEcheanceFin) count++;
+    if (v.dateOperationDebut || v.dateOperationFin) count++;
+    if (v.dateValeurDebut || v.dateValeurFin) count++;
+    return count;
   }
 
   loadEcheances(event: TableLazyLoadEvent): void {
@@ -175,8 +189,12 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
 
     const searchCriteria: EcheanceCMTSearchDto = {
       numeroEcheance: this.searchForm.get('numeroEcheance')?.value,
-      month: this.searchForm.get('month')?.value,
-      year: this.searchForm.get('year')?.value,
+      dateEcheanceDebut: this.searchForm.get('dateEcheanceDebut')?.value ?? undefined,
+      dateEcheanceFin: this.searchForm.get('dateEcheanceFin')?.value ?? undefined,
+      dateOperationDebut: this.searchForm.get('dateOperationDebut')?.value ?? undefined,
+      dateOperationFin: this.searchForm.get('dateOperationFin')?.value ?? undefined,
+      dateValeurDebut: this.searchForm.get('dateValeurDebut')?.value ?? undefined,
+      dateValeurFin: this.searchForm.get('dateValeurFin')?.value ?? undefined,
       statutPaiement: this.searchForm.get('statutPaiement')?.value,
     };
 
@@ -209,8 +227,12 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
   clearSearch(): void {
     this.searchForm.reset({
       numeroEcheance: null,
-      month: null,
-      year: null,
+      dateEcheanceDebut: null,
+      dateEcheanceFin: null,
+      dateOperationDebut: null,
+      dateOperationFin: null,
+      dateValeurDebut: null,
+      dateValeurFin: null,
       statutPaiement: null
     });
     if (this.dt) {
@@ -227,8 +249,12 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
 
     const searchCriteria: EcheanceCMTSearchDto = {
       numeroEcheance: this.searchForm.get('numeroEcheance')?.value,
-      month: this.searchForm.get('month')?.value,
-      year: this.searchForm.get('year')?.value,
+      dateEcheanceDebut: this.searchForm.get('dateEcheanceDebut')?.value ?? undefined,
+      dateEcheanceFin: this.searchForm.get('dateEcheanceFin')?.value ?? undefined,
+      dateOperationDebut: this.searchForm.get('dateOperationDebut')?.value ?? undefined,
+      dateOperationFin: this.searchForm.get('dateOperationFin')?.value ?? undefined,
+      dateValeurDebut: this.searchForm.get('dateValeurDebut')?.value ?? undefined,
+      dateValeurFin: this.searchForm.get('dateValeurFin')?.value ?? undefined,
       statutPaiement: this.searchForm.get('statutPaiement')?.value,
     };
 

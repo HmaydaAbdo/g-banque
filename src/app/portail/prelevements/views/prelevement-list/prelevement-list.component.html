@@ -96,6 +96,8 @@
                {field: 'banqueNom', header: 'Banque', sortable: true},
                {field: 'montant', header: 'Montant', sortable: true},
                {field: 'dateEmission', header: 'Date d\'émission', sortable: true},
+               {field: 'dateOperation', header: 'Date d\'opération', sortable: true},
+               {field: 'dateValeur', header: 'Date de valeur', sortable: true},
                {field: 'status', header: 'Statut', sortable: true}
              ]"
              styleClass="p-datatable-gridlines text-xs"
@@ -122,6 +124,8 @@
           <td>{{ prelevement.banqueNom }}</td>
           <td>{{ prelevement.montant | number:'1.2-2' }} MAD</td>
           <td>{{ prelevement.dateEmission | date:'dd/MM/yyyy' }}</td>
+          <td>{{ prelevement.dateOperation ? (prelevement.dateOperation | date:'dd/MM/yyyy') : 'N/A' }}</td>
+          <td>{{ prelevement.dateValeur ? (prelevement.dateValeur | date:'dd/MM/yyyy') : 'N/A' }}</td>
           <td>
             <p-tag
               [value]="prelevement.status"
@@ -151,13 +155,13 @@
 
       <ng-template pTemplate="emptyMessage">
         <tr>
-          <td [attr.colspan]="8">Aucun prélèvement trouvé.</td>
+          <td [attr.colspan]="10">Aucun prélèvement trouvé.</td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td [attr.colspan]="8">Chargement en cours...</td>
+          <td [attr.colspan]="10">Chargement en cours...</td>
         </tr>
       </ng-template>
     </p-table>

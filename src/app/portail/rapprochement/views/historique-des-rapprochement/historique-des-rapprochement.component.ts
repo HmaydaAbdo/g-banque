@@ -200,6 +200,19 @@ export class HistoriqueDesRapprochementComponent implements OnInit {
     }
   }
 
+  getStatutSeverity(statut: StatutRapprochement): 'info' | 'warning' | 'success' {
+    switch (statut) {
+      case StatutRapprochement.EN_COURS:
+        return 'info';
+      case StatutRapprochement.CLOTURE_PROVISOIRE:
+        return 'warning';
+      case StatutRapprochement.CLOTURE_DEFINITIVE:
+        return 'success';
+      default:
+        return 'info';
+    }
+  }
+
   /**
    * Navigue vers la page de détails d'un rapprochement (où les transactions sont paginées)
    */

@@ -7,6 +7,7 @@ import { RestitutionResponseDto } from '../dtos/RestitutionResponseDto';
 import { RestitutionSearchDto } from '../dtos/RestitutionSearchDto';
 import { EncoursRestitution } from '../dtos/EncoursRestitution';
 import { PageResponse } from '../../global/types/PageResponse';
+import { toLocalDateString } from '../../global/types/date.utils';
 
 @Injectable({
   providedIn: 'root'
@@ -54,9 +55,26 @@ export class RestitutionService {
 
     return this.http.post<PageResponse<RestitutionResponseDto>>(
       `${this.apiUrl}/search`,
-      searchDto,
+      this.toSearchPayload(searchDto),
       { params }
     );
+  }
+
+  /**
+   * Convertit les champs {@code Date} de {@link RestitutionSearchDto} en chaînes `yyyy-MM-dd`
+   * avant envoi en corps JSON — un objet {@code Date} sérialisé nativement produit un datetime
+   * ISO complet que {@code LocalDate} côté backend ne sait pas parser.
+   */
+  private toSearchPayload(searchDto: RestitutionSearchDto): any {
+    return {
+      ...searchDto,
+      dateEmissionDebut: toLocalDateString(searchDto.dateEmissionDebut),
+      dateEmissionFin: toLocalDateString(searchDto.dateEmissionFin),
+      dateOperationDebut: toLocalDateString(searchDto.dateOperationDebut),
+      dateOperationFin: toLocalDateString(searchDto.dateOperationFin),
+      dateValeurDebut: toLocalDateString(searchDto.dateValeurDebut),
+      dateValeurFin: toLocalDateString(searchDto.dateValeurFin),
+    };
   }
 
   /**
@@ -128,8 +146,32 @@ export class RestitutionService {
     if (searchDto.libelle)          params = params.set('libelle', searchDto.libelle);
     if (searchDto.montant != null)  params = params.set('montant', searchDto.montant.toString());
     if (searchDto.status)           params = params.set('status', searchDto.status);
+    params = this.appendDateRangeParams(params, searchDto);
 
     return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
+  }
+
+  /** Ajoute les 3 plages de dates (émission, opération, valeur) si renseignées. */
+  private appendDateRangeParams(params: HttpParams, searchDto: RestitutionSearchDto): HttpParams {
+    if (searchDto.dateEmissionDebut) {
+      params = params.set('dateEmissionDebut', toLocalDateString(searchDto.dateEmissionDebut)!);
+    }
+    if (searchDto.dateEmissionFin) {
+      params = params.set('dateEmissionFin', toLocalDateString(searchDto.dateEmissionFin)!);
+    }
+    if (searchDto.dateOperationDebut) {
+      params = params.set('dateOperationDebut', toLocalDateString(searchDto.dateOperationDebut)!);
+    }
+    if (searchDto.dateOperationFin) {
+      params = params.set('dateOperationFin', toLocalDateString(searchDto.dateOperationFin)!);
+    }
+    if (searchDto.dateValeurDebut) {
+      params = params.set('dateValeurDebut', toLocalDateString(searchDto.dateValeurDebut)!);
+    }
+    if (searchDto.dateValeurFin) {
+      params = params.set('dateValeurFin', toLocalDateString(searchDto.dateValeurFin)!);
+    }
+    return params;
   }
 
   /**

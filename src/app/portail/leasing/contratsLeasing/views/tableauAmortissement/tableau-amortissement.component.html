@@ -51,12 +51,55 @@
         <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
         <form [formGroup]="searchForm" class="flex flex-row justify-content-between align-items-center gap-2 w-full">
           <p-inputNumber formControlName="numeroEcheance" placeholder="N° Échéance" mode="decimal" [useGrouping]="false" styleClass="w-full" class="flex-1"></p-inputNumber>
-          <p-inputNumber formControlName="month" placeholder="Mois (1-12)" mode="decimal" [useGrouping]="false" [min]="1" [max]="12" styleClass="w-full" class="flex-1"></p-inputNumber>
-          <p-inputNumber formControlName="year" placeholder="Année (Ex: 2025)" mode="decimal" [useGrouping]="false" styleClass="w-full" class="flex-1"></p-inputNumber>
           <p-dropdown formControlName="statutPaiement" [options]="statutLeasingOptions" placeholder="Statut Paiement" [showClear]="true" appendTo="body" styleClass="w-full" class="flex-1"></p-dropdown>
+          <div class="flex-shrink-0">
+            <button pButton pRipple type="button"
+                    [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+                    icon="pi pi-calendar"
+                    [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+                    (click)="toggleDatePanel()">
+            </button>
+          </div>
           <p-button icon="pi pi-times" severity="secondary" (onClick)="clearSearch()"></p-button>
         </form>
       </div>
+
+      @if (showDatePanel) {
+      <div class="p-3 bg-white border-round shadow-1">
+        <form [formGroup]="searchForm" class="grid">
+          <div class="col-6 md:col-2">
+            <label class="block text-xs text-500 mb-1">Date échéance — du</label>
+            <p-calendar formControlName="dateEcheanceDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                        [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+          </div>
+          <div class="col-6 md:col-2">
+            <label class="block text-xs text-500 mb-1">Date échéance — au</label>
+            <p-calendar formControlName="dateEcheanceFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                        [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+          </div>
+          <div class="col-6 md:col-2">
+            <label class="block text-xs text-500 mb-1">Date opération — du</label>
+            <p-calendar formControlName="dateOperationDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                        [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+          </div>
+          <div class="col-6 md:col-2">
+            <label class="block text-xs text-500 mb-1">Date opération — au</label>
+            <p-calendar formControlName="dateOperationFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                        [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+          </div>
+          <div class="col-6 md:col-2">
+            <label class="block text-xs text-500 mb-1">Date valeur — du</label>
+            <p-calendar formControlName="dateValeurDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                        [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+          </div>
+          <div class="col-6 md:col-2">
+            <label class="block text-xs text-500 mb-1">Date valeur — au</label>
+            <p-calendar formControlName="dateValeurFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                        [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+          </div>
+        </form>
+      </div>
+      }
 
       <div class="mb-8">
         <p-table

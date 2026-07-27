@@ -15,6 +15,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ToolbarModule } from 'primeng/toolbar';
 import { TagModule } from 'primeng/tag';
 import { InputSwitchModule } from 'primeng/inputswitch';
+import { CalendarModule } from 'primeng/calendar';
 import {ImpayeeResponseDto} from "../../dtos/ImpayeeResponseDto";
 import {ImpayeeSearchDto} from "../../dtos/ImpayeeSearchDto";
 import {TransactionSource, TransactionSourceLabels} from "../../../transactions/dtos/TransactionSource";
@@ -51,7 +52,8 @@ import {Type} from "../../../Virements/Type";
     InputTextModule,
     ToolbarModule,
     TagModule,
-    InputSwitchModule
+    InputSwitchModule,
+    CalendarModule
   ],
   templateUrl: './Impayee-list.component.html',
   providers: [MessageService, ConfirmationService]
@@ -73,7 +75,29 @@ export class ImpayeeListComponent implements OnInit {
     type: [null as Type | null],
     status: [null as Status | null],
     libelle: [null as string | null],
+    dateEmissionDebut: [null as Date | null],
+    dateEmissionFin: [null as Date | null],
+    dateOperationDebut: [null as Date | null],
+    dateOperationFin: [null as Date | null],
+    dateValeurDebut: [null as Date | null],
+    dateValeurFin: [null as Date | null],
   });
+
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut). */
+  showDatePanel = false;
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.filterForm.value;
+    let count = 0;
+    if (v.dateEmissionDebut || v.dateEmissionFin) count++;
+    if (v.dateOperationDebut || v.dateOperationFin) count++;
+    if (v.dateValeurDebut || v.dateValeurFin) count++;
+    return count;
+  }
 
   // Dropdown data sources
   banques: BanqueResponse[] = [];
@@ -113,12 +137,18 @@ export class ImpayeeListComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort = `${sortField},${sortOrder}`;
 
-    const { banque, motif, type, status, libelle } = this.filterForm.getRawValue();
+    const { banque, motif, type, status, libelle, dateEmissionDebut, dateEmissionFin, dateOperationDebut, dateOperationFin, dateValeurDebut, dateValeurFin } = this.filterForm.getRawValue();
     this.searchCriteria.banqueId = banque?.id;
     this.searchCriteria.motif = motif ?? undefined;
     this.searchCriteria.type = type ?? undefined;
     this.searchCriteria.status = status ?? undefined;
     this.searchCriteria.libelle = libelle ? libelle : undefined;
+    this.searchCriteria.dateEmissionDebut = dateEmissionDebut ?? undefined;
+    this.searchCriteria.dateEmissionFin = dateEmissionFin ?? undefined;
+    this.searchCriteria.dateOperationDebut = dateOperationDebut ?? undefined;
+    this.searchCriteria.dateOperationFin = dateOperationFin ?? undefined;
+    this.searchCriteria.dateValeurDebut = dateValeurDebut ?? undefined;
+    this.searchCriteria.dateValeurFin = dateValeurFin ?? undefined;
 
     this.impayeeService.searchImpayees(this.searchCriteria, page, size, sort)
       .subscribe({
@@ -186,12 +216,18 @@ export class ImpayeeListComponent implements OnInit {
    */
   exportPdf(): void {
     this.exporting = true;
-    const { banque, motif, type, status, libelle } = this.filterForm.getRawValue();
+    const { banque, motif, type, status, libelle, dateEmissionDebut, dateEmissionFin, dateOperationDebut, dateOperationFin, dateValeurDebut, dateValeurFin } = this.filterForm.getRawValue();
     this.searchCriteria.banqueId = banque?.id;
     this.searchCriteria.motif = motif ?? undefined;
     this.searchCriteria.type = type ?? undefined;
     this.searchCriteria.status = status ?? undefined;
     this.searchCriteria.libelle = libelle ? libelle : undefined;
+    this.searchCriteria.dateEmissionDebut = dateEmissionDebut ?? undefined;
+    this.searchCriteria.dateEmissionFin = dateEmissionFin ?? undefined;
+    this.searchCriteria.dateOperationDebut = dateOperationDebut ?? undefined;
+    this.searchCriteria.dateOperationFin = dateOperationFin ?? undefined;
+    this.searchCriteria.dateValeurDebut = dateValeurDebut ?? undefined;
+    this.searchCriteria.dateValeurFin = dateValeurFin ?? undefined;
 
     this.impayeeService.exportPdf(this.searchCriteria).subscribe({
       next: blob => {

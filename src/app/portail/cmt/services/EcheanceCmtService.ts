@@ -9,6 +9,7 @@ import {EcheanceCMTSearchDto} from "../dtos/EcheanceCMTSearchDto";
 import {EncoursCMTRequestDTO} from "../dtos/EncoursCMTRequestDTO";
 import {EncoursCMTResponseDTO} from "../dtos/EncoursCMTResponseDTO";
 import {EcheanceCMTUpdateRequest} from "../dtos/EcheanceCMTUpdateRequest";
+import {toLocalDateString} from "../../global/types/date.utils";
 
 
 @Injectable({
@@ -29,23 +30,7 @@ export class EcheanceCmtService {
     searchDto: EcheanceCMTSearchDto,
     pageable: { page?: number, size?: number, sort?: string } = {}
   ): Observable<TableauAmortissementCMTResponseDto> {
-    let params = new HttpParams();
-
-    if (searchDto.statutPaiement) {
-      params = params.set('statutPaiement', searchDto.statutPaiement);
-    }
-
-    if (searchDto.year) {
-      params = params.set('year', searchDto.year.toString());
-    }
-
-    if (searchDto.month) {
-      params = params.set('month', searchDto.month.toString());
-    }
-
-    if (searchDto.numeroEcheance){
-      params=params.set('numeroEcheance', searchDto.numeroEcheance.toString());
-    }
+    let params = this.buildFilterParams(searchDto);
 
     params = params.set('page', pageable.page?.toString() || '0');
     params = params.set('size', pageable.size?.toString() || '10');
@@ -59,22 +44,42 @@ export class EcheanceCmtService {
    * avec les mêmes critères que {@link getTableauAmortissementForCredit}.
    */
   exportTableauAmortissementPdf(creditId: number, searchDto: EcheanceCMTSearchDto): Observable<Blob> {
+    const params = this.buildFilterParams(searchDto);
+    return this.http.get(`${this.apiUrl}/tableau-amortissement/${creditId}/export/pdf`, { params, responseType: 'blob' });
+  }
+
+  /**
+   * Construit les paramètres de filtre (sans pagination) à partir du DTO de recherche.
+   */
+  private buildFilterParams(searchDto: EcheanceCMTSearchDto): HttpParams {
     let params = new HttpParams();
 
     if (searchDto.statutPaiement) {
       params = params.set('statutPaiement', searchDto.statutPaiement);
     }
-    if (searchDto.year) {
-      params = params.set('year', searchDto.year.toString());
-    }
-    if (searchDto.month) {
-      params = params.set('month', searchDto.month.toString());
-    }
     if (searchDto.numeroEcheance) {
       params = params.set('numeroEcheance', searchDto.numeroEcheance.toString());
     }
+    if (searchDto.dateEcheanceDebut) {
+      params = params.set('dateEcheanceDebut', toLocalDateString(searchDto.dateEcheanceDebut)!);
+    }
+    if (searchDto.dateEcheanceFin) {
+      params = params.set('dateEcheanceFin', toLocalDateString(searchDto.dateEcheanceFin)!);
+    }
+    if (searchDto.dateOperationDebut) {
+      params = params.set('dateOperationDebut', toLocalDateString(searchDto.dateOperationDebut)!);
+    }
+    if (searchDto.dateOperationFin) {
+      params = params.set('dateOperationFin', toLocalDateString(searchDto.dateOperationFin)!);
+    }
+    if (searchDto.dateValeurDebut) {
+      params = params.set('dateValeurDebut', toLocalDateString(searchDto.dateValeurDebut)!);
+    }
+    if (searchDto.dateValeurFin) {
+      params = params.set('dateValeurFin', toLocalDateString(searchDto.dateValeurFin)!);
+    }
 
-    return this.http.get(`${this.apiUrl}/tableau-amortissement/${creditId}/export/pdf`, { params, responseType: 'blob' });
+    return params;
   }
 
   /**

@@ -151,11 +151,15 @@
         <tr class="white-space-nowrap">
           <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
           <th pSortableColumn="dateEmission">Date d'Émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
+          <th pSortableColumn="dateOperation">Date d'Opération <p-sortIcon field="dateOperation"></p-sortIcon></th>
+          <th pSortableColumn="dateValeur">Date de Valeur <p-sortIcon field="dateValeur"></p-sortIcon></th>
           <th pSortableColumn="beneficiaire">Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon></th>
           <th pSortableColumn="banqueBeneficiaire">Banque Bénéficiaire <p-sortIcon field="banqueBeneficiaire"></p-sortIcon></th>
           <th pSortableColumn="nomBanqueEmettrice">Banque Émettrice <p-sortIcon field="nomBanqueEmettrice"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
           <th>Type</th>
+          <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
+          <th pSortableColumn="observation">Observation <p-sortIcon field="observation"></p-sortIcon></th>
           <th>Statut</th>
           @if (isAdmin) {
             <th>Action</th>
@@ -167,11 +171,15 @@
         <tr>
           <td>{{ virement.id }}</td>
           <td>{{ virement.dateEmission | date:'dd/MM/yyyy' }}</td>
+          <td>{{ virement.dateOperation ? (virement.dateOperation | date:'dd/MM/yyyy') : 'N/A' }}</td>
+          <td>{{ virement.dateValeur ? (virement.dateValeur | date:'dd/MM/yyyy') : 'N/A' }}</td>
           <td>{{ virement.beneficiaire }}</td>
           <td>{{ virement.banqueBeneficiaire ? virement.banqueBeneficiaire : '--' }}</td>
           <td>{{ virement.banqueEmettriceNom ? virement.banqueEmettriceNom : '--' }}</td>
           <td>{{ virement.montant | number:'1.2-2' }}</td>
           <td>{{ virement.type }}</td>
+          <td>{{ virement.libelle }}</td>
+          <td>{{ virement.observation }}</td>
           <td>
             <p-tag [value]="getStatutLabel(virement.statut)"
                    [severity]="getStatutSeverity(virement.statut)">
@@ -196,10 +204,10 @@
       </ng-template>
 
       <ng-template pTemplate="emptyMessage">
-        <tr><td colspan="9">Aucun virement trouvé.</td></tr>
+        <tr><td colspan="13">Aucun virement trouvé.</td></tr>
       </ng-template>
       <ng-template pTemplate="loadingbody">
-        <tr><td colspan="9">Chargement des virements. Veuillez patienter...</td></tr>
+        <tr><td colspan="13">Chargement des virements. Veuillez patienter...</td></tr>
       </ng-template>
 
     </p-table>

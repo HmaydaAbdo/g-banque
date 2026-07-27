@@ -45,7 +45,6 @@
       (onLazyLoad)="loadLcnLines($event)"
       [columns]="[
         {field: 'id', header: 'ID', sortable: true},
-        {field: 'numero', header: 'Numéro', sortable: true},
         {field: 'dateEmission', header: 'Date Émission', sortable: true},
         {field: 'dateEcheance', header: 'Date Échéance', sortable: true},
         {field: 'emetteur', header: 'Émetteur', sortable: false},
@@ -54,6 +53,8 @@
         {field: 'montant', header: 'Montant', sortable: true},
         {field: 'natureLcn', header: 'Nature', sortable: false},
         {field: 'type', header: 'Type', sortable: true},
+        {field: 'libelle', header: 'Libellé', sortable: true},
+        {field: 'observation', header: 'Observation', sortable: true},
         {field: 'active', header: 'Statut', sortable: true}
       ]"
       styleClass="p-datatable-gridlines p-datatable-striped text-xs"
@@ -79,7 +80,6 @@
         <tr>
 
           <td >{{ lcn.id }}</td>
-          <td> {{lcn.numero}}</td>
           <td >{{ lcn.dateEmission | date: 'dd/MM/yyyy' }}</td>
           <td >{{lcn.dateEcheance | date: 'dd/MM/yyyy'}}</td>
           <td>{{lcn.emetteur}}</td>
@@ -88,13 +88,15 @@
           <td >{{lcn.montant | number}}</td>
           <td > {{lcn.natureLcn | uppercase}}</td>
           <td>{{lcn.type}}</td>
+          <td>{{ lcn.libelle }}</td>
+          <td>{{ lcn.observation }}</td>
           <td >{{( lcn.active ? "prévu": "payé" )| uppercase}}</td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td [attr.colspan]="11" class="text-center p-5">
+          <td [attr.colspan]="12" class="text-center p-5">
             <div class="flex flex-column align-items-center justify-content-center gap-3">
               <i class="pi pi-inbox text-6xl text-400"></i>
               <div>
@@ -110,7 +112,7 @@
 
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td [attr.colspan]="11" class="text-center p-5">
+          <td [attr.colspan]="12" class="text-center p-5">
             <div class="flex flex-column align-items-center justify-content-center gap-3">
               <i class="pi pi-spin pi-spinner text-6xl text-primary"></i>
               <div>

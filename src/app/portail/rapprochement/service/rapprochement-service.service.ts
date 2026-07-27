@@ -143,6 +143,20 @@ export class RapprochementService {
       params = params.set('montant', searchDto.montant.toString());
     }
 
+    if (searchDto.dateEmissionDebut) {
+      params = params.set(
+        'dateEmissionDebut',
+        toLocalDateString(new Date(searchDto.dateEmissionDebut))!
+      );
+    }
+
+    if (searchDto.dateEmissionFin) {
+      params = params.set(
+        'dateEmissionFin',
+        toLocalDateString(new Date(searchDto.dateEmissionFin))!
+      );
+    }
+
     if (searchDto.dateOperationDebut) {
       params = params.set(
         'dateOperationDebut',
@@ -154,6 +168,20 @@ export class RapprochementService {
       params = params.set(
         'dateOperationFin',
         toLocalDateString(new Date(searchDto.dateOperationFin))!
+      );
+    }
+
+    if (searchDto.dateValeurDebut) {
+      params = params.set(
+        'dateValeurDebut',
+        toLocalDateString(new Date(searchDto.dateValeurDebut))!
+      );
+    }
+
+    if (searchDto.dateValeurFin) {
+      params = params.set(
+        'dateValeurFin',
+        toLocalDateString(new Date(searchDto.dateValeurFin))!
       );
     }
     return params;

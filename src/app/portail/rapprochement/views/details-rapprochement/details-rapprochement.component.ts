@@ -78,6 +78,9 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
   searchForm!: FormGroup;
   transactionSourceOptions: any[] = [];
 
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut). */
+  showDatePanel = false;
+
   displayEditDialog: boolean = false;
   editDateForm!: FormGroup;
 
@@ -132,8 +135,12 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
       observation: [''],
       montant: [null],
       transactionSources: [[]],
+      dateEmissionDebut: [null],
+      dateEmissionFin: [null],
       dateOperationDebut: [null],
-      dateOperationFin: [null]
+      dateOperationFin: [null],
+      dateValeurDebut: [null],
+      dateValeurFin: [null]
     });
 
     // Écouter les changements du formulaire avec debounce
@@ -148,6 +155,19 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
 
     // Charger les données initiales
     this.loadRapprochementDetails();
+  }
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.searchForm.value;
+    let count = 0;
+    if (v.dateEmissionDebut || v.dateEmissionFin) count++;
+    if (v.dateOperationDebut || v.dateOperationFin) count++;
+    if (v.dateValeurDebut || v.dateValeurFin) count++;
+    return count;
   }
   initEditDialogForm(): void {
     this.editDateForm = this.fb.group({
@@ -229,8 +249,12 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
       observation: '',
       montant: null,
       transactionSources: [],
+      dateEmissionDebut: null,
+      dateEmissionFin: null,
       dateOperationDebut: null,
-      dateOperationFin: null
+      dateOperationFin: null,
+      dateValeurDebut: null,
+      dateValeurFin: null
     });
 
     if (this.dt) {

@@ -17,6 +17,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
 import { ToolbarModule } from 'primeng/toolbar';
 import { InputSwitchModule } from 'primeng/inputswitch';
+import { CalendarModule } from 'primeng/calendar';
 
 // App imports
 import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
@@ -34,7 +35,7 @@ import { AuthService } from "../../../../auth/services/auth.service";
   imports: [
     CommonModule, FormsModule, ReactiveFormsModule, TableModule, DropdownModule, ButtonModule, RippleModule,
     BreadcrumbModule, ConfirmDialogModule, ToastModule, TooltipModule, RouterModule,
-    DatePipe, DecimalPipe, InputTextModule, TagModule, ToolbarModule, InputSwitchModule
+    DatePipe, DecimalPipe, InputTextModule, TagModule, ToolbarModule, InputSwitchModule, CalendarModule
   ],
   templateUrl: './restitution-list.component.html',
   providers: [MessageService, ConfirmationService]
@@ -53,7 +54,29 @@ export class RestitutionListComponent implements OnInit {
     banque: [null as BanqueResponse | null],
     status: [null as Status | null],
     libelle: [null as string | null],
+    dateEmissionDebut: [null as Date | null],
+    dateEmissionFin: [null as Date | null],
+    dateOperationDebut: [null as Date | null],
+    dateOperationFin: [null as Date | null],
+    dateValeurDebut: [null as Date | null],
+    dateValeurFin: [null as Date | null],
   });
+
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut). */
+  showDatePanel = false;
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.filterForm.value;
+    let count = 0;
+    if (v.dateEmissionDebut || v.dateEmissionFin) count++;
+    if (v.dateOperationDebut || v.dateOperationFin) count++;
+    if (v.dateValeurDebut || v.dateValeurFin) count++;
+    return count;
+  }
 
   banques: BanqueResponse[] = [];
   banquesLoading = false;
@@ -86,10 +109,16 @@ export class RestitutionListComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort = `${sortField},${sortOrder}`;
 
-    const { banque, status, libelle } = this.filterForm.getRawValue();
+    const { banque, status, libelle, dateEmissionDebut, dateEmissionFin, dateOperationDebut, dateOperationFin, dateValeurDebut, dateValeurFin } = this.filterForm.getRawValue();
     this.searchCriteria.banqueId = banque?.id;
     this.searchCriteria.status = status ?? undefined;
     this.searchCriteria.libelle = libelle || undefined;
+    this.searchCriteria.dateEmissionDebut = dateEmissionDebut ?? undefined;
+    this.searchCriteria.dateEmissionFin = dateEmissionFin ?? undefined;
+    this.searchCriteria.dateOperationDebut = dateOperationDebut ?? undefined;
+    this.searchCriteria.dateOperationFin = dateOperationFin ?? undefined;
+    this.searchCriteria.dateValeurDebut = dateValeurDebut ?? undefined;
+    this.searchCriteria.dateValeurFin = dateValeurFin ?? undefined;
 
     this.restitutionService.searchRestitutions(this.searchCriteria, page, size, sort)
       .subscribe({
@@ -135,10 +164,16 @@ export class RestitutionListComponent implements OnInit {
    */
   exportPdf(): void {
     this.exporting = true;
-    const { banque, status, libelle } = this.filterForm.getRawValue();
+    const { banque, status, libelle, dateEmissionDebut, dateEmissionFin, dateOperationDebut, dateOperationFin, dateValeurDebut, dateValeurFin } = this.filterForm.getRawValue();
     this.searchCriteria.banqueId = banque?.id;
     this.searchCriteria.status = status ?? undefined;
     this.searchCriteria.libelle = libelle || undefined;
+    this.searchCriteria.dateEmissionDebut = dateEmissionDebut ?? undefined;
+    this.searchCriteria.dateEmissionFin = dateEmissionFin ?? undefined;
+    this.searchCriteria.dateOperationDebut = dateOperationDebut ?? undefined;
+    this.searchCriteria.dateOperationFin = dateOperationFin ?? undefined;
+    this.searchCriteria.dateValeurDebut = dateValeurDebut ?? undefined;
+    this.searchCriteria.dateValeurFin = dateValeurFin ?? undefined;
 
     this.restitutionService.exportPdf(this.searchCriteria).subscribe({
       next: blob => {
