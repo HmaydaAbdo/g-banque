@@ -127,6 +127,12 @@ export const PORTAIL_ROUTES: Routes = [
   },
 
   {
+    path: 'recap-moyens-paiement',
+    canActivate: [departmentGuard('Finance')],
+    loadChildren: () => import('../../recapMoyensPaiement/recap-moyens-paiement.routes').then(m => m.RECAP_MOYENS_PAIEMENT_ROUTES)
+  },
+
+  {
     path: 'marches',
     canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../Marches/marches.routes').then(m => m.MARCHES_ROUTES)

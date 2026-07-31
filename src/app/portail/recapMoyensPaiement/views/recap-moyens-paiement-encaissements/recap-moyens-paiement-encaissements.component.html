@@ -1,0 +1,194 @@
+<p-toast></p-toast>
+
+<div class="flex flex-column gap-4 py-2 px-2 md:px-4 h-screen w-screen overflow-y-scroll">
+
+  <div class="portail-section flex justify-content-between bg-transparent">
+    <div class="flex justify-content-center align-items-center">
+      <p-breadcrumb [model]="breadcrumbItems" [style]="{'background-color': 'transparent', 'border': 'none'}">
+        <ng-template pTemplate="item" let-item>
+          @if (item.route) {
+            <a [routerLink]="item.route" class="p-menuitem-link">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
+              <span class="text-black-alpha-90 p-2 font-bold text-sm">{{ item.label }}</span>
+            </a>
+          } @else {
+            <a [href]="item.url">
+              <span class="text-color text-sm text-center">{{ item.label }}</span>
+            </a>
+          }
+        </ng-template>
+      </p-breadcrumb>
+    </div>
+    <div class="flex gap-2 align-items-center">
+      <span class="text-sm text-600 font-medium">Total : {{ totalMontant | number:'1.2-2' }} MAD</span>
+      <button pButton pRipple label="Exporter PDF" class="h-fit mt-2" size="small" icon="pi pi-file-pdf"
+              severity="secondary" [loading]="exporting" (click)="exportPdf()">
+      </button>
+    </div>
+  </div>
+
+  <div class="pg-filters">
+    <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+    <form [formGroup]="searchForm" class="flex flex-wrap gap-3 align-items-end">
+
+      <div class="flex flex-column gap-2 flex-1" style="min-width:180px;">
+        <label for="banqueId">Banque</label>
+        <p-dropdown id="banqueId" [options]="banqueOptions" formControlName="banqueId"
+                    optionLabel="label" optionValue="value"
+                    placeholder="Toutes les banques" [showClear]="true" [styleClass]="'w-full'">
+        </p-dropdown>
+      </div>
+
+      <div class="flex flex-column gap-2 flex-1" style="min-width:220px;">
+        <label for="sources">Moyen de paiement</label>
+        <p-multiSelect id="sources" [options]="sourceOptions" formControlName="sources"
+                       optionLabel="label" optionValue="value"
+                       placeholder="Tous les moyens de paiement" [styleClass]="'w-full'">
+        </p-multiSelect>
+      </div>
+
+      <div class="flex flex-column gap-2 flex-1" style="min-width:180px;">
+        <label for="statuts">Statut</label>
+        <p-multiSelect id="statuts" [options]="statutOptions" formControlName="statuts"
+                       optionLabel="label" optionValue="value"
+                       placeholder="Tous les statuts" [styleClass]="'w-full'">
+        </p-multiSelect>
+      </div>
+
+      <div class="flex flex-column gap-2 flex-1" style="min-width:150px;">
+        <label for="numero">Numéro</label>
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-search"></i>
+          <input id="numero" pInputText type="text" formControlName="numero"
+                 placeholder="Rechercher par numéro..." class="w-full" />
+        </span>
+      </div>
+
+      <div class="flex flex-column gap-2 flex-1" style="min-width:150px;">
+        <label for="libelle">Libellé</label>
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-search"></i>
+          <input id="libelle" pInputText type="text" formControlName="libelle"
+                 placeholder="Rechercher par libellé..." class="w-full" />
+        </span>
+      </div>
+
+      <div class="flex flex-column gap-2" style="min-width:110px;">
+        <label for="montantFrom">Montant — de</label>
+        <input id="montantFrom" pInputText type="number" formControlName="montantFrom"
+               placeholder="Min" class="w-full" />
+      </div>
+
+      <div class="flex flex-column gap-2" style="min-width:110px;">
+        <label for="montantTo">Montant — à</label>
+        <input id="montantTo" pInputText type="number" formControlName="montantTo"
+               placeholder="Max" class="w-full" />
+      </div>
+
+      <div class="flex-shrink-0">
+        <button pButton pRipple type="button"
+                [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+                icon="pi pi-calendar"
+                [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+                (click)="toggleDatePanel()">
+        </button>
+      </div>
+
+      <div class="flex-shrink-0">
+        <p-button label="Effacer" icon="pi pi-times" severity="secondary"
+                  (onClick)="clearSearch()" [style]="{'white-space':'nowrap'}">
+        </p-button>
+      </div>
+
+    </form>
+  </div>
+
+  @if (showDatePanel) {
+    <div class="p-3 bg-white border-round shadow-1">
+      <form [formGroup]="searchForm" class="grid">
+        <div class="col-6 md:col-3">
+          <label class="block text-xs text-500 mb-1">Opération — du</label>
+          <p-calendar formControlName="dateOperationFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                      [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+        </div>
+        <div class="col-6 md:col-3">
+          <label class="block text-xs text-500 mb-1">Opération — au</label>
+          <p-calendar formControlName="dateOperationTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                      [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+        </div>
+        <div class="col-6 md:col-3">
+          <label class="block text-xs text-500 mb-1">Valeur — du</label>
+          <p-calendar formControlName="dateValeurFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                      [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+        </div>
+        <div class="col-6 md:col-3">
+          <label class="block text-xs text-500 mb-1">Valeur — au</label>
+          <p-calendar formControlName="dateValeurTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                      [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+        </div>
+      </form>
+    </div>
+  }
+
+  <div class="pb-8">
+    <p-table #dt
+             [value]="items"
+             [paginator]="true"
+             [rows]="10"
+             [totalRecords]="totalRecords"
+             [loading]="loading"
+             [rowsPerPageOptions]="[3,5,10,25,50]"
+             [lazy]="true"
+             (onLazyLoad)="loadItems($event)"
+             responsiveLayout="scroll"
+             [scrollable]="true"
+             columnResizeMode="expand"
+             [rowHover]="true"
+             [sortField]="'dateValeur'"
+             [sortOrder]="-1"
+             currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} encaissements"
+             [showCurrentPageReport]="true"
+             styleClass="p-datatable-gridlines text-xs">
+
+      <ng-template pTemplate="header">
+        <tr class="white-space-nowrap">
+          <th pSortableColumn="source">Moyen de paiement <p-sortIcon field="source"></p-sortIcon></th>
+          <th pSortableColumn="banqueNom">Banque <p-sortIcon field="banqueNom"></p-sortIcon></th>
+          <th pSortableColumn="numero">Numéro <p-sortIcon field="numero"></p-sortIcon></th>
+          <th pSortableColumn="emetteur">Émetteur <p-sortIcon field="emetteur"></p-sortIcon></th>
+          <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
+          <th pSortableColumn="dateOperation">Date d'Opération <p-sortIcon field="dateOperation"></p-sortIcon></th>
+          <th pSortableColumn="dateValeur">Date de Valeur <p-sortIcon field="dateValeur"></p-sortIcon></th>
+          <th pSortableColumn="dateEcheance">Date d'Échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
+          <th>Statut</th>
+          <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td><app-source-badge [source]="item.source"></app-source-badge></td>
+          <td>{{ item.banqueNom ?? '—' }}</td>
+          <td>{{ item.numero ?? '—' }}</td>
+          <td>{{ item.emetteur ?? '—' }}</td>
+          <td>{{ item.montant | number:'1.2-2' }}</td>
+          <td>{{ item.dateOperation ? (item.dateOperation | date:'dd/MM/yyyy') : '—' }}</td>
+          <td>{{ item.dateValeur ? (item.dateValeur | date:'dd/MM/yyyy') : '—' }}</td>
+          <td>{{ item.dateEcheance ? (item.dateEcheance | date:'dd/MM/yyyy') : '—' }}</td>
+          <td>
+            <p-tag [value]="getStatutLabel(item.statut)" [severity]="getStatutSeverity(item.statut)"></p-tag>
+          </td>
+          <td>{{ item.libelle }}</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptyMessage">
+        <tr><td colspan="10">Aucun encaissement trouvé.</td></tr>
+      </ng-template>
+      <ng-template pTemplate="loadingbody">
+        <tr><td colspan="10">Chargement des encaissements. Veuillez patienter...</td></tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+</div>

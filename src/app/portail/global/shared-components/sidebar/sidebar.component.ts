@@ -145,7 +145,9 @@ export class SidebarComponent implements OnInit {
           requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'],
         },
 
-        { label: 'Mises à disposition (Décaissements)', icon: 'pi pi-arrow-right-arrow-left', routerLink: '/portail/Mise-a-disposition/decaissement', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] }
+        { label: 'Mises à disposition (Décaissements)', icon: 'pi pi-arrow-right-arrow-left', routerLink: '/portail/Mise-a-disposition/decaissement', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+        { label: 'Recap Encaissement', icon: 'pi pi-plus-circle', routerLink: '/portail/recap-moyens-paiement/encaissements', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+        { label: 'Recap Décaissement', icon: 'pi pi-minus-circle', routerLink: '/portail/recap-moyens-paiement/decaissements', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
       ]
     },
     {
