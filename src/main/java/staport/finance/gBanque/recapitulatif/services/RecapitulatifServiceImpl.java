@@ -67,8 +67,6 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
     private final IBanqueService banqueService;
     private final StaportPdfReportService staportPdfReportService;
 
-    private final LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
     public RecapitulatifServiceImpl(
             RecapitulatifEncoursRepository encoursRepository,
             RecapitulatifEncoursMapper mapper,
@@ -78,6 +76,18 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
         this.mapper = mapper;
         this.banqueService = banqueService;
         this.staportPdfReportService = staportPdfReportService;
+    }
+
+    /**
+     * Fin du mois en cours, recalculée à chaque appel — ce service est un singleton Spring,
+     * donc un champ figé calculé une seule fois à la construction du bean resterait bloqué sur
+     * la fin du mois au démarrage du backend et exclurait les échéances du mois courant tant
+     * que le serveur ne redémarre pas (bug identifié le 28/07/2026 : cartes Encours +/- correctes
+     * — recalculées à la demande dans RecapGeneralDetailleServiceImpl — mais détail
+     * Encaissement/Décaissement à 0).
+     */
+    private LocalDate endOfMonth() {
+        return LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
     }
 
     @Override
@@ -96,7 +106,7 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
             Pageable pageable, DecaissementSearchDto searchDto, Long banqueId, Type sens) {
 
         Specification<RecapitulatifEncoursView> spec =
-                RecapitulatifEncoursSpecification.searchByCriteria(searchDto, banqueId, sens, endOfMonth);
+                RecapitulatifEncoursSpecification.searchByCriteria(searchDto, banqueId, sens, endOfMonth());
 
         Page<RecaputilatifItem> page = encoursRepository.findAll(spec, normalizeSort(pageable))
                 .map(mapper::toDto);
@@ -147,7 +157,7 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
         BanqueResponse banque = banqueService.getBanqueById(banqueId);
 
         Specification<RecapitulatifEncoursView> spec =
-                RecapitulatifEncoursSpecification.searchByCriteria(searchDto, banqueId, sens, endOfMonth);
+                RecapitulatifEncoursSpecification.searchByCriteria(searchDto, banqueId, sens, endOfMonth());
 
         List<RecaputilatifItem> items = encoursRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission")).stream()
                 .map(mapper::toDto)
@@ -303,7 +313,7 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
         Specification<RecapitulatifEncoursView> spec = Specification
                 .where(RecapitulatifEncoursSpecification.byBanqueId(banqueId))
                 .and(RecapitulatifEncoursSpecification.bySens(sens))
-                .and(RecapitulatifEncoursSpecification.outstandingUntil(endOfMonth));
+                .and(RecapitulatifEncoursSpecification.outstandingUntil(endOfMonth()));
 
         return encoursRepository.findAll(spec).stream()
                 .map(mapper::toDto)

@@ -109,9 +109,7 @@ public class VirementPaymentProcessor extends AbstractPaymentProcessor {
             v.setEmetteur("STAPORT");
         }
         v.setObservation(" VIREMENT N° " + numero);
-        v.setLibelle((type == Type.DECAISSEMENT ? "Décaissement" : "Encaissement")
-                + " - Bénéficiaire: " + (item.getBeneficiaire() != null ? item.getBeneficiaire() : "N/A")
-                + " / Émetteur: " + (v.getEmetteur() != null ? v.getEmetteur() : "N/A"));
+        v.setLibelle(v.getObservation());
         return v;
     }
 }
