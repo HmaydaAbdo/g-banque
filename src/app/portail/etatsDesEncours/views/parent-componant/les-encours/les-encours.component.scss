@@ -28,10 +28,14 @@
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
+    // Marge en bas pour que le dernier item (ex. "Impayés" sous Décaissements,
+    // 16 sous-items) ne reste jamais collé au bord de la fenêtre une fois scrollé.
+    padding-bottom: 1.5rem;
 
-    &::-webkit-scrollbar       { width: 4px; }
+    &::-webkit-scrollbar       { width: 6px; }
     &::-webkit-scrollbar-track { background: transparent; }
-    &::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
+    &::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+    &::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
   }
 
   // Labels + chevron — hidden when collapsed
