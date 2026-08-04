@@ -24,6 +24,7 @@ import staport.finance.gBanque.impayees.specs.ImpayeeSpecifications;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
@@ -76,6 +77,8 @@ public class ImpayeeServiceImpl implements IImpayeeService {
     public ImpayeeResponseDto createImpayee(ImpayeeRequestDto requestDto) {
         log.info("Début de création d'une impayée avec les données: {}", requestDto);
 
+        validerNumero(requestDto.motif(), requestDto.numero());
+
         Banque banque = banqueService.findOrThrow(requestDto.banqueId());
 
         Impayee impayee = impayeeMapper.toEntity(requestDto, banque);
@@ -110,6 +113,8 @@ public class ImpayeeServiceImpl implements IImpayeeService {
     public ImpayeeResponseDto updateImpayee(Long id, ImpayeeRequestDto requestDto) {
         log.info("Mise à jour de l'impayée id={}", id);
 
+        validerNumero(requestDto.motif(), requestDto.numero());
+
         Impayee impayee = impayeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Impayée introuvable avec l'ID: " + id));
 
@@ -119,6 +124,7 @@ public class ImpayeeServiceImpl implements IImpayeeService {
         impayee.setMontant(requestDto.montant());
         impayee.setBanque(banque);
         impayee.setMotif(requestDto.motif());
+        impayee.setNumero(requestDto.numero());
         impayee.setDateEmission(requestDto.dateEmission());
         impayee.setObservation(requestDto.observation());
 
@@ -145,6 +151,30 @@ public class ImpayeeServiceImpl implements IImpayeeService {
 
         impayeeRepository.deleteById(id);
         log.info("Impayée supprimée avec succès: id={}", id);
+    }
+
+    /**
+     * Le numéro du moyen de paiement d'origine (numéro de chèque ou de LCN) est obligatoire
+     * lorsque le motif de l'impayée est CHEQUE ou l'une des trois variantes LCN sélectionnables
+     * à l'écran (LCN_ENCAISSEMENT, LCN_DECAISSEMENT, LCN_ESCOMPTE) — optionnel pour tous les
+     * autres motifs. Le motif générique {@code LCN} n'est volontairement pas inclus ici : il
+     * n'est pas proposé par le formulaire Impayée (seules les 3 variantes le sont).
+     * Pas exprimable via une seule annotation Bean Validation sur le DTO (dépend d'un autre
+     * champ), donc vérifié manuellement ici, appelé à la création et à la modification.
+     */
+    private static final java.util.Set<TransactionSource> MOTIFS_NUMERO_OBLIGATOIRE = java.util.EnumSet.of(
+            TransactionSource.CHEQUE,
+            TransactionSource.LCN_ENCAISSEMENT,
+            TransactionSource.LCN_DECAISSEMENT,
+            TransactionSource.LCN_ESCOMPTE
+    );
+
+    private void validerNumero(TransactionSource motif, String numero) {
+        if (MOTIFS_NUMERO_OBLIGATOIRE.contains(motif) && (numero == null || numero.isBlank())) {
+            log.warn("Numéro manquant pour une impayée de motif {} — création/modification refusée", motif);
+            throw new ValidationException(
+                    "Le numéro est obligatoire lorsque le motif est " + motif + ".");
+        }
     }
 
     @Override
@@ -180,6 +210,7 @@ public class ImpayeeServiceImpl implements IImpayeeService {
                 .and(ImpayeeSpecifications.hasBanque(banqueId))
                 .and(ImpayeeSpecifications.hasLibelle(searchDto.libelle()))
                 .and(ImpayeeSpecifications.hasMotif(searchDto.motif()))
+                .and(ImpayeeSpecifications.hasNumero(searchDto.numero()))
                 .and(ImpayeeSpecifications.hasMontant(searchDto.montant()));
 
         Page<Impayee> impayeePage = impayeeRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
@@ -231,6 +262,7 @@ public class ImpayeeServiceImpl implements IImpayeeService {
                 .and(ImpayeeSpecifications.hasBanque(banqueId))
                 .and(ImpayeeSpecifications.hasLibelle(searchDto.libelle()))
                 .and(ImpayeeSpecifications.hasMotif(searchDto.motif()))
+                .and(ImpayeeSpecifications.hasNumero(searchDto.numero()))
                 .and(ImpayeeSpecifications.hasMontant(searchDto.montant()));
 
         List<Impayee> impayees = impayeeRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
@@ -294,14 +326,14 @@ public class ImpayeeServiceImpl implements IImpayeeService {
                         Color orange     = Color.decode("#ea580c");
                         Color borderGray = Color.decode("#e5e7eb");
 
-                        float[] colWidths = {19f, 14f, 13f, 11f, 13f, 12f, 10f};
+                        float[] colWidths = {17f, 13f, 11f, 10f, 11f, 12f, 12f, 10f};
                         PdfPTable table = new PdfPTable(colWidths);
                         table.setWidthPercentage(100f);
                         table.setSpacingBefore(8f);
                         table.setHeaderRows(1);
 
                         for (String h : new String[]{
-                                "Libellé", "Banque", "Motif", "Type", "Montant (MAD)", "Date émission", "Statut"}) {
+                                "Libellé", "Banque", "Motif", "Numéro", "Type", "Montant (MAD)", "Date émission", "Statut"}) {
                             PdfPCell c = new PdfPCell(new Phrase(h, hdrFont));
                             c.setBackgroundColor(medBlue);
                             c.setPadding(5f);
@@ -318,6 +350,7 @@ public class ImpayeeServiceImpl implements IImpayeeService {
                             addPdfCell(table, p.getLibelle(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                             addPdfCell(table, p.getBanque() != null ? p.getBanque().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                             addPdfCell(table, p.getMotif() != null ? p.getMotif().name() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                            addPdfCell(table, p.getNumero(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                             addPdfCell(table, p.getType() != null ? p.getType().name() : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
                             addPdfCell(table, formatMontantPdf(p.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
                             addPdfCell(table, p.getDateEmission() != null ? p.getDateEmission().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
@@ -337,7 +370,7 @@ public class ImpayeeServiceImpl implements IImpayeeService {
                         // Ligne total
                         PdfPCell totalLabel = new PdfPCell(
                                 new Phrase("TOTAL — " + impayees.size() + " ligne(s)", totalFont));
-                        totalLabel.setColspan(4);
+                        totalLabel.setColspan(5);
                         totalLabel.setBackgroundColor(lightBlue);
                         totalLabel.setPadding(5f);
                         totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -405,6 +438,8 @@ public class ImpayeeServiceImpl implements IImpayeeService {
             lines.add("Libellé : " + dto.libelle());
         if (dto.motif() != null)
             lines.add("Motif : " + dto.motif());
+        if (dto.numero() != null && !dto.numero().isBlank())
+            lines.add("Numéro : " + dto.numero());
         if (dto.type() != null)
             lines.add("Type : " + libelleType(dto.type()));
         if (dto.montant() != null)
@@ -446,6 +481,8 @@ public class ImpayeeServiceImpl implements IImpayeeService {
             lines.add("Libellé : " + dto.libelle());
         if (dto.motif() != null)
             lines.add("Motif : " + dto.motif());
+        if (dto.numero() != null && !dto.numero().isBlank())
+            lines.add("Numéro : " + dto.numero());
         if (dto.montant() != null)
             lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
 

@@ -16,6 +16,7 @@ public record ImpayeeSearchDto(
         Long banqueId,
         String libelle,
         TransactionSource motif,
+        String numero,
         Type type,
         BigDecimal montant,
         Status status,

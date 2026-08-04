@@ -13,6 +13,7 @@ public record EncoursImpayeeSearchDto(
 
         String libelle,
         TransactionSource motif,
+        String numero,
         Type type,
         BigDecimal montant
 

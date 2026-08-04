@@ -45,6 +45,14 @@ public class Impayee {
     @Column
     private LocalDate dateOperation ;
 
+    /**
+     * Numéro du moyen de paiement d'origine à l'origine de l'impayée (numéro de chèque ou de LCN).
+     * Obligatoire lorsque {@code motif} vaut {@code CHEQUE} ou {@code LCN} — voir la validation
+     * dans {@code ImpayeeServiceImpl}. Optionnel pour les autres motifs.
+     */
+    @Column(name = "numero")
+    private String numero;
+
     @Column(length = 500, nullable = false)
     private String libelle;
 
@@ -138,6 +146,14 @@ public class Impayee {
         this.dateOperation = dateOperation;
     }
 
+    public String getNumero() {
+        return numero;
+    }
+
+    public void setNumero(String numero) {
+        this.numero = numero;
+    }
+
     public String getLibelle() {
         return libelle;
     }
@@ -197,6 +213,7 @@ public class Impayee {
                 Objects.equals(dateOperation, that.dateOperation) &&
                 Objects.equals(libelle, that.libelle) &&
                 Objects.equals(observation, that.observation) &&
+                Objects.equals(numero, that.numero) &&
                 motif == that.motif &&
                 status == that.status;
     }
@@ -204,7 +221,7 @@ public class Impayee {
     @Override
     public int hashCode() {
         return Objects.hash(id, montant, banque, dateEmission, dateValeur,
-                dateOperation, libelle, observation, motif, status);
+                dateOperation, libelle, observation, numero, motif, status);
     }
 
     @Override
@@ -217,6 +234,7 @@ public class Impayee {
                 ", type=" + type +
                 ", dateValeur=" + dateValeur +
                 ", dateOperation=" + dateOperation +
+                ", numero='" + numero + '\'' +
                 ", libelle='" + libelle + '\'' +
                 ", observation='" + observation + '\'' +
                 ", motif=" + motif +

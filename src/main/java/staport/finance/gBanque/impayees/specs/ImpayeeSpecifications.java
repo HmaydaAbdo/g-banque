@@ -40,6 +40,15 @@ public class ImpayeeSpecifications {
         };
     }
 
+    public static Specification<Impayee> hasNumero(String numero) {
+        return (root, query, cb) -> {
+            if (numero == null || numero.trim().isEmpty()) {
+                return null;
+            }
+            return cb.like(cb.lower(root.get("numero")), "%" + numero.toLowerCase() + "%");
+        };
+    }
+
     public static Specification<Impayee> hasStatus(Status status) {
         return (root, query, cb) -> {
             if (status == null) {
@@ -72,6 +81,7 @@ public class ImpayeeSpecifications {
                 .where(hasBanque(dto.banqueId()))
                 .and(hasLibelle(dto.libelle()))
                 .and(hasMotif(dto.motif()))
+                .and(hasNumero(dto.numero()))
                 .and(hasType(dto.type()))
                 .and(hasStatus(dto.status()))
                 .and(byDateEmissionRange(dto.dateEmissionDebut(), dto.dateEmissionFin()))

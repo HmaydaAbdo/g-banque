@@ -21,6 +21,7 @@ public record ImpayeeResponseDto(
         String banqueNom,
         Type type,
         TransactionSource motif,
+        String numero,
         LocalDate dateEmission,
         LocalDate dateValeur,
         LocalDate dateOperation,

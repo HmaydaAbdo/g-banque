@@ -30,6 +30,13 @@ public record ImpayeeRequestDto(
         @NotNull(message = "Le motif (source de transaction) est obligatoire")
         TransactionSource motif,
 
+        /**
+         * Numéro du chèque/LCN d'origine. Obligatoire si {@code motif} vaut CHEQUE ou LCN,
+         * optionnel sinon — vérifié dans {@code ImpayeeServiceImpl} (dépend d'un autre champ,
+         * non exprimable via une seule annotation Bean Validation).
+         */
+        String numero,
+
         @NotBlank(message = "Le libellé est obligatoire")
         String libelle,
 

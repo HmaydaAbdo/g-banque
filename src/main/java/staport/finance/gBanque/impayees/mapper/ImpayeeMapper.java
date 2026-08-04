@@ -38,6 +38,7 @@ public class ImpayeeMapper {
         impayee.setMontant(dto.montant());
         impayee.setBanque(banque);
         impayee.setMotif(dto.motif());
+        impayee.setNumero(dto.numero());
         impayee.setDateEmission(dto.dateEmission());
 
         // Note: Le statut est généralement géré par défaut dans l'entité ou la DB (ex: PREVU)
@@ -77,6 +78,7 @@ public class ImpayeeMapper {
                 banqueNom,
                 entity.getType(),
                 entity.getMotif(),
+                entity.getNumero(),
                 entity.getDateEmission(),
                 entity.getDateValeur(),
                 entity.getDateOperation(),
