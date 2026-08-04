@@ -1,7 +1,9 @@
-<app-navbar (openSidebar)="sidebar.openSidebar()"></app-navbar>
+<div class="app-shell">
+  <app-navbar (openSidebar)="sidebar.openSidebar()"></app-navbar>
 
-<app-sidebar [(sidebarVisible)]="sidebarVisible"></app-sidebar>
+  <app-sidebar [(sidebarVisible)]="sidebarVisible"></app-sidebar>
 
-<main style="background:var(--color-page-bg);min-height:100vh">
-  <router-outlet></router-outlet>
-</main>
+  <main class="app-shell__main">
+    <router-outlet></router-outlet>
+  </main>
+</div>
