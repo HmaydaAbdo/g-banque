@@ -92,7 +92,7 @@
       [totalRecords]="totalRecords"
       [loading]="loading"
       [rowsPerPageOptions]="[5, 10, 25, 50]"
-      [lazy]="true"
+      [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
       (onLazyLoad)="loadSpecificFunctionalLines($event)"
       [showCurrentPageReport]="true"
       currentPageReportTemplate="{first}–{last} sur {totalRecords}"
@@ -104,14 +104,14 @@
           <th pSortableColumn="id" style="width:70px">
             ID <p-sortIcon field="id"></p-sortIcon>
           </th>
-          <th pSortableColumn="natureLigneFonctionnelleLabel">
-            Nature <p-sortIcon field="natureLigneFonctionnelleLabel"></p-sortIcon>
+          <th pSortableColumn="natureLigneFonctionnelle.label">
+            Nature <p-sortIcon field="natureLigneFonctionnelle.label"></p-sortIcon>
           </th>
-          <th pSortableColumn="marcheNom">
-            Marché <p-sortIcon field="marcheNom"></p-sortIcon>
+          <th pSortableColumn="marche.nom">
+            Marché <p-sortIcon field="marche.nom"></p-sortIcon>
           </th>
-          <th pSortableColumn="marcheNumero">
-            N° Marché <p-sortIcon field="marcheNumero"></p-sortIcon>
+          <th pSortableColumn="marche.numero">
+            N° Marché <p-sortIcon field="marche.numero"></p-sortIcon>
           </th>
           <th pSortableColumn="plafond" class="text-right">
             Plafond <p-sortIcon field="plafond"></p-sortIcon>

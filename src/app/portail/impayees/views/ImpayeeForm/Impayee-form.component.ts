@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import {CommonModule, DatePipe, Location} from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, ParamMap } from '@angular/router';
@@ -19,6 +19,7 @@ import { CalendarModule } from 'primeng/calendar';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { TooltipModule } from 'primeng/tooltip';
 import {TransactionSource, TransactionSourceLabels} from "../../../transactions/dtos/TransactionSource";
+import { Subscription } from 'rxjs';
 import { ImpayeeService } from '../../service/ImpayeeService';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import {Type} from "../../../Virements/Type";
@@ -45,11 +46,21 @@ import { toLocalDateString, parseLocalDate } from '../../../global/types/date.ut
   templateUrl: './impayee-form.component.html',
   providers: [MessageService, ConfirmationService,DatePipe],
 })
-export class ImpayeeFormComponent implements OnInit {
+export class ImpayeeFormComponent implements OnInit, OnDestroy {
   impayeeForm!: FormGroup;
   isEditMode = false;
   impayeeId: number | null = null;
   loading = false;
+
+  /** Motifs pour lesquels le numéro (chèque/LCN) est obligatoire. */
+  private static readonly MOTIFS_NUMERO_OBLIGATOIRE: TransactionSource[] = [
+    TransactionSource.CHEQUE,
+    TransactionSource.LCN_ENCAISSEMENT,
+    TransactionSource.LCN_DECAISSEMENT,
+    TransactionSource.LCN_ESCOMPTE,
+  ];
+  numeroRequired = false;
+  private motifSubscription!: Subscription;
 
   banquesOptions: BanqueResponse[] = [];
   motifOptions: { label: string; value: TransactionSource | null }[] = [];
@@ -96,12 +107,29 @@ export class ImpayeeFormComponent implements OnInit {
     this.impayeeForm = this.fb.group({
       banqueId: [null, Validators.required],
       motif: [null, Validators.required],
+      numero: [null],
       type: [null, Validators.required],
       montant: [null, [Validators.required, Validators.min(0.01), Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
       dateEmission: [null, Validators.required],
       observation: [null, Validators.required],
       libelle: [null, Validators.required],
     });
+
+    this.motifSubscription = this.impayeeForm.get('motif')!.valueChanges.subscribe(
+      (motif: TransactionSource | null) => this.updateNumeroValidator(motif)
+    );
+  }
+
+  /**
+   * Le numéro (chèque/LCN) est obligatoire uniquement lorsque le motif sélectionné est CHEQUE,
+   * LCN_ENCAISSEMENT, LCN_DECAISSEMENT ou LCN_ESCOMPTE — optionnel pour tous les autres motifs.
+   * Pas exprimable via un simple Validators.required statique puisque ça dépend d'un autre champ.
+   */
+  private updateNumeroValidator(motif: TransactionSource | null): void {
+    const numeroControl = this.impayeeForm.get('numero')!;
+    this.numeroRequired = !!motif && ImpayeeFormComponent.MOTIFS_NUMERO_OBLIGATOIRE.includes(motif);
+    numeroControl.setValidators(this.numeroRequired ? [Validators.required] : []);
+    numeroControl.updateValueAndValidity();
   }
 
   loadBanques(event: any): void {
@@ -147,6 +175,7 @@ export class ImpayeeFormComponent implements OnInit {
         this.impayeeForm.patchValue({
           banqueId: impayee.banqueId,
           motif: impayee.motif,
+          numero: impayee.numero,
           type: impayee.type,
           observation: impayee.observation,
           libelle: impayee.libelle,
@@ -197,6 +226,7 @@ export class ImpayeeFormComponent implements OnInit {
     const request: ImpayeeRequestDto = {
       banqueId: formValue.banqueId,
       motif: formValue.motif,
+      numero: formValue.numero,
       type: formValue.type,
       libelle: formValue.libelle,
       observation: formValue.observation,
@@ -233,5 +263,9 @@ export class ImpayeeFormComponent implements OnInit {
 
   onCancel(): void {
     this.location.back();
+  }
+
+  ngOnDestroy(): void {
+    this.motifSubscription?.unsubscribe();
   }
 }

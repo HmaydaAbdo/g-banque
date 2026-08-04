@@ -104,7 +104,7 @@
   </div>
   <p-table
     [value]="logs"
-    [lazy]="true"
+    [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
     (onLazyLoad)="loadLogs($event)"
     [paginator]="true"
     [rows]="10"

@@ -45,7 +45,7 @@
       [totalRecords]="totalRecords"
       [loading]="loading"
       [rowsPerPageOptions]="[5, 10, 25, 50]"
-      [lazy]="true"
+      [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
       (onLazyLoad)="loadDecaissements($event)"
       [rowHover]="true"
       dataKey="id"
@@ -76,13 +76,13 @@
             Crédit
               <p-sortIcon field="credit"></p-sortIcon>
           </th>
-          <th pSortableColumn="source">
+          <th pSortableColumn="id.sourceType">
             source
-              <p-sortIcon field="source"></p-sortIcon>
+              <p-sortIcon field="id.sourceType"></p-sortIcon>
           </th>
-          <th pSortableColumn="Observations">
+          <th pSortableColumn="observation">
             Observations
-              <p-sortIcon field="Observations"></p-sortIcon>
+              <p-sortIcon field="observation"></p-sortIcon>
           </th>
 
           <th pSortableColumn="libelle">

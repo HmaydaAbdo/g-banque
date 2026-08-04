@@ -68,16 +68,16 @@
 
   <div class="flex-grow-1">
     <p-table #dt [value]="lignesFonctionnellesSpecifiques" [paginator]="true" [rows]="rows"
-             [totalRecords]="totalRecords" [loading]="loading" [lazy]="true"
+             [totalRecords]="totalRecords" [loading]="loading" [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
              (onLazyLoad)="loadLignesFonctionnellesSpecifiques($event)"
              styleClass="p-datatable-gridlines p-datatable-sm text-xs" [scrollable]="true" scrollHeight="flex">
 
       <ng-template pTemplate="header">
         <tr class="white-space-nowrap">
           <th pSortableColumn="id" style="width: 50px">ID <p-sortIcon field="id"></p-sortIcon></th>
-          <th pSortableColumn="banqueNom">Banque <p-sortIcon field="banqueNom"></p-sortIcon></th>
-          <th pSortableColumn="natureLigneFonctionnelleLabel">Nature <p-sortIcon field="natureLigneFonctionnelleLabel"></p-sortIcon></th>
-          <th pSortableColumn="marcheNumero">Marché <p-sortIcon field="marcheNumero"></p-sortIcon></th>
+          <th pSortableColumn="marche.banque.nom">Banque <p-sortIcon field="marche.banque.nom"></p-sortIcon></th>
+          <th pSortableColumn="natureLigneFonctionnelle.label">Nature <p-sortIcon field="natureLigneFonctionnelle.label"></p-sortIcon></th>
+          <th pSortableColumn="marche.numero">Marché <p-sortIcon field="marche.numero"></p-sortIcon></th>
           <th pSortableColumn="plafond">Plafond <p-sortIcon field="plafond"></p-sortIcon></th>
 
           <th pSortableColumn="encours">Encours <p-sortIcon field="encours"></p-sortIcon></th>
@@ -86,7 +86,7 @@
           <th pSortableColumn="taux">Taux <p-sortIcon field="taux"></p-sortIcon></th>
           <th pSortableColumn="dateDepart">Date Départ <p-sortIcon field="dateDepart"></p-sortIcon></th>
           <th pSortableColumn="dateFin">Date Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
-          <th >Statut</th>
+          <th pSortableColumn="actif">Statut <p-sortIcon field="actif"></p-sortIcon></th>
           <th >Action</th>
 
         </tr>

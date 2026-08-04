@@ -59,7 +59,7 @@ export class LogsComponent implements OnInit {
 
   // Stocke le dernier événement de lazy load pour réappliquer pagination/tri
   // Initialise avec des valeurs par défaut pour le premier chargement
-  private lastLazyLoadEvent: TableLazyLoadEvent = { first: 0, rows: 10, sortField: 'timestamp', sortOrder: -1 };
+  private lastLazyLoadEvent: TableLazyLoadEvent = { first: 0, rows: 10, sortField: 'id', sortOrder: -1 };
   items: MenuItem[] | undefined;
 
 
@@ -94,7 +94,7 @@ export class LogsComponent implements OnInit {
     this.lastLazyLoadEvent = {
       first: event.first ?? 0,
       rows: event.rows ?? 10,
-      sortField: event.sortField ?? 'timestamp', // Default sort field
+      sortField: event.sortField ?? 'id', // Default sort field
       sortOrder: event.sortOrder ?? -1 // Default sort order (descending)
     };
 
@@ -110,7 +110,7 @@ export class LogsComponent implements OnInit {
       sortField = this.lastLazyLoadEvent.sortField;
     } else {
       sortOrder = 'desc';
-      sortField = 'timestamp';
+      sortField = 'id';
     }
 
     const sort = `${sortField},${sortOrder}`;

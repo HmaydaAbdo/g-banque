@@ -42,7 +42,7 @@
   <div class="pg-table">
     <p-table
       [value]="utilisateurs"
-      [lazy]="true"
+      [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
       [paginator]="true"
       [rows]="10"
       [totalRecords]="totalRecords"
@@ -57,9 +57,9 @@
 
       <ng-template pTemplate="header">
         <tr>
-          <th>Nom d'utilisateur</th>
-          <th class="text-center">Statut</th>
-          <th class="text-center">Admin système</th>
+          <th pSortableColumn="username">Nom d'utilisateur <p-sortIcon field="username"></p-sortIcon></th>
+          <th class="text-center" pSortableColumn="enabled">Statut <p-sortIcon field="enabled"></p-sortIcon></th>
+          <th class="text-center" pSortableColumn="isSystemAdmin">Admin système <p-sortIcon field="isSystemAdmin"></p-sortIcon></th>
           <th>Départements</th>
           <th class="text-center" style="width:8rem">Actions</th>
         </tr>

@@ -129,7 +129,7 @@
           [paginator]="true"
           [rows]="10"
           [totalRecords]="totalRecords"
-          [lazy]="true"
+          [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
           (onLazyLoad)="loadEcheances($event)"
           responsiveLayout="scroll"
           styleClass="p-datatable-sm p-datatable-gridlines text-xs white-space-nowrap"
@@ -142,7 +142,7 @@
               <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
               <th pSortableColumn="numeroEcheance">N° Échéance <p-sortIcon field="numeroEcheance"></p-sortIcon></th>
               <th pSortableColumn="dateEcheance">Date d'échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
-              <th>Montant TTC</th>
+              <th pSortableColumn="montant">Montant TTC <p-sortIcon field="montant"></p-sortIcon></th>
               <th pSortableColumn="statutPaiement">Statut Paiement <p-sortIcon field="statutPaiement"></p-sortIcon></th>
               @if (isAdmin()) {
                 <th class="col-action">Actions</th>

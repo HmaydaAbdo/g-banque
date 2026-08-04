@@ -81,7 +81,7 @@
       [totalRecords]="totalRecords"
       [loading]="loading"
       [rowsPerPageOptions]="[10, 25, 50]"
-      [lazy]="true"
+      [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
       (onLazyLoad)="loadEncoursDecomptes($event)"
       responsiveLayout="scroll"
       [scrollable]="true"
@@ -101,11 +101,11 @@
           <th pSortableColumn="dateEmission">
             Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon>
           </th>
-          <th pSortableColumn="marcheNumero">
-            N° Marché <p-sortIcon field="marcheNumero"></p-sortIcon>
+          <th pSortableColumn="marche.numero">
+            N° Marché <p-sortIcon field="marche.numero"></p-sortIcon>
           </th>
-          <th pSortableColumn="banqueName">
-            Banque <p-sortIcon field="banqueName"></p-sortIcon>
+          <th pSortableColumn="banqueEncaissement.nom">
+            Banque <p-sortIcon field="banqueEncaissement.nom"></p-sortIcon>
           </th>
           <th pSortableColumn="montant">
             Montant <p-sortIcon field="montant"></p-sortIcon>

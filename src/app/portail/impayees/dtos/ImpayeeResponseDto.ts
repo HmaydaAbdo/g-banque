@@ -10,6 +10,7 @@ export interface ImpayeeResponseDto {
   banqueId: number;
   banqueNom: string;
   motif: TransactionSource;
+  numero?: string;
   dateEmission: string;
   dateValeur?: string;
   dateOperation?: string;

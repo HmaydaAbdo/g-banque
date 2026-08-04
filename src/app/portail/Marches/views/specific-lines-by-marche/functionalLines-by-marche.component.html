@@ -40,7 +40,7 @@
         [paginator]="true"
         [rows]="10"
         [totalRecords]="totalRecordsSpecific"
-        [lazy]="true"
+        [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
         (onLazyLoad)="loadSpecificLines($event)"
         [rowsPerPageOptions]="[10, 25, 50]"
         [loading]="loadingSpecific"
@@ -53,15 +53,15 @@
         <ng-template pTemplate="header">
           <tr class="white-space-nowrap">
             <th pSortableColumn="id" style="width: 50px">ID <p-sortIcon field="id"></p-sortIcon></th>
-            <th pSortableColumn="banqueNom">Banque <p-sortIcon field="banqueNom"></p-sortIcon></th>
-            <th pSortableColumn="natureLigneFonctionnelleLabel">Nature <p-sortIcon field="natureLigneFonctionnelleLabel"></p-sortIcon></th>
+            <th pSortableColumn="marche.banque.nom">Banque <p-sortIcon field="marche.banque.nom"></p-sortIcon></th>
+            <th pSortableColumn="natureLigneFonctionnelle.label">Nature <p-sortIcon field="natureLigneFonctionnelle.label"></p-sortIcon></th>
             <th pSortableColumn="plafond">Plafond <p-sortIcon field="plafond"></p-sortIcon></th>
             <th pSortableColumn="encours">Encours <p-sortIcon field="encours"></p-sortIcon></th>
             <th pSortableColumn="solde">Solde <p-sortIcon field="solde"></p-sortIcon></th>
             <th pSortableColumn="taux">Taux <p-sortIcon field="taux"></p-sortIcon></th>
             <th pSortableColumn="dateFin">Date Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
             <th pSortableColumn="dateDepart">Date Départ <p-sortIcon field="dateDepart"></p-sortIcon></th>
-            <th>Statut</th>
+            <th pSortableColumn="actif">Statut <p-sortIcon field="actif"></p-sortIcon></th>
             <th>Action</th>
           </tr>
         </ng-template>
@@ -119,7 +119,7 @@
         [paginator]="true"
         [rows]="10"
         [totalRecords]="totalRecordsGeneral"
-        [lazy]="true"
+        [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
         (onLazyLoad)="loadGeneralLines($event)"
         [rowsPerPageOptions]="[10, 25, 50]"
         [loading]="loadingGeneral"
@@ -132,15 +132,15 @@
         <ng-template pTemplate="header">
           <tr class="white-space-nowrap">
             <th pSortableColumn="id" style="width: 50px">ID <p-sortIcon field="id"></p-sortIcon></th>
-            <th pSortableColumn="banqueNom">Banque <p-sortIcon field="banqueNom"></p-sortIcon></th>
-            <th pSortableColumn="natureLigneFonctionnelleLabel">Nature <p-sortIcon field="natureLigneFonctionnelleLabel"></p-sortIcon></th>
+            <th pSortableColumn="marche.banque.nom">Banque <p-sortIcon field="marche.banque.nom"></p-sortIcon></th>
+            <th pSortableColumn="natureLigneFonctionnelle.label">Nature <p-sortIcon field="natureLigneFonctionnelle.label"></p-sortIcon></th>
             <th pSortableColumn="plafond">Plafond <p-sortIcon field="plafond"></p-sortIcon></th>
             <th pSortableColumn="encours">Encours <p-sortIcon field="encours"></p-sortIcon></th>
             <th pSortableColumn="solde">Solde <p-sortIcon field="solde"></p-sortIcon></th>
             <th pSortableColumn="taux">Taux <p-sortIcon field="taux"></p-sortIcon></th>
             <th pSortableColumn="dateFin">Date Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
             <th pSortableColumn="dateDepart">Date Départ <p-sortIcon field="dateDepart"></p-sortIcon></th>
-            <th>Statut</th>
+            <th pSortableColumn="actif">Statut <p-sortIcon field="actif"></p-sortIcon></th>
             <th>Sous-lignes</th>
             <th>Action</th>
           </tr>

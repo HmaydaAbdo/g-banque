@@ -61,7 +61,7 @@ export class HistoriqueDesRapprochementComponent implements OnInit {
   loading: boolean = false;
   first: number | undefined = 0;
   rows: number | undefined = 10;
-  sortField: string | string[] = 'dateRapprochement';
+  sortField: string | string[] = 'id';
   sortOrder: number = -1;
   statusOptions = [
     { label: 'Tous les statuts', value: null },

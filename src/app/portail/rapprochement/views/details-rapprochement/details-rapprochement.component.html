@@ -276,7 +276,7 @@
                [totalRecords]="totalTransactionsRecords"
                [loading]="loadingTransactions"
                [rowsPerPageOptions]="[5, 10, 25, 50]"
-               [lazy]="true"
+               [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
                (onLazyLoad)="loadTransactionsLazy($event)"
                scrollHeight="flex"
                columnResizeMode="expand"

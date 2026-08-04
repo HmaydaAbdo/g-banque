@@ -45,7 +45,7 @@
       [totalRecords]="totalRecords"
       [loading]="loading"
       [rowsPerPageOptions]="[5, 10, 25, 50]"
-      [lazy]="true"
+      [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
       (onLazyLoad)="loadEncaissements($event)"
       [rowHover]="true"
       dataKey="dateEmission"
@@ -76,19 +76,19 @@
             Crédit
               <p-sortIcon field="credit"></p-sortIcon>
           </th>
-          <th pSortableColumn="Source" class="text-right">
+          <th pSortableColumn="id.sourceType" class="text-right">
             Source
-              <p-sortIcon field="Source"></p-sortIcon>
+              <p-sortIcon field="id.sourceType"></p-sortIcon>
           </th>
 
-          <th pSortableColumn="Observations" class="text-right">
+          <th pSortableColumn="observation" class="text-right">
             Observations
-              <p-sortIcon field="Observations"></p-sortIcon>
+              <p-sortIcon field="observation"></p-sortIcon>
           </th>
 
-          <th pSortableColumn="Libellé" class="text-right">
+          <th pSortableColumn="libelle" class="text-right">
             Libellé
-              <p-sortIcon field="Libellé"></p-sortIcon>
+              <p-sortIcon field="libelle"></p-sortIcon>
           </th>
 
 

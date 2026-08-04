@@ -65,7 +65,7 @@
        de défilement de la page reste inerte car rien ne dépasse réellement de 100vh). -->
   <div class="pg-table" style="flex-shrink:0; overflow:visible;">
     <p-table #dt [value]="configs" [loading]="loading" dataKey="id"
-             [lazy]="true" (onLazyLoad)="load($event)"
+             [lazy]="true" [sortField]="'id'" [sortOrder]="-1" (onLazyLoad)="load($event)"
              [paginator]="true" [rows]="rows" [totalRecords]="totalRecords"
              [rowsPerPageOptions]="[15, 25, 50]"
              [showCurrentPageReport]="true"
@@ -77,9 +77,9 @@
           <th pSortableColumn="banque.nom">Banque <p-sortIcon field="banque.nom"></p-sortIcon></th>
           <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
           <th pSortableColumn="type">Type <p-sortIcon field="type"></p-sortIcon></th>
-          <th>Motif</th>
+          <th pSortableColumn="motif">Motif <p-sortIcon field="motif"></p-sortIcon></th>
           <th pSortableColumn="jourEmission">Émission <p-sortIcon field="jourEmission"></p-sortIcon></th>
-          <th class="text-center">Période dans le libellé</th>
+          <th class="text-center" pSortableColumn="appendPeriode">Période dans le libellé <p-sortIcon field="appendPeriode"></p-sortIcon></th>
           <th class="text-right" pSortableColumn="montant">Montant (MAD) <p-sortIcon field="montant"></p-sortIcon></th>
           <th class="text-center" style="width:8rem">Actions</th>
         </tr>

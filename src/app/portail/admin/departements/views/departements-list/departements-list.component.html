@@ -49,8 +49,8 @@
 
       <ng-template pTemplate="header">
         <tr>
-          <th>Nom</th>
-          <th>Description</th>
+          <th pSortableColumn="name">Nom <p-sortIcon field="name"></p-sortIcon></th>
+          <th pSortableColumn="description">Description <p-sortIcon field="description"></p-sortIcon></th>
           <th class="text-center" style="width:8rem">Actions</th>
         </tr>
       </ng-template>

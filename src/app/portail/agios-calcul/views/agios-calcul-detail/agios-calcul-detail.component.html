@@ -202,8 +202,8 @@
             Date <p-sortIcon field="dateValeur"></p-sortIcon>
           </th>
           @if (isMultiMarche) {
-            <th pSortableColumn="marcheNumero" style="min-width:150px">
-              Marché <p-sortIcon field="marcheNumero"></p-sortIcon>
+            <th pSortableColumn="marche.numero" style="min-width:150px">
+              Marché <p-sortIcon field="marche.numero"></p-sortIcon>
             </th>
           }
           <th pSortableColumn="soldeJournalier" class="text-right" style="min-width:120px">
@@ -212,11 +212,11 @@
           <th pSortableColumn="baseCalcul" class="text-right" style="min-width:115px">
             Base calcul <p-sortIcon field="baseCalcul"></p-sortIcon>
           </th>
-          <th class="text-center" style="width:80px">Taux %</th>
+          <th class="text-center" style="width:80px" pSortableColumn="tauxApplique">Taux % <p-sortIcon field="tauxApplique"></p-sortIcon></th>
           <th pSortableColumn="agiosHT" class="text-right" style="min-width:110px">
             Agios HT <p-sortIcon field="agiosHT"></p-sortIcon>
           </th>
-          <th class="text-right" style="min-width:90px">TVA</th>
+          <th class="text-right" style="min-width:90px" pSortableColumn="tva">TVA <p-sortIcon field="tva"></p-sortIcon></th>
           <th pSortableColumn="agiosTTC" class="text-right" style="min-width:110px">
             Agios TTC <p-sortIcon field="agiosTTC"></p-sortIcon>
           </th>

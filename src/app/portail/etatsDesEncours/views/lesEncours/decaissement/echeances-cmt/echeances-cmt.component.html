@@ -63,7 +63,7 @@
       [totalRecords]="totalRecords"
       [loading]="loading"
       [rowsPerPageOptions]="[3,5,10, 25, 50]"
-      [lazy]="true"
+      [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
       (onLazyLoad)="loadEncours($event)"
       responsiveLayout="scroll"
       [scrollable]="true"
@@ -81,7 +81,7 @@
           <th style="width: 3rem">
             <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
           </th>
-          <th pSortableColumn="credit.designation">Désignation CMT <p-sortIcon field="credit.designation"></p-sortIcon></th>
+          <th pSortableColumn="creditMoyenTerme.designation">Désignation CMT <p-sortIcon field="creditMoyenTerme.designation"></p-sortIcon></th>
           <th pSortableColumn="numeroEcheance">N° Échéance <p-sortIcon field="numeroEcheance"></p-sortIcon></th>
           <th pSortableColumn="dateEcheance">Date d'Échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant TTC <p-sortIcon field="montant"></p-sortIcon></th>

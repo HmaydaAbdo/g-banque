@@ -116,7 +116,7 @@
 
   <div class="pb-8">
     <p-table #dt [value]="marches" [paginator]="true" [rows]="rows" [totalRecords]="totalRecords"
-             [loading]="loading" [rowsPerPageOptions]="[3, 5, 10, 25, 50]" [lazy]="true"
+             [loading]="loading" [rowsPerPageOptions]="[3, 5, 10, 25, 50]" [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
              responsiveLayout="scroll" [scrollable]="true"  (onLazyLoad)="loadMarches($event)"
              [columns]="[
                 {field: 'id', header: 'ID', sortable: true},
@@ -124,7 +124,7 @@
                 {field: 'nom', header: 'Nom', sortable: true},
                 {field: 'montant', header: 'Montant', sortable: true},
                 {field: 'maitreDouvrage', header: 'Maître d ouvrage', sortable: true},
-                {field: 'banqueNom', header: 'Banque', sortable: true},
+                {field: 'banque.nom', header: 'Banque', sortable: true},
                 {field: 'dateDebutDesTravaux', header: 'Date début travaux', sortable: true},
                 {field: 'dateDAchievementDesTravaux', header: 'Date achèvement travaux', sortable: true},
                 {field: 'actif', header: 'Statut', sortable: true}

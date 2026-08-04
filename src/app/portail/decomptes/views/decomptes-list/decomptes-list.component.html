@@ -150,19 +150,19 @@
              styleClass="p-datatable-gridlines text-xs shadow-1 mt-2"
              [showCurrentPageReport]="true"
              currentPageReportTemplate="{first}-{last} / {totalRecords}"
-             [sortField]="'dateValeur'" [sortOrder]="-1">
+             [sortField]="'id'" [sortOrder]="-1">
 
       <ng-template pTemplate="header">
         <tr class="white-space-nowrap">
           <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
-          <th pSortableColumn="marcheNumero">Marché <p-sortIcon field="marcheNumero"></p-sortIcon></th>
-          <th>Banque</th>
+          <th pSortableColumn="marche.numero">Marché <p-sortIcon field="marche.numero"></p-sortIcon></th>
+          <th pSortableColumn="banqueEncaissement.nom">Banque <p-sortIcon field="banqueEncaissement.nom"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
-          <th>Observation</th>
+          <th pSortableColumn="observation">Observation <p-sortIcon field="observation"></p-sortIcon></th>
           <th pSortableColumn="dateEmission">Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
           <th pSortableColumn="dateOperation">Date d'opération <p-sortIcon field="dateOperation"></p-sortIcon></th>
           <th pSortableColumn="dateValeur">Date valeur <p-sortIcon field="dateValeur"></p-sortIcon></th>
-          <th>Statut</th>
+          <th pSortableColumn="status">Statut <p-sortIcon field="status"></p-sortIcon></th>
           <th style="width: 10rem">Actions</th>
         </tr>
       </ng-template>

@@ -152,7 +152,7 @@
              [totalRecords]="totalRecords"
              [loading]="loading"
              [rowsPerPageOptions]="[3,5,10,25,50]"
-             [lazy]="true"
+             [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
              (onLazyLoad)="loadLcns($event)"
              responsiveLayout="scroll"
              [scrollable]="true"
@@ -170,12 +170,12 @@
           <th pSortableColumn="dateEcheance">Date d'Échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
           <th pSortableColumn="beneficiaire">Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon></th>
           <th pSortableColumn="emetteur">Émetteur <p-sortIcon field="emetteur"></p-sortIcon></th>
-          <th pSortableColumn="nomBanque">Banque d'encaissement <p-sortIcon field="nomBanque"></p-sortIcon></th>
+          <th pSortableColumn="banque.nom">Banque d'encaissement <p-sortIcon field="banque.nom"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
           <th pSortableColumn="natureLcn">Nature <p-sortIcon field="natureLcn"></p-sortIcon></th>
           <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
           <th pSortableColumn="observation">Observation <p-sortIcon field="observation"></p-sortIcon></th>
-          <th>Statut</th>
+          <th pSortableColumn="statut">Statut <p-sortIcon field="statut"></p-sortIcon></th>
           <th>Action</th>
         </tr>
       </ng-template>

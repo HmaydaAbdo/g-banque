@@ -69,7 +69,7 @@
       [totalRecords]="totalRecords"
       [loading]="loading"
       [rowsPerPageOptions]="[10, 25, 50]"
-      [lazy]="true"
+      [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
       [showCurrentPageReport]="true"
       currentPageReportTemplate="{first}–{last} sur {totalRecords}"
       (onLazyLoad)="loadBanques($event)"
@@ -89,8 +89,8 @@
           <th pSortableColumn="devise" class="text-center white-space-nowrap">
             Devise <p-sortIcon field="devise"></p-sortIcon>
           </th>
-          <th >Adresse</th>
-          <th >Agence</th>
+          <th pSortableColumn="adresse">Adresse <p-sortIcon field="adresse"></p-sortIcon></th>
+          <th pSortableColumn="agence">Agence <p-sortIcon field="agence"></p-sortIcon></th>
           <th class="text-right">Solde actuel</th>
           <th class="text-center">Actions</th>
         </tr>

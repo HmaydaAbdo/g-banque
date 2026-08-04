@@ -144,7 +144,7 @@
              [scrollable]="true"
              columnResizeMode="expand"
              [rowHover]="true"
-             [sortField]="'dateValeur'"
+             [sortField]="'id'"
              [sortOrder]="-1"
              currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} encaissements"
              [showCurrentPageReport]="true"
@@ -152,7 +152,7 @@
 
       <ng-template pTemplate="header">
         <tr class="white-space-nowrap">
-          <th pSortableColumn="source">Moyen de paiement <p-sortIcon field="source"></p-sortIcon></th>
+          <th pSortableColumn="id.sourceType">Moyen de paiement <p-sortIcon field="id.sourceType"></p-sortIcon></th>
           <th pSortableColumn="banqueNom">Banque <p-sortIcon field="banqueNom"></p-sortIcon></th>
           <th pSortableColumn="numero">Numéro <p-sortIcon field="numero"></p-sortIcon></th>
           <th pSortableColumn="emetteur">Émetteur <p-sortIcon field="emetteur"></p-sortIcon></th>
@@ -160,7 +160,7 @@
           <th pSortableColumn="dateOperation">Date d'Opération <p-sortIcon field="dateOperation"></p-sortIcon></th>
           <th pSortableColumn="dateValeur">Date de Valeur <p-sortIcon field="dateValeur"></p-sortIcon></th>
           <th pSortableColumn="dateEcheance">Date d'Échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
-          <th>Statut</th>
+          <th pSortableColumn="statut">Statut <p-sortIcon field="statut"></p-sortIcon></th>
           <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
         </tr>
       </ng-template>

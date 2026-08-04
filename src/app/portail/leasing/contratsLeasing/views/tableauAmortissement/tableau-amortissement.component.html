@@ -107,7 +107,7 @@
           [paginator]="true"
           [rows]="10"
           [totalRecords]="totalEcheancesRecords"
-          [lazy]="true"
+          [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
           (onLazyLoad)="loadTableauAmortissement($event)"
           responsiveLayout="scroll"
           styleClass="p-datatable-sm p-datatable-gridlines text-xs white-space-nowrap"

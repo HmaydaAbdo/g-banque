@@ -175,7 +175,7 @@
       [loading]="loading"
       [rowsPerPageOptions]="[5, 10, 25, 50]"
       [lazy]="true"
-      [sortField]="'dateFin'"
+      [sortField]="'id'"
       [sortOrder]="-1"
       (onLazyLoad)="loadLignesFonctionnelles($event)"
       styleClass="p-datatable-gridlines p-datatable-sm text-xs"
@@ -191,8 +191,8 @@
         <tr class="white-space-nowrap">
           <th style="width: 3rem"></th>
           <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
-          <th pSortableColumn="banqueNom">Banque <p-sortIcon field="banqueNom"></p-sortIcon></th>
-          <th pSortableColumn="natureLigneFonctionnelleLabel">Nature <p-sortIcon field="natureLigneFonctionnelleLabel"></p-sortIcon></th>
+          <th pSortableColumn="banque.nom">Banque <p-sortIcon field="banque.nom"></p-sortIcon></th>
+          <th pSortableColumn="natureLigneFonctionnelle.label">Nature <p-sortIcon field="natureLigneFonctionnelle.label"></p-sortIcon></th>
           <th>Marché(s)</th>
           <th pSortableColumn="plafond">Plafond <p-sortIcon field="plafond"></p-sortIcon></th>
           <th pSortableColumn="encours">Encours <p-sortIcon field="encours"></p-sortIcon></th>
@@ -200,7 +200,7 @@
           <th pSortableColumn="taux">Taux <p-sortIcon field="taux"></p-sortIcon></th>
           <th pSortableColumn="dateDepart">Date Départ <p-sortIcon field="dateDepart"></p-sortIcon></th>
           <th pSortableColumn="dateFin">Date Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
-          <th style="width: 6rem" pSortableColumn="expired">Statut <p-sortIcon field="expired"></p-sortIcon></th>
+          <th style="width: 6rem">Statut</th>
           <th style="width: 10rem; text-align: center;">Actions</th>
         </tr>
       </ng-template>

@@ -91,7 +91,7 @@ export class VirementInternationalListComponent implements OnInit, OnDestroy {
   private lastLazyLoadEvent: TableLazyLoadEvent = {
     first: 0,
     rows: 10,
-    sortField: 'dateEmission',
+    sortField: 'id',
     sortOrder: -1,
     filters: {}
   };

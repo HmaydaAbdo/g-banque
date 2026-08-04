@@ -138,7 +138,7 @@
              [totalRecords]="totalRecords"
              [loading]="loading"
              [rowsPerPageOptions]="[3,5,10,25,50]"
-             [lazy]="true"
+             [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
              (onLazyLoad)="loadCheques($event)"
              responsiveLayout="scroll"
              [scrollable]="true"
@@ -157,11 +157,11 @@
           <th pSortableColumn="dateOperation">Date d'Opération <p-sortIcon field="dateOperation"></p-sortIcon></th>
           <th pSortableColumn="dateValeur">Date de Valeur <p-sortIcon field="dateValeur"></p-sortIcon></th>
           <th pSortableColumn="beneficiaire">Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon></th>
-          <th pSortableColumn="nomBanque">Banque <p-sortIcon field="nomBanque"></p-sortIcon></th>
+          <th pSortableColumn="banque.nom">Banque <p-sortIcon field="banque.nom"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
           <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
           <th pSortableColumn="observation">Observation <p-sortIcon field="observation"></p-sortIcon></th>
-          <th style="width:8rem;">Statut</th>
+          <th style="width:8rem;" pSortableColumn="statut">Statut <p-sortIcon field="statut"></p-sortIcon></th>
           @if (isAdmin) {
             <th style="width:8rem;">Action</th>
           }

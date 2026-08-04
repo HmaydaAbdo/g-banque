@@ -66,6 +66,19 @@
           ></p-dropdown>
         </div>
         <div class="field col-12 md:col-4">
+          <label class="font-bold">Numéro{{ numeroRequired ? ' *' : '' }}</label>
+          <input
+            pInputText
+            type="text"
+            formControlName="numero"
+            placeholder="N° de chèque ou de LCN"
+            [ngClass]="{'ng-invalid ng-dirty': f['numero'].invalid && f['numero'].touched}"
+          />
+          @if (f['numero'].invalid && f['numero'].touched) {
+            <small class="p-error">Le numéro est obligatoire pour ce motif.</small>
+          }
+        </div>
+        <div class="field col-12 md:col-4">
           <label class="font-bold">Montant </label>
           <p-inputNumber
             formControlName="montant"

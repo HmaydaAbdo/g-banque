@@ -101,7 +101,7 @@ export class RecapMoyensPaiementEncaissementsComponent implements OnInit, OnDest
   private lastLazyLoadEvent: TableLazyLoadEvent = {
     first: 0,
     rows: 10,
-    sortField: 'dateValeur',
+    sortField: 'id',
     sortOrder: -1,
     filters: {}
   };

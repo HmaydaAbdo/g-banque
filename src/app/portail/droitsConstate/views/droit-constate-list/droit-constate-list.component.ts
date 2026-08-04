@@ -179,7 +179,7 @@ export class DroitConstateListComponent implements OnInit {
     this.loading = true;
     const page = event.first ? event.first / (event.rows ?? 10) : 0;
     const size = event.rows ?? 10;
-    const sort = `${event.sortField ?? 'dateEmission'},${event.sortOrder === 1 ? 'asc' : 'desc'}`;
+    const sort = `${event.sortField ?? 'id'},${event.sortOrder === 1 ? 'asc' : 'desc'}`;
 
     // On utilise les valeurs du formulaire réactif
     const criteria = this.searchForm.value;

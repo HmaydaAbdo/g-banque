@@ -55,7 +55,7 @@
     <p-table
       #dt
       [value]="contratsCadres"
-      [lazy]="true"
+      [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
       (onLazyLoad)="load($event)"
       [paginator]="true"
       [rows]="10"

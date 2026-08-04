@@ -190,7 +190,7 @@ export class CommissionCautionListComponent implements OnInit {
 
     const page      = event.first ? Math.floor(event.first / (event.rows ?? 10)) : 0;
     const size      = event.rows ?? 10;
-    const sortField = event.sortField ?? 'dateEmission';
+    const sortField = event.sortField ?? 'id';
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort      = `${sortField},${sortOrder}`;
 

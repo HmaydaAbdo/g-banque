@@ -168,7 +168,7 @@ export class DecomptesListComponent implements OnInit {
     this.loading = true;
     const page = event.first ? event.first / (event.rows ?? 10) : 0;
     const size = event.rows ?? 10;
-    const sort = `${event.sortField ?? 'dateValeur'},${event.sortOrder === 1 ? 'asc' : 'desc'}`;
+    const sort = `${event.sortField ?? 'id'},${event.sortOrder === 1 ? 'asc' : 'desc'}`;
 
     const criteria = this.searchForm.value;
 

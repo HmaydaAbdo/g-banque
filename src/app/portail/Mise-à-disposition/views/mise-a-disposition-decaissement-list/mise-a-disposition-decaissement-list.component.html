@@ -142,7 +142,7 @@
              [totalRecords]="totalRecords"
              [loading]="loading"
              [rowsPerPageOptions]="[3,5,10,25,50]"
-             [lazy]="true"
+             [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
              (onLazyLoad)="loadMisesADisposition($event)"
              responsiveLayout="scroll"
              [scrollable]="true"
@@ -162,10 +162,10 @@
           <th pSortableColumn="beneficiaire">Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon></th>
           <th pSortableColumn="cinBeneficiaire">CIN Bénéficiaire <p-sortIcon field="cinBeneficiaire"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
-          <th pSortableColumn="banqueName">Banque <p-sortIcon field="banqueName"></p-sortIcon></th>
+          <th pSortableColumn="banque.nom">Banque <p-sortIcon field="banque.nom"></p-sortIcon></th>
           <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
           <th pSortableColumn="observation">Observation <p-sortIcon field="observation"></p-sortIcon></th>
-          <th style="width: 8rem;">Statut</th>
+          <th style="width: 8rem;" pSortableColumn="statut">Statut <p-sortIcon field="statut"></p-sortIcon></th>
           <th style="width: 10rem;">Action</th>
         </tr>
       </ng-template>

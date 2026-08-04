@@ -30,7 +30,7 @@
     <p-table
     #dt
     [value]="organismeLeasings"
-    [lazy]="true"
+    [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
     (onLazyLoad)="loadOrganismeLeasings($event)"
     [paginator]="true"
     [rows]="10"

@@ -67,12 +67,12 @@
 
   <div class="pb-8">
     <p-table #dt [value]="impotEtTaxes" [selection]="pageSelection" (selectionChange)="onSelectionChange($event)" dataKey="id" [paginator]="true" [rows]="10" [totalRecords]="totalRecords"
-             [loading]="loading" [rowsPerPageOptions]="[10, 25, 50]" [lazy]="true"
+             [loading]="loading" [rowsPerPageOptions]="[10, 25, 50]" [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
              responsiveLayout="scroll" [scrollable]="true" scrollHeight="flex" (onLazyLoad)="loadImpotEtTaxes($event)"
              [resizableColumns]="true"
              [columns]="[
                 {field: 'libelle', header: 'Libellé', sortable: true},
-                {field: 'banqueNom', header: 'Banque', sortable: true},
+                {field: 'banque.nom', header: 'Banque', sortable: true},
                 {field: 'montant', header: 'Montant', sortable: true},
                 {field: 'motif', header: 'Motif', sortable: true},
                 {field: 'dateEmission', header: 'Date d\'émission', sortable: true},

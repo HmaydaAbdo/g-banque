@@ -89,7 +89,7 @@
 
     <p-table #dt
              [value]="natures"
-             [lazy]="true"
+             [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
              (onLazyLoad)="loadNatures($event)"
              [paginator]="true"
              [rows]="10"
@@ -110,7 +110,7 @@
           <th pSortableColumn="label" style="min-width:160px">
             Libellé <p-sortIcon field="label"></p-sortIcon>
           </th>
-          <th style="min-width:200px">Description</th>
+          <th style="min-width:200px" pSortableColumn="description">Description <p-sortIcon field="description"></p-sortIcon></th>
           <th pSortableColumn="portee" style="min-width:130px">
             Portée <p-sortIcon field="portee"></p-sortIcon>
           </th>

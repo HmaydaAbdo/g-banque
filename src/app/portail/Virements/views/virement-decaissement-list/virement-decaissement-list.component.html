@@ -136,7 +136,7 @@
              [totalRecords]="totalRecords"
              [loading]="loading"
              [rowsPerPageOptions]="[3,5,10,25,50]"
-             [lazy]="true"
+             [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
              (onLazyLoad)="loadVirements($event)"
              responsiveLayout="scroll"
              [scrollable]="true"
@@ -154,13 +154,13 @@
           <th pSortableColumn="dateOperation">Date d'Opération <p-sortIcon field="dateOperation"></p-sortIcon></th>
           <th pSortableColumn="dateValeur">Date de Valeur <p-sortIcon field="dateValeur"></p-sortIcon></th>
           <th pSortableColumn="beneficiaire">Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon></th>
-          <th pSortableColumn="banqueBeneficiaire">Banque Bénéficiaire <p-sortIcon field="banqueBeneficiaire"></p-sortIcon></th>
-          <th pSortableColumn="nomBanqueEmettrice">Banque Émettrice <p-sortIcon field="nomBanqueEmettrice"></p-sortIcon></th>
+          <th pSortableColumn="banqueBeneficiare.nom">Banque Bénéficiaire <p-sortIcon field="banqueBeneficiare.nom"></p-sortIcon></th>
+          <th pSortableColumn="banqueEmettrice.nom">Banque Émettrice <p-sortIcon field="banqueEmettrice.nom"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
-          <th>Type</th>
+          <th pSortableColumn="type">Type <p-sortIcon field="type"></p-sortIcon></th>
           <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
           <th pSortableColumn="observation">Observation <p-sortIcon field="observation"></p-sortIcon></th>
-          <th>Statut</th>
+          <th pSortableColumn="statut">Statut <p-sortIcon field="statut"></p-sortIcon></th>
           @if (isAdmin) {
             <th>Action</th>
           }

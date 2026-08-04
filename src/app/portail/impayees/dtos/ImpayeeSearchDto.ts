@@ -7,6 +7,7 @@ export interface ImpayeeSearchDto {
   banqueId?: number;
   libelle?: string;
   motif?: TransactionSource;
+  numero?: string;
   montant?: number;
   status?: Status;
   type?:Type;

@@ -85,7 +85,7 @@
              [totalRecords]="totalRecords"
              [loading]="loading"
              [rowsPerPageOptions]="[10, 25, 50]"
-             [lazy]="true"
+             [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
              responsiveLayout="scroll"
              [scrollable]="true"
              scrollHeight="flex"
@@ -97,7 +97,7 @@
       <ng-template pTemplate="header">
         <tr class="white-space-nowrap">
           <th pSortableColumn="dateRapprochement">Date <p-sortIcon field="dateRapprochement"></p-sortIcon></th>
-          <th>Banque</th>
+          <th pSortableColumn="banque.nom">Banque <p-sortIcon field="banque.nom"></p-sortIcon></th>
           <th pSortableColumn="soldeDebut">Solde Début <p-sortIcon field="soldeDebut"></p-sortIcon></th>
           <th pSortableColumn="soldeFin">Solde Fin <p-sortIcon field="soldeFin"></p-sortIcon></th>
           <th pSortableColumn="totalDebit">Total Débit <p-sortIcon field="totalDebit"></p-sortIcon></th>
@@ -105,7 +105,7 @@
           <th pSortableColumn="tvaDeductible">TVA Déductible <p-sortIcon field="tvaDeductible"></p-sortIcon></th>
           <th pSortableColumn="tvaCollectee">TVA Collectée <p-sortIcon field="tvaCollectee"></p-sortIcon></th>
           <th>TVA Due</th>
-          <th>Statut</th>
+          <th pSortableColumn="statut">Statut <p-sortIcon field="statut"></p-sortIcon></th>
           <th style="width: 8rem;">Actions</th>
         </tr>
       </ng-template>

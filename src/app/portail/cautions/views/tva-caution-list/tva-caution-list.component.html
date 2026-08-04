@@ -184,7 +184,7 @@
       [showCurrentPageReport]="true"
       [rows]="10"
       [rowsPerPageOptions]="[10, 25, 50]"
-      [sortField]="'dateEmission'"
+      [sortField]="'id'"
       [sortOrder]="-1"
       styleClass="p-datatable-gridlines p-datatable-sm"
       responsiveLayout="scroll">
@@ -197,10 +197,10 @@
           }
           </th>
           <th pSortableColumn="libelle"      style="min-width:16rem">Libellé          <p-sortIcon field="libelle"      /></th>
-          <th pSortableColumn="banqueNom"    style="min-width:10rem">Banque           <p-sortIcon field="banqueNom"    /></th>
+          <th pSortableColumn="banque.nom"    style="min-width:10rem">Banque           <p-sortIcon field="banque.nom"    /></th>
           <th pSortableColumn="montant"      style="min-width:9rem" class="text-right">Montant (MAD) <p-sortIcon field="montant" /></th>
           <th pSortableColumn="dateEmission" style="min-width:10rem">Date émission    <p-sortIcon field="dateEmission" /></th>
-          <th                                style="min-width:8rem">Statut</th>
+          <th pSortableColumn="status"       style="min-width:8rem">Statut <p-sortIcon field="status" /></th>
           <th                                style="min-width:7rem" class="text-center">Actions</th>
         </tr>
       </ng-template>

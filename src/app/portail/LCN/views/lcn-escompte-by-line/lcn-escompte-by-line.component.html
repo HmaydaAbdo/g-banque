@@ -39,7 +39,7 @@
       currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} éléments"
       [loading]="loading"
       [rowsPerPageOptions]="[5, 10, 25, 50]"
-      [lazy]="true"
+      [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
       responsiveLayout="scroll"
       [scrollable]="true"
       (onLazyLoad)="loadLcnLines($event)"

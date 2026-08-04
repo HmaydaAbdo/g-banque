@@ -79,6 +79,7 @@
         formControlName="banqueId"
         [options]="banques"
         placeholder="Banque"
+        appendTo="body"
         [showClear]="true"
         styleClass="w-12rem" />
 
@@ -212,7 +213,7 @@
       [showCurrentPageReport]="true"
       [rows]="10"
       [rowsPerPageOptions]="[10, 25, 50]"
-      [sortField]="'dateEmission'"
+      [sortField]="'id'"
       [sortOrder]="-1"
       styleClass="p-datatable-gridlines p-datatable-sm"
       responsiveLayout="scroll">
@@ -223,12 +224,12 @@
             <p-tableHeaderCheckbox  />
           </th>
           <th pSortableColumn="libelle"      style="min-width:16rem">Libellé          <p-sortIcon field="libelle"      /></th>
-          <th pSortableColumn="banqueNom"    style="min-width:10rem">Banque           <p-sortIcon field="banqueNom"    /></th>
-          <th                                style="min-width:9rem">Nature</th>
+          <th pSortableColumn="banque.nom"    style="min-width:10rem">Banque           <p-sortIcon field="banque.nom"    /></th>
+          <th pSortableColumn="caution.nature.label" style="min-width:9rem">Nature <p-sortIcon field="caution.nature.label" /></th>
           <th pSortableColumn="montant"      style="min-width:9rem" class="text-right">Montant commission <p-sortIcon field="montant" /></th>
-          <th                                style="min-width:9rem" class="text-right">Montant caution</th>
+          <th pSortableColumn="caution.montant" style="min-width:9rem" class="text-right">Montant caution <p-sortIcon field="caution.montant" /></th>
           <th pSortableColumn="dateEmission" style="min-width:10rem">Date émission    <p-sortIcon field="dateEmission" /></th>
-          <th                                style="min-width:8rem">Statut</th>
+          <th pSortableColumn="status"       style="min-width:8rem">Statut <p-sortIcon field="status" /></th>
           <th                                style="min-width:9rem" class="text-center">Actions</th>
         </tr>
       </ng-template>

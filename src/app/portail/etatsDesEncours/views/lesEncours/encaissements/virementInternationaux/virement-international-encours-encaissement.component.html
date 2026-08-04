@@ -74,7 +74,7 @@
       [totalRecords]="totalRecords"
       [loading]="loading"
       [rowsPerPageOptions]="[10, 25, 50]"
-      [lazy]="true"
+      [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
       (onLazyLoad)="loadOutstandingVirements($event)"
       responsiveLayout="scroll"
       [scrollable]="true"

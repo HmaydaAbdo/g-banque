@@ -87,7 +87,7 @@ export class LcnDecaissementsListComponent implements OnInit, OnDestroy {
   private lastLazyLoadEvent: TableLazyLoadEvent = {
     first: 0,
     rows: 10,
-    sortField: 'dateEcheance',
+    sortField: 'id',
     sortOrder: -1,
     filters: {}
   };

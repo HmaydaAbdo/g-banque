@@ -51,7 +51,7 @@
   <!-- ═══ TABLE (la page entière défile) ══════════════════════════════════ -->
   <div class="pg-table" style="flex-shrink:0; overflow:visible;">
     <p-table #dt [value]="configs" [loading]="loading" dataKey="id"
-             [lazy]="true" (onLazyLoad)="load($event)"
+             [lazy]="true" [sortField]="'id'" [sortOrder]="-1" (onLazyLoad)="load($event)"
              [paginator]="true" [rows]="rows" [totalRecords]="totalRecords"
              [rowsPerPageOptions]="[15,25,50]"
              [showCurrentPageReport]="true"

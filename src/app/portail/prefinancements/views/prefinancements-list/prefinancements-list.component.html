@@ -143,7 +143,7 @@
   <div class="pb-8">
     <p-table #dt [value]="prefinancements" [paginator]="true"
              [rows]="10" [totalRecords]="totalRecords"
-             [loading]="loading" [rowsPerPageOptions]="[10, 25, 50]" [lazy]="true"
+             [loading]="loading" [rowsPerPageOptions]="[10, 25, 50]" [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
              responsiveLayout="scroll" [scrollable]="true" (onLazyLoad)="loadPrefinancements($event)"
              styleClass="p-datatable-gridlines text-xs"
              [showCurrentPageReport]="true"
@@ -152,16 +152,16 @@
       <ng-template pTemplate="header">
         <tr class="white-space-nowrap">
           <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
-          <th pSortableColumn="marcheNumero">Marché <p-sortIcon field="marcheNumero"></p-sortIcon></th>
-          <th pSortableColumn="banqueName">Banque <p-sortIcon field="banqueName"></p-sortIcon></th>
+          <th pSortableColumn="marche.numero">Marché <p-sortIcon field="marche.numero"></p-sortIcon></th>
+          <th pSortableColumn="marche.banque.nom">Banque <p-sortIcon field="marche.banque.nom"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
-          <th>Observation</th>
+          <th pSortableColumn="observation">Observation <p-sortIcon field="observation"></p-sortIcon></th>
           <th pSortableColumn="dateEmission"> date d'Emission <p-sortIcon field="dateEmission"></p-sortIcon></th>
-          <th pSortableColumn="dateOperation"> date d'Operation <p-sortIcon field="dateEmission"></p-sortIcon></th>
-          <th pSortableColumn="dateValeur"> date valuer <p-sortIcon field="dateEmission"></p-sortIcon></th>
+          <th pSortableColumn="dateOperation"> date d'Operation <p-sortIcon field="dateOperation"></p-sortIcon></th>
+          <th pSortableColumn="dateValeur"> date valuer <p-sortIcon field="dateValeur"></p-sortIcon></th>
 
-          <th>Type</th>
-          <th>Statut</th>
+          <th pSortableColumn="type">Type <p-sortIcon field="type"></p-sortIcon></th>
+          <th pSortableColumn="status">Statut <p-sortIcon field="status"></p-sortIcon></th>
           <th style="width: 10rem;">Actions</th>
         </tr>
       </ng-template>

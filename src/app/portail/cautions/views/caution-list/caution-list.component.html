@@ -322,10 +322,10 @@
           <th pSortableColumn="numeroCaution" >
             N° Caution <p-sortIcon field="numeroCaution"></p-sortIcon>
           </th>
-          <th >Banque</th>
-          <th >Nature</th>
-          <th >Marché</th>
-          <th >Organisme</th>
+          <th pSortableColumn="banque.nom">Banque <p-sortIcon field="banque.nom"></p-sortIcon></th>
+          <th pSortableColumn="nature.label">Nature <p-sortIcon field="nature.label"></p-sortIcon></th>
+          <th pSortableColumn="marche.numero">Marché <p-sortIcon field="marche.numero"></p-sortIcon></th>
+          <th pSortableColumn="organisme">Organisme <p-sortIcon field="organisme"></p-sortIcon></th>
           <th pSortableColumn="montant" class="text-right" >
             Montant <p-sortIcon field="montant"></p-sortIcon>
           </th>
@@ -335,8 +335,8 @@
           <th pSortableColumn="dateDeMainLevee" >
             Date main levée <p-sortIcon field="dateDeMainLevee"></p-sortIcon>
           </th>
-          <th class="text-center">Taux</th>
-          <th class="text-center">Statut</th>
+          <th class="text-center" pSortableColumn="taux">Taux <p-sortIcon field="taux"></p-sortIcon></th>
+          <th class="text-center" pSortableColumn="actif">Statut <p-sortIcon field="actif"></p-sortIcon></th>
           <th class="text-center" >Actions</th>
         </tr>
       </ng-template>

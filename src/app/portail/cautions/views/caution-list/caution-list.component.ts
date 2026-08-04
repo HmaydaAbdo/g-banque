@@ -284,7 +284,7 @@ export class CautionListComponent implements OnInit {
       ...this.buildFilterCriteres(),
       page,
       size:  event.rows ?? 10,
-      sort: `${event.sortField ?? 'dateDePrise'},${event.sortOrder === 1 ? 'asc' : 'desc'}`,
+      sort: `${event.sortField ?? 'id'},${event.sortOrder === 1 ? 'asc' : 'desc'}`,
     };
 
     this.cautionService.rechercher(criteres)

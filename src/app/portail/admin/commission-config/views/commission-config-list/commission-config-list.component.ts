@@ -63,7 +63,7 @@ export class CommissionConfigListComponent implements OnInit {
   totalRecords = 0;
   first = 0;
   rows = 15;
-  sortField: string | string[] = 'banque.nom';
+  sortField: string | string[] = 'id';
   sortOrder = 1;
 
   loading = false;

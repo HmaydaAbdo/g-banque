@@ -91,7 +91,7 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
   protected lastLazyLoadEvent: TableLazyLoadEvent = {
     first: 0,
     rows: 3,
-    sortField: 'dateEcheance',
+    sortField: 'id',
     sortOrder: 1,
     filters: {}
   };

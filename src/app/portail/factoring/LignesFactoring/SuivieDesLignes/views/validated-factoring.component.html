@@ -40,7 +40,7 @@
       [totalRecords]="totalRecords"
       [loading]="loading"
       [rowsPerPageOptions]="[5, 10, 25, 50]"
-      [lazy]="true"
+      [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
       responsiveLayout="scroll"
       [scrollable]="true"
       (onLazyLoad)="loadFactoringLines($event)"
@@ -50,8 +50,8 @@
         {field: 'dateOperation', header: 'Date Opération', sortable: true},
         {field: 'dateValeur', header: 'Date Valeur', sortable: true},
         {field: 'libelle', header: 'Libellé', sortable: false},
-        {field: 'debit', header: 'Débit', sortable: true},
-        {field: 'credit', header: 'Crédit', sortable: true},
+        {field: 'montant', header: 'Débit', sortable: true},
+        {field: 'montant', header: 'Crédit', sortable: true},
         {field: 'observation', header: 'Observation', sortable: false},
         {field: 'status', header: 'Statut', sortable: true},
         {field: 'type', header: 'Type', sortable: true}

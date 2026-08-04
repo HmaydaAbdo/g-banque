@@ -8,5 +8,6 @@ export interface ImpayeeRequestDto {
   banqueId: number;
   type: Type;
   motif: TransactionSource;
+  numero?: string;
   dateEmission: string;
 }

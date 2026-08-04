@@ -146,7 +146,7 @@
       [totalRecords]="totalRecords"
       [loading]="loading"
       [rowsPerPageOptions]="[3, 5, 10, 25, 50]"
-      [lazy]="true"
+      [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
       (onLazyLoad)="loadContrats($event)"
       responsiveLayout="scroll"
       [scrollable]="true"
@@ -164,8 +164,8 @@
         <tr>
           <th pSortableColumn="id">Id <p-sortIcon field="id"></p-sortIcon></th>
           <th pSortableColumn="numeroContrat">N° Contrat <p-sortIcon field="numeroContrat"></p-sortIcon></th>
-          <th pSortableColumn="nomBanqueDePrelevement">Banque <p-sortIcon field="nomBanqueDePrelevement"></p-sortIcon></th>
-          <th pSortableColumn="nomOrganismeLeasing">Organisme Leasing</th>
+          <th pSortableColumn="banqueDePrelevement.nom">Banque <p-sortIcon field="banqueDePrelevement.nom"></p-sortIcon></th>
+          <th pSortableColumn="contratCadre.organisme.nom">Organisme Leasing</th>
           <th pSortableColumn="typeContrat">Type <p-sortIcon field="typeContrat"></p-sortIcon></th>
           <th pSortableColumn="montantAchatTTC">Montant Achat TTC <p-sortIcon field="montantAchatTTC"></p-sortIcon></th>
           <th pSortableColumn="plafond">Plafond <p-sortIcon field="plafond"></p-sortIcon></th>

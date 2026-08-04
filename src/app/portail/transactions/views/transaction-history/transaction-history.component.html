@@ -122,7 +122,7 @@
              [rows]="10"
              [totalRecords]="totalRecords"
              [loading]="loading"
-             [lazy]="true"
+             [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
              (onLazyLoad)="loadTransactions($event)"
              [rowsPerPageOptions]="[10, 25, 50]"
              styleClass="p-datatable-gridlines p-datatable-sm text-xs"
@@ -136,18 +136,18 @@
       <ng-template pTemplate="header">
         <tr class="white-space-nowrap">
           <th pSortableColumn="id" >ID<p-sortIcon field="id"></p-sortIcon></th>
-          <th >Banque</th>
+          <th pSortableColumn="banqueDePrelevement.nom">Banque <p-sortIcon field="banqueDePrelevement.nom"></p-sortIcon></th>
           <th pSortableColumn="dateEmission" >Date émission<p-sortIcon field="dateEmission"></p-sortIcon></th>
           <th pSortableColumn="dateOperations" >Date opération<p-sortIcon field="dateOperations"></p-sortIcon></th>
           <th pSortableColumn="dateValeur" >Date valuer<p-sortIcon field="dateValeur"></p-sortIcon></th>
           <th pSortableColumn="debit" >Débit <p-sortIcon field="debit"></p-sortIcon></th>
           <th pSortableColumn="credit" >Crédit <p-sortIcon field="credit"></p-sortIcon></th>
-          <th >TVA Déductible</th>
-          <th >TVA Collectée</th>
-          <th >Source</th>
-          <th  class="text-center">Statut</th>
+          <th pSortableColumn="tvaDeductible">TVA Déductible <p-sortIcon field="tvaDeductible"></p-sortIcon></th>
+          <th pSortableColumn="tvaCollectee">TVA Collectée <p-sortIcon field="tvaCollectee"></p-sortIcon></th>
+          <th pSortableColumn="transactionSource">Source <p-sortIcon field="transactionSource"></p-sortIcon></th>
+          <th class="text-center" pSortableColumn="rapprochement.statut">Statut <p-sortIcon field="rapprochement.statut"></p-sortIcon></th>
           <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
-          <th>Observation</th>
+          <th pSortableColumn="observation">Observation <p-sortIcon field="observation"></p-sortIcon></th>
           <th pSortableColumn="referent">Référent <p-sortIcon field="referent"></p-sortIcon></th>
 
         </tr>

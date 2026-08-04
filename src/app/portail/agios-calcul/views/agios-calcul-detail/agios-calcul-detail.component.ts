@@ -231,7 +231,7 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
     dt.onLazyLoad.emit({
       first: 0,
       rows: this.rows,
-      sortField: 'dateValeur',
+      sortField: 'id',
       sortOrder: 1
     });
     this.loadAggregates();
@@ -255,7 +255,7 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
     dt.onLazyLoad.emit({
       first: 0,
       rows: this.rows,
-      sortField: 'dateValeur',
+      sortField: 'id',
       sortOrder: 1
     });
     this.loadAggregates();
