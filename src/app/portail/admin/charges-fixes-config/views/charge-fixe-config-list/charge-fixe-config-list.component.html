@@ -1,7 +1,7 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="flex flex-column w-screen h-screen overflow-y-scroll gap-3 p-3 pb-8">
+<div class="flex flex-column w-full h-full overflow-y-scroll gap-3 p-3 pb-8">
 
   <!-- ═══ HEADER ═══════════════════════════════════════════════════════════ -->
   <div class="pg-header">
@@ -61,7 +61,7 @@
 
   <!-- ═══ TABLE (colonne Banque, triable — la page entière défile) ═══════ -->
   <!-- flex-shrink:0 + overflow:visible : empêche ce wrapper d'être compressé et de
-       clipper son contenu à l'intérieur du shell flex-column h-screen (sinon la barre
+       clipper son contenu à l'intérieur du shell flex-column h-full (sinon la barre
        de défilement de la page reste inerte car rien ne dépasse réellement de 100vh). -->
   <div class="pg-table" style="flex-shrink:0; overflow:visible;">
     <p-table #dt [value]="configs" [loading]="loading" dataKey="id"
