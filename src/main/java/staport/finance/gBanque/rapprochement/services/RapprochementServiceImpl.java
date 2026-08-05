@@ -123,8 +123,12 @@ public class RapprochementServiceImpl implements IRapprochementService {
 
         Rapprochement rapprochement = findOrThrow(rapprochementId);
 
+        // NB: un Pageable "unpaged" ignore silencieusement son Sort dans Spring Data JPA
+        // (SimpleJpaRepository.getQuery ne consulte getSort() que si isPaged() est vrai) —
+        // on utilise donc un PageRequest paginé avec une taille couvrant tout le rapprochement.
         Page<TransactionResponseDto> transactionPage = transactionService.searchTransactionsForRapprochement(
-                rapprochementId, searchDto, Pageable.unpaged(Sort.by(Sort.Direction.ASC, "dateOperations")));
+                rapprochementId, searchDto,
+                PageRequest.of(0, Integer.MAX_VALUE, Sort.by(Sort.Direction.ASC, "dateOperations")));
 
         // Single aggregate query — no Java stream summation
         RapprochementAggregates agg = fetchAggregates(rapprochementId);
