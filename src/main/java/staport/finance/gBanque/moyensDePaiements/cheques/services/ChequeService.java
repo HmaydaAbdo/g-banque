@@ -126,6 +126,17 @@ public class ChequeService {
         return toDto(trouverOuLeverException(id));
     }
 
+    /**
+     * Supprime un chèque saisi manuellement.
+     *
+     * <p>Un chèque issu de la synchronisation FunPaiement ({@code idPaiement} renseigné) ne peut pas
+     * être supprimé : le lecteur de synchro relit tout l'historique à chaque exécution et la seule
+     * clé d'idempotence est {@code findByIdPaiement}. Supprimer la ligne efface cette clé, et la
+     * synchro suivante la recrée à l'identique. Pour retirer une telle ligne des encours, l'annuler
+     * plutôt que la supprimer : une ligne existante n'est jamais recréée ni écrasée par la synchro.
+     * Même règle que {@code VirementService.deleteVirement} (boucle constatée en production sur les
+     * virements en juillet 2026).
+     */
     @Transactional
     @AuditableAction(operation = AuditOperation.DELETE, entity = Cheque.class)
     public void deleteCheque(Long id) {
@@ -136,6 +147,14 @@ public class ChequeService {
         if (cheque.getStatut() == StatutMoyenPaiement.REGLE) {
             log.warn("Tentative de suppression d'un chèque déjà réglé — id: {}", id);
             throw new ChequeBusinessException("Suppression interdite : le chèque id " + id + " est déjà réglé.");
+        }
+
+        if (cheque.getIdPaiement() != null) {
+            log.warn("Tentative de suppression d'un chèque synchronisé — id: {}, idPaiement: {}",
+                    id, cheque.getIdPaiement());
+            throw new ChequeBusinessException(
+                    "Suppression interdite : le chèque " + id + " provient de la synchronisation FunPaiement "
+                            + "et serait recréé à la prochaine synchronisation. Annulez-le plutôt que de le supprimer.");
         }
 
         chequeRepository.deleteById(id);

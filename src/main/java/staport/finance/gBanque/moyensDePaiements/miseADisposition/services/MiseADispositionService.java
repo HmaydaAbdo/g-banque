@@ -123,6 +123,17 @@ public class MiseADispositionService {
         return toDto(trouverOuLeverException(id));
     }
 
+    /**
+     * Supprime une mise à disposition saisie manuellement.
+     *
+     * <p>Une mise à disposition issue de la synchronisation FunPaiement ({@code idPaiement}
+     * renseigné) ne peut pas être supprimée : le lecteur de synchro relit tout l'historique à chaque
+     * exécution et la seule clé d'idempotence est {@code findByIdPaiement}. Supprimer la ligne efface
+     * cette clé, et la synchro suivante la recrée à l'identique. Pour retirer une telle ligne des
+     * encours, l'annuler plutôt que la supprimer : une ligne existante n'est jamais recréée ni
+     * écrasée par la synchro. Même règle que {@code VirementService.deleteVirement} (boucle
+     * constatée en production sur les virements en juillet 2026).
+     */
     @Transactional
     @AuditableAction(operation = AuditOperation.DELETE, entity = MiseADisposition.class)
     public void deleteMiseAdispositionById(Long id) {
@@ -133,6 +144,14 @@ public class MiseADispositionService {
         if (miseADisposition.getStatut() == StatutMoyenPaiement.REGLE) {
             log.warn("Tentative de suppression d'une mise à disposition déjà réglée, ID={}", id);
             throw new MiseADispositionBusinessException("Suppression interdite: la mise à dispo with id " + id + " est déjà réglée.");
+        }
+
+        if (miseADisposition.getIdPaiement() != null) {
+            log.warn("Tentative de suppression d'une mise à disposition synchronisée, ID={}, idPaiement={}",
+                    id, miseADisposition.getIdPaiement());
+            throw new MiseADispositionBusinessException(
+                    "Suppression interdite: la mise à disposition " + id + " provient de la synchronisation FunPaiement "
+                            + "et serait recréée à la prochaine synchronisation. Annulez-la plutôt que de la supprimer.");
         }
 
         miseADispositionRepository.deleteById(id);

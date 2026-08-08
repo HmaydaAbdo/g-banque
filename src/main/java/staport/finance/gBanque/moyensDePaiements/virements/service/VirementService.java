@@ -204,6 +204,18 @@ public class VirementService {
         return new EncoursVirementResponseDto(totalDesEncours, virementPage.map(this::toDto));
     }
 
+    /**
+     * Supprime un virement saisi manuellement.
+     *
+     * <p>Un virement issu de la synchronisation FunPaiement ({@code idPaiement} renseigné) ne peut
+     * pas être supprimé : le lecteur de synchro relit tout l'historique à chaque exécution
+     * ({@code PaymentItemReader.open()} → {@code fetchAll()}) et la seule clé d'idempotence est
+     * {@code findByIdPaiement}. Supprimer la ligne efface cette clé, et la synchro suivante la
+     * recrée à l'identique — boucle observée en production du 13 au 17/07/2026 sur les
+     * encaissements de virements internes du 18/03/2026. Pour retirer une telle ligne des encours,
+     * l'annuler plutôt que la supprimer : une ligne existante n'est jamais recréée ni écrasée par
+     * la synchro.
+     */
     @Transactional
     @AuditableAction(operation = AuditOperation.DELETE, entity = Virement.class)
     public void deleteVirement(Long id) {
@@ -214,6 +226,14 @@ public class VirementService {
         if (virement.getStatut() == StatutMoyenPaiement.REGLE) {
             log.warn("Tentative de suppression d'un virement déjà réglé, ID={}", id);
             throw new VirementBusinessException("Suppression interdite: le virement with id " + id + " est déjà réglé.");
+        }
+
+        if (virement.getIdPaiement() != null) {
+            log.warn("Tentative de suppression d'un virement synchronisé, ID={}, idPaiement={}",
+                    id, virement.getIdPaiement());
+            throw new VirementBusinessException(
+                    "Suppression interdite: le virement " + id + " provient de la synchronisation FunPaiement "
+                            + "et serait recréé à la prochaine synchronisation. Annulez-le plutôt que de le supprimer.");
         }
 
         virementRepository.delete(virement);

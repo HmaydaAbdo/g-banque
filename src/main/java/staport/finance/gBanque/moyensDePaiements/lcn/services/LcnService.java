@@ -210,6 +210,17 @@ public class LcnService {
         return toDto(trouverOuLeverException(id));
     }
 
+    /**
+     * Supprime un LCN saisi manuellement.
+     *
+     * <p>Un LCN issu de la synchronisation FunPaiement ({@code idPaiement} renseigné) ne peut pas
+     * être supprimé : le lecteur de synchro relit tout l'historique à chaque exécution et la seule
+     * clé d'idempotence est {@code findByIdPaiement}. Supprimer la ligne efface cette clé, et la
+     * synchro suivante la recrée à l'identique. Pour retirer une telle ligne des encours, l'annuler
+     * plutôt que la supprimer : une ligne existante n'est jamais recréée ni écrasée par la synchro.
+     * Même règle que {@code VirementService.deleteVirement} (boucle constatée en production sur les
+     * virements en juillet 2026).
+     */
     @Transactional
     @AuditableAction(operation = AuditOperation.DELETE, entity = Lcn.class)
     public void deleteLcn(Long id) {
@@ -220,6 +231,14 @@ public class LcnService {
         if (lcn.getStatut() == StatutMoyenPaiement.REGLE) {
             log.warn("Tentative de suppression d'un LCN déjà réglé, ID={}", id);
             throw new LcnBusinessException("Suppression interdite: le lcn with id " + id + " est déjà réglé.");
+        }
+
+        if (lcn.getIdPaiement() != null) {
+            log.warn("Tentative de suppression d'un LCN synchronisé, ID={}, idPaiement={}",
+                    id, lcn.getIdPaiement());
+            throw new LcnBusinessException(
+                    "Suppression interdite: le LCN " + id + " provient de la synchronisation FunPaiement "
+                            + "et serait recréé à la prochaine synchronisation. Annulez-le plutôt que de le supprimer.");
         }
 
         lcnRepository.deleteById(id);
