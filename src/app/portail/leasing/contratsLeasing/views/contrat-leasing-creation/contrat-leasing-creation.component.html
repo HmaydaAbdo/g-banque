@@ -1,47 +1,44 @@
-<div class="card">
-  <div class="flex justify-content-center ">
-    <div class="flex flex-column align-items-center   min-h-full">
-      <div class="w-full bg-white shadow-md rounded-lg py-2 px-4 flex flex-column my-auto h-full overflow-y-scroll">
-        <h2 class="text-2xl font-bold mb-2 text-center">Création d'un Contrat Leasing</h2>
-        <h3 class="text-lg text-gray-600 mb-4 text-center">Suivez les étapes pour configurer votre nouveau contrat.</h3>
-        <p-steps [model]="items" [activeIndex]="activeIndex" (activeIndexChange)="onStepChange($event)" [readonly]="false"></p-steps>
+<div class="lw">
+  <div class="lw__head">
+    <h2 class="lw__title">Création d'un Contrat Leasing</h2>
+    <p class="lw__subtitle">Suivez les étapes pour configurer votre nouveau contrat.</p>
+    <p-steps [model]="items" [activeIndex]="activeIndex" (activeIndexChange)="onStepChange($event)" [readonly]="false"></p-steps>
+  </div>
 
-        <router-outlet (activate)="onActivate($event)"></router-outlet>
+  <div class="lw__body">
+    <router-outlet (activate)="onActivate($event)"></router-outlet>
+  </div>
 
-        <div class="flex justify-content-between w-full px-4  border-t border-gray-200 pb-8 mb-8">
-          <p-button
-            label="Précédent"
-            icon="pi pi-arrow-left"
-            (onClick)="navigateToStep('prev')"
-            [disabled]="activeIndex === 0"
-            severity="secondary"
-          ></p-button>
+  <div class="lw__actions">
+    <p-button
+      label="Précédent"
+      icon="pi pi-arrow-left"
+      (onClick)="navigateToStep('prev')"
+      [disabled]="activeIndex === 0"
+      severity="secondary"
+    ></p-button>
 
-          @if (activeIndex < items.length - 1) {
-            <p-button
-              label="Suivant"
-              icon="pi pi-arrow-right"
-              iconPos="right"
-              (onClick)="navigateToStep('next')"
-              [disabled]="!isCurrentStepGloballyValid"
-              severity="primary"
-            ></p-button>
-          }
+    @if (activeIndex < items.length - 1) {
+      <p-button
+        label="Suivant"
+        icon="pi pi-arrow-right"
+        iconPos="right"
+        (onClick)="navigateToStep('next')"
+        [disabled]="!isCurrentStepGloballyValid"
+        severity="primary"
+      ></p-button>
+    }
 
-          @if (activeIndex === items.length - 1) {
-            <p-button
-              label="Soumettre"
-              icon="pi pi-check"
-              iconPos="left"
-              (onClick)="submitContract()"
-              [disabled]="!isSubmitEnabled()"
-              severity="success"
-            ></p-button>
-          }
-        </div>
-      </div>
-    </div>
+    @if (activeIndex === items.length - 1) {
+      <p-button
+        label="Soumettre"
+        icon="pi pi-check"
+        iconPos="left"
+        (onClick)="submitContract()"
+        [disabled]="!isSubmitEnabled()"
+        severity="success"
+      ></p-button>
+    }
   </div>
 </div>
 <p-confirmDialog></p-confirmDialog>
-<p-messages></p-messages>

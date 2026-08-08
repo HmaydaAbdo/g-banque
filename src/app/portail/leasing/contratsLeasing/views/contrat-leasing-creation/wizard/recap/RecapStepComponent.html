@@ -1,143 +1,98 @@
-<div class="p-fluid recap-step-container">
+<div class="recap">
 
-  <div class="flex justify-content-center align-items-center gap-4 ">
-    <h2 class=" font-extrabold text-gray-800 text-center">
-      Récapitulatif du Contrat de Leasing
-    </h2>
+  <div class="recap__head">
+    <h3 class="recap__title">Récapitulatif du Contrat de Leasing</h3>
     <p-tag
       [value]="isContractValid ? 'Contrat Valide' : 'Contrat Invalide'"
       [severity]="isContractValid ? 'success' : 'danger'"
       [rounded]="true"
-      class=" font-bold shadow-lg"
     ></p-tag>
   </div>
 
   @if (contractData) {
 
     @if (formattedGlobalMessages.length > 0) {
-      <div class="mb-5">
-        <p-messages [value]="formattedGlobalMessages" [enableService]="false"></p-messages>
-      </div>
+      <p-messages [value]="formattedGlobalMessages" [enableService]="false"></p-messages>
     }
 
-    <p-fieldset legend="Détails Principaux du Contrat" [toggleable]="true" [collapsed]="false" class="mb-4">
-      <div class="grid p-nogutter">
-        <div class="col-12 md:col-6 lg:col-4 p-3">
-          <div class="flex align-items-center gap-2">
-            <i class="pi pi-file-o text-xl text-primary"></i>
-            <span class="font-semibold text-lg">Numéro de Contrat:</span>
-          </div>
-          <p class="ml-4 mt-1 text-700">{{ contractData.numeroContrat || '—' }}</p>
-        </div>
-        <div class="col-12 md:col-6 lg:col-4 p-3">
-          <div class="flex align-items-center gap-2">
-            <i class="pi pi-building text-xl text-primary"></i>
-            <span class="font-semibold text-lg">Immobilisation:</span>
-          </div>
-          <p class="ml-4 mt-1 text-700">{{ contractData.immobilisation || '—' }}</p>
-        </div>
-        <div class="col-12 md:col-6 lg:col-4 p-3">
-          <div class="flex align-items-center gap-2">
-            <i class="pi pi-calendar text-xl text-primary"></i>
-            <span class="font-semibold text-lg">Date de Début:</span>
-          </div>
-          <p class="ml-4 mt-1 text-700">{{ formatDate(contractData.dateDebut) }}</p>
-        </div>
-        <div class="col-12 md:col-6 lg:col-4 p-3">
-          <div class="flex align-items-center gap-2">
-            <i class="pi pi-hourglass text-xl text-primary"></i>
-            <span class="font-semibold text-lg">Période:</span>
-          </div>
-          <p class="ml-4 mt-1 text-700">{{ contractData.periodeEnMois ? contractData.periodeEnMois + ' mois' : '—' }}</p>
-        </div>
-        <div class="col-12 md:col-6 lg:col-4 p-3">
-          <div class="flex align-items-center gap-2">
-            <i class="pi pi-briefcase text-xl text-primary"></i>
-            <span class="font-semibold text-lg">Organisme de Leasing:</span>
-          </div>
-          <p class="ml-4 mt-1 text-700">{{ contractData.nomOrganismeLeasing || '—' }}</p>
-        </div>
-        <div class="col-12 md:col-6 lg:col-4 p-3">
-          <div class="flex align-items-center gap-2">
-            <i class="pi pi-bank text-xl text-primary"></i>
-            <span class="font-semibold text-lg">Banque de Prélèvement:</span>
-          </div>
-          <p class="ml-4 mt-1 text-700">{{ contractData.nomBanqueDePrelevement || '—' }}</p>
-        </div>
-        <div class="col-12 md:col-6 lg:col-4 p-3">
-          <div class="flex align-items-center gap-2">
-            <i class="pi pi-sitemap text-xl text-primary"></i>
-            <span class="font-semibold text-lg">Type de Contrat:</span>
-          </div>
-          <p class="ml-4 mt-1 text-700">{{ getContractTypeDisplayName(contractData.typeContrat) }}</p>
-        </div>
-        <div class="col-12 md:col-6 lg:col-4 p-3">
-          <div class="flex align-items-center gap-2">
-            <i class="pi pi-calculator text-xl text-primary"></i>
-            <span class="font-semibold text-lg">Valeur Résiduelle:</span>
-          </div>
-          <p class="ml-4 mt-1 text-700">
-            {{ contractData.typeContrat === TypeContratLeasing.LINEAIRE ? formatCurrency(contractData.valeurResiduelle) : 'Non applicable' }}
-          </p>
-        </div>
+    <div class="recap__grid">
+      <div class="recap__row">
+        <span class="recap__label">Numéro de Contrat</span>
+        <span class="recap__value">{{ contractData.numeroContrat || '—' }}</span>
       </div>
-    </p-fieldset>
-
-    <p-fieldset legend="Récapitulatif Financier" [toggleable]="true" [collapsed]="false" class="mb-4">
-      <div class="grid text-center">
-        <div class="col-12 md:col-6 lg:col-4 p-3">
-          <div class="card p-4 surface-100 border-round shadow-1">
-            <i class="pi pi-tag text-4xl text-purple-500 mb-3"></i>
-            <div class="text-xl text-purple-800 font-bold mb-2">Montant Achat TTC</div>
-            <div class="text-3xl font-bold text-purple-900">{{ formatCurrency(contractData.montantAchatTTC) }}</div>
-          </div>
-        </div>
-        <div class="col-12 md:col-6 lg:col-4 p-3">
-          <div class="card p-4 surface-100 border-round shadow-1">
-            <i class="pi pi-money-bill text-4xl text-green-500 mb-3"></i>
-            <div class="text-xl text-green-800 font-bold mb-2">Endettement</div>
-            <div class="text-3xl font-bold text-green-900">{{ formatCurrency(contractData.expectedTotalAmountService) }}</div>
-          </div>
-        </div>
+      <div class="recap__row">
+        <span class="recap__label">Immobilisation</span>
+        <span class="recap__value">{{ contractData.immobilisation || '—' }}</span>
       </div>
-    </p-fieldset>
+      <div class="recap__row">
+        <span class="recap__label">Date de Début</span>
+        <span class="recap__value">{{ formatDate(contractData.dateDebut) }}</span>
+      </div>
+      <div class="recap__row">
+        <span class="recap__label">Période</span>
+        <span class="recap__value">{{ contractData.periodeEnMois ? contractData.periodeEnMois + ' mois' : '—' }}</span>
+      </div>
+      <div class="recap__row">
+        <span class="recap__label">Organisme de Leasing</span>
+        <span class="recap__value">{{ contractData.nomOrganismeLeasing || '—' }}</span>
+      </div>
+      <div class="recap__row">
+        <span class="recap__label">Banque de Prélèvement</span>
+        <span class="recap__value">{{ contractData.nomBanqueDePrelevement || '—' }}</span>
+      </div>
+      <div class="recap__row">
+        <span class="recap__label">Type de Contrat</span>
+        <span class="recap__value">{{ getContractTypeDisplayName(contractData.typeContrat) }}</span>
+      </div>
+      <div class="recap__row">
+        <span class="recap__label">Valeur Résiduelle</span>
+        <span class="recap__value">
+          {{ contractData.typeContrat === TypeContratLeasing.LINEAIRE ? formatCurrency(contractData.valeurResiduelle) : 'Non applicable' }}
+        </span>
+      </div>
+    </div>
 
-    <p-fieldset legend="Détail des Phases" [toggleable]="true" [collapsed]="false">
+    <div class="recap__tiles">
+      <div class="recap__tile">
+        <span class="recap__tile-label">Montant Achat TTC</span>
+        <span class="recap__tile-value">{{ formatCurrency(contractData.montantAchatTTC) }}</span>
+      </div>
+      <div class="recap__tile">
+        <span class="recap__tile-label">Endettement</span>
+        <span class="recap__tile-value">{{ formatCurrency(contractData.expectedTotalAmountService) }}</span>
+      </div>
+    </div>
+
+    <div>
+      <span class="recap__section-label">Détail des Phases</span>
       <p-table
         [value]="contractData.phases"
-        [paginator]="true"
-        [rows]="5"
-        [showCurrentPageReport]="true"
-        currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} phases"
-        [rowsPerPageOptions]="[5,10,20]"
         dataKey="numeroPhase"
-        styleClass="p-datatable-gridlines p-datatable-striped w-full"
+        styleClass="p-datatable-sm p-datatable-gridlines"
       >
         <ng-template pTemplate="header">
-          <tr class="bg-gray-100 text-gray-700 uppercase text-sm leading-normal">
-            <th class="py-3 px-6 text-left">Numéro Phase</th>
-            <th class="py-3 px-6 text-left">Durée (Mois)</th>
-            <th class="py-3 px-6 text-left">Mensualité TTC</th>
+          <tr>
+            <th>Numéro Phase</th>
+            <th>Durée (Mois)</th>
+            <th class="text-right">Mensualité TTC</th>
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-phase>
-          <tr class="border-b border-gray-200 hover:bg-gray-50 text-gray-700 text-sm">
-            <td class="py-3 px-6 text-left whitespace-nowrap">{{ phase.numeroPhase }}</td>
-            <td class="py-3 px-6 text-left">{{ phase.dureeMois }}</td>
-            <td class="py-3 px-6 text-left">{{ formatCurrency(phase.mensualiteTTC) }}</td>
+          <tr>
+            <td>{{ phase.numeroPhase }}</td>
+            <td>{{ phase.dureeMois }}</td>
+            <td class="text-right">{{ formatCurrency(phase.mensualiteTTC) }}</td>
           </tr>
         </ng-template>
         <ng-template pTemplate="emptymessage">
           <tr>
-            <td colspan="3" class="text-center py-4 text-gray-500">Aucune phase ajoutée.</td>
+            <td colspan="3" class="recap__empty">Aucune phase ajoutée.</td>
           </tr>
         </ng-template>
       </p-table>
-    </p-fieldset>
+    </div>
 
   } @else {
-    <div class="p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded-md text-center shadow-sm">
-      <span class="text-lg font-medium">Chargement des données du contrat...</span>
-    </div>
+    <div class="recap__loading">Chargement des données du contrat...</div>
   }
 </div>

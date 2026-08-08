@@ -6,11 +6,8 @@ import { Subscription, forkJoin, of, Subject, combineLatest } from 'rxjs';
 import { switchMap, map, catchError, takeUntil, distinctUntilChanged } from 'rxjs/operators';
 
 // PrimeNG Modules
-import { CardModule } from 'primeng/card';
 import { TableModule } from 'primeng/table';
-import { FieldsetModule } from 'primeng/fieldset';
 import { TagModule } from 'primeng/tag';
-import { MessageModule } from 'primeng/message';
 import { Message, MessageService } from 'primeng/api';
 import { MessagesModule } from 'primeng/messages';
 
@@ -36,14 +33,12 @@ interface RecapContractDisplayData extends ContratLeasingRequestDTO {
   standalone: true,
   imports: [
     CommonModule,
-    CardModule,
     TableModule,
-    FieldsetModule,
     TagModule,
-    MessageModule,
     MessagesModule
   ],
   templateUrl: './RecapStepComponent.html',
+  styleUrls: ['./RecapStepComponent.scss'],
   providers: [DecimalPipe, DatePipe, MessageService]
 })
 export class RecapStepComponent implements OnInit, OnDestroy {

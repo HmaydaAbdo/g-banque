@@ -1,17 +1,14 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import { MenuItem, Message, MessageService, ConfirmationService } from 'primeng/api';
+import { MenuItem, MessageService, ConfirmationService } from 'primeng/api';
 import { Router, ActivatedRoute, NavigationEnd, Event as RouterEvent } from '@angular/router';
-import { Subscription, filter, Observable, BehaviorSubject, combineLatest } from 'rxjs';
-import { map, startWith } from 'rxjs/operators';
+import { Subscription, filter, Observable, combineLatest } from 'rxjs';
+import { startWith } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 
 // PrimeNG Modules
 import { StepsModule } from 'primeng/steps';
-import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
-import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { MessagesModule } from 'primeng/messages';
 
 // Service and DTOs
 import { LeasingContractWizardService } from '../../services/LeasingContractWizardService';
@@ -41,11 +38,8 @@ interface WizardStepComponent {
   imports: [
     CommonModule,
     StepsModule,
-    CardModule,
     ButtonModule,
-    ToastModule,
-    ConfirmDialogModule,
-    MessagesModule
+    ConfirmDialogModule
   ],
   providers: [MessageService, ConfirmationService]
 })
@@ -63,9 +57,6 @@ export class ContratLeasingCreationComponent implements OnInit, OnDestroy {
   isCurrentStepGloballyValid: boolean = false;
 
   private currentActiveChildComponent: WizardStepComponent | null = null;
-
-  private _globalMessages = new BehaviorSubject<Message[]>([]);
-  globalMessages$: Observable<Message[]> = this._globalMessages.asObservable();
 
   private allGlobalErrors: string[] = [];
 
@@ -87,20 +78,13 @@ export class ContratLeasingCreationComponent implements OnInit, OnDestroy {
     this.initSteps();
     this.subscribeToRouterEvents();
 
-    // Subscribe to global validation errors from the service
-    this.globalErrorsSubscription = this.wizardService.globalValidationErrors$.pipe(
-      map(errors => {
+    // Les erreurs globales sont conservées pour piloter l'activation du bouton
+    // « Soumettre » et sont redistribuées à l'étape active, qui les affiche.
+    this.globalErrorsSubscription = this.wizardService.globalValidationErrors$
+      .subscribe(errors => {
         this.allGlobalErrors = errors;
-        return errors.map(errorDetail => ({
-          severity: 'error',
-          summary: 'Erreur de Validation Globale',
-          detail: errorDetail
-        }));
-      })
-    ).subscribe(messages => {
-      this._globalMessages.next(messages);
-      this.distributeGlobalErrorsToActiveChild();
-    });
+        this.distributeGlobalErrorsToActiveChild();
+      });
   }
 
   ngOnDestroy(): void {

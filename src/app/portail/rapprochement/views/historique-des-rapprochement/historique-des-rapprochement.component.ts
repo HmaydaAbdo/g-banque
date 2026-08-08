@@ -141,7 +141,7 @@ export class HistoriqueDesRapprochementComponent implements OnInit {
     // Récupérer les critères de recherche du formulaire
     const searchCriteria: RapprochementSearchDto = this.searchForm.value;
 
-    this.rapprochementService.searchRapprochements(searchCriteria, page, rows as number)
+    this.rapprochementService.searchRapprochements(searchCriteria, page, rows as number, sort)
       .subscribe({
         next: (response: PageResponse<RapprochementResponse>) => {
           this.rapprochements = response.content;

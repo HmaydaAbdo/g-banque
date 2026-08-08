@@ -61,6 +61,7 @@ export class UtilisateursListComponent implements OnInit {
 
   private lastPage = 0;
   private lastSize = 10;
+  private lastSort = 'id,desc';
 
   ngOnInit(): void {
     this.searchControl.valueChanges.pipe(debounceTime(300)).subscribe(() => {
@@ -72,11 +73,15 @@ export class UtilisateursListComponent implements OnInit {
     this.loading = true;
     const page = event ? (event.first ?? 0) / (event.rows ?? 10) : this.lastPage;
     const size = event?.rows ?? this.lastSize;
+    const sortField = event?.sortField ?? 'id';
+    const sortOrder = event?.sortOrder === 1 ? 'asc' : 'desc';
+    const sort = event?.sortField ? `${sortField},${sortOrder}` : this.lastSort;
     this.lastPage = page;
     this.lastSize = size;
+    this.lastSort = sort;
 
     const username = this.searchControl.value || undefined;
-    this.userService.search({ username }, page, size).subscribe({
+    this.userService.search({ username }, page, size, sort).subscribe({
       next: (response) => {
         this.utilisateurs = response.content;
         this.totalRecords = response.page.totalElements;

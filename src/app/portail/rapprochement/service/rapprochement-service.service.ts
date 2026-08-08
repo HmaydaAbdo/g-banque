@@ -45,12 +45,14 @@ export class RapprochementService {
   searchRapprochements(
     searchDto: RapprochementSearchDto,
     page: number = 0,
-    size: number = 10
+    size: number = 10,
+    sort: string = 'id,desc'
   ): Observable<PageResponse<RapprochementResponse>> {
 
     let params = new HttpParams()
       .set('page', page.toString())
-      .set('size', size.toString());
+      .set('size', size.toString())
+      .set('sort', sort);
 
     if (searchDto.banqueId) {
       params = params.set('banqueId', searchDto.banqueId.toString());
