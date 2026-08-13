@@ -137,8 +137,7 @@ export class RecapMoyensPaiementDecaissementsComponent implements OnInit, OnDest
       statuts: [[]],
       libelle: [''],
       numero: [''],
-      montantFrom: [null],
-      montantTo: [null],
+      montant: [null],
       dateOperationFrom: [null],
       dateOperationTo: [null],
       dateValeurFrom: [null],
@@ -207,7 +206,7 @@ export class RecapMoyensPaiementDecaissementsComponent implements OnInit, OnDest
   clearSearch(): void {
     this.searchForm.reset({
       banqueId: null, sources: [], statuts: [], libelle: '', numero: '',
-      montantFrom: null, montantTo: null,
+      montant: null,
       dateOperationFrom: null, dateOperationTo: null,
       dateValeurFrom: null, dateValeurTo: null,
     });

@@ -77,11 +77,8 @@ export class RecapMoyenPaiementService {
     if (searchDto.numero) {
       params = params.set('numero', searchDto.numero);
     }
-    if (searchDto.montantFrom !== null && searchDto.montantFrom !== undefined) {
-      params = params.set('montantFrom', searchDto.montantFrom.toString());
-    }
-    if (searchDto.montantTo !== null && searchDto.montantTo !== undefined) {
-      params = params.set('montantTo', searchDto.montantTo.toString());
+    if (searchDto.montant !== null && searchDto.montant !== undefined) {
+      params = params.set('montant', searchDto.montant.toString());
     }
     if (searchDto.dateOperationFrom) {
       params = params.set('dateOperationFrom', this.toIsoDate(searchDto.dateOperationFrom));
