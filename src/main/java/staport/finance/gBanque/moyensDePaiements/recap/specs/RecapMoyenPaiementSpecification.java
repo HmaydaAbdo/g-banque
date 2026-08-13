@@ -55,13 +55,13 @@ public final class RecapMoyenPaiementSpecification {
                         : cb.like(cb.lower(root.get("numero")), "%" + numero.toLowerCase() + "%");
     }
 
-    public static Specification<RecapMoyenPaiementView> byMontantRange(BigDecimal from, BigDecimal to) {
-        return (root, query, cb) -> {
-            if (from == null && to == null) return cb.conjunction();
-            if (from != null && to != null) return cb.between(root.get("montant"), from, to);
-            if (from != null) return cb.greaterThanOrEqualTo(root.get("montant"), from);
-            return cb.lessThanOrEqualTo(root.get("montant"), to);
-        };
+    /**
+     * Recherche par montant exact (champ unique, pas un intervalle — choix validé avec HMAYDA le
+     * 13/08/2026).
+     */
+    public static Specification<RecapMoyenPaiementView> byMontant(BigDecimal montant) {
+        return (root, query, cb) ->
+                montant == null ? cb.conjunction() : cb.equal(root.get("montant"), montant);
     }
 
     public static Specification<RecapMoyenPaiementView> byDateOperationRange(LocalDate from, LocalDate to) {
@@ -98,7 +98,7 @@ public final class RecapMoyenPaiementSpecification {
                     .and(byStatuts(searchDto.statuts()))
                     .and(byLibelle(searchDto.libelle()))
                     .and(byNumero(searchDto.numero()))
-                    .and(byMontantRange(searchDto.montantFrom(), searchDto.montantTo()))
+                    .and(byMontant(searchDto.montant()))
                     .and(byDateOperationRange(searchDto.dateOperationFrom(), searchDto.dateOperationTo()))
                     .and(byDateValeurRange(searchDto.dateValeurFrom(), searchDto.dateValeurTo()));
         }

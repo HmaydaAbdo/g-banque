@@ -12,7 +12,8 @@ public enum Motif {
     COMMUNAL("COMMUNAL"),
     TVA_COMMISSION_CAUTION("TVA sur commission sur caution"),
     TAXE_PROFESSIONNELLE("Taxe Professionnelle"),
-    VIGNETTE("Vignette");
+    VIGNETTE("Vignette"),
+    AUTRE_ASSURANCE("Autre Assurance");
 
 
     private  final String motif;

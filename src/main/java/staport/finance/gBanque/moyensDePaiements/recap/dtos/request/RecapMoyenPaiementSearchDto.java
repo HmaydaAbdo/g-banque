@@ -11,7 +11,9 @@ import java.util.List;
 /**
  * Critères de recherche pour les endpoints Recap Encaissement / Recap Décaissement des moyens de
  * paiement. Tous les champs sont optionnels. Les plages de dates portent sur la date d'opération
- * et la date de valeur (pas la date d'émission — choix validé avec HMAYDA le 31/07/2026).
+ * et la date de valeur (pas la date d'émission — choix validé avec HMAYDA le 31/07/2026). La
+ * recherche par montant est un champ unique (correspondance exacte), pas un intervalle — choix
+ * validé avec HMAYDA le 13/08/2026.
  */
 public record RecapMoyenPaiementSearchDto(
 
@@ -25,9 +27,7 @@ public record RecapMoyenPaiementSearchDto(
 
         String numero,
 
-        BigDecimal montantFrom,
-
-        BigDecimal montantTo,
+        BigDecimal montant,
 
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         LocalDate dateOperationFrom,

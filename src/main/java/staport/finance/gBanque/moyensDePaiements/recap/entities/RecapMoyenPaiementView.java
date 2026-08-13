@@ -16,7 +16,8 @@ import java.time.LocalDate;
 
 /**
  * Entité JPA en lecture seule mappée sur la vue SQL {@code v_recap_moyens_paiement}
- * (voir {@code v_recap_moyens_paiement.sql} à la racine du projet, créée manuellement par
+ * (voir {@code sql/v_recap_moyens_paiement.sql}, reconstruite le 13/08/2026 après perte de la
+ * version originale du 31/07/2026 — script désormais versionné dans le dépôt ; créée initialement manuellement par
  * HMAYDA — module "Recap Encaissement / Recap Décaissement" sous "Les moyens de paiement",
  * 31/07/2026).
  *
