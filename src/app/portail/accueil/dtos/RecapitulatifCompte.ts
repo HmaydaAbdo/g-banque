@@ -7,6 +7,8 @@ export interface RecapitulatifCompte {
   soldeActuel:   number;
   soldeDebut:    number;
   plafondFC?:    number;
+  /** Solde actuel + plafond FC (situation du jour) — toujours renseignée par le backend. */
+  disponibiliteFC: number;
   devise:        Devise;
   lcnsEchusCount:      number;
   virementsEchusCount: number;

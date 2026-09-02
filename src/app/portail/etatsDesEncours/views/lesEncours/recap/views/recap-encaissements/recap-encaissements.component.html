@@ -30,6 +30,13 @@
           appendTo="body"
           [style]="{'width':'100%'}">
         </p-multiSelect>
+<span class="flex flex-column w-full" style="min-width: 12rem;">
+          <label class="text-xs text-500 mb-1">Date de référence jusqu'au</label>
+          <p-calendar formControlName="dateReferenceJusqua" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                      [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"
+                      pTooltip="Filtre chaque opération sur sa date de référence propre (date d'émission, date d'échéance, etc. selon la source) — par défaut la fin du mois en cours."
+                      tooltipPosition="top"></p-calendar>
+        </span>
 <button type="button" pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf"
         class="h-fit" size="small" severity="secondary"
         [loading]="exporting" (click)="exportPdf()"></button>

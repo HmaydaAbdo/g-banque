@@ -13,6 +13,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angul
 import { ToolbarModule } from 'primeng/toolbar';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { InputTextModule } from 'primeng/inputtext';
+import { CalendarModule } from 'primeng/calendar';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -41,6 +42,7 @@ import { AgregatedRecapDto } from "../../dtos/AgregatedRecapDto";
     ToolbarModule,
     MultiSelectModule,
     InputTextModule,
+    CalendarModule,
     ButtonModule,
     RippleModule,
   ],
@@ -92,7 +94,8 @@ export class RecapEncaissementsComponent implements OnInit, OnDestroy {
     this.searchForm = this.fb.group({
       transactionSources: [[]],
       libelle: [''],
-      observation: ['']
+      observation: [''],
+      dateReferenceJusqua: [null]
     });
 
     this.subscriptions.push(
@@ -132,7 +135,8 @@ export class RecapEncaissementsComponent implements OnInit, OnDestroy {
     const searchDto: DecaissementSearchDto = {
       transactionSources: this.searchForm.get('transactionSources')?.value,
       libelle: this.searchForm.get('libelle')?.value,
-      observation: this.searchForm.get('observation')?.value
+      observation: this.searchForm.get('observation')?.value,
+      dateReferenceJusqua: this.searchForm.get('dateReferenceJusqua')?.value
     };
 
     this.subscriptions.push(
@@ -160,7 +164,8 @@ export class RecapEncaissementsComponent implements OnInit, OnDestroy {
     const searchDto: DecaissementSearchDto = {
       transactionSources: this.searchForm.get('transactionSources')?.value,
       libelle: this.searchForm.get('libelle')?.value,
-      observation: this.searchForm.get('observation')?.value
+      observation: this.searchForm.get('observation')?.value,
+      dateReferenceJusqua: this.searchForm.get('dateReferenceJusqua')?.value
     };
 
     this.recapService.exportRecapitulatifEncaissementPdf(this.banqueIdFromRoute, searchDto).subscribe({

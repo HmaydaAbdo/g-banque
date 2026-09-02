@@ -4,6 +4,7 @@ import {HttpClient, HttpParams} from "@angular/common/http";
 import {Observable} from "rxjs";
 import {DecaissementSearchDto} from "../dtos/DecaissementSearchDto";
 import {AgregatedRecapDto} from "../dtos/AgregatedRecapDto";
+import {PeriodeRecap} from "../dtos/PeriodeRecap";
 
 @Injectable({
   providedIn: 'root'
@@ -60,6 +61,10 @@ export class RecapService {
         params = params.append('observation', searchDto.observation);
     }
 
+    if (searchDto.dateReferenceJusqua) {
+      params = params.append('dateReferenceJusqua', this.toIsoDate(searchDto.dateReferenceJusqua));
+    }
+
 
 
     const url = `${this.baseUrl}/decaissement/banque/${banqueId}`;
@@ -101,6 +106,10 @@ export class RecapService {
     if (searchDto.observation && searchDto.observation.length > 0) {
       params = params.append('observation', searchDto.observation);
     }
+
+    if (searchDto.dateReferenceJusqua) {
+      params = params.append('dateReferenceJusqua', this.toIsoDate(searchDto.dateReferenceJusqua));
+    }
     // Construct the URL with the banqueId as a path variable
     const url = `${this.baseUrl}/encaissement/banque/${banqueId}`;
 
@@ -126,6 +135,10 @@ export class RecapService {
       params = params.append('observation', searchDto.observation);
     }
 
+    if (searchDto.dateReferenceJusqua) {
+      params = params.append('dateReferenceJusqua', this.toIsoDate(searchDto.dateReferenceJusqua));
+    }
+
     const url = `${this.baseUrl}/decaissement/banque/${banqueId}/export/pdf`;
     return this.http.get(url, { params, responseType: 'blob' });
   }
@@ -149,6 +162,10 @@ export class RecapService {
       params = params.append('observation', searchDto.observation);
     }
 
+    if (searchDto.dateReferenceJusqua) {
+      params = params.append('dateReferenceJusqua', this.toIsoDate(searchDto.dateReferenceJusqua));
+    }
+
     const url = `${this.baseUrl}/encaissement/banque/${banqueId}/export/pdf`;
     return this.http.get(url, { params, responseType: 'blob' });
   }
@@ -158,21 +175,25 @@ export class RecapService {
    * Downloads the global summary report (PDF) for a specific bank.
    *
    * @param banqueId The ID of the bank.
+   * @param periode 'A_CE_JOUR' (encours déjà échus/émis) ou 'FIN_DE_MOIS' (défaut backend).
    * @returns Observable<Blob> An observable of the PDF file as a Blob.
    */
-  downloadRecapGlobalByBank(banqueId: number): Observable<Blob> {
+  downloadRecapGlobalByBank(banqueId: number, periode: PeriodeRecap = 'FIN_DE_MOIS'): Observable<Blob> {
     const url = `${this.baseUrl}/${banqueId}/pdf`;
-    return this.http.get(url, { responseType: 'blob' });
+    const params = new HttpParams().set('periode', periode);
+    return this.http.get(url, { params, responseType: 'blob' });
   }
 
   /**
    * Downloads the consolidated global summary report (PDF) for all banks.
    *
+   * @param periode 'A_CE_JOUR' (encours déjà échus/émis) ou 'FIN_DE_MOIS' (défaut backend).
    * @returns Observable<Blob> An observable of the PDF file as a Blob.
    */
-  downloadGlobalRecapForAllBanks(): Observable<Blob> {
+  downloadGlobalRecapForAllBanks(periode: PeriodeRecap = 'FIN_DE_MOIS'): Observable<Blob> {
     const url = `${this.baseUrl}/global/pdf`;
-    return this.http.get(url, { responseType: 'blob' });
+    const params = new HttpParams().set('periode', periode);
+    return this.http.get(url, { params, responseType: 'blob' });
   }
 
   /**
@@ -189,5 +210,13 @@ export class RecapService {
   downloadRecapGeneralDetailleAllBanquesPdf(): Observable<Blob> {
     const url = `${environment.apiUrl}recap-general-detaille/all/pdf`;
     return this.http.get(url, { responseType: 'blob' });
+  }
+
+  /** Formate un objet Date en chaîne ISO yyyy-MM-dd pour le backend Spring. */
+  private toIsoDate(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 }

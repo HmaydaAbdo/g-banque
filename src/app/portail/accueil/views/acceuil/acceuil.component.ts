@@ -12,8 +12,12 @@ import {BreadcrumbModule} from "primeng/breadcrumb";
 import {ProgressBarModule} from "primeng/progressbar";
 import {FunPaymentService} from "../../../FunPaimentService/FunPaymentService";
 import {RecapService} from "../../../etatsDesEncours/views/lesEncours/recap/services/recap.service";
+import {PeriodeRecap} from "../../../etatsDesEncours/views/lesEncours/recap/dtos/PeriodeRecap";
 import {catchError, finalize} from "rxjs/operators";
 import {throwError} from "rxjs";
+import {FormControl, ReactiveFormsModule} from "@angular/forms";
+import {DialogModule} from "primeng/dialog";
+import {SelectButtonModule} from "primeng/selectbutton";
 
 @Component({
   selector: 'app-accueil',
@@ -26,7 +30,10 @@ import {throwError} from "rxjs";
     RouterLink,
     BreadcrumbModule,
     RouterLinkActive,
-    ProgressBarModule
+    ProgressBarModule,
+    ReactiveFormsModule,
+    DialogModule,
+    SelectButtonModule
   ],
   templateUrl: './acceuil.component.html',
   styleUrl: './acceuil.component.scss',
@@ -41,6 +48,14 @@ export class AcceuilComponent implements OnInit {
   globalRecapLoading: boolean = false;
   recapDetailleAllLoading: boolean = false;
   recapDetailleBanqueLoadingMap: Map<number, boolean> = new Map();
+
+  // ── Choix de la période du Récap global (retour utilisateur du 31/08/2026) ──
+  showRecapGlobalPeriodeModal: boolean = false;
+  periodeControl = new FormControl<PeriodeRecap | null>('FIN_DE_MOIS');
+  periodeOptions: { label: string; value: PeriodeRecap }[] = [
+    { label: 'À ce jour', value: 'A_CE_JOUR' },
+    { label: "Jusqu'à fin de mois", value: 'FIN_DE_MOIS' }
+  ];
 
   private banqueService      = inject(BanqueService);
   private messageService     = inject(MessageService);
@@ -87,10 +102,20 @@ export class AcceuilComponent implements OnInit {
   }
 
 
-  downloadGlobalRecap(): void {
+  /** Ouvre le choix de période avant de télécharger le Récap global. */
+  openRecapGlobalPeriodeModal(): void {
+    this.periodeControl.setValue('FIN_DE_MOIS');
+    this.showRecapGlobalPeriodeModal = true;
+  }
+
+  confirmDownloadGlobalRecap(): void {
+    if (!this.periodeControl.value) return;
+    const periode = this.periodeControl.value;
+    this.showRecapGlobalPeriodeModal = false;
+
     this.globalRecapLoading = true;
 
-    this.recapService.downloadGlobalRecapForAllBanks()
+    this.recapService.downloadGlobalRecapForAllBanks(periode)
       .pipe(
         // 1. Gérer l'erreur et afficher un message à l'utilisateur
         catchError(() => {
@@ -111,7 +136,8 @@ export class AcceuilComponent implements OnInit {
 
           // 2. Déterminer le nom de fichier
           const date = this.datePipe.transform(new Date(), 'dd/MM/yyyy');
-          const filename = `Récapitulatif_Global_${date}.pdf`;
+          const suffixePeriode = periode === 'A_CE_JOUR' ? 'A_ce_jour' : 'Fin_de_mois';
+          const filename = `Récapitulatif_Global_${suffixePeriode}_${date}.pdf`;
 
           // 3. Créer un élément <a> invisible
           const a = document.createElement('a');
