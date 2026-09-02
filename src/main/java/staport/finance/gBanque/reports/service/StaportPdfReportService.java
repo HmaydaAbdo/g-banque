@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import staport.finance.gBanque.rapprochement.dtos.ReportDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifGlobal;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifItem;
+import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
 import staport.finance.gBanque.reports.enums.ReportType;
 import staport.finance.gBanque.reports.utils.StaportPdfPageEventHelper;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
@@ -40,6 +41,7 @@ public class StaportPdfReportService {
     private static final Font SUBTITLE_FONT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
     private static final Font BOLD_FONT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
     private static final Font DATA_FONT = FontFactory.getFont(FontFactory.HELVETICA, 12);
+    private static final Font AGGREGATED_DATA_FONT = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
     private static final Font TRANSACTION_HEADER_FONT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 6, Color.WHITE);
     private static final Font TRANSACTION_DATA_FONT = FontFactory.getFont(FontFactory.HELVETICA, 6);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MM/yyyy");
@@ -316,39 +318,54 @@ public class StaportPdfReportService {
         return cell;
     }
 
-    private void addAggregatedSummaryTable(Document document, List<RecaputilatifGlobal> dtos) throws DocumentException {
+    private void addAggregatedSummaryTable(Document document, List<RecaputilatifGlobal> dtos, PeriodeRecap periode) throws DocumentException {
         PdfPTable table = new PdfPTable(7);
         table.setWidthPercentage(100);
         table.setWidths(new float[]{2f, 2.5f, 2.5f, 2.5f, 2.5f, 2.5f, 2.5f});
         table.setSpacingAfter(10);
         table.setHeaderRows(2);
 
+        String suffixSolde = periode == PeriodeRecap.A_CE_JOUR ? "Solde\nà ce jour" : "Solde\nfin du mois";
+        String suffixDispo = periode == PeriodeRecap.A_CE_JOUR ? "Disponibilité FC\nà ce jour" : "Disponibilité FC\nfin du mois";
+
         table.addCell(createHeaderCell("Banque", TRANSACTION_HEADER_FONT, STAPORT_BLUE, Element.ALIGN_CENTER, 1, 2));
         table.addCell(createHeaderCell("Solde Actuel", TRANSACTION_HEADER_FONT, STAPORT_BLUE, Element.ALIGN_CENTER, 1, 2));
         table.addCell(createHeaderCell("Encours", TRANSACTION_HEADER_FONT, STAPORT_BLUE, Element.ALIGN_CENTER, 2, 1));
-        table.addCell(createHeaderCell("Solde\nfin du mois", TRANSACTION_HEADER_FONT, STAPORT_BLUE, Element.ALIGN_CENTER, 1, 2));
+        table.addCell(createHeaderCell(suffixSolde, TRANSACTION_HEADER_FONT, STAPORT_BLUE, Element.ALIGN_CENTER, 1, 2));
         table.addCell(createHeaderCell("Plafond FC", TRANSACTION_HEADER_FONT, STAPORT_BLUE, Element.ALIGN_CENTER, 1, 2));
-        table.addCell(createHeaderCell("Reste\nfin du mois", TRANSACTION_HEADER_FONT, STAPORT_BLUE, Element.ALIGN_CENTER, 1, 2));
+        table.addCell(createHeaderCell(suffixDispo, TRANSACTION_HEADER_FONT, STAPORT_BLUE, Element.ALIGN_CENTER, 1, 2));
         table.addCell(createHeaderCell("Total\nEncaissements", TRANSACTION_HEADER_FONT, STAPORT_BLUE, Element.ALIGN_CENTER, 1, 1));
         table.addCell(createHeaderCell("Total\nDécaissements", TRANSACTION_HEADER_FONT, STAPORT_BLUE, Element.ALIGN_CENTER, 1, 1));
 
         for (RecaputilatifGlobal dto : dtos) {
-            table.addCell(createCell(dto.banqueName() != null ? dto.banqueName() : "", DATA_FONT, Element.ALIGN_LEFT));
-            table.addCell(createCell(formatCurrency(dto.soldeActuel()), DATA_FONT, Element.ALIGN_RIGHT));
-            table.addCell(createCell(formatCurrency(dto.totalEncaissements()), DATA_FONT, Element.ALIGN_RIGHT));
-            table.addCell(createCell(formatCurrency(dto.totalDecaissements()), DATA_FONT, Element.ALIGN_RIGHT));
-            table.addCell(createCell(formatCurrency(dto.soldefin()), DATA_FONT, Element.ALIGN_RIGHT));
-            table.addCell(createCell(formatCurrency(dto.plafondFC()), DATA_FONT, Element.ALIGN_RIGHT));
-            table.addCell(createCell(formatCurrency(dto.reste()), DATA_FONT, Element.ALIGN_RIGHT));
+            table.addCell(createAggregatedCell(dto.banqueName() != null ? dto.banqueName() : "", Element.ALIGN_LEFT));
+            table.addCell(createAggregatedCell(formatCurrency(dto.soldeActuel()), Element.ALIGN_RIGHT));
+            table.addCell(createAggregatedCell(formatCurrency(dto.totalEncaissements()), Element.ALIGN_RIGHT));
+            table.addCell(createAggregatedCell(formatCurrency(dto.totalDecaissements()), Element.ALIGN_RIGHT));
+            table.addCell(createAggregatedCell(formatCurrency(dto.soldefin()), Element.ALIGN_RIGHT));
+            table.addCell(createAggregatedCell(formatCurrency(dto.plafondFC()), Element.ALIGN_RIGHT));
+            table.addCell(createAggregatedCell(formatCurrency(dto.disponibiliteFinDuMois()), Element.ALIGN_RIGHT));
         }
 
         document.add(table);
     }
 
-    private void generateAggregatedRecapItemTable(Document document, List<RecaputilatifGlobal> dtos, boolean isEncaissement) throws DocumentException {
+    /**
+     * Cellule de donnée du tableau récapitulatif agrégé (multi-banques) : police réduite (8pt)
+     * et NoWrap forcé pour que chaque valeur (nom de banque ou montant) tienne sur une seule
+     * ligne, quelle que soit sa longueur — cf. retour utilisateur du 31/08/2026 (montants
+     * coupés sur deux lignes dans le PDF imprimé).
+     */
+    private PdfPCell createAggregatedCell(String text, int alignment) {
+        PdfPCell cell = createCell(text, AGGREGATED_DATA_FONT, alignment);
+        cell.setNoWrap(true);
+        return cell;
+    }
+
+    private void generateAggregatedRecapItemTable(Document document, List<RecaputilatifGlobal> dtos, boolean isEncaissement, PeriodeRecap periode) throws DocumentException {
         if (!isEncaissement) return;
 
-        String title = "DÉTAIL DES ENCAISSEMENTS PRÉVUS ";
+        String title = "DÉTAIL DES ENCAISSEMENTS PRÉVUS — " + libelleHorizon(periode);
         Paragraph titleParagraph = new Paragraph(title, TITLE_FONT_BLACK);
         titleParagraph.setAlignment(Element.ALIGN_CENTER);
         titleParagraph.setSpacingAfter(10);
@@ -387,9 +404,9 @@ public class StaportPdfReportService {
         document.add(table);
     }
 
-    public byte[] generateGlobalRecapForMultipleBanks(List<RecaputilatifGlobal> dtos) throws DocumentException {
+    public byte[] generateGlobalRecapForMultipleBanks(List<RecaputilatifGlobal> dtos, PeriodeRecap periode) throws DocumentException {
         String today = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-        String reportTitle = "Récapitulatif global :  " + today;
+        String reportTitle = "Récapitulatif global — " + libelleHorizon(periode) + " : " + today;
 
         return generateReport(reportTitle, (document, writer) -> {
             try {
@@ -398,8 +415,8 @@ public class StaportPdfReportService {
                 title.setSpacingAfter(10);
                 document.add(title);
 
-                addAggregatedSummaryTable(document, dtos);
-                generateAggregatedRecapItemTable(document, dtos, true);
+                addAggregatedSummaryTable(document, dtos, periode);
+                generateAggregatedRecapItemTable(document, dtos, true, periode);
                 document.newPage();
 
             } catch (DocumentException e) {
@@ -408,8 +425,17 @@ public class StaportPdfReportService {
         });
     }
 
-    public byte[] generateRecapGlobalReport(RecaputilatifGlobal dto) throws DocumentException {
-        String reportTitle = "Journal banque ";
+    /**
+     * Libellé affiché dans les titres/en-têtes PDF pour indiquer l'horizon retenu — évite qu'un
+     * rapport imprimé (donc sans le contexte de l'écran d'où il vient) laisse planer une
+     * ambiguïté sur ce qu'il couvre (retour utilisateur du 31/08/2026).
+     */
+    private String libelleHorizon(PeriodeRecap periode) {
+        return periode == PeriodeRecap.A_CE_JOUR ? "à ce jour" : "jusqu'à fin de mois";
+    }
+
+    public byte[] generateRecapGlobalReport(RecaputilatifGlobal dto, PeriodeRecap periode) throws DocumentException {
+        String reportTitle = "Journal banque — " + libelleHorizon(periode);
 
         return generateReport(reportTitle, (document, writer) -> {
             try {
@@ -420,10 +446,10 @@ public class StaportPdfReportService {
                 document.add(Chunk.NEWLINE);
                 document.add(title);
 
-                addGlobalSummaryTable(document, dto);
+                addGlobalSummaryTable(document, dto, periode);
                 document.add(Chunk.NEWLINE);
 
-                document.add(new Paragraph("DÉTAIL DES ENCAISSEMENTS PRÉVUS", TITLE_FONT));
+                document.add(new Paragraph("DÉTAIL DES ENCAISSEMENTS PRÉVUS — " + libelleHorizon(periode), TITLE_FONT));
                 document.add(new LineSeparator(1f, 100f, STAPORT_BLUE, Element.ALIGN_CENTER, -2));
                 document.add(Chunk.NEWLINE);
 
@@ -434,7 +460,7 @@ public class StaportPdfReportService {
                     document.add(Chunk.NEWLINE);
                 }
 
-                document.add(new Paragraph("DÉTAIL DES DÉCAISSEMENTS PRÉVUS", TITLE_FONT));
+                document.add(new Paragraph("DÉTAIL DES DÉCAISSEMENTS PRÉVUS — " + libelleHorizon(periode), TITLE_FONT));
                 document.add(new LineSeparator(1f, 100f, STAPORT_BLUE, Element.ALIGN_CENTER, -2));
                 document.add(Chunk.NEWLINE);
 
@@ -451,7 +477,7 @@ public class StaportPdfReportService {
         });
     }
 
-    private void addGlobalSummaryTable(Document document, RecaputilatifGlobal dto) throws DocumentException {
+    private void addGlobalSummaryTable(Document document, RecaputilatifGlobal dto, PeriodeRecap periode) throws DocumentException {
         PdfPTable table = new PdfPTable(4);
         table.setWidthPercentage(100);
         table.setWidths(new float[]{3f, 2f, 3f, 2f});
@@ -464,13 +490,13 @@ public class StaportPdfReportService {
 
         addSummaryDataCell(table, "Solde Actuel:", BOLD_FONT, Element.ALIGN_LEFT);
         addSummaryDataCell(table, formatCurrency(dto.soldeActuel()), DATA_FONT, Element.ALIGN_RIGHT);
-        addSummaryDataCell(table, "Solde Fin du mois:", BOLD_FONT, Element.ALIGN_LEFT);
+        addSummaryDataCell(table, (periode == PeriodeRecap.A_CE_JOUR ? "Solde à ce jour:" : "Solde Fin du mois:"), BOLD_FONT, Element.ALIGN_LEFT);
         addSummaryDataCell(table, formatCurrency(dto.soldefin()), DATA_FONT, Element.ALIGN_RIGHT);
 
         addSummaryDataCell(table, "Plafond FC:", BOLD_FONT, Element.ALIGN_LEFT);
         addSummaryDataCell(table, formatCurrency(dto.plafondFC()), DATA_FONT, Element.ALIGN_RIGHT);
-        addSummaryDataCell(table, "Reste fin du mois:", BOLD_FONT, Element.ALIGN_LEFT);
-        addSummaryDataCell(table, formatCurrency(dto.reste()), DATA_FONT, Element.ALIGN_RIGHT);
+        addSummaryDataCell(table, (periode == PeriodeRecap.A_CE_JOUR ? "Disponibilité FC à ce jour:" : "Disponibilité FC fin du mois:"), BOLD_FONT, Element.ALIGN_LEFT);
+        addSummaryDataCell(table, formatCurrency(dto.disponibiliteFinDuMois()), DATA_FONT, Element.ALIGN_RIGHT);
 
         addSummaryDataCell(table, "Total Décaissements:", BOLD_FONT, Element.ALIGN_LEFT);
         addSummaryDataCell(table, formatCurrency(dto.totalDecaissements()), DATA_FONT, Element.ALIGN_RIGHT);
@@ -633,6 +659,14 @@ public class StaportPdfReportService {
                     .stream().map(CategorieAmountDto::categorie).collect(Collectors.toList());
             for (int i = 0; i < decLabels.size(); i++) {
                 final int idx = i;
+                boolean allZeroAcrossBanques = banques.stream().allMatch(b -> {
+                    List<CategorieAmountDto> cats = b.decaissements().categories();
+                    BigDecimal m = idx < cats.size() ? cats.get(idx).montant() : null;
+                    return m == null || m.compareTo(BigDecimal.ZERO) == 0;
+                });
+                if (allZeroAcrossBanques) {
+                    continue;
+                }
                 addRgdDataRow(table, decLabels.get(i), banques, b -> {
                     List<CategorieAmountDto> cats = b.decaissements().categories();
                     return idx < cats.size() ? cats.get(idx).montant() : BigDecimal.ZERO;
@@ -648,6 +682,14 @@ public class StaportPdfReportService {
                     .stream().map(CategorieAmountDto::categorie).collect(Collectors.toList());
             for (int i = 0; i < encLabels.size(); i++) {
                 final int idx = i;
+                boolean allZeroAcrossBanques = banques.stream().allMatch(b -> {
+                    List<CategorieAmountDto> cats = b.encaissements().categories();
+                    BigDecimal m = idx < cats.size() ? cats.get(idx).montant() : null;
+                    return m == null || m.compareTo(BigDecimal.ZERO) == 0;
+                });
+                if (allZeroAcrossBanques) {
+                    continue;
+                }
                 addRgdDataRow(table, encLabels.get(i), banques, b -> {
                     List<CategorieAmountDto> cats = b.encaissements().categories();
                     return idx < cats.size() ? cats.get(idx).montant() : BigDecimal.ZERO;

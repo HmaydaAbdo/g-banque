@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.recapitulatif.dtos.request.DecaissementSearchDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.AgregatedRecapDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifGlobal;
+import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
 import staport.finance.gBanque.recapitulatif.services.interfaces.IRecapitulatifService;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
 
@@ -119,16 +120,20 @@ public class RecapitulatifController {
         return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
-    @Operation(summary = "Télécharger le récapitulatif global (PDF)")
+    @Operation(summary = "Télécharger le récapitulatif global (PDF)",
+            description = "periode=A_CE_JOUR limite aux encours déjà échus/émis ; periode=FIN_DE_MOIS " +
+                    "(défaut) inclut les encours jusqu'à la fin du mois en cours.")
     @ApiResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_PDF_VALUE))
     @GetMapping("/{banqueId}/pdf")
-    public ResponseEntity<byte[]> getGlobalRecapReport(@PathVariable Long banqueId) throws DocumentException {
+    public ResponseEntity<byte[]> getGlobalRecapReport(
+            @PathVariable Long banqueId,
+            @RequestParam(defaultValue = "FIN_DE_MOIS") PeriodeRecap periode) throws DocumentException {
 
         // 1. Récupérer le DTO complet et calculé
-        RecaputilatifGlobal recapGlobalDto = recapitulatifService.getRecapitulatifGlobal(banqueId);
+        RecaputilatifGlobal recapGlobalDto = recapitulatifService.getRecapitulatifGlobal(banqueId, periode);
 
         // 2. Générer le fichier PDF
-        byte[] pdfBytes = staportPdfReportService.generateRecapGlobalReport(recapGlobalDto);
+        byte[] pdfBytes = staportPdfReportService.generateRecapGlobalReport(recapGlobalDto, periode);
 
         // 3. Préparer les en-têtes de la réponse HTTP pour le téléchargement
         String banqueName = recapGlobalDto.banqueName().replaceAll("\\s+", "_");
@@ -151,14 +156,17 @@ public class RecapitulatifController {
         );
     }
 
-    @Operation(summary = "Télécharger le récapitulatif global consolidé (PDF, toutes banques)")
+    @Operation(summary = "Télécharger le récapitulatif global consolidé (PDF, toutes banques)",
+            description = "periode=A_CE_JOUR limite aux encours déjà échus/émis ; periode=FIN_DE_MOIS " +
+                    "(défaut) inclut les encours jusqu'à la fin du mois en cours.")
     @ApiResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_PDF_VALUE))
     @ApiResponse(responseCode = "204", description = "Aucune banque à récapituler")
     @GetMapping("/global/pdf")
-    public ResponseEntity<byte[]> getGlobalRecapReportForAllBanks() throws DocumentException {
+    public ResponseEntity<byte[]> getGlobalRecapReportForAllBanks(
+            @RequestParam(defaultValue = "FIN_DE_MOIS") PeriodeRecap periode) throws DocumentException {
 
         // 1. Récupérer la liste des DTOs complets pour toutes les banques.
-        List<RecaputilatifGlobal> recapsGlobaux = recapitulatifService.getAllRecapitulatifsGlobaux();
+        List<RecaputilatifGlobal> recapsGlobaux = recapitulatifService.getAllRecapitulatifsGlobaux(periode);
 
         if (recapsGlobaux.isEmpty()) {
             // Optionnel : Retourner une 404 ou 204 si aucune donnée n'est trouvée.
@@ -166,7 +174,7 @@ public class RecapitulatifController {
         }
 
         // 2. Générer le fichier PDF consolidé
-        byte[] pdfBytes = staportPdfReportService.generateGlobalRecapForMultipleBanks(recapsGlobaux);
+        byte[] pdfBytes = staportPdfReportService.generateGlobalRecapForMultipleBanks(recapsGlobaux, periode);
 
         // 3. Préparer les en-têtes de la réponse HTTP pour le téléchargement
         String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));

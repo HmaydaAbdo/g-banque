@@ -4,6 +4,7 @@ import org.springframework.data.domain.Pageable;
 import staport.finance.gBanque.recapitulatif.dtos.request.DecaissementSearchDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.AgregatedRecapDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifGlobal;
+import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
 
 import java.util.List;
 
@@ -31,7 +32,13 @@ public interface IRecapitulatifService {
      */
     byte[] exportRecapitulatifEncaissementPdf(DecaissementSearchDto searchDto, Long banqueId);
 
-    RecaputilatifGlobal getRecapitulatifGlobal(Long banqueId);
+    /**
+     * @param periode horizon de calcul (à ce jour, ou jusqu'à fin de mois) — voir {@link PeriodeRecap}.
+     */
+    RecaputilatifGlobal getRecapitulatifGlobal(Long banqueId, PeriodeRecap periode);
 
-    List<RecaputilatifGlobal> getAllRecapitulatifsGlobaux();
+    /**
+     * @param periode horizon de calcul (à ce jour, ou jusqu'à fin de mois) — voir {@link PeriodeRecap}.
+     */
+    List<RecaputilatifGlobal> getAllRecapitulatifsGlobaux(PeriodeRecap periode);
 }

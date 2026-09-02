@@ -23,6 +23,7 @@ import staport.finance.gBanque.recapitulatif.dtos.request.DecaissementSearchDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.AgregatedRecapDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifGlobal;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifItem;
+import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
 import staport.finance.gBanque.recapitulatif.entities.RecapitulatifEncoursView;
 import staport.finance.gBanque.recapitulatif.mappers.RecapitulatifEncoursMapper;
 import staport.finance.gBanque.recapitulatif.repositories.RecapitulatifEncoursRepository;
@@ -105,8 +106,9 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
     private AgregatedRecapDto buildAgregatedRecap(
             Pageable pageable, DecaissementSearchDto searchDto, Long banqueId, Type sens) {
 
+        LocalDate until = resolveDateReferenceUntil(searchDto);
         Specification<RecapitulatifEncoursView> spec =
-                RecapitulatifEncoursSpecification.searchByCriteria(searchDto, banqueId, sens, endOfMonth());
+                RecapitulatifEncoursSpecification.searchByCriteria(searchDto, banqueId, sens, until);
 
         Page<RecaputilatifItem> page = encoursRepository.findAll(spec, normalizeSort(pageable))
                 .map(mapper::toDto);
@@ -156,8 +158,9 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
     private byte[] exportRecapitulatifPdf(DecaissementSearchDto searchDto, Long banqueId, Type sens, String titlePrefix) {
         BanqueResponse banque = banqueService.getBanqueById(banqueId);
 
+        LocalDate until = resolveDateReferenceUntil(searchDto);
         Specification<RecapitulatifEncoursView> spec =
-                RecapitulatifEncoursSpecification.searchByCriteria(searchDto, banqueId, sens, endOfMonth());
+                RecapitulatifEncoursSpecification.searchByCriteria(searchDto, banqueId, sens, until);
 
         List<RecaputilatifItem> items = encoursRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission")).stream()
                 .map(mapper::toDto)
@@ -176,6 +179,9 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
             }
             if (searchDto.transactionSources() != null && !searchDto.transactionSources().isEmpty()) {
                 filterLines.add("Source : " + searchDto.transactionSources());
+            }
+            if (searchDto.dateReferenceJusqua() != null) {
+                filterLines.add("Date de référence jusqu'au : " + searchDto.dateReferenceJusqua().format(DATE_FMT));
             }
         }
 
@@ -272,6 +278,17 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
         }
     }
 
+    /**
+     * Détermine la borne supérieure ("jusqu'à") appliquée sur {@code dateReference} : la date
+     * choisie par l'utilisateur si elle est renseignée dans le formulaire de recherche, sinon la
+     * fin du mois en cours (comportement historique, cf. {@link #endOfMonth()}).
+     */
+    private LocalDate resolveDateReferenceUntil(DecaissementSearchDto searchDto) {
+        return (searchDto != null && searchDto.dateReferenceJusqua() != null)
+                ? searchDto.dateReferenceJusqua()
+                : endOfMonth();
+    }
+
     private void addRecapPdfCell(PdfPTable table, String text, Font font, Color bg, int align) {
         PdfPCell cell = new PdfPCell(new Phrase(text != null ? text : "—", font));
         cell.setBackgroundColor(bg);
@@ -292,28 +309,46 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
     }
 
     @Override
-    public RecaputilatifGlobal getRecapitulatifGlobal(Long banqueId) {
+    public RecaputilatifGlobal getRecapitulatifGlobal(Long banqueId, PeriodeRecap periode) {
         BanqueResponse banque = this.banqueService.getBanqueById(banqueId);
+        // Plafond FC stocké en positif en base (colonne ligne_fonctionnelle.plafond) — conservé
+        // tel quel ici (pas de negate()) pour rester cohérent avec RecapGeneralDetailleServiceImpl
+        // (ResumeSectionDto.plafondLigne), qui affiche le même plafond en positif. Voir
+        // RecaputilatifGlobal.disponibiliteFinDuMois() pour le calcul de marge qui en découle
+        // (retour utilisateur du 31/08/2026 : l'ancien negate() ici inversait le signe de cette
+        // marge par rapport à la convention déjà utilisée dans l'autre rapport).
         BigDecimal plafondFc = banqueService.getPlafondFC(banqueId);
 
-        List<RecaputilatifItem> decaissements = fetchOutstanding(banqueId, Type.DECAISSEMENT);
-        List<RecaputilatifItem> encaissements = fetchOutstanding(banqueId, Type.ENCAISSEMENT);
+        LocalDate horizon = resolveHorizon(periode);
+        List<RecaputilatifItem> decaissements = fetchOutstanding(banqueId, Type.DECAISSEMENT, horizon);
+        List<RecaputilatifItem> encaissements = fetchOutstanding(banqueId, Type.ENCAISSEMENT, horizon);
 
         return new RecaputilatifGlobal(
                 banque.id(),
                 banque.nom(),
                 banque.soldeActuel(),
-                plafondFc.negate(),
+                plafondFc,
                 encaissements,
                 decaissements
         );
     }
 
-    private List<RecaputilatifItem> fetchOutstanding(Long banqueId, Type sens) {
+    /**
+     * Traduit le choix utilisateur ({@link PeriodeRecap}) en borne de date effective — {@code
+     * A_CE_JOUR} n'inclut que les encours déjà échus/émis (date de référence &lt;= aujourd'hui),
+     * {@code FIN_DE_MOIS} garde le comportement historique (borne à la fin du mois en cours).
+     * {@code null} est traité comme {@code FIN_DE_MOIS} (valeur par défaut au niveau du
+     * contrôleur de toute façon, filet de sécurité si jamais appelé directement).
+     */
+    private LocalDate resolveHorizon(PeriodeRecap periode) {
+        return periode == PeriodeRecap.A_CE_JOUR ? LocalDate.now() : endOfMonth();
+    }
+
+    private List<RecaputilatifItem> fetchOutstanding(Long banqueId, Type sens, LocalDate horizon) {
         Specification<RecapitulatifEncoursView> spec = Specification
                 .where(RecapitulatifEncoursSpecification.byBanqueId(banqueId))
                 .and(RecapitulatifEncoursSpecification.bySens(sens))
-                .and(RecapitulatifEncoursSpecification.outstandingUntil(endOfMonth()));
+                .and(RecapitulatifEncoursSpecification.outstandingUntil(horizon));
 
         return encoursRepository.findAll(spec).stream()
                 .map(mapper::toDto)
@@ -321,11 +356,11 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
     }
 
     @Override
-    public List<RecaputilatifGlobal> getAllRecapitulatifsGlobaux() {
+    public List<RecaputilatifGlobal> getAllRecapitulatifsGlobaux(PeriodeRecap periode) {
         List<Long> allBankIds = this.banqueService.getAllBanqueIds();
 
         return allBankIds.stream()
-                .map(this::getRecapitulatifGlobal)
+                .map(id -> getRecapitulatifGlobal(id, periode))
                 .collect(Collectors.toList());
     }
 }
