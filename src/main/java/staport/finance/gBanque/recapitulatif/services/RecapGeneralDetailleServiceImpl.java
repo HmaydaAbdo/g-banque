@@ -45,14 +45,14 @@ public class RecapGeneralDetailleServiceImpl implements IRecapGeneralDetailleSer
     private static final List<String> DECAISSEMENT_ORDER = List.of(
             "Leasing", "CMT", "REGLEMENT FRNS", "Virement International", "Préfinancement",
             "Factoring", "Droit Constaté", "Commission", "Agios", "Prélèvement",
-            "Frais Bancaires", "Impôts & Taxes", "Impayée", "Opération Erronée"
+            "Frais Bancaires", "Impôts & Taxes", "Impayée", "Opération Erronée", "Provision"
     );
 
     /** Ordre et libellés des catégories — identiques à l'ancien {@code buildEncaissements}. */
     private static final Map<TransactionSource, String> ENCAISSEMENT_CATEGORIES = new LinkedHashMap<>();
     private static final List<String> ENCAISSEMENT_ORDER = List.of(
             "REGLEMENT FRNS", "Virement International", "Préfinancement", "Factoring",
-            "Droit Constaté", "Décompte", "Restitution", "Impayée"
+            "Droit Constaté", "Décompte", "Restitution", "Impayée", "Provision"
     );
 
     static {
@@ -73,6 +73,7 @@ public class RecapGeneralDetailleServiceImpl implements IRecapGeneralDetailleSer
         DECAISSEMENT_CATEGORIES.put(IMPOT_TAXE, "Impôts & Taxes");
         DECAISSEMENT_CATEGORIES.put(IMPAYEE, "Impayée");
         DECAISSEMENT_CATEGORIES.put(OPERATION_ERRONE, "Opération Erronée");
+        DECAISSEMENT_CATEGORIES.put(PROVISION, "Provision");
 
         ENCAISSEMENT_CATEGORIES.put(CHEQUE, "REGLEMENT FRNS");
         ENCAISSEMENT_CATEGORIES.put(LCN_ENCAISSEMENT, "REGLEMENT FRNS");
@@ -86,6 +87,7 @@ public class RecapGeneralDetailleServiceImpl implements IRecapGeneralDetailleSer
         ENCAISSEMENT_CATEGORIES.put(DECOMPTES, "Décompte");
         ENCAISSEMENT_CATEGORIES.put(RESTITUTION, "Restitution");
         ENCAISSEMENT_CATEGORIES.put(IMPAYEE, "Impayée");
+        ENCAISSEMENT_CATEGORIES.put(PROVISION, "Provision");
     }
 
     public RecapGeneralDetailleServiceImpl(IBanqueService banqueService, RecapitulatifEncoursRepository encoursRepository) {

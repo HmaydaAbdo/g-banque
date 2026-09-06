@@ -46,6 +46,9 @@ import staport.finance.gBanque.impayees.validation.services.interfaces.IImpayeeV
 import staport.finance.gBanque.impot_taxes.validation.dto.ImpotEtTaxeTransactionRequestDto;
 import staport.finance.gBanque.impot_taxes.validation.dto.ImpotEtTaxeTransactionResponseDto;
 import staport.finance.gBanque.impot_taxes.validation.services.interfaces.IImpotEtTaxeValidationService;
+import staport.finance.gBanque.provision.validation.dto.ProvisionTransactionRequestDto;
+import staport.finance.gBanque.provision.validation.dto.ProvisionTransactionResponseDto;
+import staport.finance.gBanque.provision.validation.services.interfaces.IProvisionValidationService;
 import staport.finance.gBanque.moyensDePaiements.lcn.validation.dto.LcnTransactionRequest;
 import staport.finance.gBanque.moyensDePaiements.lcn.validation.dto.LcnTransactionResponseDto;
 import staport.finance.gBanque.moyensDePaiements.lcn.validation.services.interfaces.ILcnValidationService;
@@ -106,7 +109,7 @@ import java.util.List;
  * Cas particulier CMT / LEASING : l'identifiant de lot porte l'ID de l'échéance (pas celui du
  * contrat parent). Le contrat (CreditMoyenTerme / ContratLeasing) est dérivé côté serveur à partir
  * de la relation {@code @ManyToOne} de l'échéance elle-même — jamais fourni par le client, qui ne
- * transmet qu'une liste d'IDs génériques ({@link BatchValidationRequestDto#getIds()}).
+ * transmet qu'une liste d'IDs génériques ({@link BatchValidationRequestDto()}).
  * <p>
  * Hors périmètre : CAUTION (géré par le module {@code cautions}, ne transite pas par ce contrôleur).
  */
@@ -134,6 +137,7 @@ public class BatchValidationService {
     private final IDecompteValidationService decompteValidationService;
     private final IImpotEtTaxeValidationService impotEtTaxeValidationService;
     private final ICommissionValidationService commissionValidationService;
+    private final IProvisionValidationService provisionValidationService;
 
     public BatchValidationService(IFraisBancaireValidationService fraisBancaireValidationService,
                                    IRestitutionValidationService restitutionValidationService,
@@ -155,7 +159,8 @@ public class BatchValidationService {
                                    IDroitConstateValidationService droitConstateValidationService,
                                    IDecompteValidationService decompteValidationService,
                                    IImpotEtTaxeValidationService impotEtTaxeValidationService,
-                                   ICommissionValidationService commissionValidationService) {
+                                   ICommissionValidationService commissionValidationService,
+                                   IProvisionValidationService provisionValidationService) {
         this.fraisBancaireValidationService = fraisBancaireValidationService;
         this.restitutionValidationService = restitutionValidationService;
         this.operationErroneValidationService = operationErroneValidationService;
@@ -177,6 +182,7 @@ public class BatchValidationService {
         this.decompteValidationService = decompteValidationService;
         this.impotEtTaxeValidationService = impotEtTaxeValidationService;
         this.commissionValidationService = commissionValidationService;
+        this.provisionValidationService = provisionValidationService;
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -318,6 +324,14 @@ public class BatchValidationService {
                         requestDto.dateValeur(), requestDto.dateOperation(),
                         null, null, requestDto.rapprochementId());
                 OperationErroneTransactionResponseDto r = operationErroneValidationService.processOperationErroneTransaction(dto);
+                return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
+            }
+            case PROVISION -> {
+                ProvisionTransactionRequestDto dto = new ProvisionTransactionRequestDto(
+                        id, requestDto.tvaDeductible(), null,
+                        requestDto.dateValeur(), requestDto.dateOperation(),
+                        null, null, requestDto.rapprochementId());
+                ProvisionTransactionResponseDto r = provisionValidationService.processProvisionTransaction(dto);
                 return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
             }
             case FACTORING -> {
