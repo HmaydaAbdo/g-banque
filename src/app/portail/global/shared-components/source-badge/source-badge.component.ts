@@ -30,6 +30,8 @@ const SOURCE_COLOR: Record<TransactionSource, string> = {
 
   [TransactionSource.IMPAYEE]:                'var(--color-danger)',
   [TransactionSource.OPERATION_ERRONE]:       'var(--color-danger)',
+
+  [TransactionSource.PROVISION]:              'var(--color-info)',
 };
 
 @Component({

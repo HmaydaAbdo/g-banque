@@ -36,6 +36,8 @@
   import {RestitutionValidationRequest} from "../../dtos/restitution/RestitutionValidationRequest";
   import {OperationErroneValidationRequest} from "../../dtos/operation-erronés/OperationErroneValidationRequest";
   import {OperationErroneTransactionResponse} from "../../dtos/operation-erronés/OperationErroneTransactionResponse";
+  import {ProvisionValidationRequest} from "../../dtos/provision/ProvisionValidationRequest";
+  import {ProvisionTransactionResponse} from "../../dtos/provision/ProvisionTransactionResponse";
   import {
     VirementInternationalTransactionRequestDto
   } from "../../dtos/virementsInternationaux/VirementInternationalTransactionRequestDto";
@@ -212,6 +214,19 @@
     ): Observable<OperationErroneTransactionResponse> {
       return this.http.post<OperationErroneTransactionResponse>(
         `${this.baseUrl}/process/operation-errone`,
+        request
+      );
+    }
+
+    /**
+     * Traiter une provision (encaissement ou décaissement selon son sens) vers une transaction
+     * POST /rapprochement/process/provision
+     */
+    provisionToRapprochement(
+      request: ProvisionValidationRequest
+    ): Observable<ProvisionTransactionResponse> {
+      return this.http.post<ProvisionTransactionResponse>(
+        `${this.baseUrl}/process/provision`,
         request
       );
     }

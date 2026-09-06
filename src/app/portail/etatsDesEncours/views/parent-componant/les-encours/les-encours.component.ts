@@ -78,6 +78,7 @@ export class LesEncoursComponent implements OnInit {
     'fraisBancaire': { label: 'Décaissements / Frais Bancaires', icon: 'pi pi-credit-card' },
     'impots-taxes': { label: 'Décaissements / Impôts et Taxes', icon: 'pi pi-file' },
     'operations-errones': { label: 'Décaissements / Opérations Erronées', icon: 'pi pi-exclamation-triangle' },
+    'provisions-decaissements': { label: 'Décaissements / Provisions', icon: 'pi pi-wallet' },
     'impayees-decaissement': { label: 'Décaissements / Impayés', icon: 'pi pi-exclamation-circle' },
 
 
@@ -94,6 +95,7 @@ export class LesEncoursComponent implements OnInit {
     'decomptes': { label: 'Encaissements / Décomptes', icon: 'pi pi-calculator' },
     'restitutions': { label: 'Encaissements / Restitutions', icon: 'pi pi-refresh' },
     'impayees-encaissement': { label: 'Encaissements / Impayés', icon: 'pi pi-exclamation-circle' },
+    'provisions-encaissements': { label: 'Encaissements / Provisions', icon: 'pi pi-wallet' },
 
   };
 
@@ -177,6 +179,7 @@ export class LesEncoursComponent implements OnInit {
           { label: 'Décomptes', icon: 'pi pi-calculator', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'decomptes'] },
           { label: 'Restitutions', icon: 'pi pi-refresh', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'restitutions'] },
           { label: 'Impayées', icon: 'pi pi-ban', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'impayees-encaissement'] },
+          { label: 'Provisions', icon: 'pi pi-wallet', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'provisions-encaissements'] },
 
         ]
       },
@@ -201,6 +204,7 @@ export class LesEncoursComponent implements OnInit {
           { label: 'Impôts et Taxes', icon: 'pi pi-file', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'impots-taxes'] },
           { label: 'Opérations Erronées', icon: 'pi pi-exclamation-triangle', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'operations-errones'] },
           {label: 'Impayés', icon: 'pi pi-ban', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'impayees-decaissement']},
+          { label: 'Provisions', icon: 'pi pi-wallet', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'provisions-decaissements'] },
 
         ]
       }

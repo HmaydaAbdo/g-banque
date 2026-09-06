@@ -55,6 +55,8 @@ export const ETATS_DES_ENCOURS_ROUTES: Routes = [
       { path: 'impayees-decaissement', loadComponent: () => import('./views/lesEncours/decaissement/impayee/decaissement-encours-impayee.component').then(m => m.DecaissementEncoursImpayeeComponent) },
       { path: 'impayees-encaissement', loadComponent: () => import('./views/lesEncours/encaissements/impayee/encaissement-encours-impayee.component').then(m => m.EncaissementEncoursImpayeeComponent) },
       { path: 'operations-errones', loadComponent: () => import('./views/lesEncours/decaissement/operation-errone/operation-errone.component').then(m => m.EncoursOperationErroneComponent) },
+      { path: 'provisions-decaissements', loadComponent: () => import('./views/lesEncours/decaissement/provision/provision-encours.component').then(m => m.ProvisionEncoursDecaissementComponent) },
+      { path: 'provisions-encaissements', loadComponent: () => import('./views/lesEncours/encaissements/provision/provision-encours.component').then(m => m.ProvisionEncoursEncaissementComponent) },
     ]
   }
 ];

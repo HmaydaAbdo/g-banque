@@ -121,6 +121,12 @@ export const PORTAIL_ROUTES: Routes = [
   },
 
   {
+    path: 'provisions',
+    canActivate: [departmentGuard('Finance')],
+    loadChildren: () => import('../../provision/provision.routes').then(m => m.PROVISION_ROUTES)
+  },
+
+  {
     path: 'Mise-a-disposition',
     canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../Mise-à-disposition/mise-a-disposition.routes').then(m => m.MISE_A_DISPOSITION_ROUTES)
