@@ -16,21 +16,23 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.recapitulatif.dtos.request.DecaissementSearchDto;
+import staport.finance.gBanque.recapitulatif.dtos.request.RecapitulatifSearchDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.AgregatedRecapDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifGlobal;
 import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
 import staport.finance.gBanque.recapitulatif.services.interfaces.IRecapitulatifService;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
+import staport.finance.gBanque.transactions.enums.SensOperation;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 /**
- * REST Controller for the disbursement summary.
- * Exposes a paginated and sortable endpoint to retrieve a consolidated view
- * of all expected payments for the current month.
+ * REST Controller du récapitulatif des encours prévisionnels.
+ * Expose un endpoint paginé et triable donnant une vue consolidée des encaissements et
+ * décaissements attendus du mois en cours pour une banque, ainsi que son export PDF.
  */
 @Tag(name = "Récapitulatif", description = "Vue consolidée des décaissements/encaissements prévisionnels du mois par banque")
 @SecurityRequirement(name = "bearerAuth")
@@ -51,73 +53,53 @@ public class RecapitulatifController {
     }
 
     /**
-     * Endpoint to retrieve the list of upcoming disbursements for a specific bank.
-     * The banqueId is a mandatory path variable.
-     * @param banqueId The ID of the bank to filter by.
-     * @param pageable Pagination and sorting information.
-     * @return A paginated list of disbursement items.
+     * Endpoint unique du récapitulatif des encours du mois pour une banque : encaissements et
+     * décaissements réunis, le sens n'étant plus qu'un critère de recherche optionnel.
+     *
+     * @param banqueId identifiant de la banque (obligatoire, porté par l'URL).
+     * @param searchDto critères de recherche, dont le sens (facultatif).
+     * @param pageable pagination et tri.
      */
-    @Operation(summary = "Décaissements prévisionnels du mois")
-    @GetMapping("/decaissement/banque/{banqueId}")
-    public ResponseEntity<AgregatedRecapDto> getRecapitulatifDecaissement(
-            @PageableDefault(sort = "dateEmission", direction = Sort.Direction.ASC) Pageable pageable,
-            @PathVariable Long banqueId, @ModelAttribute DecaissementSearchDto searchDto) {
+    @Operation(summary = "Encaissements et décaissements prévisionnels du mois",
+            description = "Le paramètre de requête `sens` est optionnel : absent, les deux sens " +
+                    "sont retournés entrelacés ; ENCAISSEMENT ou DECAISSEMENT ne retourne que ce " +
+                    "sens. Les totaux débit et crédit retournés suivent toujours les critères " +
+                    "appliqués — le total du sens exclu vaut donc zéro.")
+    @GetMapping("/banque/{banqueId}")
+    public ResponseEntity<AgregatedRecapDto> getRecapitulatif(
+            @PageableDefault(sort = "dateEmission", direction = Sort.Direction.DESC) Pageable pageable,
+            @PathVariable Long banqueId, @ModelAttribute RecapitulatifSearchDto searchDto) {
 
         AgregatedRecapDto res =
-                recapitulatifService.getRecapitulatifDecaissementForCurrentMonthForGivenBanque(pageable, searchDto, banqueId);
+                recapitulatifService.getRecapitulatifForCurrentMonthForGivenBanque(pageable, searchDto, banqueId);
 
         return new ResponseEntity<>(res, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Exporter en PDF le récapitulatif des encours prévisionnels du mois",
+            description = "Mêmes critères que GET /recapitulatif/banque/{banqueId}, filtre de sens compris — sans pagination")
+    @ApiResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_PDF_VALUE))
+    @GetMapping("/banque/{banqueId}/export/pdf")
+    public ResponseEntity<byte[]> exportRecapitulatifPdf(
+            @PathVariable Long banqueId, @ModelAttribute RecapitulatifSearchDto searchDto) {
+
+        byte[] pdf = recapitulatifService.exportRecapitulatifPdf(searchDto, banqueId);
+        String filename = "recapitulatif_" + segmentSens(searchDto) + "_" + banqueId + "_" + LocalDate.now() + ".pdf";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
     /**
-     * Endpoint to retrieve the list of upcoming encaissement for a specific bank.
-     * The banqueId is a mandatory path variable.
-     * @param banqueId The ID of the bank to filter by.
-     * @param pageable Pagination and sorting information.
-     * @return A paginated list of disbursement items.
+     * Segment du nom de fichier reflétant le filtre de sens appliqué à l'export ("tous" lorsque
+     * aucun sens n'est filtré), pour que deux exports successifs de sens différents ne se
+     * recouvrent pas dans le dossier de téléchargement de l'utilisateur.
      */
-    @Operation(summary = "Encaissements prévisionnels du mois")
-    @GetMapping("/encaissement/banque/{banqueId}")
-    public ResponseEntity<AgregatedRecapDto> getRecapitulatifEncaissement(
-            @PageableDefault(sort = "dateEmission", direction = Sort.Direction.ASC) Pageable pageable,
-            @PathVariable Long banqueId, @ModelAttribute DecaissementSearchDto searchDto) {
-
-        AgregatedRecapDto res = recapitulatifService.getRecapitulatifEncaissementForCurrentMonthForGivenBanque(pageable, searchDto, banqueId);
-
-        return new ResponseEntity<>(res, HttpStatus.OK);
-    }
-
-
-    @Operation(summary = "Exporter en PDF le récapitulatif des décaissements prévisionnels du mois",
-            description = "Mêmes critères que GET /recapitulatif/decaissement/banque/{banqueId} — sans pagination")
-    @ApiResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_PDF_VALUE))
-    @GetMapping("/decaissement/banque/{banqueId}/export/pdf")
-    public ResponseEntity<byte[]> exportRecapitulatifDecaissementPdf(
-            @PathVariable Long banqueId, @ModelAttribute DecaissementSearchDto searchDto) {
-
-        byte[] pdf = recapitulatifService.exportRecapitulatifDecaissementPdf(searchDto, banqueId);
-        String filename = "recapitulatif_decaissement_" + banqueId + "_" + LocalDate.now() + ".pdf";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", filename);
-        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
-    }
-
-    @Operation(summary = "Exporter en PDF le récapitulatif des encaissements prévisionnels du mois",
-            description = "Mêmes critères que GET /recapitulatif/encaissement/banque/{banqueId} — sans pagination")
-    @ApiResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_PDF_VALUE))
-    @GetMapping("/encaissement/banque/{banqueId}/export/pdf")
-    public ResponseEntity<byte[]> exportRecapitulatifEncaissementPdf(
-            @PathVariable Long banqueId, @ModelAttribute DecaissementSearchDto searchDto) {
-
-        byte[] pdf = recapitulatifService.exportRecapitulatifEncaissementPdf(searchDto, banqueId);
-        String filename = "recapitulatif_encaissement_" + banqueId + "_" + LocalDate.now() + ".pdf";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", filename);
-        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+    private static String segmentSens(RecapitulatifSearchDto searchDto) {
+        SensOperation sens = (searchDto != null) ? searchDto.sens() : null;
+        return sens == null ? "tous" : sens.name().toLowerCase(Locale.ROOT);
     }
 
     @Operation(summary = "Télécharger le récapitulatif global (PDF)",

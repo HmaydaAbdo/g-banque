@@ -2,10 +2,11 @@ package staport.finance.gBanque.recapitulatif.specs;
 
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
-import staport.finance.gBanque.recapitulatif.dtos.request.DecaissementSearchDto;
+import staport.finance.gBanque.recapitulatif.dtos.request.RecapitulatifSearchDto;
 import staport.finance.gBanque.recapitulatif.entities.RecapitulatifEncoursView;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -23,6 +24,11 @@ public final class RecapitulatifEncoursSpecification {
     public static Specification<RecapitulatifEncoursView> bySens(Type sens) {
         return (root, query, cb) ->
                 sens == null ? cb.conjunction() : cb.equal(root.get("sens"), sens);
+    }
+
+    public static Specification<RecapitulatifEncoursView> outstandingFrom(LocalDate from) {
+        return (root, query, cb) ->
+                from == null ? cb.conjunction() : cb.greaterThanOrEqualTo(root.get("dateReference"), from);
     }
 
     public static Specification<RecapitulatifEncoursView> outstandingUntil(LocalDate until) {
@@ -52,21 +58,38 @@ public final class RecapitulatifEncoursSpecification {
     }
 
     /**
-     * Combine les critères fixes (banque, sens, encours jusqu'à une date) avec les filtres
-     * dynamiques optionnels de {@link DecaissementSearchDto} (sources, libellé, observation).
+     * Filtre optionnel sur le montant exact (égalité stricte, pas une plage) — {@code null} ne
+     * filtre pas.
+     */
+    public static Specification<RecapitulatifEncoursView> byMontant(BigDecimal montant) {
+        return (root, query, cb) ->
+                montant == null ? cb.conjunction() : cb.equal(root.get("montant"), montant);
+    }
+
+    /**
+     * Combine les critères fixes (banque, sens, encours entre deux dates) avec les filtres
+     * dynamiques optionnels de {@link RecapitulatifSearchDto} (sources, libellé, observation,
+     * plage de montant).
+     *
+     * <p>Le sens est reçu ici sous sa forme legacy {@link Type} — celle portée par la vue SQL —
+     * et non sous la forme {@code SensOperation} du DTO : la traduction est faite en amont par le
+     * Service, pour que cette classe ne dépende que du modèle de persistance qu'elle interroge.
+     * {@code null} signifie « aucun filtre de sens » : les deux sens sont alors retournés.</p>
      */
     public static Specification<RecapitulatifEncoursView> searchByCriteria(
-            DecaissementSearchDto searchDto, Long banqueId, Type sens, LocalDate until) {
+            RecapitulatifSearchDto searchDto, Long banqueId, Type sens, LocalDate from, LocalDate until) {
 
         Specification<RecapitulatifEncoursView> spec = Specification
                 .where(byBanqueId(banqueId))
                 .and(bySens(sens))
+                .and(outstandingFrom(from))
                 .and(outstandingUntil(until));
 
         if (searchDto != null) {
             spec = spec.and(bySources(searchDto.transactionSources()))
                     .and(byLibelle(searchDto.libelle()))
-                    .and(byObservation(searchDto.observation()));
+                    .and(byObservation(searchDto.observation()))
+                    .and(byMontant(searchDto.montant()));
         }
 
         return spec;

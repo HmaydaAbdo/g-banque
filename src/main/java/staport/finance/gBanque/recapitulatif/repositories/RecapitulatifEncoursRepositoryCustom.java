@@ -1,17 +1,32 @@
 package staport.finance.gBanque.recapitulatif.repositories;
 
 import org.springframework.data.jpa.domain.Specification;
+import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.recapitulatif.entities.RecapitulatifEncoursView;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 /**
  * Agrégation (SUM) sur {@link RecapitulatifEncoursView} respectant une {@link Specification}
  * arbitraire — nécessaire car {@code JpaSpecificationExecutor} ne fournit pas d'agrégat natif,
- * et les filtres dynamiques de {@code DecaissementSearchDto} (sources, libellé, observation)
- * doivent être reflétés dans le total, pas seulement dans la page retournée.
+ * et les filtres dynamiques de {@code RecapitulatifSearchDto} (sources, libellé, observation,
+ * sens) doivent être reflétés dans les totaux, pas seulement dans la page retournée.
  */
 public interface RecapitulatifEncoursRepositoryCustom {
 
-    BigDecimal sumMontant(Specification<RecapitulatifEncoursView> spec);
+    /**
+     * Somme des montants groupée par sens, pour la {@link Specification} donnée.
+     *
+     * <p>Une seule requête couvre les deux totaux affichés côte à côte par l'écran Récapitulatif
+     * depuis la fusion des deux écrans (06/09/2026), y compris quand aucun filtre de sens n'est
+     * appliqué et que les deux sens sont donc présents dans le résultat.</p>
+     *
+     * <p>Un sens absent du résultat — aucune ligne correspondante, ou sens exclu par la
+     * Specification elle-même lorsque l'utilisateur filtre sur un sens précis — est simplement
+     * absent de la Map : au consommateur d'appliquer {@code getOrDefault(..., BigDecimal.ZERO)}.
+     * C'est ce qui fait que le total du sens non demandé vaut zéro par construction, sans
+     * traitement conditionnel dans le Service.</p>
+     */
+    Map<Type, BigDecimal> sumMontantParSens(Specification<RecapitulatifEncoursView> spec);
 }

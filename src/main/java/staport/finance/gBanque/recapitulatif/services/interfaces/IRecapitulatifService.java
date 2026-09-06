@@ -1,7 +1,7 @@
 package staport.finance.gBanque.recapitulatif.services.interfaces;
 
 import org.springframework.data.domain.Pageable;
-import staport.finance.gBanque.recapitulatif.dtos.request.DecaissementSearchDto;
+import staport.finance.gBanque.recapitulatif.dtos.request.RecapitulatifSearchDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.AgregatedRecapDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifGlobal;
 import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
@@ -14,23 +14,24 @@ import java.util.List;
  */
 public interface IRecapitulatifService {
 
-    AgregatedRecapDto getRecapitulatifEncaissementForCurrentMonthForGivenBanque(
-            Pageable pageable, DecaissementSearchDto searchDto, Long banqueId);
-
-    AgregatedRecapDto getRecapitulatifDecaissementForCurrentMonthForGivenBanque(
-            Pageable pageable, DecaissementSearchDto searchDto, Long banqueId);
+    /**
+     * Récapitulatif des encours prévisionnels du mois pour une banque, paginé, trié et filtré.
+     *
+     * <p>Le sens fait partie des critères portés par {@code searchDto} : {@code searchDto.sens()}
+     * à {@code null} retourne les encaissements et les décaissements entrelacés (comportement par
+     * défaut de l'écran, « Tous »), une valeur précise ne retourne que ce sens.</p>
+     *
+     * <p>Les deux totaux du {@link AgregatedRecapDto} suivent toujours les critères appliqués :
+     * lorsqu'un sens précis est demandé, le total de l'autre sens vaut zéro.</p>
+     */
+    AgregatedRecapDto getRecapitulatifForCurrentMonthForGivenBanque(
+            Pageable pageable, RecapitulatifSearchDto searchDto, Long banqueId);
 
     /**
-     * Exporte en PDF le récapitulatif des décaissements prévisionnels du mois pour une banque
-     * (mêmes critères que {@link #getRecapitulatifDecaissementForCurrentMonthForGivenBanque}, sans pagination).
+     * Exporte en PDF le récapitulatif des encours prévisionnels du mois pour une banque
+     * (mêmes critères que {@link #getRecapitulatifForCurrentMonthForGivenBanque}, sans pagination).
      */
-    byte[] exportRecapitulatifDecaissementPdf(DecaissementSearchDto searchDto, Long banqueId);
-
-    /**
-     * Exporte en PDF le récapitulatif des encaissements prévisionnels du mois pour une banque
-     * (mêmes critères que {@link #getRecapitulatifEncaissementForCurrentMonthForGivenBanque}, sans pagination).
-     */
-    byte[] exportRecapitulatifEncaissementPdf(DecaissementSearchDto searchDto, Long banqueId);
+    byte[] exportRecapitulatifPdf(RecapitulatifSearchDto searchDto, Long banqueId);
 
     /**
      * @param periode horizon de calcul (à ce jour, ou jusqu'à fin de mois) — voir {@link PeriodeRecap}.

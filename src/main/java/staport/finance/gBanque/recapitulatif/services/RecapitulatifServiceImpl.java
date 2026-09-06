@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.dtos.response.BanqueResponse;
 import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
-import staport.finance.gBanque.recapitulatif.dtos.request.DecaissementSearchDto;
+import staport.finance.gBanque.recapitulatif.dtos.request.RecapitulatifSearchDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.AgregatedRecapDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifGlobal;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifItem;
@@ -30,6 +30,7 @@ import staport.finance.gBanque.recapitulatif.repositories.RecapitulatifEncoursRe
 import staport.finance.gBanque.recapitulatif.services.interfaces.IRecapitulatifService;
 import staport.finance.gBanque.recapitulatif.specs.RecapitulatifEncoursSpecification;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
+import staport.finance.gBanque.transactions.enums.SensOperation;
 
 import java.awt.Color;
 import java.math.BigDecimal;
@@ -41,6 +42,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -52,6 +54,10 @@ import java.util.stream.Collectors;
  * {@code v_recapitulatif_encours} — pagination, tri et agrégation réels en base, remplaçant
  * l'ancienne implémentation qui chargeait ~17 repositories en mémoire (voir historique dans
  * {@code modules_sweep.md}, sweep États des encours / Récapitulatif, Phase 2, 17/07/2026).</p>
+ *
+ * <p>Depuis le 06/09/2026, les deux écrans Récapitulatif Décaissements et Récapitulatif
+ * Encaissements sont fusionnés en un seul : le sens est devenu un critère de recherche optionnel
+ * au lieu d'être fixé par la route, et les deux totaux sont retournés ensemble.</p>
  */
 @Service
 @Transactional(readOnly = true)
@@ -92,40 +98,64 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
     }
 
     @Override
-    public AgregatedRecapDto getRecapitulatifEncaissementForCurrentMonthForGivenBanque(
-            Pageable pageable, DecaissementSearchDto searchDto, Long banqueId) {
-        return buildAgregatedRecap(pageable, searchDto, banqueId, Type.ENCAISSEMENT);
-    }
+    public AgregatedRecapDto getRecapitulatifForCurrentMonthForGivenBanque(
+            Pageable pageable, RecapitulatifSearchDto searchDto, Long banqueId) {
 
-    @Override
-    public AgregatedRecapDto getRecapitulatifDecaissementForCurrentMonthForGivenBanque(
-            Pageable pageable, DecaissementSearchDto searchDto, Long banqueId) {
-        return buildAgregatedRecap(pageable, searchDto, banqueId, Type.DECAISSEMENT);
-    }
-
-    private AgregatedRecapDto buildAgregatedRecap(
-            Pageable pageable, DecaissementSearchDto searchDto, Long banqueId, Type sens) {
-
-        LocalDate until = resolveDateReferenceUntil(searchDto);
-        Specification<RecapitulatifEncoursView> spec =
-                RecapitulatifEncoursSpecification.searchByCriteria(searchDto, banqueId, sens, until);
+        Specification<RecapitulatifEncoursView> spec = buildSearchSpecification(searchDto, banqueId);
 
         Page<RecaputilatifItem> page = encoursRepository.findAll(spec, normalizeSort(pageable))
                 .map(mapper::toDto);
 
-        BigDecimal total = encoursRepository.sumMontant(spec);
-        BigDecimal totalDebit = sens == Type.DECAISSEMENT ? total : BigDecimal.ZERO;
-        BigDecimal totalCredit = sens == Type.ENCAISSEMENT ? total : BigDecimal.ZERO;
+        Map<Type, BigDecimal> totaux = encoursRepository.sumMontantParSens(spec);
 
-        return new AgregatedRecapDto(totalDebit, totalCredit, page);
+        return new AgregatedRecapDto(
+                totaux.getOrDefault(Type.DECAISSEMENT, BigDecimal.ZERO),
+                totaux.getOrDefault(Type.ENCAISSEMENT, BigDecimal.ZERO),
+                page);
     }
 
     /**
-     * Les colonnes triables côté Angular (recap-decaissement/recap-encaissements) incluent
-     * "debit"/"credit"/"dateEcheance", qui n'existent pas comme propriétés distinctes sur
-     * {@link RecapitulatifEncoursView} (une seule colonne "montant", direction déjà fixée par le
-     * filtre "sens" ; "dateEcheance" est exposée sous "dateEcheanceAffichage"). On les retraduit
-     * ici plutôt que de les exposer tel quel côté base pour ne pas changer le contrat frontend.
+     * Construit la Specification unique de l'écran à partir des critères saisis. La même
+     * instance sert à la fois à la page retournée et aux totaux : c'est ce qui garantit que les
+     * totaux affichés correspondent exactement aux lignes filtrées, et que le total du sens exclu
+     * vaut zéro dès qu'un sens précis est demandé (le regroupement par sens ne renvoie alors
+     * qu'une seule clé).
+     */
+    private Specification<RecapitulatifEncoursView> buildSearchSpecification(
+            RecapitulatifSearchDto searchDto, Long banqueId) {
+
+        return RecapitulatifEncoursSpecification.searchByCriteria(
+                searchDto, banqueId, toLegacySens(searchDto),
+                resolveDateReferenceDepuis(searchDto), resolveDateReferenceUntil(searchDto));
+    }
+
+    /**
+     * Borne basse optionnelle — contrairement à {@link #resolveDateReferenceUntil}, aucune valeur
+     * par défaut n'est appliquée quand elle est absente : {@code null} signifie simplement
+     * « aucune borne basse », pas un repli sur une date calculée.
+     */
+    private LocalDate resolveDateReferenceDepuis(RecapitulatifSearchDto searchDto) {
+        return (searchDto != null) ? searchDto.dateReferenceDepuis() : null;
+    }
+
+    /**
+     * Convertit le sens demandé ({@link SensOperation}, type public du projet) vers l'enum legacy
+     * {@link Type} porté par la vue SQL. Les deux enums déclarent les mêmes constantes, la
+     * correspondance par nom suffit donc. {@code null} traverse tel quel : la Specification traite
+     * alors le sens comme non filtré et retourne les deux sens.
+     */
+    private Type toLegacySens(RecapitulatifSearchDto searchDto) {
+        SensOperation sens = (searchDto != null) ? searchDto.sens() : null;
+        return sens == null ? null : Type.valueOf(sens.name());
+    }
+
+    /**
+     * Les colonnes triables côté Angular (écran Récapitulatif) incluent "debit"/"credit"/
+     * "dateEcheance", qui n'existent pas comme propriétés distinctes sur
+     * {@link RecapitulatifEncoursView} : la vue ne porte qu'une seule colonne "montant" (sa
+     * direction étant donnée par la colonne "sens"), et la date d'échéance y est exposée sous
+     * "dateEcheanceAffichage". On les retraduit ici plutôt que de les exposer tel quel côté base
+     * pour ne pas changer le contrat frontend.
      */
     private Pageable normalizeSort(Pageable pageable) {
         if (pageable.getSort().isUnsorted()) {
@@ -146,31 +176,26 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
     }
 
     @Override
-    public byte[] exportRecapitulatifDecaissementPdf(DecaissementSearchDto searchDto, Long banqueId) {
-        return exportRecapitulatifPdf(searchDto, banqueId, Type.DECAISSEMENT, "Récapitulatif des Décaissements Prévisionnels");
-    }
-
-    @Override
-    public byte[] exportRecapitulatifEncaissementPdf(DecaissementSearchDto searchDto, Long banqueId) {
-        return exportRecapitulatifPdf(searchDto, banqueId, Type.ENCAISSEMENT, "Récapitulatif des Encaissements Prévisionnels");
-    }
-
-    private byte[] exportRecapitulatifPdf(DecaissementSearchDto searchDto, Long banqueId, Type sens, String titlePrefix) {
+    public byte[] exportRecapitulatifPdf(RecapitulatifSearchDto searchDto, Long banqueId) {
         BanqueResponse banque = banqueService.getBanqueById(banqueId);
 
-        LocalDate until = resolveDateReferenceUntil(searchDto);
-        Specification<RecapitulatifEncoursView> spec =
-                RecapitulatifEncoursSpecification.searchByCriteria(searchDto, banqueId, sens, until);
+        Specification<RecapitulatifEncoursView> spec = buildSearchSpecification(searchDto, banqueId);
 
-        List<RecaputilatifItem> items = encoursRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission")).stream()
-                .map(mapper::toDto)
-                .toList();
+        List<RecaputilatifItem> items =
+                encoursRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "dateEmission")).stream()
+                        .map(mapper::toDto)
+                        .toList();
 
-        BigDecimal total = encoursRepository.sumMontant(spec);
+        Map<Type, BigDecimal> totaux = encoursRepository.sumMontantParSens(spec);
+        BigDecimal totalDebit = totaux.getOrDefault(Type.DECAISSEMENT, BigDecimal.ZERO);
+        BigDecimal totalCredit = totaux.getOrDefault(Type.ENCAISSEMENT, BigDecimal.ZERO);
 
         List<String> filterLines = new ArrayList<>();
         filterLines.add("Banque : " + banque.nom());
         if (searchDto != null) {
+            if (searchDto.sens() != null) {
+                filterLines.add("Sens : " + libelleSens(searchDto.sens()));
+            }
             if (searchDto.libelle() != null && !searchDto.libelle().isBlank()) {
                 filterLines.add("Libellé : " + searchDto.libelle());
             }
@@ -180,12 +205,18 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
             if (searchDto.transactionSources() != null && !searchDto.transactionSources().isEmpty()) {
                 filterLines.add("Source : " + searchDto.transactionSources());
             }
+            if (searchDto.dateReferenceDepuis() != null) {
+                filterLines.add("Date de référence depuis : " + searchDto.dateReferenceDepuis().format(DATE_FMT));
+            }
             if (searchDto.dateReferenceJusqua() != null) {
                 filterLines.add("Date de référence jusqu'au : " + searchDto.dateReferenceJusqua().format(DATE_FMT));
             }
+            if (searchDto.montant() != null) {
+                filterLines.add("Montant : " + formatMontantRecap(searchDto.montant()) + " MAD");
+            }
         }
 
-        String title = titlePrefix + " — " + banque.nom();
+        String title = titreRapport(searchDto) + " — " + banque.nom();
 
         try {
             return staportPdfReportService.generateReport(title, (doc, writer) -> {
@@ -245,28 +276,27 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
                         addRecapPdfCell(table, it.observations(), cellFont, rowBg, Element.ALIGN_LEFT);
                     }
 
+                    // Ligne de total : 4 (libellé) + 1 (débit) + 1 (crédit) + 2 (vide) = 8 cellules,
+                    // soit exactement le nombre de colonnes du tableau. Les deux totaux sont posés
+                    // sous leur colonne respective : l'écran pouvant désormais mélanger les deux
+                    // sens, un total unique ne suffirait plus.
                     PdfPCell totalLabel = new PdfPCell(new Phrase("TOTAL — " + items.size() + " ligne(s)", totalFont));
-                    totalLabel.setColspan(sens == Type.DECAISSEMENT ? 4 : 5);
+                    totalLabel.setColspan(4);
                     totalLabel.setBackgroundColor(LIGHT_BLUE);
                     totalLabel.setPadding(5f);
                     totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
                     totalLabel.setBorderColor(MED_BLUE);
                     table.addCell(totalLabel);
 
-                    PdfPCell totalVal = new PdfPCell(new Phrase(formatMontantRecap(total) + " MAD", totalFont));
-                    totalVal.setBackgroundColor(LIGHT_BLUE);
-                    totalVal.setPadding(5f);
-                    totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                    totalVal.setBorderColor(MED_BLUE);
-                    table.addCell(totalVal);
+                    addRecapPdfTotalCell(table, formatMontantRecap(totalDebit) + " MAD", totalFont);
+                    addRecapPdfTotalCell(table, formatMontantRecap(totalCredit) + " MAD", totalFont);
 
-                    int remainingCols = sens == Type.DECAISSEMENT ? 2 : 1;
-                    for (int j = 0; j < remainingCols; j++) {
-                        PdfPCell empty = new PdfPCell(new Phrase(""));
-                        empty.setBackgroundColor(LIGHT_BLUE);
-                        empty.setBorderColor(MED_BLUE);
-                        table.addCell(empty);
-                    }
+                    PdfPCell trailing = new PdfPCell(new Phrase(""));
+                    trailing.setColspan(2);
+                    trailing.setBackgroundColor(LIGHT_BLUE);
+                    trailing.setPadding(5f);
+                    trailing.setBorderColor(MED_BLUE);
+                    table.addCell(trailing);
 
                     doc.add(table);
                 } catch (DocumentException e) {
@@ -279,11 +309,30 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
     }
 
     /**
+     * Intitulé du rapport, adapté au filtre de sens actif — aucun filtre (« Tous » côté écran)
+     * produit un titre couvrant les deux sens.
+     */
+    private String titreRapport(RecapitulatifSearchDto searchDto) {
+        SensOperation sens = (searchDto != null) ? searchDto.sens() : null;
+        if (sens == SensOperation.DECAISSEMENT) {
+            return "Récapitulatif des Décaissements Prévisionnels";
+        }
+        if (sens == SensOperation.ENCAISSEMENT) {
+            return "Récapitulatif des Encaissements Prévisionnels";
+        }
+        return "Récapitulatif des Encaissements et Décaissements Prévisionnels";
+    }
+
+    private String libelleSens(SensOperation sens) {
+        return sens == SensOperation.DECAISSEMENT ? "Décaissement" : "Encaissement";
+    }
+
+    /**
      * Détermine la borne supérieure ("jusqu'à") appliquée sur {@code dateReference} : la date
      * choisie par l'utilisateur si elle est renseignée dans le formulaire de recherche, sinon la
      * fin du mois en cours (comportement historique, cf. {@link #endOfMonth()}).
      */
-    private LocalDate resolveDateReferenceUntil(DecaissementSearchDto searchDto) {
+    private LocalDate resolveDateReferenceUntil(RecapitulatifSearchDto searchDto) {
         return (searchDto != null && searchDto.dateReferenceJusqua() != null)
                 ? searchDto.dateReferenceJusqua()
                 : endOfMonth();
@@ -296,6 +345,15 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
         cell.setHorizontalAlignment(align);
         cell.setBorderColor(BORDER_GRAY);
         cell.setBorderWidth(0.5f);
+        table.addCell(cell);
+    }
+
+    private void addRecapPdfTotalCell(PdfPTable table, String text, Font font) {
+        PdfPCell cell = new PdfPCell(new Phrase(text, font));
+        cell.setBackgroundColor(LIGHT_BLUE);
+        cell.setPadding(5f);
+        cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        cell.setBorderColor(MED_BLUE);
         table.addCell(cell);
     }
 
