@@ -64,6 +64,9 @@ import staport.finance.gBanque.restitution.validation.services.interfaces.IResti
 import staport.finance.gBanque.operationErrone.validation.dto.OperationErroneTransactionRequestDto;
 import staport.finance.gBanque.operationErrone.validation.dto.OperationErroneTransactionResponseDto;
 import staport.finance.gBanque.operationErrone.validation.services.interfaces.IOperationErroneValidationService;
+import staport.finance.gBanque.provision.validation.dto.ProvisionTransactionRequestDto;
+import staport.finance.gBanque.provision.validation.dto.ProvisionTransactionResponseDto;
+import staport.finance.gBanque.provision.validation.services.interfaces.IProvisionValidationService;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.validation.dto.VirementInternationalTransactionRequestDto;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.validation.dto.VirementInternationalTransactionResponseDto;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.validation.services.interfaces.IVirementInternationalValidationService;
@@ -88,6 +91,7 @@ public class ValidationController {
     private final IFraisBancaireValidationService fraisBancaireValidationService;
     private final IRestitutionValidationService restitutionValidationService;
     private final IOperationErroneValidationService operationErroneValidationService;
+    private final IProvisionValidationService provisionValidationService;
     private final IImpayeeValidationService impayeeValidationService;
     private final ReverseTransactionService reverseTransactionService;
     private final ILeasingValidationService leasingValidationService;
@@ -112,6 +116,7 @@ public class ValidationController {
     public ValidationController(IFraisBancaireValidationService fraisBancaireValidationService,
                                 IRestitutionValidationService restitutionValidationService,
                                 IOperationErroneValidationService operationErroneValidationService,
+                                IProvisionValidationService provisionValidationService,
                                 IImpayeeValidationService impayeeValidationService,
                                 ReverseTransactionService reverseTransactionService,
                                 ILeasingValidationService leasingValidationService,
@@ -135,6 +140,7 @@ public class ValidationController {
         this.fraisBancaireValidationService = fraisBancaireValidationService;
         this.restitutionValidationService = restitutionValidationService;
         this.operationErroneValidationService = operationErroneValidationService;
+        this.provisionValidationService = provisionValidationService;
         this.impayeeValidationService = impayeeValidationService;
         this.reverseTransactionService = reverseTransactionService;
         this.leasingValidationService  = leasingValidationService;
@@ -394,6 +400,14 @@ public class ValidationController {
     public ResponseEntity<OperationErroneTransactionResponseDto> processOperationErroneToTransaction(
             @Valid @RequestBody OperationErroneTransactionRequestDto requestDto) {
         OperationErroneTransactionResponseDto responseDto = operationErroneValidationService.processOperationErroneTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
+    @Operation(summary = "Valider une provision")
+    @PostMapping("/process/provision")
+    public ResponseEntity<ProvisionTransactionResponseDto> processProvisionToTransaction(
+            @Valid @RequestBody ProvisionTransactionRequestDto requestDto) {
+        ProvisionTransactionResponseDto responseDto = provisionValidationService.processProvisionTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 

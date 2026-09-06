@@ -23,5 +23,6 @@ public enum TransactionSource {
     RESTITUTION,
     OPERATION_ERRONE,
     VIREMENT_INTERNATIONAL,
-    IMPAYEE
+    IMPAYEE,
+    PROVISION
 }

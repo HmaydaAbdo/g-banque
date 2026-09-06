@@ -34,6 +34,7 @@ import staport.finance.gBanque.fraisBancaires.validation.services.interfaces.IFr
 import staport.finance.gBanque.impayees.validation.services.interfaces.IImpayeeValidationService;
 import staport.finance.gBanque.impot_taxes.validation.services.interfaces.IImpotEtTaxeValidationService;
 import staport.finance.gBanque.operationErrone.validation.services.interfaces.IOperationErroneValidationService;
+import staport.finance.gBanque.provision.validation.services.interfaces.IProvisionValidationService;
 import staport.finance.gBanque.restitution.validation.services.interfaces.IRestitutionValidationService;
 import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.ILeasingValidationService;
 import staport.finance.gBanque.moyensDePaiements.cheques.validation.services.interfaces.IChequeValidationService;
@@ -102,6 +103,7 @@ public class TransactionServiceImpl implements ITransactionService {
     private final IOperationErroneValidationService operationErroneValidationService;
     private final IImpayeeValidationService impayeeValidationService;
     private final IAgiosValidationService agiosValidationService;
+    private final IProvisionValidationService provisionValidationService;
 
     public TransactionServiceImpl(TransactionRepository transactionRepository,
                               TransactionMapper transactionMapper,
@@ -124,7 +126,8 @@ public class TransactionServiceImpl implements ITransactionService {
                               IRestitutionValidationService restitutionValidationService,
                               IOperationErroneValidationService operationErroneValidationService,
                               IImpayeeValidationService impayeeValidationService,
-                              IAgiosValidationService agiosValidationService) {
+                              IAgiosValidationService agiosValidationService,
+                              IProvisionValidationService provisionValidationService) {
         this.transactionRepository = transactionRepository;
         this.transactionMapper = transactionMapper;
         this.staportPdfReportService = staportPdfReportService;
@@ -147,6 +150,7 @@ public class TransactionServiceImpl implements ITransactionService {
         this.operationErroneValidationService = operationErroneValidationService;
         this.impayeeValidationService = impayeeValidationService;
         this.agiosValidationService = agiosValidationService;
+        this.provisionValidationService = provisionValidationService;
     }
 
     @Override
@@ -582,6 +586,17 @@ public class TransactionServiceImpl implements ITransactionService {
             log.info("Transaction OPERATION_ERRONE ID: {} mise à jour — synchronisation de l'opération erronée ID: {}",
                     saved.getId(), saved.getReferent());
             operationErroneValidationService.syncOperationErroneFromTransaction(
+                    saved.getReferent(),
+                    saved.getDateValeur(),
+                    saved.getDateOperations());
+        }
+
+        // Synchronisation provision : si la transaction provient d'une provision, on propage
+        // dateValeur et dateOperation vers la provision source (referent = provisionId).
+        if (TransactionSource.PROVISION == saved.getTransactionSource() && saved.getReferent() != null) {
+            log.info("Transaction PROVISION ID: {} mise à jour — synchronisation de la provision ID: {}",
+                    saved.getId(), saved.getReferent());
+            provisionValidationService.syncProvisionFromTransaction(
                     saved.getReferent(),
                     saved.getDateValeur(),
                     saved.getDateOperations());
