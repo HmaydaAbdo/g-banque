@@ -1,4 +1,4 @@
-// recap-decaissement.component.scss
+// recapitulatif.component.scss
 // Règles p-inputtext / p-multiselect hover → supprimées (centralisées dans styles.scss)
 
 .stat-card {
@@ -41,6 +41,51 @@
 
 .debit-badge:hover  { background: color-mix(in srgb, var(--color-danger-light) 70%, var(--color-danger) 30%); }
 .credit-badge:hover { background: color-mix(in srgb, var(--color-success-light) 70%, var(--color-success) 30%); }
+
+// ── Badge de sens (icône + libellé, une ligne peut être encaissement ou
+// décaissement depuis la fusion des deux écrans du 06/09/2026) ─────────
+.sens-badge {
+  display      : inline-flex;
+  align-items  : center;
+  gap          : 4px;
+  padding      : 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-weight  : var(--weight-semibold);
+  font-size    : var(--text-xs);
+  white-space  : nowrap;
+}
+.sens-decaissement {
+  background: var(--color-danger-light);
+  color     : var(--color-danger-text);
+}
+.sens-encaissement {
+  background: var(--color-success-light);
+  color     : var(--color-success-text);
+}
+
+// ── Bande de totaux ──────────────────────────────────────
+.totals-bar {
+  flex-shrink  : 0;
+  background   : var(--color-surface);
+  border       : 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding      : 0.5rem 1rem;
+  box-shadow   : var(--shadow-sm);
+}
+.stat-chip {
+  display      : flex;
+  align-items  : center;
+  gap          : 5px;
+  padding      : 3px 8px;
+  border-radius: var(--radius-sm);
+  white-space  : nowrap;
+}
+.stat-divider {
+  width      : 1px;
+  height     : 16px;
+  background : var(--color-border);
+  flex-shrink: 0;
+}
 
 // ── Lignes tableau ──────────────────────────────────────
 .table-row {

@@ -58,8 +58,7 @@ export class LesEncoursComponent implements OnInit {
     'rapprochement': { label: 'Rapprochement en cours', icon: 'pi pi-sync' },
 
     // Récapitulatifs
-    'recap-decaissement': { label: 'Récapitulatif Décaissements', icon: 'pi pi-chart-bar' },
-    'recap-encaissement': { label: 'Récapitulatif Encaissements', icon: 'pi pi-chart-line' },
+    'recapitulatif': { label: 'Récapitulatifs', icon: 'pi pi-chart-bar' },
 
     // Décaissements (Sorties)
     'echeances-leasing': { label: 'Décaissements / Échéances Leasing', icon: 'pi pi-building' },
@@ -160,10 +159,7 @@ export class LesEncoursComponent implements OnInit {
       {
         label: 'Récapitulatifs',
         icon: 'pi pi-briefcase',
-        items: [
-          { label: 'Décaissements', icon: 'pi pi-chart-bar', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'recap-decaissement'] },
-          { label: 'Encaissements', icon: 'pi pi-chart-line', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'recap-encaissement'] }
-        ]
+        routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'recapitulatif']
       },
       {
         label: 'Encaissements',

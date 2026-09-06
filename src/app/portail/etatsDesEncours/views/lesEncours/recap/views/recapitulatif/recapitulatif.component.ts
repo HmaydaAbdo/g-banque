@@ -1,62 +1,61 @@
 import { Component, inject, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
-import { CardModule } from 'primeng/card';
-import { PaginatorModule } from 'primeng/paginator';
 import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 import { Table } from 'primeng/table';
 import { MessageService } from 'primeng/api';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
-import { ToolbarModule } from 'primeng/toolbar';
+import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { MultiSelectModule } from 'primeng/multiselect';
-import { InputTextModule } from 'primeng/inputtext'; // Ajouté pour le champ de recherche
+import { InputTextModule } from 'primeng/inputtext';
 import { CalendarModule } from 'primeng/calendar';
+import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { RecapService } from "../../services/recap.service";
-import { PageResponse } from "../../../../../../global/types/PageResponse";
 import { RecaputilatifItem } from "../../dtos/RecaputilatifItem";
 import { TransactionSource } from "../../../../../../transactions/dtos/TransactionSource";
-import { DecaissementSearchDto } from "../../dtos/DecaissementSearchDto";
-import {AgregatedRecapDto} from "../../dtos/AgregatedRecapDto";
-import {Decimal} from "decimal.js";
+import { SensOperation } from "../../../../../../transactions/dtos/SensOperation";
+import { RecapitulatifSearchDto } from "../../dtos/RecapitulatifSearchDto";
+import { AgregatedRecapDto } from "../../dtos/AgregatedRecapDto";
 
+/** Options du dropdown de filtre de sens — `null` = « Tous », aucun filtre appliqué. */
+interface SensOption {
+  label: string;
+  value: SensOperation | null;
+}
 
 @Component({
-  selector: 'app-recap-decaissement',
+  selector: 'app-recapitulatif',
   standalone: true,
   imports: [
     CommonModule,
     TableModule,
-    CardModule,
-    PaginatorModule,
     TooltipModule,
     ToastModule,
     DatePipe,
     DecimalPipe,
-    FormsModule,
     ReactiveFormsModule,
-    ToolbarModule,
     MultiSelectModule,
     InputTextModule,
     CalendarModule,
+    DropdownModule,
     ButtonModule,
     RippleModule,
   ],
-  templateUrl: './recap-decaissement.component.html',
-  styleUrl: './recap-decaissement.component.scss',
+  templateUrl: './recapitulatif.component.html',
+  styleUrl: './recapitulatif.component.scss',
   providers: [MessageService]
 })
-export class RecapDecaissementComponent implements OnInit, OnDestroy {
+export class RecapitulatifComponent implements OnInit, OnDestroy {
   // Table data state properties
-  totalDebit!:number
-  totalCredit!:number
-  recapDecaissements: RecaputilatifItem[] = [];
+  totalDebit!: number;
+  totalCredit!: number;
+  recapItems: RecaputilatifItem[] = [];
   totalRecords: number = 0;
   loading: boolean = true;
   exporting: boolean = false;
@@ -64,12 +63,18 @@ export class RecapDecaissementComponent implements OnInit, OnDestroy {
 
   searchForm!: FormGroup;
   transactionSourceOptions: any[] = [];
+  readonly sensOptions: SensOption[] = [
+    { label: 'Tous', value: null },
+    { label: 'Encaissement', value: SensOperation.ENCAISSEMENT },
+    { label: 'Décaissement', value: SensOperation.DECAISSEMENT },
+  ];
+  readonly SensOperation = SensOperation;
 
   @ViewChild('dt') dt: Table | undefined;
 
   private subscriptions: Subscription[] = [];
 
-  private readonly recapitulatifDecaissementService = inject(RecapService);
+  private readonly recapService = inject(RecapService);
   private readonly messageService = inject(MessageService);
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
@@ -85,7 +90,7 @@ export class RecapDecaissementComponent implements OnInit, OnDestroy {
           this.banqueIdFromRoute = +id;
           if (this.dt) {
             this.dt.first = 0;
-            this.loadDecaissements(this.dt.createLazyLoadMetadata());
+            this.loadRecapitulatif(this.dt.createLazyLoadMetadata());
           }
         }
       })
@@ -97,7 +102,10 @@ export class RecapDecaissementComponent implements OnInit, OnDestroy {
       transactionSources: [[]],
       libelle: [''],
       observation: [''],
-      dateReferenceJusqua: [null]
+      sens: [null],
+      dateReferenceDepuis: [null],
+      dateReferenceJusqua: [null],
+      montant: [null]
     });
 
     this.subscriptions.push(
@@ -108,19 +116,20 @@ export class RecapDecaissementComponent implements OnInit, OnDestroy {
   }
 
   populateTransactionSourceOptions(): void {
-    this.transactionSourceOptions = Object.entries(TransactionSource).map(([key, value]) => ({
-      label: value,
-      value: key
+    this.transactionSourceOptions = Object.values(TransactionSource).map(source => ({
+      label: source,
+      value: source
     }));
   }
+
   onFilterChange(): void {
     if (this.dt) {
       this.dt.first = 0;
-      this.loadDecaissements(this.dt.createLazyLoadMetadata());
+      this.loadRecapitulatif(this.dt.createLazyLoadMetadata());
     }
   }
 
-  loadDecaissements(event: TableLazyLoadEvent): void {
+  loadRecapitulatif(event: TableLazyLoadEvent): void {
     if (!this.banqueIdFromRoute) {
       return;
     }
@@ -131,20 +140,15 @@ export class RecapDecaissementComponent implements OnInit, OnDestroy {
     const size = event.rows!;
     const sort = event.sortField && event.sortOrder
       ? `${event.sortField},${event.sortOrder === 1 ? 'asc' : 'desc'}`
-      : 'dateEmission,asc';
+      : 'dateEmission,desc';
 
-    const searchDto: DecaissementSearchDto = {
-      transactionSources: this.searchForm.get('transactionSources')?.value,
-      libelle: this.searchForm.get('libelle')?.value,
-      observation: this.searchForm.get('observation')?.value,
-      dateReferenceJusqua: this.searchForm.get('dateReferenceJusqua')?.value
-    };
+    const searchDto = this.buildSearchDto();
 
     this.subscriptions.push(
-      this.recapitulatifDecaissementService.getRecapitulatifDecaissement(this.banqueIdFromRoute, searchDto, page, size, sort)
+      this.recapService.getRecapitulatif(this.banqueIdFromRoute, searchDto, page, size, sort)
         .subscribe({
           next: (response: AgregatedRecapDto) => {
-            this.recapDecaissements = response.page.content;
+            this.recapItems = response.page.content;
             this.totalRecords = response.page.page.totalElements;
             this.loading = false;
             this.totalCredit = response.totalCredit;
@@ -162,19 +166,14 @@ export class RecapDecaissementComponent implements OnInit, OnDestroy {
       return;
     }
     this.exporting = true;
-    const searchDto: DecaissementSearchDto = {
-      transactionSources: this.searchForm.get('transactionSources')?.value,
-      libelle: this.searchForm.get('libelle')?.value,
-      observation: this.searchForm.get('observation')?.value,
-      dateReferenceJusqua: this.searchForm.get('dateReferenceJusqua')?.value
-    };
+    const searchDto = this.buildSearchDto();
 
-    this.recapitulatifDecaissementService.exportRecapitulatifDecaissementPdf(this.banqueIdFromRoute, searchDto).subscribe({
+    this.recapService.exportRecapitulatifPdf(this.banqueIdFromRoute, searchDto).subscribe({
       next: (blob: Blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `recapitulatif_decaissement_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.download = `recapitulatif_${new Date().toISOString().slice(0, 10)}.pdf`;
         a.click();
         window.URL.revokeObjectURL(url);
         this.exporting = false;
@@ -183,6 +182,19 @@ export class RecapDecaissementComponent implements OnInit, OnDestroy {
         this.exporting = false;
       }
     });
+  }
+
+  /** Construit le DTO de recherche à partir du formulaire — partagé entre chargement et export. */
+  private buildSearchDto(): RecapitulatifSearchDto {
+    return {
+      transactionSources: this.searchForm.get('transactionSources')?.value,
+      libelle: this.searchForm.get('libelle')?.value,
+      observation: this.searchForm.get('observation')?.value,
+      sens: this.searchForm.get('sens')?.value,
+      dateReferenceDepuis: this.searchForm.get('dateReferenceDepuis')?.value,
+      dateReferenceJusqua: this.searchForm.get('dateReferenceJusqua')?.value,
+      montant: this.searchForm.get('montant')?.value
+    };
   }
 
   ngOnDestroy(): void {
