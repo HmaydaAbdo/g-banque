@@ -44,6 +44,8 @@ import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
 import staport.finance.gBanque.moyensDePaiements.virements.repositories.VirementRepository;
 import staport.finance.gBanque.operationErrone.entities.OperationErrone;
 import staport.finance.gBanque.operationErrone.repositories.OperationErroneRepository;
+import staport.finance.gBanque.provision.entities.Provision;
+import staport.finance.gBanque.provision.repositories.ProvisionRepository;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.repository.PrefinancementRepository;
@@ -86,6 +88,7 @@ public class ReverseTransactionService {
     private final ImpotEtTaxeRepository impotEtTaxeRepository;
     private final RestitutionRepository restitutionRepository;
     private final OperationErroneRepository operationErroneRepository;
+    private final ProvisionRepository provisionRepository;
     private final VirementInternationalRepository virementInternationalRepository;
     private final ImpayeeRepository impayeeRepository;
     private final SoldeCascadeService soldeCascadeService;
@@ -105,7 +108,7 @@ public class ReverseTransactionService {
             IAgiosValidationService agiosValidationService,
             PrelevementRepository prelevementRepository,
             FraisBancaireRepository fraisBancaireRepository,
-            FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository, SoldeCascadeService soldeCascadeService) {
+            FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository, ProvisionRepository provisionRepository, SoldeCascadeService soldeCascadeService) {
         this.transactionRepository = transactionRepository;
         this.echeanceLeasingRepository = echeanceLeasingRepository;
         this.echeanceCMTRepository = echeanceCMTRepository;
@@ -126,6 +129,7 @@ public class ReverseTransactionService {
         this.operationErroneRepository = operationErroneRepository;
         this.virementInternationalRepository = virementInternationalRepository;
         this.impayeeRepository = impayeeRepository;
+        this.provisionRepository = provisionRepository;
         this.soldeCascadeService = soldeCascadeService;
     }
 
@@ -239,6 +243,9 @@ public class ReverseTransactionService {
                 break;
             case IMPAYEE:
                 resetImpayee(referentId);
+                break;
+            case PROVISION:
+                resetProvision(referentId);
                 break;
             default:
                 throw new ReversalException("Type de transaction non supporté pour l'annulation: " + source);
@@ -433,6 +440,17 @@ public class ReverseTransactionService {
         operationErrone.setDateValeur(null);
         operationErroneRepository.save(operationErrone);
         log.debug("Operation erroné {} remis à PREVU", operationErroneId);
+    }
+
+    private void resetProvision(Long provisionId) {
+        Provision provision = provisionRepository.findById(provisionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Provision introuvable: " + provisionId));
+
+        provision.setStatus(Status.PREVU);
+        provision.setDateOperation(null);
+        provision.setDateValeur(null);
+        provisionRepository.save(provision);
+        log.debug("Provision {} remise à PREVU", provisionId);
     }
 
     private void resetVirementInternational(Long virementInternationalId) {
