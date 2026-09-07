@@ -21,7 +21,7 @@ import java.time.LocalDate;
  * <p>Remplace l'agrégation en mémoire de ~19 repositories sources (Leasing, CMT, Cheque, Lcn,
  * Virement, VirementInternational, MiseADisposition, Prefinancement, Factoring, DroitConstate,
  * Decompte, Restitution, Commission, Agios, Prelevement, FraisBancaire, ImpotEtTaxe, Impayee,
- * OperationErrone) par une seule requête paginée/triée au niveau base — la vue fait déjà le
+ * OperationErrone, Provision) par une seule requête paginée/triée au niveau base — la vue fait déjà le
  * filtre "encours" (statut PREVU/ENCOURS) et le UNION ALL.</p>
  *
  * <p>{@code @Immutable} : Hibernate ne doit jamais tenter d'écrire sur cette entité (c'est une
@@ -39,7 +39,7 @@ import java.time.LocalDate;
         "cheques", "lcns", "virements", "virements_internationaux", "mises_a_disposition",
         "prefinancement", "factoring", "droit_constate", "marches",
         "decompte", "restitution", "commission", "agios", "prelevement",
-        "frais_bancaire", "impot_et_taxe", "impayee", "operation_errone"
+        "frais_bancaire", "impot_et_taxe", "impayee", "operation_errone", "provision"
 })
 public class RecapitulatifEncoursView {
 
@@ -62,6 +62,14 @@ public class RecapitulatifEncoursView {
     private String libelle;
 
     private String observation;
+
+    /**
+     * Numero de piece porte nativement par la source (cheque, LCN, virement, mise a
+     * disposition, impaye, numero de marche, numero de contrat leasing). {@code null}
+     * pour les sources qui n'en ont pas (CMT, virement international, restitution,
+     * commission, agios, prelevement, frais bancaire, impot et taxe, operation erronee).
+     */
+    private String numero;
 
     protected RecapitulatifEncoursView() {
         // Requis par JPA
@@ -109,5 +117,9 @@ public class RecapitulatifEncoursView {
 
     public String getObservation() {
         return observation;
+    }
+
+    public String getNumero() {
+        return numero;
     }
 }

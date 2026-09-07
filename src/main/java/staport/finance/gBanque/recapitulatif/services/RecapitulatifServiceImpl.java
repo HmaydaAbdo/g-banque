@@ -182,7 +182,7 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
         Specification<RecapitulatifEncoursView> spec = buildSearchSpecification(searchDto, banqueId);
 
         List<RecaputilatifItem> items =
-                encoursRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "dateEmission")).stream()
+                encoursRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "dateReference")).stream()
                         .map(mapper::toDto)
                         .toList();
 
@@ -201,6 +201,9 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
             }
             if (searchDto.observation() != null && !searchDto.observation().isBlank()) {
                 filterLines.add("Observation : " + searchDto.observation());
+            }
+            if (searchDto.numero() != null && !searchDto.numero().isBlank()) {
+                filterLines.add("N° de pièce : " + searchDto.numero());
             }
             if (searchDto.transactionSources() != null && !searchDto.transactionSources().isEmpty()) {
                 filterLines.add("Source : " + searchDto.transactionSources());
@@ -280,7 +283,7 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
                     // soit exactement le nombre de colonnes du tableau. Les deux totaux sont posés
                     // sous leur colonne respective : l'écran pouvant désormais mélanger les deux
                     // sens, un total unique ne suffirait plus.
-                    PdfPCell totalLabel = new PdfPCell(new Phrase("TOTAL — " + items.size() + " ligne(s)", totalFont));
+                    PdfPCell totalLabel = new PdfPCell(new Phrase("TOTAL PRÉVISIONNEL — " + items.size() + " ligne(s)", totalFont));
                     totalLabel.setColspan(4);
                     totalLabel.setBackgroundColor(LIGHT_BLUE);
                     totalLabel.setPadding(5f);

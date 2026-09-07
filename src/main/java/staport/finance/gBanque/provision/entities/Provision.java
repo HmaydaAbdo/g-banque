@@ -33,6 +33,14 @@ public class Provision {
     @JoinColumn(name = "banque_id", nullable = false)
     private Banque banque;
 
+    /**
+     * Date de rattachement de la provision à une période — obligatoire : c'est elle que la vue
+     * {@code v_recapitulatif_encours} projette en {@code date_reference}, et une provision sans
+     * date d'émission serait invisible de l'écran Récapitulatifs comme du Récapitulatif global.
+     * Le DTO de création l'exigeait déjà ({@code @NotNull}) ; la contrainte est ici aussi, pour
+     * que rien ne puisse être persisté sans elle par un autre chemin.
+     */
+    @Column(nullable = false)
     private LocalDate dateEmission;
     private LocalDate dateValeur;
     private LocalDate dateOperation;

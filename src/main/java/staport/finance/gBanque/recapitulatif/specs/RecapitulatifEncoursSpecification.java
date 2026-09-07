@@ -43,6 +43,13 @@ public final class RecapitulatifEncoursSpecification {
                         : root.get("id").get("sourceType").in(sources);
     }
 
+    public static Specification<RecapitulatifEncoursView> byNumero(String numero) {
+        return (root, query, cb) ->
+                (numero == null || numero.isBlank())
+                        ? cb.conjunction()
+                        : cb.like(cb.lower(root.get("numero")), "%" + numero.toLowerCase() + "%");
+    }
+
     public static Specification<RecapitulatifEncoursView> byLibelle(String libelle) {
         return (root, query, cb) ->
                 (libelle == null || libelle.isBlank())
@@ -89,6 +96,7 @@ public final class RecapitulatifEncoursSpecification {
             spec = spec.and(bySources(searchDto.transactionSources()))
                     .and(byLibelle(searchDto.libelle()))
                     .and(byObservation(searchDto.observation()))
+                    .and(byNumero(searchDto.numero()))
                     .and(byMontant(searchDto.montant()));
         }
 

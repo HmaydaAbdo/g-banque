@@ -67,7 +67,7 @@ public class RecapitulatifController {
                     "appliqués — le total du sens exclu vaut donc zéro.")
     @GetMapping("/banque/{banqueId}")
     public ResponseEntity<AgregatedRecapDto> getRecapitulatif(
-            @PageableDefault(sort = "dateEmission", direction = Sort.Direction.DESC) Pageable pageable,
+            @PageableDefault(sort = "dateReference", direction = Sort.Direction.DESC) Pageable pageable,
             @PathVariable Long banqueId, @ModelAttribute RecapitulatifSearchDto searchDto) {
 
         AgregatedRecapDto res =

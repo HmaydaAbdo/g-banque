@@ -40,6 +40,7 @@ public record RecapitulatifSearchDto(
         List<TransactionSource> transactionSources,
         String libelle,
         String observation,
+        String numero,
         SensOperation sens,
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         LocalDate dateReferenceDepuis,

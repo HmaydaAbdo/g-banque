@@ -28,6 +28,7 @@ public record RecaputilatifItem(
         LocalDate dateEmission,
         LocalDate dateEcheance,
         String libelle,
+        String numero,
         SensOperation sens,
         BigDecimal debit,
         BigDecimal credit,
