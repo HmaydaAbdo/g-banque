@@ -53,9 +53,9 @@ public interface ChequeMapper {
         cheque.setType(dto.getType());
         cheque.setEmetteur(dto.getEmetteur());
         cheque.setObservation("CHQ N°" + dto.getNumero());
-        cheque.setLibelle((dto.getType() == Type.DECAISSEMENT ? "Décaissement" : "Encaissement")
-                + " - Bénéficiaire: " + (dto.getBeneficiaire() != null ? dto.getBeneficiaire() : "N/A")
-                + " / Émetteur: " + (dto.getEmetteur() != null ? dto.getEmetteur() : "N/A"));
+        cheque.setLibelle(dto.getType() == Type.DECAISSEMENT
+                ? "Décaissement - Bénéficiaire: " + (dto.getBeneficiaire() != null ? dto.getBeneficiaire() : "")
+                : "Encaissement - Émetteur: " + (dto.getEmetteur() != null ? dto.getEmetteur() : ""));
         return cheque;
     }
 }

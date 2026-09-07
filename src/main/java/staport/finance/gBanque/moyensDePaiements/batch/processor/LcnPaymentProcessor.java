@@ -79,9 +79,9 @@ public class LcnPaymentProcessor extends AbstractPaymentProcessor {
         lcn.setType(Type.DECAISSEMENT);
         lcn.setStatut(statut);
         lcn.setObservation(" LCN N° " + item.getNumero());
-        lcn.setLibelle((lcn.getType() == Type.DECAISSEMENT ? "Décaissement" : "Encaissement")
-                + " - Bénéficiaire: " + (lcn.getBeneficiaire() != null ? lcn.getBeneficiaire() : "N/A")
-                + " / Émetteur: " + (lcn.getEmetteur() != null ? lcn.getEmetteur() : "N/A"));
+        lcn.setLibelle(lcn.getType() == Type.DECAISSEMENT
+                ? "Décaissement - Bénéficiaire: " + (lcn.getBeneficiaire() != null ? lcn.getBeneficiaire() : "")
+                : "Encaissement - Émetteur: " + (lcn.getEmetteur() != null ? lcn.getEmetteur() : ""));
         return lcn;
     }
 }

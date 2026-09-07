@@ -39,8 +39,9 @@ public interface MiseADispositionMapper {
         miseADisposition.setType(dto.getType());
         miseADisposition.setEmetteur(dto.getEmetteur());
         miseADisposition.setObservation(" MAD " + miseADisposition.getNumero());
-        miseADisposition.setLibelle("Bénéficiaire: " + (dto.getBeneficiaire() != null ? dto.getBeneficiaire() : "N/A")
-                + " / Émetteur: " + (dto.getEmetteur() != null ? dto.getEmetteur() : "N/A"));
+        miseADisposition.setLibelle(dto.getType() == staport.finance.gBanque.moyensDePaiements.virements.enums.Type.DECAISSEMENT
+                ? "Bénéficiaire: " + (dto.getBeneficiaire() != null ? dto.getBeneficiaire() : "")
+                : "Émetteur: " + (dto.getEmetteur() != null ? dto.getEmetteur() : ""));
         return miseADisposition;
     }
 }

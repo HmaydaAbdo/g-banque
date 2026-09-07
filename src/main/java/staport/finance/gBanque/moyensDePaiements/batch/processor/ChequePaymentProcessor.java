@@ -75,9 +75,9 @@ public class ChequePaymentProcessor extends AbstractPaymentProcessor {
         cheque.setBanque(banque);
         cheque.setStatut(statut);
         cheque.setObservation("CHQ N°" + item.getNumero());
-        cheque.setLibelle((cheque.getType() == Type.DECAISSEMENT ? "Décaissement" : "Encaissement")
-                + " - Bénéficiaire: " + (cheque.getBeneficiaire() != null ? cheque.getBeneficiaire() : "N/A")
-                + " / Émetteur: " + (cheque.getEmetteur() != null ? cheque.getEmetteur() : "N/A"));
+        cheque.setLibelle(cheque.getType() == Type.DECAISSEMENT
+                ? "Décaissement - Bénéficiaire: " + (cheque.getBeneficiaire() != null ? cheque.getBeneficiaire() : "")
+                : "Encaissement - Émetteur: " + (cheque.getEmetteur() != null ? cheque.getEmetteur() : ""));
         return cheque;
     }
 }

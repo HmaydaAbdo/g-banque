@@ -79,8 +79,9 @@ public class MiseADispositionPaymentProcessor extends AbstractPaymentProcessor {
         mad.setCinBeneficiaire(item.getCinBeneficiaire());
         mad.setStatut(statut);
         mad.setObservation(" MAD " + item.getNumero());
-        mad.setLibelle("Bénéficiaire: " + (mad.getBeneficiaire() != null ? mad.getBeneficiaire() : "N/A")
-                + " / Émetteur: " + (mad.getEmetteur() != null ? mad.getEmetteur() : "N/A"));
+        mad.setLibelle(mad.getType() == Type.DECAISSEMENT
+                ? "Bénéficiaire: " + (mad.getBeneficiaire() != null ? mad.getBeneficiaire() : "")
+                : "Émetteur: " + (mad.getEmetteur() != null ? mad.getEmetteur() : ""));
         return mad;
     }
 }
