@@ -1,0 +1,195 @@
+version: '3.8'
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # MySQL - Internal database service
+  # ---------------------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: gbanque-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      TZ: ${TZ}
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-authentication-plugin=mysql_native_password
+    volumes:
+      - ./docker-data/mysql:/var/lib/mysql
+    networks:
+      - gbanque-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # Backup MySQL
+  # ---------------------------------------------------------------------------
+  backup:
+    image: fradelg/mysql-cron-backup:latest
+    container_name: gbanque-backup
+    restart: unless-stopped
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: ${MYSQL_PORT}
+      MYSQL_USER: root
+      MYSQL_PASS: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQLDUMP_OPTS: "--no-tablespaces --single-transaction"
+      CRON_TIME: "0 2 * * *"
+      INIT_BACKUP: 1
+      MAX_BACKUPS: 7
+      GZIP_LEVEL: 9
+      TZ: ${TZ}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./backups/mysql:/backup
+    networks:
+      - gbanque-network
+
+  # ---------------------------------------------------------------------------
+  # Spring Boot Backend - Internal host access on 8080 for Outer Nginx
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: gbanque-backend
+    restart: unless-stopped
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms512m -Xmx1g"
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      SERVER_ADRESSE: ${SERVER_ADRESSE}
+      SERVER_PORT: ${SERVER_PORT}
+      CONTEXT_PATH: ${CONTEXT_PATH}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_HOURS: ${JWT_EXPIRATION_HOURS}
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      LOGIN_MAX_ATTEMPTS: ${LOGIN_MAX_ATTEMPTS}
+      LOGIN_LOCKOUT_MINUTES: ${LOGIN_LOCKOUT_MINUTES}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_PROTOCOL: ${MAIL_PROTOCOL}
+      MAIL_FROM: ${MAIL_FROM}
+      MAIL_NOTIFICATION_RECIPIENTS: ${MAIL_NOTIFICATION_RECIPIENTS}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks:
+      - gbanque-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/gbanque/api/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  # ---------------------------------------------------------------------------
+  # Angular Frontend (Inner Nginx) - Bound to local host port 8081
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: gbanque-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "127.0.0.1:8081:80"
+    networks:
+      - gbanque-network
+    environment:
+      TZ: ${TZ}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:80/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # Monitoring & Admin Tools
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: gbanque-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./docker-data/prometheus:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      - gbanque-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: gbanque-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: http://localhost:3000
+      TZ: ${TZ}
+    volumes:
+      - ./docker-data/grafana:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - gbanque-network
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: gbanque-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      PMA_ARBITRARY: 0
+      UPLOAD_LIMIT: 300M
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8082:80"
+    networks:
+      - gbanque-network
+
+networks:
+  gbanque-network:
+    driver: bridge

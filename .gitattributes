@@ -1,0 +1,15 @@
+# Même dispositif que les dépôts Backend et Frontend : sans lui, un éditeur
+# Windows réenregistrant un fichier en CRLF le fait apparaître intégralement
+# réécrit alors qu'aucune ligne n'a changé.
+*.md    text eol=lf
+*.sql   text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.conf  text eol=lf
+*.sh    text eol=lf
+.gitignore     text eol=lf
+.gitattributes text eol=lf
+
+*.docx  binary
+*.pdf   binary
+*.png   binary

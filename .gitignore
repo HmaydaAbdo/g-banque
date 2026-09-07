@@ -1,0 +1,25 @@
+# ── Dépôts imbriqués ─────────────────────────────────────
+# Backend/ et Frontend/ ont chacun leur propre historique git. Ils sont ignorés
+# ici tant qu'ils ne sont pas fusionnés dans ce dépôt : sans cette règle, git
+# les enregistrerait comme gitlinks et le statut deviendrait illisible.
+Backend/
+Frontend/
+
+# ── Secrets : ne jamais versionner ───────────────────────
+# Contiennent en clair MYSQL_ROOT_PASSWORD, MYSQL_PASSWORD, JWT_SECRET,
+# MAIL_PASSWORD et GRAFANA_PASSWORD. docker-compose.yml, lui, est versionné :
+# il ne fait que référencer ces variables.
+.env
+env.dev
+*.env.local
+
+# ── Données et sauvegardes ───────────────────────────────
+docker-data/
+backups/
+
+# ── Artefacts locaux ─────────────────────────────────────
+.idea/
+.claude/
+Claude outputs/
+*.bak
+.fuse_hidden*
