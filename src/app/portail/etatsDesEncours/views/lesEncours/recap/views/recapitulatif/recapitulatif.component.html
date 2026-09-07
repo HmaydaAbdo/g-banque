@@ -182,6 +182,15 @@
 
           <span class="flex-auto"></span>
 
+          @if (sortParDefaut) {
+            <span class="text-xs text-500 white-space-nowrap mr-2"
+                  pTooltip="La date de référence est la date de rattachement au mois : échéance pour le leasing, le CMT et les LCN, émission pour les autres sources. Cliquez un en-tête pour trier autrement."
+                  tooltipPosition="top">
+              <i class="pi pi-sort-amount-down text-xs" aria-hidden="true"></i>
+              Trié par date de référence, la plus récente d'abord
+            </span>
+          }
+
           <button type="button" pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf"
                   size="small" severity="secondary"
                   pTooltip="Exporte exactement les lignes filtrées" tooltipPosition="left"

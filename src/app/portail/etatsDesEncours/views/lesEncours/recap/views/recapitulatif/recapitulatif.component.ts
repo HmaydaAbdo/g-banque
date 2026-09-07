@@ -83,6 +83,13 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     'Chaque opération est filtrée sur sa propre date de référence : la date d\'échéance '
     + 'pour le leasing, le CMT et les LCN, la date d\'émission pour toutes les autres sources.';
 
+  /**
+   * Vrai tant que l'utilisateur n'a pas cliqué d'en-tête : le tableau est alors trié sur
+   * `dateReference`, qui n'est pas une colonne affichée — aucune flèche de tri ne peut donc
+   * l'indiquer. On l'annonce en clair plutôt que de laisser croire à un ordre arbitraire.
+   */
+  sortParDefaut = true;
+
   /** Barre de filtres repliee par defaut : le tableau prend toute la hauteur au chargement. */
   showFilters = false;
 
@@ -163,6 +170,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     const sort = event.sortField && event.sortOrder
       ? `${event.sortField},${event.sortOrder === 1 ? 'asc' : 'desc'}`
       : 'dateReference,desc';
+    this.sortParDefaut = !event.sortField;
 
     const searchDto = this.buildSearchDto();
 
