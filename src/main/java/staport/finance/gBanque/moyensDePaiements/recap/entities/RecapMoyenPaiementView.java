@@ -16,10 +16,11 @@ import java.time.LocalDate;
 
 /**
  * Entité JPA en lecture seule mappée sur la vue SQL {@code v_recap_moyens_paiement}
- * (voir {@code sql/v_recap_moyens_paiement.sql}, reconstruite le 13/08/2026 après perte de la
- * version originale du 31/07/2026 — script désormais versionné dans le dépôt ; créée initialement manuellement par
- * HMAYDA — module "Recap Encaissement / Recap Décaissement" sous "Les moyens de paiement",
- * 31/07/2026).
+ * (voir {@code sql/v_recap_moyens_paiement.sql} — créée manuellement par HMAYDA le
+ * 31/07/2026 pour le module "Recap Encaissement / Recap Décaissement" sous "Les moyens de
+ * paiement", mais jamais versionnée dans le dépôt jusqu'au 07/09/2026, malgré cette javadoc
+ * qui l'affirmait déjà à tort auparavant — voir l'historique en tête du fichier .sql pour le
+ * détail).
  *
  * <p>Consolide les 5 moyens de paiement de la section "Les moyens de paiement" — Cheque, Lcn,
  * Virement, VirementInternational, MiseADisposition — tous statuts confondus (contrairement à
