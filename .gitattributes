@@ -11,6 +11,18 @@
 *.md        text eol=lf
 *.json      text eol=lf
 
+# Fichiers sans extension ou non couverts ci-dessus — même motif : au 07/09/2026
+# .dockerignore, Dockerfile, graphify-out/graph.html et .idea/gBanque.iml
+# ressortaient « modifiés » alors qu'ils étaient en LF dans l'index et en CRLF
+# sur le disque, faute de règle les concernant.
+.dockerignore  text eol=lf
+.gitignore     text eol=lf
+.gitattributes text eol=lf
+Dockerfile     text eol=lf
+*.html      text eol=lf
+*.iml       text eol=lf
+*.sh        text eol=lf
+
 # Binary
 *.class binary
 *.jar   binary
