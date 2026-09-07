@@ -1,7 +1,12 @@
 package staport.finance.gBanque.prefinancement.validation.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -27,8 +32,14 @@ public class PrefinancementTransactionRequest {
     @NotNull(message = "la date d'opération est obligatoire ")
     private LocalDate dateOperation ;
 
-    @NotNull(message = "La TVA  est obligatoire.")
-    private double tva;
+    /** Taux de TVA choisi dans la liste, en pourcentage (ex : 20 pour 20 %). Exclusif de {@link #montantTva}. */
+    @DecimalMin(value = "0", message = "Le taux de TVA ne peut pas être négatif")
+    @DecimalMax(value = "100", message = "Le taux de TVA ne peut pas dépasser 100")
+    private Double tauxTva;
+
+    /** Montant de TVA saisi directement, en MAD. Exclusif de {@link #tauxTva}. */
+    @DecimalMin(value = "0.00", message = "Le montant de TVA ne peut pas être négatif")
+    private BigDecimal montantTva;
 
     @NotNull(message = "libelle est obligatoire")
     private String libelle;
@@ -71,12 +82,31 @@ public class PrefinancementTransactionRequest {
         this.banqueId = banqueId;
     }
 
-    public double getTva() {
-        return tva;
+    public Double getTauxTva() {
+        return tauxTva;
     }
 
-    public void setTva(double tvaDeductible) {
-        this.tva = tvaDeductible;
+    public void setTauxTva(Double tauxTva) {
+        this.tauxTva = tauxTva;
+    }
+
+    public BigDecimal getMontantTva() {
+        return montantTva;
+    }
+
+    public void setMontantTva(BigDecimal montantTva) {
+        this.montantTva = montantTva;
+    }
+
+    /**
+     * Exactement l'une des deux saisies de TVA doit être renseignée — vérifié dès la couche
+     * Jakarta, avant d'atteindre le service. {@code TvaResolver} refait la vérification pour les
+     * appels internes (validation en lot) qui ne passent pas par la validation du contrôleur.
+     */
+    @JsonIgnore
+    @AssertTrue(message = "Renseigner soit un taux de TVA, soit un montant de TVA, mais pas les deux")
+    public boolean isSaisieTvaCoherente() {
+        return (tauxTva == null) ^ (montantTva == null);
     }
 
     public String getLibelle() {

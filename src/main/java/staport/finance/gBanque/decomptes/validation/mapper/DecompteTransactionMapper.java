@@ -5,7 +5,6 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.decomptes.validation.dto.DecompteTransactionRequestDto;
 import staport.finance.gBanque.decomptes.validation.dto.DecompteTransactionResponseDto;
-import staport.finance.gBanque.validation.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
@@ -22,7 +21,7 @@ import java.math.BigDecimal;
 @Component
 public class DecompteTransactionMapper {
 
-    public Transaction toEntity(DecompteTransactionRequestDto requestDto, Decompte decompte, Banque banque) {
+    public Transaction toEntity(DecompteTransactionRequestDto requestDto, Decompte decompte, Banque banque, BigDecimal montantTva) {
 
         if (requestDto == null || decompte == null) {
             return null;
@@ -42,9 +41,6 @@ public class DecompteTransactionMapper {
         transaction.setDebit(BigDecimal.ZERO);
         transaction.setCredit(decompte.getMontant());
 
-        BigDecimal ttc = decompte.getMontant();
-        BigDecimal tauxTva = BigDecimal.valueOf(requestDto.tva());
-        BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
         transaction.setTvaCollectee(montantTva);
 
         return transaction;

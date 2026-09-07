@@ -9,7 +9,6 @@ import staport.finance.gBanque.moyensDePaiements.lcn.validation.dto.LcnTransacti
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
-import staport.finance.gBanque.validation.utils.TVAUtils;
 
 import java.math.BigDecimal;
 
@@ -25,7 +24,7 @@ public class LcnTransactionMapper {
     public LcnTransactionMapper() {
     }
 
-    public Transaction toEntity(LcnTransactionRequest requestDto, Lcn lcn) {
+    public Transaction toEntity(LcnTransactionRequest requestDto, Lcn lcn, BigDecimal montantTva) {
 
         if (requestDto == null || lcn == null) {
             return null;
@@ -42,10 +41,6 @@ public class LcnTransactionMapper {
         transaction.setDateOperations(requestDto.getDateOperation());
 
         transaction.setBanqueDePrelevement(lcn.getBanque());
-
-        BigDecimal ttc = lcn.getMontant();
-        BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTvaDeductible());
-        BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
 
         if (lcn.getType() == Type.DECAISSEMENT) {
             transaction.setTvaDeductible(montantTva);

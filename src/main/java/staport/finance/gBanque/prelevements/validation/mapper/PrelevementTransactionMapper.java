@@ -5,7 +5,6 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.prelevements.entitie.Prelevement;
 import staport.finance.gBanque.prelevements.validation.dto.PrelevementTransactionResponse;
 import staport.finance.gBanque.prelevements.validation.dto.PrelevementValidationRequest;
-import staport.finance.gBanque.validation.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import java.math.BigDecimal;
@@ -17,7 +16,7 @@ public class PrelevementTransactionMapper {
     public PrelevementTransactionMapper() {
     }
 
-    public Transaction toEntity(PrelevementValidationRequest requestDto, Prelevement prelevement )   {
+    public Transaction toEntity(PrelevementValidationRequest requestDto, Prelevement prelevement, BigDecimal montantTva)   {
 
 
         if (requestDto == null || prelevement == null ) {
@@ -39,16 +38,7 @@ public class PrelevementTransactionMapper {
         transaction.setCredit(BigDecimal.ZERO);
         transaction.setBanqueDePrelevement(prelevement.getBanque());
 
-        BigDecimal ttc = prelevement.getMontant();
-        BigDecimal tauxTVA = BigDecimal.valueOf(requestDto.getTva());
-
-        // Calculer uniquement le montant de la TVA
-        BigDecimal tva = TVAUtils.calculerTVA(ttc, tauxTVA);
-
-        // Stocker la TVA dans la transaction
-        transaction.setTvaDeductible(tva);
-
-
+        transaction.setTvaDeductible(montantTva);
 
         return transaction;
     }

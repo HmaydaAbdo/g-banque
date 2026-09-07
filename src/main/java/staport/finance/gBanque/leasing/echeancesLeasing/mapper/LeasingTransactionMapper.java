@@ -6,15 +6,14 @@ import staport.finance.gBanque.leasing.echeancesLeasing.dto.LeasingTransactionRe
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.LeasingTransactionResponseDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
 import staport.finance.gBanque.transactions.entities.Transaction;
-import staport.finance.gBanque.validation.utils.TVAUtils;
 
 import java.math.BigDecimal;
 
 /**
  * Mapper MapStruct pour la conversion entre DTOs leasing et l'entité {@link Transaction}.
  * <p>
- * Note : importe {@code TVAUtils} depuis le package {@code validation.utils},
- * classe utilitaire stateless partagée entre tous les mappers de rapprochement.
+ * Le montant de TVA est résolu par {@code LeasingValidationService} via {@code TvaResolver} et
+ * transmis en {@code @Context} — le mapper ne fait que le poser sur {@code tvaDeductible}.
  */
 @Mapper(componentModel = "spring")
 public abstract class LeasingTransactionMapper {
@@ -42,7 +41,8 @@ public abstract class LeasingTransactionMapper {
     public abstract Transaction toEntity(
             LeasingTransactionRequestDTO requestDTO,
             ContratLeasing contratLeasing,
-            EcheanceLeasing echeanceLeasing);
+            EcheanceLeasing echeanceLeasing,
+            @Context BigDecimal montantTva);
 
     /**
      * Calcule {@code credit} et {@code tvaDeductible}, et applique le fallback observation/libelle/
@@ -55,19 +55,16 @@ public abstract class LeasingTransactionMapper {
     protected void computeFinancials(
             LeasingTransactionRequestDTO requestDTO,
             EcheanceLeasing echeanceLeasing,
+            @Context BigDecimal montantTva,
             @MappingTarget Transaction transaction) {
         transaction.setObservation(requestDTO.observation() != null ? requestDTO.observation() : echeanceLeasing.getObservation());
         transaction.setLibelle(requestDTO.libelle() != null ? requestDTO.libelle() : echeanceLeasing.getLibelle());
         transaction.setDateEmission(requestDTO.dateEmission() != null ? requestDTO.dateEmission() : echeanceLeasing.getDateEcheance());
 
         transaction.setCredit(BigDecimal.ZERO);
-        BigDecimal tauxTva = requestDTO.tvaDeductible() != null
-                ? BigDecimal.valueOf(requestDTO.tvaDeductible())
-                : BigDecimal.ZERO;
-        transaction.setTvaDeductible(
-                tauxTva.compareTo(BigDecimal.ZERO) > 0
-                        ? TVAUtils.calculerTVA(echeanceLeasing.getMontantTTC(), tauxTva)
-                        : BigDecimal.ZERO);
+        // Règles de saisie de la TVA (taux XOR montant, bornes) : logique métier, résolue par
+        // LeasingValidationService via TvaResolver avant l'appel à ce mapper (conventions/architecture.md).
+        transaction.setTvaDeductible(montantTva != null ? montantTva : BigDecimal.ZERO);
     }
 
     /**

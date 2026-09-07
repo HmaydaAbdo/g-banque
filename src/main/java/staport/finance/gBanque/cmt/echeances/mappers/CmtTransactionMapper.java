@@ -6,15 +6,14 @@ import staport.finance.gBanque.cmt.echeances.dtos.CmtTransactionResponseDto;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.transactions.entities.Transaction;
-import staport.finance.gBanque.validation.utils.TVAUtils;
 
 import java.math.BigDecimal;
 
 /**
  * Mapper MapStruct pour la conversion entre DTOs CMT et l'entité {@link Transaction}.
  * <p>
- * Note : importe {@code TVAUtils} depuis le package {@code validation.utils},
- * classe utilitaire stateless partagée entre tous les mappers de rapprochement.
+ * Le montant de TVA est résolu par {@code CmtValidationService} via {@code TvaResolver} et transmis
+ * en {@code @Context} — le mapper ne fait que le poser sur {@code tvaDeductible}.
  */
 @Mapper(componentModel = "spring")
 public abstract class CmtTransactionMapper {
@@ -42,7 +41,8 @@ public abstract class CmtTransactionMapper {
     public abstract Transaction toEntity(
             CmtTransactionRequestDto requestDto,
             CreditMoyenTerme creditMoyenTerme,
-            EcheanceCMT echeanceCMT);
+            EcheanceCMT echeanceCMT,
+            @Context BigDecimal montantTva);
 
     /**
      * Calcule {@code credit} et {@code tvaDeductible}, et applique le fallback observation/libelle/
@@ -55,19 +55,16 @@ public abstract class CmtTransactionMapper {
     protected void computeFinancials(
             CmtTransactionRequestDto requestDto,
             EcheanceCMT echeanceCMT,
+            @Context BigDecimal montantTva,
             @MappingTarget Transaction transaction) {
         transaction.setObservation(requestDto.observation() != null ? requestDto.observation() : echeanceCMT.getObservation());
         transaction.setLibelle(requestDto.libelle() != null ? requestDto.libelle() : echeanceCMT.getLibelle());
         transaction.setDateEmission(requestDto.dateEmission() != null ? requestDto.dateEmission() : echeanceCMT.getDateEcheance());
 
         transaction.setCredit(BigDecimal.ZERO);
-        BigDecimal tauxTva = requestDto.tvaDeductible() != null
-                ? BigDecimal.valueOf(requestDto.tvaDeductible())
-                : BigDecimal.ZERO;
-        transaction.setTvaDeductible(
-                tauxTva.compareTo(BigDecimal.ZERO) > 0
-                        ? TVAUtils.calculerTVA(echeanceCMT.getMontant(), tauxTva)
-                        : BigDecimal.ZERO);
+        // Règles de saisie de la TVA (taux XOR montant, bornes) : logique métier, résolue par
+        // CmtValidationService via TvaResolver avant l'appel à ce mapper (conventions/architecture.md).
+        transaction.setTvaDeductible(montantTva != null ? montantTva : BigDecimal.ZERO);
     }
 
     /**

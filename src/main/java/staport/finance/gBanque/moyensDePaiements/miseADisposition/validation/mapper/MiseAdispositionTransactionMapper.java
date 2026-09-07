@@ -8,7 +8,6 @@ import staport.finance.gBanque.moyensDePaiements.miseADisposition.validation.dto
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
-import staport.finance.gBanque.validation.utils.TVAUtils;
 
 import java.math.BigDecimal;
 
@@ -28,7 +27,7 @@ public class MiseAdispositionTransactionMapper {
      * Convertit le DTO de requête et la mise à disposition associée en entité Transaction.
      * Le service est responsable de récupérer l'entité.
      */
-    public Transaction toEntity(MiseAdispositionTransactionRequestDto requestDto, MiseADisposition miseADispo) {
+    public Transaction toEntity(MiseAdispositionTransactionRequestDto requestDto, MiseADisposition miseADispo, BigDecimal montantTva) {
 
         if (requestDto == null || miseADispo == null) {
             return null;
@@ -45,10 +44,6 @@ public class MiseAdispositionTransactionMapper {
         transaction.setLibelle(requestDto.getLibelle() != null ? requestDto.getLibelle() : miseADispo.getLibelle());
         transaction.setTransactionSource(TransactionSource.MiseADisposition);
         transaction.setBanqueDePrelevement(miseADispo.getBanque());
-
-        BigDecimal ttc = miseADispo.getMontant();
-        BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTvaDeductible());
-        BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
 
         if (miseADispo.getType() == Type.DECAISSEMENT) {
             transaction.setTvaDeductible(montantTva);

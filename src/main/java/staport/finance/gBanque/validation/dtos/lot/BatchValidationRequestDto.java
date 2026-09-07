@@ -10,14 +10,17 @@ import java.util.List;
 
 /**
  * Requête de validation (rapprochement) en lot : applique les mêmes champs communs
- * (TVA, date opération, date valeur, rapprochement cible) à un ensemble d'opérations
+ * (taux de TVA, date opération, date valeur, rapprochement cible) à un ensemble d'opérations
  * de même type et même sens, en une seule opération atomique.
  * <p>
  * Volontairement absent de ce DTO : libellé, observation et date d'émission. Ces champs sont
  * propres à chaque opération (saisis à sa création) et ne doivent jamais être écrasés par une
  * valeur unique appliquée à tout le lot — contrairement à la TVA et aux dates d'opération/valeur,
  * qui proviennent du relevé bancaire traité et sont légitimement communes aux opérations d'un même
- * lot. Chaque opération du lot conserve donc automatiquement son propre libellé/observation/date
+ * lot. La saisie libre d'un montant de TVA (voir {@code TvaResolver}) est volontairement
+ * exclue du mode lot : un montant fixe appliqué à N opérations de montants différents n'a pas
+ * de sens comptable — seul un taux, converti côté serveur sur le TTC de chaque opération, est
+ * accepté ici. Chaque opération du lot conserve donc automatiquement son propre libellé/observation/date
  * d'émission d'origine (voir les mappers de {@code validation.mapper}, {@code ICmtValidationService}
  * et {@code ILeasingValidationService} : fallback sur l'entité source si le DTO unitaire ne porte
  * pas ces champs).
@@ -46,8 +49,8 @@ public record BatchValidationRequestDto(
         @NotNull(message = "La date d'opération est obligatoire")
         LocalDate dateOperation,
 
-        @NotNull(message = "La TVA déductible est obligatoire")
-        Double tvaDeductible,
+        @NotNull(message = "Le taux de TVA est obligatoire")
+        Double tauxTva,
 
         @NotNull(message = "rapprochementId est obligatoire")
         Long rapprochementId

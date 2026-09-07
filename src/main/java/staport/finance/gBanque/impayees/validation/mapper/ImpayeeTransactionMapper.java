@@ -8,7 +8,6 @@ import staport.finance.gBanque.impayees.validation.dto.ImpayeeTransactionRespons
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
-import staport.finance.gBanque.validation.utils.TVAUtils;
 
 import java.math.BigDecimal;
 
@@ -23,7 +22,7 @@ import java.math.BigDecimal;
 @Component
 public class ImpayeeTransactionMapper {
 
-    public Transaction toEntity(ImpayeeTransactionRequestDto requestDto, Impayee impayee) {
+    public Transaction toEntity(ImpayeeTransactionRequestDto requestDto, Impayee impayee, BigDecimal montantTva) {
 
         if (requestDto == null || impayee == null) {
             return null;
@@ -40,10 +39,6 @@ public class ImpayeeTransactionMapper {
         transaction.setLibelle(requestDto.libelle() != null ? requestDto.libelle() : impayee.getLibelle());
         transaction.setTransactionSource(TransactionSource.IMPAYEE);
         transaction.setBanqueDePrelevement(impayee.getBanque());
-
-        BigDecimal ttc = impayee.getMontant();
-        BigDecimal tauxTva = BigDecimal.valueOf(requestDto.tva());
-        BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
 
         if (impayee.getType() == Type.DECAISSEMENT) {
             transaction.setDebit(impayee.getMontant());

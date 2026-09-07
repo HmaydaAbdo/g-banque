@@ -24,7 +24,9 @@ import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 import staport.finance.gBanque.rapprochement.services.SoldeCascadeService;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
+import staport.finance.gBanque.validation.utils.TvaResolver;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -91,7 +93,12 @@ public class VirementValidationService implements IVirementValidationService {
             throw new ValidationException("Le virement id: " + virement.getId() + " n'est pas ENCOURS.");
         }
 
-        Transaction transactionEntity = virementTransactionMapper.toEntity(requestDto, virement);
+        // Règles de saisie de la TVA (taux choisi XOR montant saisi, bornes) : logique métier,
+        // donc portée par le service et non par le mapper (conventions/architecture.md).
+        BigDecimal montantTva = TvaResolver.resoudre(
+                virement.getMontant(), requestDto.getTauxTva(), requestDto.getMontantTva());
+
+        Transaction transactionEntity = virementTransactionMapper.toEntity(requestDto, virement, montantTva);
         Banque banque = virement.getType() == Type.DECAISSEMENT
                 ? virement.getBanqueEmettrice()
                 : virement.getBanqueBeneficiare();

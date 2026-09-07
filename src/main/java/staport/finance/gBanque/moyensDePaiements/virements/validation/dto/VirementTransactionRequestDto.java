@@ -1,9 +1,14 @@
 package staport.finance.gBanque.moyensDePaiements.virements.validation.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
 
@@ -38,8 +43,14 @@ public class VirementTransactionRequestDto {
     @NotBlank(message = "libelle est obligatoire")
     private String libelle;
 
-    @NotNull(message = "La TVA déductible est obligatoire")
-    private Double tvaDeductible;
+    /** Taux de TVA choisi dans la liste, en pourcentage (ex : 20 pour 20 %). Exclusif de {@link #montantTva}. */
+    @DecimalMin(value = "0", message = "Le taux de TVA ne peut pas être négatif")
+    @DecimalMax(value = "100", message = "Le taux de TVA ne peut pas dépasser 100")
+    private Double tauxTva;
+
+    /** Montant de TVA saisi directement, en MAD. Exclusif de {@link #tauxTva}. */
+    @DecimalMin(value = "0.00", message = "Le montant de TVA ne peut pas être négatif")
+    private BigDecimal montantTva;
 
     @NotNull(message = "rapprochementId est obligatoire")
     private Long rapprochementId;
@@ -91,12 +102,31 @@ public class VirementTransactionRequestDto {
         this.observation = observation;
     }
 
-    public Double getTvaDeductible() {
-        return tvaDeductible;
+    public Double getTauxTva() {
+        return tauxTva;
     }
 
-    public void setTvaDeductible(Double tvaDeductible) {
-        this.tvaDeductible = tvaDeductible;
+    public void setTauxTva(Double tauxTva) {
+        this.tauxTva = tauxTva;
+    }
+
+    public BigDecimal getMontantTva() {
+        return montantTva;
+    }
+
+    public void setMontantTva(BigDecimal montantTva) {
+        this.montantTva = montantTva;
+    }
+
+    /**
+     * Exactement l'une des deux saisies de TVA doit être renseignée — vérifié dès la couche
+     * Jakarta, avant d'atteindre le service. {@code TvaResolver} refait la vérification pour les
+     * appels internes (validation en lot) qui ne passent pas par la validation du contrôleur.
+     */
+    @JsonIgnore
+    @AssertTrue(message = "Renseigner soit un taux de TVA, soit un montant de TVA, mais pas les deux")
+    public boolean isSaisieTvaCoherente() {
+        return (tauxTva == null) ^ (montantTva == null);
     }
 
     public String getLibelle() {
@@ -125,12 +155,12 @@ public class VirementTransactionRequestDto {
                 Objects.equals(dateValeur, that.dateValeur) &&
                 Objects.equals(dateOperation, that.dateOperation) &&
                 Objects.equals(observation, that.observation) &&
-                Objects.equals(tvaDeductible, that.tvaDeductible);
+                Objects.equals(tauxTva, that.tauxTva) && Objects.equals(montantTva, that.montantTva);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, transactionSource, dateEmission, dateValeur, dateOperation, observation, tvaDeductible);
+        return Objects.hash(id, transactionSource, dateEmission, dateValeur, dateOperation, observation, tauxTva, montantTva);
     }
 
     @Override
@@ -142,7 +172,8 @@ public class VirementTransactionRequestDto {
                 ", dateValeur=" + dateValeur +
                 ", dateOperation=" + dateOperation +
                 ", observation='" + observation + '\'' +
-                ", tvaDeductible=" + tvaDeductible +
+                ", tauxTva=" + tauxTva +
+                ", montantTva=" + montantTva +
                 '}';
     }
 }

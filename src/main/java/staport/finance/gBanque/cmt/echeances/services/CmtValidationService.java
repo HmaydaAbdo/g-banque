@@ -23,7 +23,9 @@ import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 import staport.finance.gBanque.rapprochement.services.SoldeCascadeService;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
+import staport.finance.gBanque.validation.utils.TvaResolver;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -80,7 +82,14 @@ public class CmtValidationService implements ICmtValidationService {
             throw new ValidationException("L'échéance ID " + dto.echeanceId() + " est déjà payée.");
         }
 
-        Transaction transactionEntity = cmtTransactionMapper.toEntity(dto, creditMoyenTerme, echeanceCMT);
+        // Règles de saisie de la TVA (taux XOR montant, bornes) : logique métier, donc portée par le
+        // service et non par le mapper (conventions/architecture.md). Contrairement aux autres
+        // modules, la TVA reste optionnelle ici (aucune des deux saisies renseignée = pas de TVA).
+        BigDecimal montantTva = (dto.tauxTva() == null && dto.montantTva() == null)
+                ? BigDecimal.ZERO
+                : TvaResolver.resoudre(echeanceCMT.getMontant(), dto.tauxTva(), dto.montantTva());
+
+        Transaction transactionEntity = cmtTransactionMapper.toEntity(dto, creditMoyenTerme, echeanceCMT, montantTva);
         Transaction savedTransaction = saveTransactionWithCascade(
                 transactionEntity,
                 creditMoyenTerme.getBanque().getId(),

@@ -22,7 +22,9 @@ import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 import staport.finance.gBanque.rapprochement.services.SoldeCascadeService;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
+import staport.finance.gBanque.validation.utils.TvaResolver;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -90,7 +92,12 @@ public class ChequeValidationService implements IChequeValidationService {
             throw new ValidationException("Le chèque id: " + cheque.getId() + " n'est pas ENCOURS.");
         }
 
-        Transaction transactionEntity = chequeTransactionMapper.toEntity(requestDto, cheque);
+        // Règles de saisie de la TVA (taux choisi XOR montant saisi, bornes) : logique métier,
+        // donc portée par le service et non par le mapper (conventions/architecture.md).
+        BigDecimal montantTva = TvaResolver.resoudre(
+                cheque.getMontant(), requestDto.getTauxTva(), requestDto.getMontantTva());
+
+        Transaction transactionEntity = chequeTransactionMapper.toEntity(requestDto, cheque, montantTva);
         Transaction savedTransaction = saveTransactionWithCascade(
                 transactionEntity, cheque.getBanque().getId(), requestDto.getRapprochementId());
 

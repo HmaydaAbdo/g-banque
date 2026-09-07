@@ -7,7 +7,6 @@ import staport.finance.gBanque.operationErrone.validation.dto.OperationErroneTra
 import staport.finance.gBanque.operationErrone.validation.dto.OperationErroneTransactionResponseDto;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
-import staport.finance.gBanque.validation.utils.TVAUtils;
 
 import java.math.BigDecimal;
 
@@ -21,7 +20,7 @@ import java.math.BigDecimal;
 @Component
 public class OperationErroneTransactionMapper {
 
-    public Transaction toEntity(OperationErroneTransactionRequestDto requestDto, OperationErrone operationErrone) {
+    public Transaction toEntity(OperationErroneTransactionRequestDto requestDto, OperationErrone operationErrone, BigDecimal montantTva) {
 
         if (requestDto == null || operationErrone == null) {
             return null;
@@ -41,9 +40,6 @@ public class OperationErroneTransactionMapper {
         transaction.setCredit(BigDecimal.ZERO);
         transaction.setBanqueDePrelevement(operationErrone.getBanque());
 
-        BigDecimal ttc = operationErrone.getMontant();
-        BigDecimal tauxTva = BigDecimal.valueOf(requestDto.tva());
-        BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
         transaction.setTvaDeductible(montantTva);
 
         return transaction;

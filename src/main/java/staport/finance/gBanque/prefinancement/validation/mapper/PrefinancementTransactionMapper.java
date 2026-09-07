@@ -6,7 +6,6 @@ import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.prefinancement.enums.Type;
 import staport.finance.gBanque.prefinancement.validation.dto.PrefinancementTransactionRequest;
 import staport.finance.gBanque.prefinancement.validation.dto.PrefinancementTransactionResponse;
-import staport.finance.gBanque.validation.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
@@ -21,7 +20,7 @@ import java.math.BigDecimal;
 @Component
 public class PrefinancementTransactionMapper {
 
-    public Transaction toEntity(PrefinancementTransactionRequest requestDto, Prefinancement prefinancement, Banque banque) {
+    public Transaction toEntity(PrefinancementTransactionRequest requestDto, Prefinancement prefinancement, Banque banque, BigDecimal montantTva) {
 
         if (requestDto == null || prefinancement == null) {
             return null;
@@ -42,19 +41,11 @@ public class PrefinancementTransactionMapper {
         if (prefinancement.getType() == Type.REMBOURSEMENT) {
             transaction.setDebit(prefinancement.getMontant());
             transaction.setCredit(BigDecimal.ZERO);
-
-            BigDecimal ttc = prefinancement.getMontant();
-            BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTva());
-            BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
             transaction.setTvaDeductible(montantTva);
 
         } else {
             transaction.setDebit(BigDecimal.ZERO);
             transaction.setCredit(prefinancement.getMontant());
-
-            BigDecimal ttc = prefinancement.getMontant();
-            BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTva());
-            BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
             transaction.setTvaCollectee(montantTva);
         }
 

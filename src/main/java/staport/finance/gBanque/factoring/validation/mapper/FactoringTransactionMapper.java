@@ -6,7 +6,6 @@ import staport.finance.gBanque.factoring.entities.Factoring;
 import staport.finance.gBanque.factoring.validation.dto.FactoringTransactionRequest;
 import staport.finance.gBanque.factoring.validation.dto.FactoringTransactionResponse;
 import staport.finance.gBanque.prefinancement.enums.Type;
-import staport.finance.gBanque.validation.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
@@ -21,7 +20,7 @@ import java.math.BigDecimal;
 @Component
 public class FactoringTransactionMapper {
 
-    public Transaction toEntity(FactoringTransactionRequest requestDto, Factoring factoring, Banque banque) {
+    public Transaction toEntity(FactoringTransactionRequest requestDto, Factoring factoring, Banque banque, BigDecimal montantTva) {
 
         if (requestDto == null || factoring == null) {
             return null;
@@ -42,18 +41,11 @@ public class FactoringTransactionMapper {
         if (factoring.getType() == Type.REMBOURSEMENT) {
             transaction.setDebit(factoring.getMontant());
             transaction.setCredit(BigDecimal.ZERO);
-
-            BigDecimal ttc = factoring.getMontant();
-            BigDecimal tauxTVA = BigDecimal.valueOf(requestDto.getTva());
-            BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTVA);
             transaction.setTvaDeductible(montantTva);
 
         } else {
             transaction.setDebit(BigDecimal.ZERO);
             transaction.setCredit(factoring.getMontant());
-            BigDecimal ttc = factoring.getMontant();
-            BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTva());
-            BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
             transaction.setTvaCollectee(montantTva);
         }
 

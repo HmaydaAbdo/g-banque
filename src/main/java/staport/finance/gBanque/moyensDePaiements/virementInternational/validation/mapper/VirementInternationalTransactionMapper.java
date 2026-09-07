@@ -8,7 +8,6 @@ import staport.finance.gBanque.moyensDePaiements.virementInternational.validatio
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
-import staport.finance.gBanque.validation.utils.TVAUtils;
 
 import java.math.BigDecimal;
 
@@ -33,7 +32,7 @@ public class VirementInternationalTransactionMapper {
      * @return L'entité Transaction, prête à être persistée.
      */
     public Transaction toEntity(VirementInternationalTransactionRequestDto requestDto,
-                                VirementInternational virementInternational)  {
+                                VirementInternational virementInternational, BigDecimal montantTva) {
 
         if (requestDto == null || virementInternational == null) {
             return null;
@@ -49,9 +48,6 @@ public class VirementInternationalTransactionMapper {
         transaction.setDateOperations(requestDto.getDateOperation());
         transaction.setLibelle(requestDto.getLibelle() != null ? requestDto.getLibelle() : virementInternational.getLibelle());
         transaction.setTransactionSource(TransactionSource.VIREMENT_INTERNATIONAL);
-        BigDecimal ttc = virementInternational.getMontant();
-        BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTva());
-        BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
 
         if (virementInternational.getType() == Type.DECAISSEMENT) {
             transaction.setDebit(virementInternational.getMontant());

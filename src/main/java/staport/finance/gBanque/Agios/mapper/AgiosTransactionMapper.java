@@ -7,14 +7,13 @@ import staport.finance.gBanque.Agios.entities.Agios;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
-import staport.finance.gBanque.validation.utils.TVAUtils;
 
 import java.math.BigDecimal;
 
 @Component
 public class AgiosTransactionMapper {
 
-    public Transaction toEntity(AgiosValidationRequest dto, Agios agios) {
+    public Transaction toEntity(AgiosValidationRequest dto, Agios agios, BigDecimal montantTva) {
         if (dto == null || agios == null) {
             return null;
         }
@@ -32,8 +31,7 @@ public class AgiosTransactionMapper {
         transaction.setCredit(BigDecimal.ZERO);
         transaction.setBanqueDePrelevement(agios.getBanque());
 
-        BigDecimal tva = TVAUtils.calculerTVA(agios.getMontant(), BigDecimal.valueOf(dto.tva().doubleValue()));
-        transaction.setTvaDeductible(tva);
+        transaction.setTvaDeductible(montantTva);
 
         return transaction;
     }

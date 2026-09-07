@@ -91,6 +91,11 @@ import java.util.List;
  * {@link ICmtValidationService} / {@link ILeasingValidationService} — aucune logique métier n'est dupliquée ici, seul le dispatch
  * et l'agrégation du résultat le sont.
  * <p>
+ * La saisie libre du montant de TVA n'est volontairement pas disponible en lot : un montant fixe
+ * appliqué à N opérations de montants différents n'a pas de sens comptable. Le lot ne transporte
+ * donc qu'un taux, que le service de chaque module convertit sur le TTC de chaque opération via
+ * {@code TvaResolver} — le champ {@code montantTva} des DTO unitaires reste {@code null} ici.
+ * <p>
  * Volontairement absents du DTO de lot : libellé, observation, date d'émission. Propres à chaque
  * opération, ils ne sont jamais écrasés par une saisie unique appliquée à tout le lot — chaque
  * DTO unitaire construit par {@link #processOne} laisse ces champs à {@code null}, ce qui
@@ -209,7 +214,7 @@ public class BatchValidationService {
                 VirementTransactionRequestDto dto = new VirementTransactionRequestDto();
                 dto.setId(id);
                 copyChampsCommuns(requestDto, dto::setDateValeur, dto::setDateOperation,
-                        dto::setTvaDeductible, dto::setRapprochementId);
+                        dto::setTauxTva, dto::setRapprochementId);
                 VirementTransactionResponseDto r = requestDto.sens() == SensOperation.DECAISSEMENT
                         ? virementValidationService.processVirementDecaissementTransaction(dto)
                         : virementValidationService.processVirementEncaissementTransaction(dto);
@@ -219,7 +224,7 @@ public class BatchValidationService {
                 ChequeTransactionRequest dto = new ChequeTransactionRequest();
                 dto.setIdCheque(id);
                 copyChampsCommuns(requestDto, dto::setDateValeur, dto::setDateOperation,
-                        dto::setTvaDeductible, dto::setRapprochementId);
+                        dto::setTauxTva, dto::setRapprochementId);
                 ChequeTransactionResponseDto r = requestDto.sens() == SensOperation.DECAISSEMENT
                         ? chequeValidationService.processChequeDecaissementTransaction(dto)
                         : chequeValidationService.processChequeEncaissementTransaction(dto);
@@ -229,7 +234,7 @@ public class BatchValidationService {
                 LcnTransactionRequest dto = new LcnTransactionRequest();
                 dto.setId(id);
                 copyChampsCommuns(requestDto, dto::setDateValeur, dto::setDateOperation,
-                        dto::setTvaDeductible, dto::setRapprochementId);
+                        dto::setTauxTva, dto::setRapprochementId);
                 LcnTransactionResponseDto r = lcnValidationService.processLcnDecaissementTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
@@ -237,7 +242,7 @@ public class BatchValidationService {
                 LcnTransactionRequest dto = new LcnTransactionRequest();
                 dto.setId(id);
                 copyChampsCommuns(requestDto, dto::setDateValeur, dto::setDateOperation,
-                        dto::setTvaDeductible, dto::setRapprochementId);
+                        dto::setTauxTva, dto::setRapprochementId);
                 LcnTransactionResponseDto r = lcnValidationService.processLcnEncaissementTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
@@ -245,7 +250,7 @@ public class BatchValidationService {
                 MiseAdispositionTransactionRequestDto dto = new MiseAdispositionTransactionRequestDto();
                 dto.setId(id);
                 copyChampsCommuns(requestDto, dto::setDateValeur, dto::setDateOperation,
-                        dto::setTvaDeductible, dto::setRapprochementId);
+                        dto::setTauxTva, dto::setRapprochementId);
                 MiseAdispositionTransactionResponseDto r = requestDto.sens() == SensOperation.DECAISSEMENT
                         ? miseADispositionValidationService.processMiseAdispositionDecaissementTransaction(dto)
                         : miseADispositionValidationService.processMiseAdispositionEncaissementTransaction(dto);
@@ -256,7 +261,7 @@ public class BatchValidationService {
                 dto.setId(id);
                 dto.setDateValeur(requestDto.dateValeur());
                 dto.setDateOperation(requestDto.dateOperation());
-                dto.setTva(requestDto.tvaDeductible());
+                dto.setTauxTva(requestDto.tauxTva());
                 dto.setRapprochementId(requestDto.rapprochementId());
                 VirementInternationalTransactionResponseDto r = requestDto.sens() == SensOperation.DECAISSEMENT
                         ? virementInternationalValidationService.processVirementInternationalDecaissementTransaction(dto)
@@ -265,7 +270,7 @@ public class BatchValidationService {
             }
             case COMMISSION -> {
                 CommissionTransactionRequestDto dto = new CommissionTransactionRequestDto(
-                        id, requestDto.tvaDeductible(), null,
+                        id, requestDto.tauxTva(), null, null,
                         requestDto.dateValeur(), requestDto.dateOperation(),
                         null, null, requestDto.rapprochementId());
                 CommissionTransactionResponseDto r = commissionValidationService.processCommissionTransaction(dto);
@@ -274,7 +279,8 @@ public class BatchValidationService {
             case AGIOS -> {
                 AgiosValidationRequest dto = new AgiosValidationRequest(
                         id,
-                        BigDecimal.valueOf(requestDto.tvaDeductible()),
+                        requestDto.tauxTva(),
+                        null,
                         null,
                         requestDto.dateValeur(),
                         requestDto.dateOperation(),
@@ -289,14 +295,14 @@ public class BatchValidationService {
                 dto.setIdPrelevement(id);
                 dto.setDateValeur(requestDto.dateValeur());
                 dto.setDateOperation(requestDto.dateOperation());
-                dto.setTva(requestDto.tvaDeductible());
+                dto.setTauxTva(requestDto.tauxTva());
                 dto.setRapprochementId(requestDto.rapprochementId());
                 PrelevementTransactionResponse r = prelevementValidationService.processPrelevementToTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case FRAIS_BANCAIRE -> {
                 FraisBancaireTransactionRequestDto dto = new FraisBancaireTransactionRequestDto(
-                        id, requestDto.tvaDeductible(), null,
+                        id, requestDto.tauxTva(), null, null,
                         requestDto.dateValeur(), requestDto.dateOperation(),
                         null, null, requestDto.rapprochementId());
                 FraisBancaireTransactionResponseDto r = fraisBancaireValidationService.processFraisBancaireTransaction(dto);
@@ -304,7 +310,7 @@ public class BatchValidationService {
             }
             case IMPOT_TAXE -> {
                 ImpotEtTaxeTransactionRequestDto dto = new ImpotEtTaxeTransactionRequestDto(
-                        id, requestDto.tvaDeductible(), null,
+                        id, requestDto.tauxTva(), null, null,
                         requestDto.dateValeur(), requestDto.dateOperation(),
                         null, null, requestDto.rapprochementId());
                 ImpotEtTaxeTransactionResponseDto r = impotEtTaxeValidationService.processImpotEtTaxeTransaction(dto);
@@ -312,7 +318,7 @@ public class BatchValidationService {
             }
             case RESTITUTION -> {
                 RestitutionTransactionRequestDto dto = new RestitutionTransactionRequestDto(
-                        id, requestDto.tvaDeductible(), null,
+                        id, requestDto.tauxTva(), null, null,
                         requestDto.dateValeur(), requestDto.dateOperation(),
                         null, null, requestDto.rapprochementId());
                 RestitutionTransactionResponseDto r = restitutionValidationService.processRestitutionTransaction(dto);
@@ -320,7 +326,7 @@ public class BatchValidationService {
             }
             case OPERATION_ERRONE -> {
                 OperationErroneTransactionRequestDto dto = new OperationErroneTransactionRequestDto(
-                        id, requestDto.tvaDeductible(), null,
+                        id, requestDto.tauxTva(), null, null,
                         requestDto.dateValeur(), requestDto.dateOperation(),
                         null, null, requestDto.rapprochementId());
                 OperationErroneTransactionResponseDto r = operationErroneValidationService.processOperationErroneTransaction(dto);
@@ -328,7 +334,7 @@ public class BatchValidationService {
             }
             case PROVISION -> {
                 ProvisionTransactionRequestDto dto = new ProvisionTransactionRequestDto(
-                        id, requestDto.tvaDeductible(), null,
+                        id, requestDto.tauxTva(), null, null,
                         requestDto.dateValeur(), requestDto.dateOperation(),
                         null, null, requestDto.rapprochementId());
                 ProvisionTransactionResponseDto r = provisionValidationService.processProvisionTransaction(dto);
@@ -340,7 +346,7 @@ public class BatchValidationService {
                 dto.setBanqueId(requestDto.banqueId());
                 dto.setDateValeur(requestDto.dateValeur());
                 dto.setDateOperation(requestDto.dateOperation());
-                dto.setTva(requestDto.tvaDeductible());
+                dto.setTauxTva(requestDto.tauxTva());
                 dto.setRapprochementId(requestDto.rapprochementId());
                 FactoringTransactionResponse r = factoringValidationService.processFactoringTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
@@ -351,7 +357,7 @@ public class BatchValidationService {
                 dto.setBanqueId(requestDto.banqueId());
                 dto.setDateValeur(requestDto.dateValeur());
                 dto.setDateOperation(requestDto.dateOperation());
-                dto.setTva(requestDto.tvaDeductible());
+                dto.setTauxTva(requestDto.tauxTva());
                 dto.setRapprochementId(requestDto.rapprochementId());
                 PrefinancementTransactionResponse r = prefinancementValidationService.processPrefinancementTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
@@ -362,7 +368,7 @@ public class BatchValidationService {
                 dto.setBanqueId(requestDto.banqueId());
                 dto.setDateValeur(requestDto.dateValeur());
                 dto.setDateOperation(requestDto.dateOperation());
-                dto.setTva(requestDto.tvaDeductible());
+                dto.setTauxTva(requestDto.tauxTva());
                 dto.setRapprochementId(requestDto.rapprochementId());
                 DroitConstateTransactionResponse r = droitConstateValidationService.processDroitConstateTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
@@ -374,7 +380,8 @@ public class BatchValidationService {
                         null,
                         requestDto.dateValeur(),
                         requestDto.dateOperation(),
-                        requestDto.tvaDeductible(),
+                        requestDto.tauxTva(),
+                        null,
                         null,
                         null,
                         requestDto.rapprochementId());
@@ -383,7 +390,7 @@ public class BatchValidationService {
             }
             case IMPAYEE -> {
                 ImpayeeTransactionRequestDto dto = new ImpayeeTransactionRequestDto(
-                        id, requestDto.tvaDeductible(), null,
+                        id, requestDto.tauxTva(), null, null,
                         requestDto.dateValeur(), requestDto.dateOperation(),
                         null, null, requestDto.rapprochementId());
                 ImpayeeTransactionResponseDto r = impayeeValidationService.processImpayeeTransaction(dto);
@@ -401,7 +408,8 @@ public class BatchValidationService {
                         requestDto.dateValeur(),
                         requestDto.dateOperation(),
                         null,
-                        requestDto.tvaDeductible(),
+                        requestDto.tauxTva(),
+                        null,
                         null,
                         requestDto.rapprochementId());
                 CmtTransactionResponseDto r = cmtValidationService.processCmtTransaction(creditMoyenTerme, dto);
@@ -419,7 +427,8 @@ public class BatchValidationService {
                         requestDto.dateValeur(),
                         requestDto.dateOperation(),
                         null,
-                        requestDto.tvaDeductible(),
+                        requestDto.tauxTva(),
+                        null,
                         null,
                         requestDto.rapprochementId());
                 LeasingTransactionResponseDTO r = leasingValidationService.processLeasingTransaction(contratLeasing, dto);
@@ -461,22 +470,24 @@ public class BatchValidationService {
     }
 
     /**
-     * Applique les champs communs (date opération, date valeur, TVA, rapprochementId) à un DTO
-     * unitaire via ses setters, pour les types dont le champ TVA s'appelle {@code tvaDeductible}
-     * (Double) et qui n'ont pas de champ banqueId.
+     * Applique les champs communs (date opération, date valeur, taux de TVA, rapprochementId) à un
+     * DTO unitaire via ses setters, pour les types dont le champ de taux de TVA est un {@code Double}
+     * et qui n'ont pas de champ banqueId. Passage par un {@code Consumer} plutôt que par une
+     * interface commune : les DTOs unitaires n'ont pas de type commun.
      * <p>
      * Ne touche volontairement pas à dateEmission/observation/libelle : ces champs restent {@code null}
      * sur le DTO unitaire, ce qui déclenche le fallback sur l'entité source dans le mapper
-     * correspondant (voir {@link BatchValidationRequestDto}).
+     * correspondant (voir {@link BatchValidationRequestDto}). Ne touche pas non plus à montantTva
+     * (saisie libre) : le mode lot ne transporte jamais qu'un taux — voir {@link BatchValidationRequestDto}.
      */
     private void copyChampsCommuns(BatchValidationRequestDto source,
                                     java.util.function.Consumer<java.time.LocalDate> setDateValeur,
                                     java.util.function.Consumer<java.time.LocalDate> setDateOperation,
-                                    java.util.function.Consumer<Double> setTvaDeductible,
+                                    java.util.function.Consumer<Double> setTauxTva,
                                     java.util.function.Consumer<Long> setRapprochementId) {
         setDateValeur.accept(source.dateValeur());
         setDateOperation.accept(source.dateOperation());
-        setTvaDeductible.accept(source.tvaDeductible());
+        setTauxTva.accept(source.tauxTva());
         setRapprochementId.accept(source.rapprochementId());
     }
 }

@@ -24,7 +24,9 @@ import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 import staport.finance.gBanque.rapprochement.services.SoldeCascadeService;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
+import staport.finance.gBanque.validation.utils.TvaResolver;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -83,7 +85,12 @@ public class ImpayeeValidationService implements IImpayeeValidationService {
 
         banqueService.findOrThrow(impayee.getBanque().getId());
 
-        Transaction transactionEntity = impayeeTransactionMapper.toEntity(requestDto, impayee);
+        // Règles de saisie de la TVA (taux choisi XOR montant saisi, bornes) : logique métier,
+        // donc portée par le service et non par le mapper (conventions/architecture.md).
+        BigDecimal montantTva = TvaResolver.resoudre(
+                impayee.getMontant(), requestDto.tauxTva(), requestDto.montantTva());
+
+        Transaction transactionEntity = impayeeTransactionMapper.toEntity(requestDto, impayee, montantTva);
         Transaction savedTransaction = saveTransactionWithCascade(
                 transactionEntity, impayee.getBanque().getId(), requestDto.rapprochementId());
 

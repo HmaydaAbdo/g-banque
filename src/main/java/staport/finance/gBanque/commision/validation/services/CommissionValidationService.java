@@ -24,7 +24,9 @@ import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 import staport.finance.gBanque.rapprochement.services.SoldeCascadeService;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
+import staport.finance.gBanque.validation.utils.TvaResolver;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -90,7 +92,12 @@ public class CommissionValidationService implements ICommissionValidationService
         // comportement de ValidationService.processCommissionToTransaction).
         banqueService.findOrThrow(commission.getBanque().getId());
 
-        Transaction transactionEntity = commissionTransactionMapper.toEntity(requestDto, commission);
+        // Règles de saisie de la TVA (taux choisi XOR montant saisi, bornes) : logique métier,
+        // donc portée par le service et non par le mapper (conventions/architecture.md).
+        BigDecimal montantTva = TvaResolver.resoudre(
+                commission.getMontant(), requestDto.tauxTva(), requestDto.montantTva());
+
+        Transaction transactionEntity = commissionTransactionMapper.toEntity(requestDto, commission, montantTva);
         Transaction savedTransaction = saveTransactionWithCascade(
                 transactionEntity, commission.getBanque().getId(), requestDto.rapprochementId());
 

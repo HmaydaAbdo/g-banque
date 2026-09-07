@@ -8,7 +8,6 @@ import staport.finance.gBanque.provision.validation.dto.ProvisionTransactionResp
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.SensOperation;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
-import staport.finance.gBanque.validation.utils.TVAUtils;
 
 import java.math.BigDecimal;
 
@@ -26,7 +25,7 @@ import java.math.BigDecimal;
 @Component
 public class ProvisionTransactionMapper {
 
-    public Transaction toEntity(ProvisionTransactionRequestDto requestDto, Provision provision) {
+    public Transaction toEntity(ProvisionTransactionRequestDto requestDto, Provision provision, BigDecimal montantTva) {
 
         if (requestDto == null || provision == null) {
             return null;
@@ -43,17 +42,13 @@ public class ProvisionTransactionMapper {
         transaction.setTransactionSource(TransactionSource.PROVISION);
         transaction.setBanqueDePrelevement(provision.getBanque());
 
-        BigDecimal montant = provision.getMontant();
-        BigDecimal tauxTva = BigDecimal.valueOf(requestDto.tva());
-        BigDecimal montantTva = TVAUtils.calculerTVA(montant, tauxTva);
-
         if (provision.getSens() == SensOperation.DECAISSEMENT) {
-            transaction.setDebit(montant);
+            transaction.setDebit(provision.getMontant());
             transaction.setCredit(BigDecimal.ZERO);
             transaction.setTvaDeductible(montantTva);
             transaction.setTvaCollectee(BigDecimal.ZERO);
         } else {
-            transaction.setCredit(montant);
+            transaction.setCredit(provision.getMontant());
             transaction.setDebit(BigDecimal.ZERO);
             transaction.setTvaCollectee(montantTva);
             transaction.setTvaDeductible(BigDecimal.ZERO);

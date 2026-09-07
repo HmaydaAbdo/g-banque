@@ -8,7 +8,6 @@ import staport.finance.gBanque.moyensDePaiements.virements.validation.dto.Vireme
 import staport.finance.gBanque.moyensDePaiements.virements.validation.dto.VirementTransactionResponseDto;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
-import staport.finance.gBanque.validation.utils.TVAUtils;
 
 import java.math.BigDecimal;
 
@@ -24,7 +23,7 @@ public class VirementTransactionMapper {
     public VirementTransactionMapper() {
     }
 
-    public Transaction toEntity(VirementTransactionRequestDto requestDto, Virement virement) {
+    public Transaction toEntity(VirementTransactionRequestDto requestDto, Virement virement, BigDecimal montantTva) {
 
         if (requestDto == null || virement == null) {
             return null;
@@ -40,10 +39,6 @@ public class VirementTransactionMapper {
         transaction.setDateOperations(requestDto.getDateOperation());
         transaction.setLibelle(requestDto.getLibelle() != null ? requestDto.getLibelle() : virement.getLibelle());
         transaction.setTransactionSource(TransactionSource.Virement);
-
-        BigDecimal ttc = virement.getMontant();
-        BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTvaDeductible());
-        BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
 
         if (virement.getType() == Type.DECAISSEMENT) {
             transaction.setDebit(virement.getMontant());

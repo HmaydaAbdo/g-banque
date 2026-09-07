@@ -5,7 +5,6 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
 import staport.finance.gBanque.moyensDePaiements.cheques.validation.dto.ChequeTransactionRequest;
 import staport.finance.gBanque.moyensDePaiements.cheques.validation.dto.ChequeTransactionResponseDto;
-import staport.finance.gBanque.validation.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
@@ -17,6 +16,12 @@ import java.math.BigDecimal;
  *
  * <p>Déplacé depuis {@code validation.mapper} vers le module {@code cheques} —
  * conforme à {@code architecture.md} Règle 1.
+ *
+ * <p>Le montant de TVA n'est plus calculé ici : il est résolu en amont par
+ * {@code TvaResolver} dans {@code ChequeValidationService}, qui porte les règles (taux choisi ou
+ * montant saisi, bornes). Le mapper se contente de le poser sur {@code tvaDeductible} ou
+ * {@code tvaCollectee} selon le sens du chèque — conversion uniquement, conforme à
+ * {@code architecture.md}.
  */
 @Component
 public class ChequeTransactionMapper {
@@ -24,7 +29,10 @@ public class ChequeTransactionMapper {
     public ChequeTransactionMapper() {
     }
 
-    public Transaction toEntity(ChequeTransactionRequest requestDto, Cheque cheque) {
+    /**
+     * @param montantTva montant de TVA déjà résolu par {@code TvaResolver} (jamais recalculé ici)
+     */
+    public Transaction toEntity(ChequeTransactionRequest requestDto, Cheque cheque, BigDecimal montantTva) {
 
         if (requestDto == null || cheque == null) {
             return null;
@@ -40,11 +48,6 @@ public class ChequeTransactionMapper {
         transaction.setDateOperations(requestDto.getDateOperation());
         transaction.setTransactionSource(TransactionSource.CHEQUE);
         transaction.setBanqueDePrelevement(cheque.getBanque());
-
-        // Calculer la TVA avec utilitaire
-        BigDecimal ttc = cheque.getMontant();
-        BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTvaDeductible());
-        BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
 
         if (cheque.getType() == Type.DECAISSEMENT) {
             transaction.setDebit(cheque.getMontant());

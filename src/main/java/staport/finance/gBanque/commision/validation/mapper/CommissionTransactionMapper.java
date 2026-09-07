@@ -7,7 +7,6 @@ import staport.finance.gBanque.commision.validation.dto.CommissionTransactionReq
 import staport.finance.gBanque.commision.validation.dto.CommissionTransactionResponseDto;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
-import staport.finance.gBanque.validation.utils.TVAUtils;
 
 import java.math.BigDecimal;
 
@@ -21,7 +20,7 @@ import java.math.BigDecimal;
 @Component
 public class CommissionTransactionMapper {
 
-    public Transaction toEntity(CommissionTransactionRequestDto requestDto, Commission commission) {
+    public Transaction toEntity(CommissionTransactionRequestDto requestDto, Commission commission, BigDecimal montantTva) {
 
         if (requestDto == null || commission == null) {
             return null;
@@ -41,9 +40,6 @@ public class CommissionTransactionMapper {
         transaction.setCredit(BigDecimal.ZERO);
         transaction.setBanqueDePrelevement(commission.getBanque());
 
-        BigDecimal ttc = commission.getMontant();
-        BigDecimal tauxTva = BigDecimal.valueOf(requestDto.tva());
-        BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
         transaction.setTvaDeductible(montantTva);
 
         return transaction;

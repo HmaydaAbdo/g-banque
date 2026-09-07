@@ -6,7 +6,6 @@ import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.droitConstate.validation.dto.DroitConstateTransactionRequest;
 import staport.finance.gBanque.droitConstate.validation.dto.DroitConstateTransactionResponse;
 import staport.finance.gBanque.prefinancement.enums.Type;
-import staport.finance.gBanque.validation.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
@@ -23,7 +22,7 @@ import java.math.BigDecimal;
 @Component
 public class DroitConstateTransactionMapper {
 
-    public Transaction toEntity(DroitConstateTransactionRequest requestDto, DroitConstate droitConstate, Banque banque) {
+    public Transaction toEntity(DroitConstateTransactionRequest requestDto, DroitConstate droitConstate, Banque banque, BigDecimal montantTva) {
 
         if (requestDto == null || droitConstate == null) {
             return null;
@@ -44,19 +43,11 @@ public class DroitConstateTransactionMapper {
         if (droitConstate.getType() == Type.REMBOURSEMENT) {
             transaction.setDebit(droitConstate.getMontant());
             transaction.setCredit(BigDecimal.ZERO);
-
-            BigDecimal ttc = droitConstate.getMontant();
-            BigDecimal tauxTVA = BigDecimal.valueOf(requestDto.getTva());
-            BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTVA);
             transaction.setTvaDeductible(montantTva);
 
         } else {
             transaction.setDebit(BigDecimal.ZERO);
             transaction.setCredit(droitConstate.getMontant());
-
-            BigDecimal ttc = droitConstate.getMontant();
-            BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTva());
-            BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
             transaction.setTvaCollectee(montantTva);
         }
 

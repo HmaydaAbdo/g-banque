@@ -7,7 +7,6 @@ import staport.finance.gBanque.restitution.validation.dto.RestitutionTransaction
 import staport.finance.gBanque.restitution.validation.dto.RestitutionTransactionResponseDto;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
-import staport.finance.gBanque.validation.utils.TVAUtils;
 
 import java.math.BigDecimal;
 
@@ -21,7 +20,7 @@ import java.math.BigDecimal;
 @Component
 public class RestitutionTransactionMapper {
 
-    public Transaction toEntity(RestitutionTransactionRequestDto requestDto, Restitution restitution) {
+    public Transaction toEntity(RestitutionTransactionRequestDto requestDto, Restitution restitution, BigDecimal montantTva) {
 
         if (requestDto == null || restitution == null) {
             return null;
@@ -41,9 +40,6 @@ public class RestitutionTransactionMapper {
         transaction.setDebit(BigDecimal.ZERO);
         transaction.setBanqueDePrelevement(restitution.getBanque());
 
-        BigDecimal ttc = restitution.getMontant();
-        BigDecimal tauxTva = BigDecimal.valueOf(requestDto.tva());
-        BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
         transaction.setTvaCollectee(montantTva);
 
         return transaction;

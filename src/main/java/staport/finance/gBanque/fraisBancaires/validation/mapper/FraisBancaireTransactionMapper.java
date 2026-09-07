@@ -7,7 +7,6 @@ import staport.finance.gBanque.fraisBancaires.validation.dto.FraisBancaireTransa
 import staport.finance.gBanque.fraisBancaires.validation.dto.FraisBancaireTransactionResponseDto;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
-import staport.finance.gBanque.validation.utils.TVAUtils;
 
 import java.math.BigDecimal;
 
@@ -21,7 +20,7 @@ import java.math.BigDecimal;
 @Component
 public class FraisBancaireTransactionMapper {
 
-    public Transaction toEntity(FraisBancaireTransactionRequestDto requestDto, FraisBancaire fraisBancaire) {
+    public Transaction toEntity(FraisBancaireTransactionRequestDto requestDto, FraisBancaire fraisBancaire, BigDecimal montantTva) {
 
         if (requestDto == null || fraisBancaire == null) {
             return null;
@@ -41,9 +40,6 @@ public class FraisBancaireTransactionMapper {
         transaction.setCredit(BigDecimal.ZERO);
         transaction.setBanqueDePrelevement(fraisBancaire.getBanque());
 
-        BigDecimal ttc = fraisBancaire.getMontant();
-        BigDecimal tauxTva = BigDecimal.valueOf(requestDto.tva());
-        BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
         transaction.setTvaDeductible(montantTva);
 
         return transaction;

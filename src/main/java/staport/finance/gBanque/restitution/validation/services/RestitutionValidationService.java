@@ -24,7 +24,9 @@ import staport.finance.gBanque.restitution.validation.mapper.RestitutionTransact
 import staport.finance.gBanque.restitution.validation.services.interfaces.IRestitutionValidationService;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
+import staport.finance.gBanque.validation.utils.TvaResolver;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -83,7 +85,12 @@ public class RestitutionValidationService implements IRestitutionValidationServi
 
         banqueService.findOrThrow(restitution.getBanque().getId());
 
-        Transaction transactionEntity = restitutionTransactionMapper.toEntity(requestDto, restitution);
+        // Règles de saisie de la TVA (taux choisi XOR montant saisi, bornes) : logique métier,
+        // donc portée par le service et non par le mapper (conventions/architecture.md).
+        BigDecimal montantTva = TvaResolver.resoudre(
+                restitution.getMontant(), requestDto.tauxTva(), requestDto.montantTva());
+
+        Transaction transactionEntity = restitutionTransactionMapper.toEntity(requestDto, restitution, montantTva);
         Transaction savedTransaction = saveTransactionWithCascade(
                 transactionEntity, restitution.getBanque().getId(), requestDto.rapprochementId());
 

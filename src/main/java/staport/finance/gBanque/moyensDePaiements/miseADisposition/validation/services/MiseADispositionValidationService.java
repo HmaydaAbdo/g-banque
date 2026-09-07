@@ -22,7 +22,9 @@ import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 import staport.finance.gBanque.rapprochement.services.SoldeCascadeService;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
+import staport.finance.gBanque.validation.utils.TvaResolver;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -86,7 +88,12 @@ public class MiseADispositionValidationService implements IMiseADispositionValid
             throw new ValidationException("La mise à disposition id: " + miseADisposition.getId() + " n'est pas ENCOURS.");
         }
 
-        Transaction transactionEntity = miseAdispositionTransactionMapper.toEntity(requestDto, miseADisposition);
+        // Règles de saisie de la TVA (taux choisi XOR montant saisi, bornes) : logique métier,
+        // donc portée par le service et non par le mapper (conventions/architecture.md).
+        BigDecimal montantTva = TvaResolver.resoudre(
+                miseADisposition.getMontant(), requestDto.getTauxTva(), requestDto.getMontantTva());
+
+        Transaction transactionEntity = miseAdispositionTransactionMapper.toEntity(requestDto, miseADisposition, montantTva);
         Transaction savedTransaction = saveTransactionWithCascade(
                 transactionEntity, miseADisposition.getBanque().getId(), requestDto.getRapprochementId());
 
