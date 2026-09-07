@@ -33,6 +33,13 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
 import { TransactionSource } from "../../../../../transactions/dtos/TransactionSource";
 import { BatchValidationResponseDto } from "../../../../dtos/lot/BatchValidationResponseDto";
 import { ValidationLotModalComponent } from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import {TvaInputComponent} from "../../shared/tva-input/tva-input.component";
+import {
+  decrireSaisieTva,
+  messageErreurTva,
+  SaisieTva,
+  saisieTvaParDefaut
+} from "../../shared/tva-input/saisie-tva.model";
 import { TableSelectionState } from "../../shared/table-selection.state";
 
 
@@ -60,6 +67,7 @@ import { TableSelectionState } from "../../shared/table-selection.state";
     InputTextareaModule,
     InputTextModule,
     ValidationLotModalComponent
+    ,TvaInputComponent
   ],
   templateUrl: './echeances-cmt.component.html',
   styleUrl: './echeances-cmt.component.scss',
@@ -75,12 +83,6 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
   currentMonthYear: string | null = null;
 
 
-  tvaOptions: SelectItem[] = [
-    { label: '0%', value: 0 },
-    { label: '10%', value: 10 },
-    { label: '14%', value: 14 },
-    { label: '20%', value: 20 }
-  ];
 
   searchForm!: FormGroup;
   banqueIdFromRoute!: number;
@@ -93,6 +95,14 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
 
   private subscriptions: Subscription[] = [];
   isSubmitting: boolean = false;
+
+  /** Exposé au template pour le message d'erreur du champ TVA. */
+  readonly messageErreurTva = messageErreurTva;
+
+  /** Borne haute du montant de TVA saisissable, exposée au template. */
+  get montantMaxTva(): number | null {
+    return this.selectedEcheance?.montantTtc ?? null;
+  }
 
   // Validation en lot
   selectionState = new TableSelectionState<EcheanceCMTResponseDto>(e => e.id);
@@ -177,7 +187,7 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
       observation: ['',Validators.required],
-      tvaDeductible: [null, Validators.required] ,
+      tva: [saisieTvaParDefaut()],
       libelle: ['', Validators.required]
     });
   }
@@ -297,7 +307,7 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
                 <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
                 <li><strong>Libellé:</strong> ${formValue.libelle}</li>
                 <li><strong>Observation:</strong> ${formValue.observation}</li>
-                <li><strong>TVA Déductible:</strong> ${formValue.tvaDeductible}%</li>
+                <li><strong>TVA Déductible:</strong> ${decrireSaisieTva(formValue.tva)}</li>
             </ul>
       `;
 
@@ -330,6 +340,7 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
       const donneesComplementaires: DonneesComplementairesRapprochementDTO = formValue as DonneesComplementairesRapprochementDTO;
       const rapprochementId = this.bankStateService.getRapprochementId();
 
+      const saisieTva: SaisieTva = formValue.tva;
       const cmtTransactionRequest: CmtTransactionRequest = {
         creditMoyenTermeId: this.selectedEcheance.credit.id,
         echeanceId: this.selectedEcheance.id,
@@ -337,7 +348,8 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
         dateValeur: this.datePipe.transform( donneesComplementaires.dateValeur, 'yyyy-MM-dd') as string ,
         dateOperation: this.datePipe.transform(donneesComplementaires.dateOperation,'yyyy-MM-dd') as string,
         observation: donneesComplementaires.observation,
-        tvaDeductible: donneesComplementaires.tvaDeductible,
+        tauxTva: saisieTva.tauxTva,
+        montantTva: saisieTva.montantTva,
         libelle:donneesComplementaires.libelle,
         rapprochementId: rapprochementId!
       };

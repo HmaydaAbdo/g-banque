@@ -30,6 +30,13 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
 import { TransactionSource } from "../../../../../transactions/dtos/TransactionSource";
 import { BatchValidationResponseDto } from "../../../../dtos/lot/BatchValidationResponseDto";
 import { ValidationLotModalComponent } from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import {TvaInputComponent} from "../../shared/tva-input/tva-input.component";
+import {
+  decrireSaisieTva,
+  messageErreurTva,
+  SaisieTva,
+  saisieTvaParDefaut
+} from "../../shared/tva-input/saisie-tva.model";
 import { TableSelectionState } from "../../shared/table-selection.state";
 
 
@@ -55,6 +62,7 @@ import { TableSelectionState } from "../../shared/table-selection.state";
     ConfirmDialogModule,
     RouterLink,
     ValidationLotModalComponent,
+    TvaInputComponent,
   ],
   templateUrl: './droit-constate-remboursements.component.html',
   styleUrl: './droit-constate-remboursements.component.scss',
@@ -78,14 +86,16 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
   selectedDroitConstate: DroitConstateResponseDto | null = null;
 
   // New TVA options for the dialog dropdown
-  tvaOptions = [
-    { label: '0%', value: 0 },
-    { label: '10%', value: 10 },
-    { label: '14%', value: 14 },
-    { label: '20%', value: 20 },
-  ];
 
   isSubmitting: boolean = false;
+
+  /** Exposé au template pour le message d'erreur du champ TVA. */
+  readonly messageErreurTva = messageErreurTva;
+
+  /** Borne haute du montant de TVA saisissable, exposée au template. */
+  get montantMaxTva(): number | null {
+    return this.selectedDroitConstate?.montant ?? null;
+  }
 
   /** Indicateur de chargement du bouton "Exporter PDF". */
   exporting = false;
@@ -196,7 +206,7 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
       dateEmission: [null, Validators.required],
       dateOperation: [null, Validators.required],
       dateValeur: [null, Validators.required],
-      tva: [null, Validators.required],
+      tva: [saisieTvaParDefaut()],
       observation:['',Validators.required],
       libelle:['',Validators.required],
     });
@@ -254,7 +264,7 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
                 <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
                 <li><strong>Libellé:</strong> ${formValue.libelle}</li>
                 <li><strong>Observation:</strong> ${formValue.observation}</li>
-                <li><strong>TVA :</strong> ${formValue.tva}%</li>
+                <li><strong>TVA :</strong> ${decrireSaisieTva(formValue.tva)}</li>
             </ul>
       `;
 
@@ -284,13 +294,15 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
 
       this.isSubmitting = true;
       const rapprochementId = this.bankStateService.getRapprochementId();
+      const saisieTva: SaisieTva = this.rapprochementForm.value.tva;
       const dcTransactionRequest: DroitConstateTransactionRequest = {
         droitConstateId: this.selectedDroitConstate.id,
         banqueId: this.selectedDroitConstate.banqueId,
         dateEmission: this.datePipe.transform(this.rapprochementForm.value.dateEmission,'yyyy-MM-dd') as string,
         dateOperation:this.datePipe.transform(this.rapprochementForm.value.dateOperation,'yyyy-MM-dd') as string,
         dateValeur:this.datePipe.transform(this.rapprochementForm.value.dateValeur,'yyyy-MM-dd') as string,
-        tva: this.rapprochementForm.value.tva,
+        tauxTva: saisieTva.tauxTva,
+        montantTva: saisieTva.montantTva,
         libelle: this.rapprochementForm.value.libelle,
         observation: this.rapprochementForm.value.observation,
         rapprochementId: rapprochementId!

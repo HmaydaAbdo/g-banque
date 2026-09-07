@@ -30,7 +30,14 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
 import { TransactionSource } from "../../../../../transactions/dtos/TransactionSource";
 import { BatchValidationResponseDto } from "../../../../dtos/lot/BatchValidationResponseDto";
 import { ValidationLotModalComponent } from "../../shared/validation-lot-modal/validation-lot-modal.component";
-import { TableSelectionState } from "../../shared/table-selection.state";
+
+import {TvaInputComponent} from "../../shared/tva-input/tva-input.component";
+import {
+  decrireSaisieTva,
+  messageErreurTva,
+  SaisieTva,
+  saisieTvaParDefaut
+} from "../../shared/tva-input/saisie-tva.model";import { TableSelectionState } from "../../shared/table-selection.state";
 
 @Component({
   selector: 'app-encours-operation-errone',
@@ -56,7 +63,8 @@ import { TableSelectionState } from "../../shared/table-selection.state";
     InputTextareaModule,
     ConfirmDialogModule,
     TagModule,
-    ValidationLotModalComponent
+    ValidationLotModalComponent,
+    TvaInputComponent
   ],
   templateUrl: './operation-errone.component.html',
   providers: [MessageService, ConfirmationService, DecimalPipe]
@@ -78,14 +86,16 @@ export class EncoursOperationErroneComponent implements OnInit {
   searchForm!: FormGroup;
 
   items: MenuItem[] = [];
-  tvaOptions: SelectItem[] = [
-    { label: '0%', value: 0 },
-    { label: '10%', value: 10 },
-    { label: '14%', value: 14 },
-    { label: '20%', value: 20 }
-  ];
 
   isSubmitting: boolean = false;
+
+  /** Exposé au template pour le message d'erreur du champ TVA. */
+  readonly messageErreurTva = messageErreurTva;
+
+  /** Borne haute du montant de TVA saisissable, exposée au template. */
+  get montantMaxTva(): number | null {
+    return this.selectedOperation?.montant ?? null;
+  }
 
   searchFormSubscription!: Subscription;
 
@@ -181,7 +191,7 @@ export class EncoursOperationErroneComponent implements OnInit {
       dateValeur: [null, Validators.required],
       observation: ['', Validators.required],
       libelle: ['', Validators.required],
-      tvaDeductible: [null, Validators.required],
+      tva: [saisieTvaParDefaut()],
     });
   }
 
@@ -277,7 +287,7 @@ export class EncoursOperationErroneComponent implements OnInit {
             <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
             <li><strong>Libellé:</strong> ${formValue.libelle}</li>
             <li><strong>Observation:</strong> ${formValue.observation}</li>
-            <li><strong>TVA Déductible:</strong> ${formValue.tvaDeductible}%</li>
+            <li><strong>TVA Déductible:</strong> ${decrireSaisieTva(formValue.tva)}</li>
         </ul>
       `;
 
@@ -303,6 +313,7 @@ export class EncoursOperationErroneComponent implements OnInit {
       const formValue = this.rapprochementForm.value;
 
       const rapprochementId = this.bankStateService.getRapprochementId();
+      const saisieTva: SaisieTva = formValue.tva;
       const request: OperationErroneValidationRequest = {
         idOperationErrone: this.selectedOperation.id,
         dateOperation: this.datePipe.transform(formValue.dateOperation,'yyyy-MM-dd') as string,
@@ -310,7 +321,8 @@ export class EncoursOperationErroneComponent implements OnInit {
         dateValeur: this.datePipe.transform(formValue.dateValeur,'yyyy-MM-dd') as string,
         observation: formValue.observation,
         libelle: formValue.libelle,
-        tva: formValue.tvaDeductible,
+        tauxTva: saisieTva.tauxTva,
+        montantTva: saisieTva.montantTva,
         rapprochementId: rapprochementId!
       };
 

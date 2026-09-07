@@ -39,6 +39,13 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
 import {SensOperation} from "../../../../../transactions/dtos/SensOperation";
 import {BatchValidationResponseDto} from "../../../../dtos/lot/BatchValidationResponseDto";
 import {ValidationLotModalComponent} from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import {TvaInputComponent} from "../../shared/tva-input/tva-input.component";
+import {
+  decrireSaisieTva,
+  messageErreurTva,
+  SaisieTva,
+  saisieTvaParDefaut
+} from "../../shared/tva-input/saisie-tva.model";
 import {TableSelectionState} from "../../shared/table-selection.state";
 
 @Component({
@@ -65,6 +72,7 @@ import {TableSelectionState} from "../../shared/table-selection.state";
     ConfirmDialogModule,
     RouterLink,
     ValidationLotModalComponent,
+    TvaInputComponent,
   ],
   templateUrl: './virement-international-encours-decaissement.component.html',
   providers: [MessageService, ConfirmationService, DecimalPipe],
@@ -87,14 +95,16 @@ export class VirementInternationalEncoursDecaissementComponent implements OnInit
   // Propriétés pour la recherche et TVA
   searchForm!: FormGroup;
   currentSearchDto: EncoursVirementsInternationalSearchDto = {};
-  tvaOptions: { label: string, value: number }[] = [
-    { label: '0%', value: 0 },
-    { label: '10%', value: 10 },
-    { label: '14%', value: 14 },
-    { label: '20%', value: 20 }
-  ];
 
   isSubmitting: boolean = false;
+
+  /** Exposé au template pour le message d'erreur du champ TVA. */
+  readonly messageErreurTva = messageErreurTva;
+
+  /** Borne haute du montant de TVA saisissable, exposée au template. */
+  get montantMaxTva(): number | null {
+    return this.selectedVirement?.montant ?? null;
+  }
 
   // Validation en lot
   selectionState = new TableSelectionState<VirementInternationalResponseDto>(v => v.id);
@@ -180,7 +190,7 @@ export class VirementInternationalEncoursDecaissementComponent implements OnInit
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
       observation: ['', Validators.required],
-      tva: [0, Validators.required],
+      tva: [saisieTvaParDefaut()],
       libelle: ['', Validators.required],
     });
   }
@@ -235,7 +245,7 @@ export class VirementInternationalEncoursDecaissementComponent implements OnInit
           <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
           <li><strong>Libellé:</strong> ${formValue.libelle}</li>
           <li><strong>Observation:</strong> ${formValue.observation}</li>
-          <li><strong>TVA:</strong> ${formValue.tva}%</li>
+          <li><strong>TVA:</strong> ${decrireSaisieTva(formValue.tva)}</li>
         </ul>
       `;
 
@@ -266,7 +276,8 @@ export class VirementInternationalEncoursDecaissementComponent implements OnInit
         dateValeur: this.datePipe.transform(formValue.dateValeur,'yyyy-MM-dd') as string,
         dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd' ) as string,
         observation: formValue.observation,
-        tva: formValue.tva,
+        tauxTva: (formValue.tva as SaisieTva).tauxTva,
+        montantTva: (formValue.tva as SaisieTva).montantTva,
         transactionSource: TransactionSource.VIREMENT_INTERNATIONAL,
         libelle: formValue.libelle,
         rapprochementId: rapprochementId!

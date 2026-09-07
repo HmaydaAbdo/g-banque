@@ -1,6 +1,7 @@
 export interface ImpayeeValidationRequest {
   idImpayee: number;
-  tva: number;
+  tauxTva: number | null;
+  montantTva: number | null;
   dateEmission: string;
   dateValeur: string;
   dateOperation: string;

@@ -29,7 +29,14 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
 import { TransactionSource } from "../../../../../transactions/dtos/TransactionSource";
 import { BatchValidationResponseDto } from "../../../../dtos/lot/BatchValidationResponseDto";
 import { ValidationLotModalComponent } from "../../shared/validation-lot-modal/validation-lot-modal.component";
-import { TableSelectionState } from "../../shared/table-selection.state";
+
+import {TvaInputComponent} from "../../shared/tva-input/tva-input.component";
+import {
+  decrireSaisieTva,
+  messageErreurTva,
+  SaisieTva,
+  saisieTvaParDefaut
+} from "../../shared/tva-input/saisie-tva.model";import { TableSelectionState } from "../../shared/table-selection.state";
 
 @Component({
   selector: 'app-encours-impots-taxes',
@@ -53,7 +60,8 @@ import { TableSelectionState } from "../../shared/table-selection.state";
     InputTextareaModule,
     ConfirmDialogModule,
     RouterLink,
-    ValidationLotModalComponent
+    ValidationLotModalComponent,
+    TvaInputComponent
   ],
   templateUrl: './encours-impots-taxes.component.html',
   providers: [MessageService, ConfirmationService, DecimalPipe]
@@ -78,15 +86,16 @@ export class EncoursImpotsEtTaxesComponent implements OnInit, OnDestroy {
   motifOptions: { label: string; value: Motif | null }[] = [];
   motifLabels = MotifLabels;
   items: MenuItem[] = [];
-  tvaOptions: SelectItem[] = [
-    { label: '0%', value: 0 },
-    { label: '10%', value: 10 },
-    { label: '14%', value: 14 },
-    { label: '20%', value: 20 },
-    { label: '100%', value: 100 }
-  ];
 
   isSubmitting: boolean = false;
+
+  /** Exposé au template pour le message d'erreur du champ TVA. */
+  readonly messageErreurTva = messageErreurTva;
+
+  /** Borne haute du montant de TVA saisissable, exposée au template. */
+  get montantMaxTva(): number | null {
+    return this.selectedImpotEtTaxe?.montant ?? null;
+  }
 
   // Validation en lot
   selectionState = new TableSelectionState<ImpotEtTaxeResponseDto>(i => i.id);
@@ -176,7 +185,7 @@ export class EncoursImpotsEtTaxesComponent implements OnInit, OnDestroy {
       dateValeur: [null, Validators.required],
       observation: ['', Validators.required],
       libelle: ['', Validators.required],
-      tvaDeductible: [null, Validators.required],
+      tva: [saisieTvaParDefaut()],
     });
   }
 
@@ -285,7 +294,7 @@ export class EncoursImpotsEtTaxesComponent implements OnInit, OnDestroy {
                 <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
                 <li><strong>Libellé:</strong> ${libelleEchappe}</li>
                 <li><strong>Observation:</strong> ${observationEchappee}</li>
-                <li><strong>TVA Déductible:</strong> ${formValue.tvaDeductible}%</li>
+                <li><strong>TVA Déductible:</strong> ${decrireSaisieTva(formValue.tva)}</li>
             </ul>
       `;
 
@@ -308,6 +317,7 @@ export class EncoursImpotsEtTaxesComponent implements OnInit, OnDestroy {
   submitRapprochement(): void {
     if (this.rapprochementForm.valid && this.selectedImpotEtTaxe) {
       const rapprochementId = this.bankStateService.getRapprochementId();
+      const saisieTva: SaisieTva = this.rapprochementForm.value.tva;
       const request: ImpotEtTaxeValidationRequest = {
         idImpotEtTaxe: this.selectedImpotEtTaxe.id,
         dateOperation: this.datePipe.transform(this.rapprochementForm.value.dateOperation,'yyyy-MM-dd') as string,
@@ -315,7 +325,8 @@ export class EncoursImpotsEtTaxesComponent implements OnInit, OnDestroy {
         dateValeur:this.datePipe.transform(this.rapprochementForm.value.dateValeur,'yyyy-MM-dd') as string,
         observation: this.rapprochementForm.value.observation,
         libelle: this.rapprochementForm.value.libelle,
-        tva: this.rapprochementForm.value.tvaDeductible,
+        tauxTva: saisieTva.tauxTva,
+        montantTva: saisieTva.montantTva,
         rapprochementId: rapprochementId!
       };
 

@@ -15,6 +15,8 @@ import {SensOperation} from '../../../../../transactions/dtos/SensOperation';
 import {BatchValidationRequestDto} from '../../../../dtos/lot/BatchValidationRequestDto';
 import {BatchValidationResponseDto} from '../../../../dtos/lot/BatchValidationResponseDto';
 import {ValidationService} from '../../../../services/validation/validation.service';
+import {TvaInputComponent} from '../tva-input/tva-input.component';
+import {decrireSaisieTva, messageErreurTva, SaisieTva, saisieTvaParDefaut} from '../tva-input/saisie-tva.model';
 import {BankStateService} from '../../../../../comptes-bancaire/services/bank-state.service';
 
 /**
@@ -48,6 +50,7 @@ import {BankStateService} from '../../../../../comptes-bancaire/services/bank-st
     InputTextareaModule,
     DropdownModule,
     DividerModule,
+    TvaInputComponent,
     ButtonModule,
     ConfirmDialogModule,
     ToastModule,
@@ -78,12 +81,9 @@ export class ValidationLotModalComponent {
 
   rapprochementForm!: FormGroup;
   isSubmitting = false;
-  tvaOptions: { label: string; value: number }[] = [
-    {label: '0%', value: 0},
-    {label: '10%', value: 10},
-    {label: '14%', value: 14},
-    {label: '20%', value: 20},
-  ];
+
+  /** Expose au template pour le message d'erreur du champ TVA. */
+  readonly messageErreurTva = messageErreurTva;
 
   private readonly fb = inject(FormBuilder);
   private readonly datePipe = inject(DatePipe);
@@ -101,7 +101,7 @@ export class ValidationLotModalComponent {
     this.rapprochementForm = this.fb.group({
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
-      tvaDeductible: [0, Validators.required],
+      tva: [saisieTvaParDefaut()],
     });
   }
 
@@ -146,7 +146,7 @@ export class ValidationLotModalComponent {
           <ul>
               <li><strong>Date de valeur :</strong> ${dateValeurFormatted || '-'}</li>
               <li><strong>Date d'opération :</strong> ${dateOperationFormatted || '-'}</li>
-              <li><strong>${this.tvaLabel} :</strong> ${formValue.tvaDeductible}%</li>
+              <li><strong>${this.tvaLabel} :</strong> ${decrireSaisieTva(formValue.tva)}</li>
           </ul>
           <br>
           Le libellé et l'observation d'origine de chaque opération sont conservés.
@@ -165,6 +165,10 @@ export class ValidationLotModalComponent {
   private submit(): void {
     const rapprochementId = this.bankStateService.getRapprochementId();
     const formValue = this.rapprochementForm.getRawValue();
+    // Mode lot : autoriserSaisieLibre=false sur <app-tva-input> garantit que tauxTva est
+    // toujours renseigne ici (montantTva n'a pas de sens applique a N operations differentes
+    // et n'existe donc pas dans BatchValidationRequestDto -- voir TvaResolver cote backend).
+    const saisieTva: SaisieTva = formValue.tva!;
 
     const request: BatchValidationRequestDto = {
       transactionSource: this.transactionSource,
@@ -173,7 +177,7 @@ export class ValidationLotModalComponent {
       ids: this.selectedIds,
       dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
       dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-      tvaDeductible: formValue.tvaDeductible,
+      tauxTva: saisieTva.tauxTva,
       rapprochementId: rapprochementId!,
     };
 

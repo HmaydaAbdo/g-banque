@@ -36,6 +36,13 @@ import {BankStateService} from "../../../../../comptes-bancaire/services/bank-st
 import { parseLocalDate } from '../../../../../global/types/date.utils';
 import { BatchValidationResponseDto } from "../../../../dtos/lot/BatchValidationResponseDto";
 import { ValidationLotModalComponent } from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import {TvaInputComponent} from "../../shared/tva-input/tva-input.component";
+import {
+  decrireSaisieTva,
+  messageErreurTva,
+  SaisieTva,
+  saisieTvaParDefaut
+} from "../../shared/tva-input/saisie-tva.model";
 import { TableSelectionState } from "../../shared/table-selection.state";
 
 
@@ -64,6 +71,7 @@ import { TableSelectionState } from "../../shared/table-selection.state";
     InputTextModule,
     TableModule,
     ValidationLotModalComponent,
+    TvaInputComponent,
   ],
   templateUrl: './echeances-leasing.component.html',
   styleUrl: './echeances-leasing.component.scss',
@@ -81,12 +89,6 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
   searchForm!: FormGroup;
   banqueIdFromRoute!: number; // Propriété pour stocker l'ID de la banque
 
-  tvaOptions = [
-    { label: '0 %', value: 0 },
-    { label: '10 %', value: 10 },
-    { label: '14 %', value: 14 },
-    { label: '20 %', value: 20 },
-  ];
 
   organismeLeasingOptions: { label: string, value: number }[] = [];
 
@@ -100,6 +102,14 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
 
   isSubmitting: boolean = false;
+
+  /** Exposé au template pour le message d'erreur du champ TVA. */
+  readonly messageErreurTva = messageErreurTva;
+
+  /** Borne haute du montant de TVA saisissable, exposée au template. */
+  get montantMaxTva(): number | null {
+    return this.selectedEcheance?.montantTTC ?? null;
+  }
 
   // Validation en lot
   selectionState = new TableSelectionState<EcheanceLeasingResponse>(e => e.id);
@@ -195,7 +205,7 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
       dateOperation: [null, Validators.required],
       observation: ['', Validators.required],
       libelle: ['', Validators.required], // Ajout du champ libelle
-      tvaDeductible: [20, [Validators.required, Validators.min(0), Validators.max(100)]] // Valeur par défaut 20%
+      tva: [{tauxTva: 20, montantTva: null}], // Valeur par défaut 20%, verrouillée (comportement préexistant)
     });
   }
 
@@ -281,12 +291,12 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
       libelle: echeance.libelle,
 
       // Pré-remplissage de la TVA (20%) et désactivation
-      tvaDeductible: 20
+      tva: {tauxTva: 20, montantTva: null}
     });
 
     // Désactivation des contrôles non éditables
     this.rapprochementForm.get('dateEmission')?.disable();
-    this.rapprochementForm.get('tvaDeductible')?.disable();
+    this.rapprochementForm.get('tva')?.disable();
 
 
     // dateValeur et dateOperation restent nulls et éditables
@@ -329,7 +339,7 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
                 <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
                 <li><strong>Libellé:</strong> ${formValue.libelle}</li>
                 <li><strong>Observation:</strong> ${formValue.observation}</li>
-                <li><strong>TVA Déductible:</strong> ${this.decimalPipe.transform(formValue.tvaDeductible,"1.2-2","fr-FR")}%</li>
+                <li><strong>TVA Déductible:</strong> ${decrireSaisieTva(formValue.tva)}</li>
             </ul>
       `;
 
@@ -351,13 +361,14 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
 
   submitRapprochement(): void {
     if (this.rapprochementForm.valid && this.selectedEcheance) {
-      // Utilisation de getRawValue() pour récupérer aussi les champs désactivés (dateEmission, tvaDeductible)
+      // Utilisation de getRawValue() pour récupérer aussi les champs désactivés (dateEmission, tva)
       const formValue = this.rapprochementForm.getRawValue();
 
 
       const rapprochementId = this.bankStateService.getRapprochementId();
 
       // Create the LeasingTransactionRequest object
+      const saisieTva: SaisieTva = formValue.tva;
       const leasingTransactionRequest: LeasingTransactionRequest = {
         contratLeasingId: this.selectedEcheance.contratLeasingId,
         echeanceId: this.selectedEcheance.id,
@@ -366,7 +377,8 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
         dateValeur: this.datePipe.transform(formValue.dateValeur,'yyyy-MM-dd') as string,
         dateOperation:this.datePipe.transform(formValue.dateOperation,'yyyy-MM-dd') as string,
         observation:  formValue.observation,
-        tvaDeductible:  formValue.tvaDeductible,
+        tauxTva: saisieTva.tauxTva,
+        montantTva: saisieTva.montantTva,
         libelle: formValue.libelle,
         rapprochementId: rapprochementId!
       };

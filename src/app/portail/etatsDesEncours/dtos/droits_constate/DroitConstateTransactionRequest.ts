@@ -4,7 +4,8 @@ export interface DroitConstateTransactionRequest {
   dateEmission: string;
   dateValeur: string;
   dateOperation: string;
-  tva: number;
+  tauxTva: number | null;
+  montantTva: number | null;
   libelle: string;
   observation: string;
   rapprochementId: number;

@@ -37,6 +37,13 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
 import {SensOperation} from "../../../../../transactions/dtos/SensOperation";
 import {BatchValidationResponseDto} from "../../../../dtos/lot/BatchValidationResponseDto";
 import {ValidationLotModalComponent} from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import {TvaInputComponent} from "../../shared/tva-input/tva-input.component";
+import {
+  decrireSaisieTva,
+  messageErreurTva,
+  SaisieTva,
+  saisieTvaParDefaut
+} from "../../shared/tva-input/saisie-tva.model";
 import {TableSelectionState} from "../../shared/table-selection.state";
 
 
@@ -62,6 +69,7 @@ import {TableSelectionState} from "../../shared/table-selection.state";
     DropdownModule,
     ConfirmDialogModule,
     ValidationLotModalComponent,
+    TvaInputComponent,
   ],
   templateUrl: './mise-a-disposition-encours.component.html',
   styleUrl: './mise-a-disposition-encours.component.scss',
@@ -85,14 +93,16 @@ export class MiseADispositionEncoursComponent implements OnInit {
   // New properties for search and TVA
   searchForm!: FormGroup;
   currentSearchDto: MiseADispositionSearchDto = {};
-  tvaOptions: { label: string, value: number }[] = [
-    { label: '0%', value: 0 },
-    { label: '10%', value: 10 },
-    { label: '14%', value: 14 },
-    { label: '20%', value: 20 }
-  ];
 
   isSubmitting: boolean = false;
+
+  /** Exposé au template pour le message d'erreur du champ TVA. */
+  readonly messageErreurTva = messageErreurTva;
+
+  /** Borne haute du montant de TVA saisissable, exposée au template. */
+  get montantMaxTva(): number | null {
+    return this.selectedMiseADisposition?.montant ?? null;
+  }
 
   // Validation en lot
   selectionState = new TableSelectionState<MiseADispositionResponseDto>(m => m.id);
@@ -179,7 +189,7 @@ export class MiseADispositionEncoursComponent implements OnInit {
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
       observation: ['', Validators.required],
-      tvaDeductible: [0, Validators.required],
+      tva: [saisieTvaParDefaut()],
       libelle: ['', Validators.required],
     });
   }
@@ -232,7 +242,7 @@ export class MiseADispositionEncoursComponent implements OnInit {
                 <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
                 <li><strong>Libellé:</strong> ${formValue.libelle}</li>
                 <li><strong>Observation:</strong> ${formValue.observation}</li>
-                <li><strong>TVA Déductible:</strong> ${formValue.tvaDeductible}%</li>
+                <li><strong>TVA Déductible:</strong> ${decrireSaisieTva(formValue.tva)}</li>
             </ul>
       `;
 
@@ -258,13 +268,15 @@ export class MiseADispositionEncoursComponent implements OnInit {
     if (this.rapprochementForm.valid && this.selectedMiseADisposition) {
       const rapprochementId = this.bankStateService.getRapprochementId();
 
+      const saisieTva: SaisieTva = this.rapprochementForm.value.tva;
       const miseADispositionTransactionRequest: MiseAdispositionTransactionRequestDto = {
         id: this.selectedMiseADisposition.id,
         dateEmission:this.datePipe.transform(this.rapprochementForm.value.dateEmission,'yyyy-MM-dd') as string,
         dateValeur:this.datePipe.transform(this.rapprochementForm.value.dateValeur,'yyyy-MM-dd') as string,
         dateOperation: this.datePipe.transform(this.rapprochementForm.value.dateOperation,'yyyy-MM-dd') as string,
         observation: this.rapprochementForm.value.observation,
-        tvaDeductible: this.rapprochementForm.value.tvaDeductible,
+        tauxTva: saisieTva.tauxTva,
+        montantTva: saisieTva.montantTva,
         transactionSource: TransactionSource.MiseADisposition,
         libelle: this.rapprochementForm.value.libelle,
         rapprochementId: rapprochementId!

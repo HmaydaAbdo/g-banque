@@ -13,7 +13,7 @@ import { CardModule } from "primeng/card";
 import { DialogModule } from "primeng/dialog";
 import { CalendarModule } from "primeng/calendar";
 import { InputTextareaModule } from "primeng/inputtextarea";
-import { ConfirmationService, MenuItem, MessageService, SelectItem } from "primeng/api";
+import { ConfirmationService, MenuItem, MessageService } from "primeng/api";
 import { ActivatedRoute } from "@angular/router";
 import { debounceTime, distinctUntilChanged, Subscription } from "rxjs";
 
@@ -29,6 +29,13 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
 import { TransactionSource } from "../../../../../transactions/dtos/TransactionSource";
 import { BatchValidationResponseDto } from "../../../../dtos/lot/BatchValidationResponseDto";
 import { ValidationLotModalComponent } from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import {TvaInputComponent} from "../../shared/tva-input/tva-input.component";
+import {
+  decrireSaisieTva,
+  messageErreurTva,
+  SaisieTva,
+  saisieTvaParDefaut
+} from "../../shared/tva-input/saisie-tva.model";
 import { TableSelectionState } from "../../shared/table-selection.state";
 
 
@@ -39,7 +46,7 @@ import { TableSelectionState } from "../../shared/table-selection.state";
     CommonModule, FormsModule, TableModule, DropdownModule, ButtonModule, RippleModule,
     BreadcrumbModule, ToastModule, TooltipModule, DatePipe, DecimalPipe, NgFor,
     InputTextModule, CardModule, DialogModule, ReactiveFormsModule, CalendarModule,
-    InputTextareaModule, ConfirmDialogModule, ValidationLotModalComponent
+    InputTextareaModule, ConfirmDialogModule, ValidationLotModalComponent, TvaInputComponent
   ],
   templateUrl: './prelevement.component.html',
   providers: [MessageService, ConfirmationService, DecimalPipe]
@@ -61,14 +68,15 @@ export class EncoursPrelevementComponent implements OnInit, OnDestroy {
   searchForm!: FormGroup;
 
   items: MenuItem[] = [];
-  tvaOptions: SelectItem[] = [
-    { label: '0%', value: 0 },
-    { label: '10%', value: 10 },
-    { label: '14%', value: 14 },
-    { label: '20%', value: 20 }
-  ];
-
   isSubmitting: boolean = false;
+
+  /** Exposé au template pour le message d'erreur du champ TVA. */
+  readonly messageErreurTva = messageErreurTva;
+
+  /** Borne haute du montant de TVA saisissable, exposée au template. */
+  get montantMaxTva(): number | null {
+    return this.selectedPrelevement?.montant ?? null;
+  }
   private searchSubscription!: Subscription;
 
   // Validation en lot
@@ -160,7 +168,7 @@ export class EncoursPrelevementComponent implements OnInit, OnDestroy {
       dateValeur: [null, Validators.required],
       observation: ['', Validators.required],
       libelle: ['', Validators.required],
-      tvaDeductible: [null, Validators.required],
+      tva: [saisieTvaParDefaut()],
     });
   }
 
@@ -264,7 +272,7 @@ export class EncoursPrelevementComponent implements OnInit, OnDestroy {
                 <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
                 <li><strong>Libellé:</strong> ${formValue.libelle}</li>
                 <li><strong>Observation:</strong> ${formValue.observation}</li>
-                <li><strong>TVA Déductible:</strong> ${formValue.tvaDeductible}%</li>
+                <li><strong>TVA Déductible:</strong> ${decrireSaisieTva(formValue.tva)}</li>
             </ul>
       `;
 
@@ -298,7 +306,8 @@ export class EncoursPrelevementComponent implements OnInit, OnDestroy {
         dateValeur: this.datePipe.transform(this.rapprochementForm.value.dateValeur,'yyyy-MM-dd') as string,
         observation: this.rapprochementForm.value.observation,
         libelle: this.rapprochementForm.value.libelle,
-        tva: this.rapprochementForm.value.tvaDeductible,
+        tauxTva: (this.rapprochementForm.value.tva as SaisieTva).tauxTva,
+        montantTva: (this.rapprochementForm.value.tva as SaisieTva).montantTva,
         rapprochementId: rapprochementId!
       };
 

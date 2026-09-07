@@ -187,20 +187,12 @@
         </div>
 
         <div class="col-12 md:col-6 mb-3">
-          <span class="p-float-label">
-            <p-dropdown id="tva"
-                        [options]="tvaOptions"
-                        formControlName="tva"
-                        optionLabel="label"
-                        optionValue="value"
-                        placeholder="Sélectionner un taux"
-                        appendTo="body">
-            </p-dropdown>
-            <label for="tva">TVA</label>
-          </span>
+          <app-tva-input formControlName="tva" label="TVA"
+                         inputId="tvaVirementInternational"
+                         [montantMax]="montantMaxTva"></app-tva-input>
           @if (isInvalid('tva')) {
           <small class="p-error">
-            La TVA est obligatoire
+            {{ messageErreurTva(rapprochementForm.get('tva')?.errors) }}
           </small>
           }
         </div>

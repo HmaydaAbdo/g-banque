@@ -25,6 +25,9 @@ export interface BatchValidationRequestDto {
   ids: number[];
   dateValeur: string;
   dateOperation: string;
-  tvaDeductible: number;
+  /** Taux de TVA (%). Le mode lot ne transporte jamais qu'un taux : la saisie libre d'un
+   * montant fixe appliqué a N operations de montants differents n'a pas de sens comptable
+   * (voir TvaResolver cote backend et <app-tva-input [autoriserSaisieLibre]="false">). */
+  tauxTva: number | null;
   rapprochementId: number;
 }

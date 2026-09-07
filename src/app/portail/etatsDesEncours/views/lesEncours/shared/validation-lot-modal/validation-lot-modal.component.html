@@ -15,15 +15,11 @@
 
     <div class="grid p-fluid mt-1">
       <div class="col-12 md:col-6 mb-3">
-        <span class="p-float-label">
-          <p-dropdown id="lotTva" [options]="tvaOptions" formControlName="tvaDeductible"
-                      optionLabel="label" optionValue="value"
-                      [placeholder]="tvaLabel" appendTo="body"></p-dropdown>
-          <label for="lotTva">{{ tvaLabel }}</label>
-        </span>
-        @if (isInvalid('tvaDeductible')) {
+        <app-tva-input formControlName="tva" [label]="tvaLabel" inputId="lotTva"
+                       [autoriserSaisieLibre]="false"></app-tva-input>
+        @if (isInvalid('tva')) {
         <small class="p-error">
-          La TVA est obligatoire
+          {{ messageErreurTva(rapprochementForm.get('tva')?.errors) }}
         </small>
         }
       </div>

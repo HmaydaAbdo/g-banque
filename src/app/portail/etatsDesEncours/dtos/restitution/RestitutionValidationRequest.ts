@@ -1,6 +1,7 @@
 export interface RestitutionValidationRequest {
   idRestitution: number;
-  tva: number;
+  tauxTva: number | null;
+  montantTva: number | null;
   dateEmission: string;
   dateValeur: string;
   dateOperation: string;

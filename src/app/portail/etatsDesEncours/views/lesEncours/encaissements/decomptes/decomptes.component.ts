@@ -29,7 +29,14 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
 import { TransactionSource } from "../../../../../transactions/dtos/TransactionSource";
 import { BatchValidationResponseDto } from "../../../../dtos/lot/BatchValidationResponseDto";
 import { ValidationLotModalComponent } from "../../shared/validation-lot-modal/validation-lot-modal.component";
-import { TableSelectionState } from "../../shared/table-selection.state";
+
+import {TvaInputComponent} from "../../shared/tva-input/tva-input.component";
+import {
+  decrireSaisieTva,
+  messageErreurTva,
+  SaisieTva,
+  saisieTvaParDefaut
+} from "../../shared/tva-input/saisie-tva.model";import { TableSelectionState } from "../../shared/table-selection.state";
 
 
 @Component({
@@ -52,6 +59,7 @@ import { TableSelectionState } from "../../shared/table-selection.state";
     ConfirmDialogModule,
     RouterLink,
     ValidationLotModalComponent,
+    TvaInputComponent,
   ],
   templateUrl: './decomptes.component.html',
   styleUrl: './decomptes.component.scss',
@@ -69,12 +77,6 @@ export class DecomptesComponent implements OnInit, OnDestroy {
   // New properties for search and TVA
   searchForm!: FormGroup;
   private searchSubscription!: Subscription;
-  tvaOptions = [
-    { label: '0%', value: 0 },
-    { label: '10%', value: 10 },
-    { label: '14%', value: 14 },
-    { label: '20%', value: 20 },
-  ];
 
   //  properties for the dialog and form
   displayModal: boolean = false;
@@ -82,6 +84,14 @@ export class DecomptesComponent implements OnInit, OnDestroy {
   selectedDecompte: DecompteResponseDto | null = null;
 
   isSubmitting: boolean = false;
+
+  /** Exposé au template pour le message d'erreur du champ TVA. */
+  readonly messageErreurTva = messageErreurTva;
+
+  /** Borne haute du montant de TVA saisissable, exposée au template. */
+  get montantMaxTva(): number | null {
+    return this.selectedDecompte?.montant ?? null;
+  }
 
   /** Indicateur de chargement du bouton "Exporter PDF". */
   exporting = false;
@@ -192,7 +202,7 @@ export class DecomptesComponent implements OnInit, OnDestroy {
       dateEmission: [null, Validators.required],
       dateOperation: [null, Validators.required],
       dateValeur: [null, Validators.required],
-      tva: [null, Validators.required],
+      tva: [saisieTvaParDefaut()],
       libelle: ['', Validators.required],
       observation: ['', Validators.required],
     });
@@ -250,7 +260,7 @@ export class DecomptesComponent implements OnInit, OnDestroy {
                 <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
                 <li><strong>Libellé:</strong> ${formValue.libelle}</li>
                 <li><strong>Observation:</strong> ${formValue.observation}</li>
-                <li><strong>TVA :</strong> ${formValue.tva}%</li>
+                <li><strong>TVA :</strong> ${decrireSaisieTva(formValue.tva)}</li>
             </ul>
       `;
 
@@ -281,13 +291,15 @@ export class DecomptesComponent implements OnInit, OnDestroy {
 
     const rapprochementId = this.bankStateService.getRapprochementId();
     // Construct the request DTO using the selected dc and form data
+    const saisieTva: SaisieTva = this.rapprochementForm.value.tva;
     const decompteTransactionRequest:DecompteTransactionRequest= {
       dateEmission: this.datePipe.transform(this.rapprochementForm.value.dateEmission,  'yyyy-MM-dd') as string,
       dateOperation: this.datePipe.transform(this.rapprochementForm.value.dateOperation,  'yyyy-MM-dd') as string,
       dateValeur: this.datePipe.transform(this.rapprochementForm.value.dateValeur,  'yyyy-MM-dd') as string,
       decompteId: this.selectedDecompte.id,
       banqueId: this.selectedDecompte.banqueEncaissementId,
-      tva: this.rapprochementForm.value.tva,
+      tauxTva: saisieTva.tauxTva,
+      montantTva: saisieTva.montantTva,
       libelle:this.rapprochementForm.value.libelle,
       observation:this.rapprochementForm.value.observation,
       rapprochementId: rapprochementId!

@@ -29,7 +29,14 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
 import { TransactionSource } from "../../../../../transactions/dtos/TransactionSource";
 import { BatchValidationResponseDto } from "../../../../dtos/lot/BatchValidationResponseDto";
 import { ValidationLotModalComponent } from "../../shared/validation-lot-modal/validation-lot-modal.component";
-import { TableSelectionState } from "../../shared/table-selection.state";
+
+import {TvaInputComponent} from "../../shared/tva-input/tva-input.component";
+import {
+  decrireSaisieTva,
+  messageErreurTva,
+  SaisieTva,
+  saisieTvaParDefaut
+} from "../../shared/tva-input/saisie-tva.model";import { TableSelectionState } from "../../shared/table-selection.state";
 
 @Component({
   selector: 'app-encours-fraisBancaire',
@@ -54,7 +61,8 @@ import { TableSelectionState } from "../../shared/table-selection.state";
     CalendarModule,
     InputTextareaModule,
     ConfirmDialogModule,
-    ValidationLotModalComponent
+    ValidationLotModalComponent,
+    TvaInputComponent
   ],
   templateUrl: './encours-fraisBancaire.component.html',
   providers: [MessageService,ConfirmationService,DecimalPipe]
@@ -78,14 +86,16 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
   subscriptions:Subscription[]=[]
 
   items: MenuItem[] = [];
-  tvaOptions: SelectItem[] = [
-    { label: '0%', value: 0 },
-    { label: '10%', value: 10 },
-    { label: '14%', value: 14 },
-    { label: '20%', value: 20 }
-  ];
 
   isSubmitting: boolean = false;
+
+  /** Exposé au template pour le message d'erreur du champ TVA. */
+  readonly messageErreurTva = messageErreurTva;
+
+  /** Borne haute du montant de TVA saisissable, exposée au template. */
+  get montantMaxTva(): number | null {
+    return this.selectedFraisBancaire?.montant ?? null;
+  }
 
   // Validation en lot
   selectionState = new TableSelectionState<FraisBancaireResponseDto>(f => f.id);
@@ -186,7 +196,7 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
       dateValeur: [null, Validators.required],
       observation: ['', Validators.required],
       libelle: ['', Validators.required],
-      tvaDeductible: [null, Validators.required],
+      tva: [saisieTvaParDefaut()],
     });
 
     this.subscriptions.push(sub1,sub2)
@@ -284,7 +294,7 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
                 <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
                 <li><strong>Libellé:</strong> ${formValue.libelle}</li>
                 <li><strong>Observation:</strong> ${formValue.observation}</li>
-                <li><strong>TVA Déductible:</strong> ${formValue.tvaDeductible}%</li>
+                <li><strong>TVA Déductible:</strong> ${decrireSaisieTva(formValue.tva)}</li>
             </ul>
       `;
 
@@ -310,6 +320,7 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
 
 
       const rapprochementId = this.bankStateService.getRapprochementId();
+      const saisieTva: SaisieTva = this.rapprochementForm.value.tva;
       const request: FraisBancaireValidationRequest = {
         idFraisBancaire: this.selectedFraisBancaire.id,
         dateOperation:this.datePipe.transform(this.rapprochementForm.value.dateOperation,'yyyy-MM-dd') as string,
@@ -317,7 +328,8 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
         dateValeur: this.datePipe.transform(this.rapprochementForm.value.dateValeur,'yyyy-MM-dd') as string,
         observation: this.rapprochementForm.value.observation,
         libelle: this.rapprochementForm.value.libelle,
-        tva: this.rapprochementForm.value.tvaDeductible,
+        tauxTva: saisieTva.tauxTva,
+        montantTva: saisieTva.montantTva,
         rapprochementId: rapprochementId!
       };
 

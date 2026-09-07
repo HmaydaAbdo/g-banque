@@ -1,5 +1,3 @@
-import {Decimal} from "decimal.js";
-
 export interface CommissionValidationDto {
   idCommission: number;
   dateEmission: string;
@@ -7,6 +5,7 @@ export interface CommissionValidationDto {
   observation: string;
   dateValeur: string;
   dateOperation: string;
-  tva:Decimal;
+  tauxTva: number | null;
+  montantTva: number | null;
   rapprochementId: number;
 }

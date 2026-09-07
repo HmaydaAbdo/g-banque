@@ -6,6 +6,7 @@ export interface FactoringTransactionRequest {
   dateOperation: string;
   libelle: string;
   observation: string;
-  tva: number;
+  tauxTva: number | null;
+  montantTva: number | null;
   rapprochementId: number;
 }

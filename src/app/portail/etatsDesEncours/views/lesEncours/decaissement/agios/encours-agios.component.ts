@@ -29,7 +29,14 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
 import { TransactionSource } from '../../../../../transactions/dtos/TransactionSource';
 import { BatchValidationResponseDto } from '../../../../dtos/lot/BatchValidationResponseDto';
 import { ValidationLotModalComponent } from '../../shared/validation-lot-modal/validation-lot-modal.component';
-import { TableSelectionState } from '../../shared/table-selection.state';
+
+import {TvaInputComponent} from "../../shared/tva-input/tva-input.component";
+import {
+  decrireSaisieTva,
+  messageErreurTva,
+  SaisieTva,
+  saisieTvaParDefaut
+} from "../../shared/tva-input/saisie-tva.model";import { TableSelectionState } from '../../shared/table-selection.state';
 
 @Component({
   selector: 'app-encours-agios',
@@ -52,7 +59,8 @@ import { TableSelectionState } from '../../shared/table-selection.state';
     InputTextareaModule,
     ConfirmDialogModule,
     RouterLink,
-    ValidationLotModalComponent
+    ValidationLotModalComponent,
+    TvaInputComponent
   ],
   templateUrl: './encours-agios.component.html',
   providers: [MessageService, ConfirmationService, DecimalPipe, DatePipe]
@@ -90,18 +98,20 @@ export class EncoursAgiosComponent implements OnInit, OnDestroy {
     dateValeur:    [null as Date | null, Validators.required],
     observation:   ['', Validators.required],
     libelle:       ['', Validators.required],
-    tvaDeductible: [null as number | null, Validators.required],
+    tva: [saisieTvaParDefaut()],
   });
 
   items: MenuItem[] = [];
-  tvaOptions: SelectItem[] = [
-    { label: '0%',  value: 0  },
-    { label: '10%', value: 10 },
-    { label: '14%', value: 14 },
-    { label: '20%', value: 20 }
-  ];
 
   isSubmitting = false;
+
+  /** Exposé au template pour le message d'erreur du champ TVA. */
+  readonly messageErreurTva = messageErreurTva;
+
+  /** Borne haute du montant de TVA saisissable, exposée au template. */
+  get montantMaxTva(): number | null {
+    return this.selectedAgio?.montant ?? null;
+  }
   private searchSubscription!: Subscription;
 
   // Validation en lot
@@ -247,6 +257,7 @@ export class EncoursAgiosComponent implements OnInit, OnDestroy {
     const rapprochementId = this.bankStateService.getRapprochementId();
     const formValue = this.rapprochementForm.getRawValue();
 
+    const saisieTva: SaisieTva = formValue.tva!;
     const request: AgiosValidationRequest = {
       idAgio:          this.selectedAgio.id,
       dateOperation:   this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
@@ -254,7 +265,8 @@ export class EncoursAgiosComponent implements OnInit, OnDestroy {
       dateValeur:      this.datePipe.transform(formValue.dateValeur,    'yyyy-MM-dd') as string,
       observation:     formValue.observation!,
       libelle:         formValue.libelle!,
-      tva:             formValue.tvaDeductible!,
+      tauxTva: saisieTva.tauxTva,
+      montantTva: saisieTva.montantTva,
       rapprochementId: rapprochementId!
     };
 

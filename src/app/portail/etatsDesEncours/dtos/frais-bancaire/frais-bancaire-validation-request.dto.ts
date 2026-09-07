@@ -2,7 +2,8 @@
 
 export interface FraisBancaireValidationRequest {
   idFraisBancaire: number;
-  tva: number;
+  tauxTva: number | null;
+  montantTva: number | null;
   dateEmission: string;
   dateValeur: string;
   dateOperation: string;

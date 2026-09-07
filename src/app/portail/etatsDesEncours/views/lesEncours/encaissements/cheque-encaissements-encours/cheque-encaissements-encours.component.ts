@@ -30,6 +30,13 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
 import {SensOperation} from "../../../../../transactions/dtos/SensOperation";
 import {BatchValidationResponseDto} from "../../../../dtos/lot/BatchValidationResponseDto";
 import {ValidationLotModalComponent} from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import {TvaInputComponent} from "../../shared/tva-input/tva-input.component";
+import {
+  decrireSaisieTva,
+  messageErreurTva,
+  SaisieTva,
+  saisieTvaParDefaut
+} from "../../shared/tva-input/saisie-tva.model";
 import {TableSelectionState} from "../../shared/table-selection.state";
 
 @Component({
@@ -55,6 +62,7 @@ import {TableSelectionState} from "../../shared/table-selection.state";
     TooltipModule,
     RouterLink,
     ValidationLotModalComponent,
+    TvaInputComponent,
   ],
   templateUrl: './cheque-encaissements-encours.component.html',
   styleUrl: './cheque-encaissements-encours.component.scss',
@@ -80,15 +88,10 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
   rapprochementForm!: FormGroup;
   selectedCheque: ChequeResponseDto | null = null;
 
-  // Updated property for TVA options to use label-value pairs
-  tvaOptions: { label: string, value: number }[] = [
-    { label: '0%', value: 0 },
-    { label: '10%', value: 10 },
-    { label: '14%', value: 14 },
-    { label: '20%', value: 20 }
-  ];
-
   isSubmitting: boolean = false;
+
+  /** Exposé au template pour le message d'erreur du champ TVA. */
+  readonly messageErreurTva = messageErreurTva;
 
   // Validation en lot
   selectionState = new TableSelectionState<ChequeResponseDto>(c => c.id);
@@ -175,7 +178,7 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
       observation: ['', Validators.required],
-      tvaDeductible: [0, Validators.required],
+      tva: [saisieTvaParDefaut()],
       libelle: ['', Validators.required]
     });
   }
@@ -233,7 +236,7 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
                 <li><strong>Date d'opération :</strong> ${dateOperationFormatted || '-'}</li>
                 <li><strong>Libellé:</strong> ${formValue.libelle}</li>
                 <li><strong>Observation:</strong> ${formValue.observation}</li>
-                <li><strong>TVA Collectée :</strong> ${formValue.tvaDeductible}%</li>
+                <li><strong>TVA Collectée :</strong> ${decrireSaisieTva(formValue.tva)}</li>
             </ul>
       `;
 
@@ -256,6 +259,7 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
   submitRapprochement(): void {
     if (this.rapprochementForm.valid && this.selectedCheque) {
       const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
+      const saisieTva: SaisieTva = this.rapprochementForm.value.tva;
       const rapprochementId = this.bankStateService.getRapprochementId();
 
       const chequeTransactionRequest: ChequeTransactionRequest = {
@@ -264,7 +268,8 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
         dateValeur: this.datePipe.transform(donneesComplementaires.dateValeur,  'yyyy-MM-dd') as string,
         dateOperation: this.datePipe.transform(donneesComplementaires.dateOperation,  'yyyy-MM-dd') as string,
         observation: donneesComplementaires.observation,
-        tvaDeductible: donneesComplementaires.tvaDeductible,
+        tauxTva: saisieTva.tauxTva,
+        montantTva: saisieTva.montantTva,
         transactionSource: TransactionSource.CHEQUE,
         libelle:donneesComplementaires.libelle,
         rapprochementId: rapprochementId!

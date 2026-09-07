@@ -31,6 +31,13 @@ import {BankStateService} from "../../../../../comptes-bancaire/services/bank-st
 import { parseLocalDate } from '../../../../../global/types/date.utils';
 import {BatchValidationResponseDto} from "../../../../dtos/lot/BatchValidationResponseDto";
 import {ValidationLotModalComponent} from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import {TvaInputComponent} from "../../shared/tva-input/tva-input.component";
+import {
+  decrireSaisieTva,
+  messageErreurTva,
+  SaisieTva,
+  saisieTvaParDefaut
+} from "../../shared/tva-input/saisie-tva.model";
 import {TableSelectionState} from "../../shared/table-selection.state";
 
 
@@ -57,6 +64,7 @@ import {TableSelectionState} from "../../shared/table-selection.state";
     InputNumberModule,
     ConfirmDialogModule,
     ValidationLotModalComponent,
+    TvaInputComponent,
   ],
   templateUrl: './lcn-encours.component.html',
   styleUrl: './lcn-encours.component.scss',
@@ -81,14 +89,16 @@ export class LcnEncoursComponent implements OnInit {
   // New properties for search and TVA
   searchForm!: FormGroup;
   currentSearchDto: LcnSearchDTO = {};
-  tvaOptions: { label: string, value: number }[] = [
-    { label: '0%', value: 0 },
-    { label: '10%', value: 10 },
-    { label: '14%', value: 14 },
-    { label: '20%', value: 20 }
-  ];
 
   isSubmitting: boolean = false;
+
+  /** Exposé au template pour le message d'erreur du champ TVA. */
+  readonly messageErreurTva = messageErreurTva;
+
+  /** Borne haute du montant de TVA saisissable, exposée au template. */
+  get montantMaxTva(): number | null {
+    return this.selectedLcn?.montant ?? null;
+  }
 
   // Validation en lot
   selectionState = new TableSelectionState<LcnResponseDTO>(l => l.id);
@@ -174,7 +184,7 @@ export class LcnEncoursComponent implements OnInit {
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
       observation: ['', Validators.required],
-      tvaDeductible: [0, Validators.required],
+      tva: [saisieTvaParDefaut()],
       libelle: ['', Validators.required]
     });
   }
@@ -229,7 +239,7 @@ export class LcnEncoursComponent implements OnInit {
                 <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
                 <li><strong>Libellé:</strong> ${formValue.libelle}</li>
                 <li><strong>Observation:</strong> ${formValue.observation}</li>
-                <li><strong>TVA Déductible:</strong> ${formValue.tvaDeductible}%</li>
+                <li><strong>TVA Déductible:</strong> ${decrireSaisieTva(formValue.tva)}</li>
             </ul>
       `;
 
@@ -255,13 +265,15 @@ export class LcnEncoursComponent implements OnInit {
 
     if (this.rapprochementForm.valid && this.selectedLcn) {
       const rapprochementId = this.bankStateService.getRapprochementId();
+      const saisieTva: SaisieTva = this.rapprochementForm.value.tva;
       const lcnTransactionRequest: LcnTransactionRequest = {
         id: this.selectedLcn.id,
         dateEmission:this.datePipe.transform(this.rapprochementForm.value.dateEmission,'yyyy-MM-dd') as string,
         dateValeur:this.datePipe.transform(this.rapprochementForm.value.dateValeur,'yyyy-MM-dd') as string,
         dateOperation:this.datePipe.transform(this.rapprochementForm.value.dateOperation,'yyyy-MM-dd') as string,
         observation: this.rapprochementForm.value.observation,
-        tvaDeductible: this.rapprochementForm.value.tvaDeductible,
+        tauxTva: saisieTva.tauxTva,
+        montantTva: saisieTva.montantTva,
         libelle:this.rapprochementForm.value.libelle,
         rapprochementId: rapprochementId!
       };

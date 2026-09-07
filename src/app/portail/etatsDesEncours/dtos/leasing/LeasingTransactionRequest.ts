@@ -12,6 +12,7 @@ export interface LeasingTransactionRequest {
   dateOperation: string;      // Date de l'opération
   observation: string;       // Commentaire
   libelle:string;
-  tvaDeductible: number;      // Montant de TVA déductible
+  tauxTva: number | null;
+  montantTva: number | null;      // Montant de TVA déductible
   rapprochementId: number;
 }

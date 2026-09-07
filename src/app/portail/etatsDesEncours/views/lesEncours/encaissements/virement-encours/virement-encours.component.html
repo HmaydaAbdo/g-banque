@@ -180,15 +180,12 @@
         </div>
 
         <div class="col-12 md:col-6 mb-3">
-          <span class="p-float-label">
-            <p-dropdown id="tvaDeductible" [options]="tvaOptions" formControlName="tvaDeductible"
-                        optionLabel="label" optionValue="value"
-                        placeholder="Sélectionner un taux" appendTo="body"></p-dropdown>
-            <label for="tvaDeductible">TVA Collectée</label>
-          </span>
-          @if (isInvalid('tvaDeductible')) {
+          <app-tva-input formControlName="tva" label="TVA Collectée"
+                         inputId="tvaVirementEncaissement"
+                         [montantMax]="montantMaxTva"></app-tva-input>
+          @if (isInvalid('tva')) {
           <small class="p-error">
-            La TVA est obligatoire
+            {{ messageErreurTva(rapprochementForm.get('tva')?.errors) }}
           </small>
           }
         </div>

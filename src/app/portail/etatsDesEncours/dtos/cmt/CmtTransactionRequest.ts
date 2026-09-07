@@ -7,6 +7,7 @@ export interface CmtTransactionRequest {
   dateOperation: string;
   observation: string;
   libelle: string;
-  tvaDeductible: number;
+  tauxTva: number | null;
+  montantTva: number | null;
   rapprochementId: number;
 }
