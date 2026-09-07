@@ -54,6 +54,21 @@ export class LesEncoursComponent implements OnInit {
   /** * Mapping complet basé sur vos routes enfants
    * Les icônes sont choisies pour être sémantiquement proches du contexte bancaire
    **/
+  /**
+   * Nature de l'écran courant, affichée en pastille à côté du fil d'Ariane.
+   * « Prévisionnel » = opérations attendues, pas encore passées en banque ;
+   * « Réalisé » = transactions effectivement passées sur le compte.
+   */
+  natureEcran: 'previsionnel' | 'realise' = 'previsionnel';
+
+  /**
+   * Seuls segments adossés aux transactions déjà passées en banque. Tout le reste
+   * du workspace est de l'encours : la règle est énoncée ici en négatif plutôt que
+   * répétée sur les 34 entrées de breadcrumbMap, pour qu'un nouvel écran d'encours
+   * soit correctement étiqueté sans rien avoir à déclarer.
+   */
+  private static readonly SEGMENTS_REALISES = new Set<string>(['rapprochement']);
+
   private breadcrumbMap: { [key: string]: { label: string, icon: string } } = {
     'rapprochement': { label: 'Rapprochement en cours', icon: 'pi pi-sync' },
 
@@ -138,6 +153,9 @@ export class LesEncoursComponent implements OnInit {
     const child = this.route.firstChild?.snapshot;
     if (child?.routeConfig?.path && this.banqueId) {
       const segment = child.routeConfig.path;
+      this.natureEcran = LesEncoursComponent.SEGMENTS_REALISES.has(segment)
+        ? 'realise'
+        : 'previsionnel';
       const bc = this.breadcrumbMap[segment];
       if (bc) {
         this.breadcrumbItems[2] = {

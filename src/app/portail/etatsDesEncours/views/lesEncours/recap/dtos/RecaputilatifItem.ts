@@ -8,6 +8,8 @@ export interface RecaputilatifItem {
   dateEmission: string;
   dateEcheance: string;
   libelle: string;
+  /** Numéro de pièce porté par la source ; `null` quand la source n'en a pas. */
+  numero: string | null;
   sens: SensOperation;
   debit: Decimal;
   credit: Decimal;

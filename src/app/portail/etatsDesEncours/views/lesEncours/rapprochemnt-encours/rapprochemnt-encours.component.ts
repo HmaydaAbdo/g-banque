@@ -3,22 +3,18 @@ import { SourceBadgeComponent } from '../../../../global/shared-components/sourc
 import { TransactionResponseDto } from '../../../../transactions/dtos/TransactionResponseDto';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
-import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
-import { ToolbarModule } from 'primeng/toolbar';
-import { PaginatorModule } from 'primeng/paginator';
 import { InputTextModule } from 'primeng/inputtext';
-import {FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {ReactiveFormsModule, FormBuilder, FormGroup, Validators} from '@angular/forms';
 import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import {ConfirmationService, MessageService} from 'primeng/api';
 import { ActivatedRoute } from '@angular/router';
 import { TransactionSearchDto } from '../../../../transactions/dtos/TransactionSearchDto';
 import { TransactionService } from "../../../../transactions/service/TransactionService";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
-import {BreadcrumbModule} from "primeng/breadcrumb";
 import {MultiSelectModule} from "primeng/multiselect";
-import {TransactionSource} from "../../../../transactions/dtos/TransactionSource";
+import {TransactionSource, TransactionSourceLabels} from "../../../../transactions/dtos/TransactionSource";
 import {AgreratedTransactionResponseDto} from "../../../../transactions/dtos/AgreratedTransactionResponseDto";
 import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
@@ -26,7 +22,6 @@ import {ValidationService} from "../../../services/validation/validation.service
 import {BankStateService} from "../../../../comptes-bancaire/services/bank-state.service";
 import {parseLocalDate, toLocalDateString} from "../../../../global/types/date.utils";
 import {TransactionUpdateRequestDto} from "../../../../transactions/dtos/TransactionUpdateRequestDto";
-import {TagModule} from "primeng/tag";
 import { SkeletonModule } from 'primeng/skeleton';
 import { RippleModule } from 'primeng/ripple';
 import {RapprochementService} from "../../../../rapprochement/service/rapprochement-service.service";
@@ -38,21 +33,15 @@ import {RapprochementService} from "../../../../rapprochement/service/rapprochem
   imports: [
     CommonModule,
     TableModule,
-    CardModule,
     ButtonModule,
     ToastModule,
-    ToolbarModule,
-    PaginatorModule,
     InputTextModule,
-    FormsModule,
     ReactiveFormsModule,
     DatePipe,
     ConfirmDialogModule,
-    BreadcrumbModule,
     MultiSelectModule,
     DialogModule,
     CalendarModule,
-    TagModule,
     SourceBadgeComponent,
     SkeletonModule,
     RippleModule,
@@ -65,6 +54,9 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
   @ViewChild('dt') dt!: Table;
 
   agregatedData: AgreratedTransactionResponseDto | null = null;
+
+  /** Barre de filtres repliée par défaut — même comportement que l'écran Récapitulatifs. */
+  showFilters = false;
   transactions: TransactionResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
@@ -138,10 +130,12 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
 
   // Populates the options for the multi-select from the TransactionSource enum.
   populateTransactionSourceOptions(): void {
-    this.transactionSourceOptions = Object.entries(TransactionSource).map(([key, value]) => ({
-      label: value,
-      value: key
-    }));
+    this.transactionSourceOptions = Object.values(TransactionSource)
+      .map(source => ({
+        label: TransactionSourceLabels[source] ?? source,
+        value: source
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label, 'fr'));
   }
 
   initSearchForm(): void {
@@ -205,6 +199,58 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
           this.loading = false;
         }
       });
+  }
+
+  /** Ouvre / referme la barre de filtres. */
+  toggleFilters(): void {
+    this.showFilters = !this.showFilters;
+  }
+
+  /** Résumé des critères actifs, affiché en pastilles quand la barre est repliée. */
+  get activeFilterChips(): string[] {
+    if (!this.searchForm) {
+      return [];
+    }
+    const value = this.searchForm.value;
+    const chips: string[] = [];
+
+    if (value.transactionSources && value.transactionSources.length > 0) {
+      chips.push(value.transactionSources.length === 1
+        ? 'Source : ' + (TransactionSourceLabels[value.transactionSources[0] as TransactionSource]
+                         ?? value.transactionSources[0])
+        : 'Sources : ' + value.transactionSources.length);
+    }
+    if (value.libelle) {
+      chips.push('Libellé : ' + value.libelle);
+    }
+    if (value.observation) {
+      chips.push('Observation : ' + value.observation);
+    }
+    if (value.montant !== null && value.montant !== undefined && value.montant !== '') {
+      chips.push('Montant : ' + value.montant);
+    }
+    const bornes = (value.dateOperationDebut ? 1 : 0) + (value.dateOperationFin ? 1 : 0);
+    if (bornes > 0) {
+      chips.push('Date d\'opération : ' + bornes + (bornes > 1 ? ' bornes' : ' borne'));
+    }
+    return chips;
+  }
+
+  /** Nombre de critères actifs — badge du bouton « Filtres ». */
+  get activeFilterCount(): number {
+    return this.activeFilterChips.length;
+  }
+
+  /** Remet tous les critères à leur valeur neutre ; le rechargement suit via valueChanges. */
+  clearSearch(): void {
+    this.searchForm.reset({
+      libelle: '',
+      transactionSources: [],
+      observation: '',
+      montant: null,
+      dateOperationDebut: null,
+      dateOperationFin: null
+    });
   }
 
   onSearch(): void {

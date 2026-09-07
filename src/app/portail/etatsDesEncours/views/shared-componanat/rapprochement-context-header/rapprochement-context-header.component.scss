@@ -1,9 +1,25 @@
-// ── KPI items (icon-only, no background box) ─────────────
+// Bandeau de contexte rapprochement — styles du composant.
+//
+// La mise en page est portée par les utilitaires PrimeFlex du template
+// (flex, gap-*, surface-card, border-round-xl…) ; ce fichier ne contient que
+// ce qui ne s'exprime pas en utilitaires : les items KPI et les couleurs de
+// montant.
+//
+// 07/09/2026 — Nettoyage : suppression de 35 classes `.ctx-*` (ctx-header,
+// ctx-bank, ctx-kpi, ctx-stats, ctx-skeleton…) et du @keyframes `pulse`,
+// vestiges d'une refonte antérieure que le template n'a jamais référencés,
+// ainsi que des styles de la ligne d'agrégats (stat-chip, stat-divider,
+// amount-badge, debit/credit-badge) retirée le 06/09/2026 — les totaux sont
+// affichés par l'écran Rapprochement (réalisé) et par l'écran Récapitulatifs
+// (prévisionnel), pas par ce bandeau.
+
+// ── Items KPI (icône + libellé + valeur, sans encadré) ───
 .kpi-item {
   display    : flex;
   align-items: center;
   gap        : 8px;
 }
+
 .kpi-icon {
   font-size  : 1rem;
   flex-shrink: 0;
@@ -12,293 +28,11 @@
   color      : var(--color-text-muted);
 }
 
-// ── Stats bar ─────────────────────────────────────────────
-.stat-chip {
-  display      : flex;
-  align-items  : center;
-  gap          : 5px;
-  padding      : 3px 8px;
-  border-radius: var(--radius-sm);
-  white-space  : nowrap;
-}
-.stat-dot {
-  display      : inline-block;
-  width        : 7px;
-  height       : 7px;
-  border-radius: 50%;
-  flex-shrink  : 0;
-}
-.stat-divider {
-  width      : 1px;
-  height     : 16px;
-  background : var(--color-border);
-  flex-shrink: 0;
-}
+// ── Couleurs des montants selon le signe ─────────────────
+.num-credit  { color: var(--color-success)      !important; }
+.num-debit   { color: var(--color-danger)       !important; }
+.num-neutral { color: var(--color-text-primary) !important; }
 
-// ── Header wrapper ───────────────────────────────────────
-.ctx-header {
-  background   : var(--color-surface);
-  border       : 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  box-shadow   : var(--shadow-card);
-  overflow     : hidden;
-}
-
-// ── Top row ──────────────────────────────────────────────
-.ctx-header__top {
-  display        : flex;
-  align-items    : center;
-  justify-content: space-between;
-  flex-wrap      : wrap;
-  gap            : 1rem;
-  padding        : 0.875rem 1.25rem;
-}
-
-// ── Banque ────────────────────────────────────────────────
-.ctx-bank {
-  display    : flex;
-  align-items: center;
-  gap        : 0.75rem;
-  flex-shrink: 0;
-}
-
-.ctx-bank__logo {
-  width      : 44px;
-  height     : 44px;
-  object-fit : contain;
-  border-radius: var(--radius-md);
-}
-
-.ctx-bank__logo-fallback {
-  width          : 44px;
-  height         : 44px;
-  border-radius  : var(--radius-md);
-  background     : var(--color-surface-2);
-  border         : 1px solid var(--color-border);
-  display        : flex;
-  align-items    : center;
-  justify-content: center;
-  color          : var(--color-text-muted);
-  font-size      : 1.25rem;
-}
-
-.ctx-bank__info {
-  display       : flex;
-  flex-direction: column;
-  gap           : 4px;
-}
-
-.ctx-bank__name {
-  font-size  : var(--text-md);
-  font-weight: var(--weight-bold);
-  color      : var(--color-text-primary);
-  line-height: 1;
-}
-
-.ctx-bank__meta {
-  display    : flex;
-  align-items: center;
-  gap        : 8px;
-}
-
-.ctx-bank__period {
-  font-size: var(--text-xs);
-  color    : var(--color-text-muted);
-}
-
-// ── Badge statut ─────────────────────────────────────────
-.ctx-badge {
-  display      : inline-flex;
-  align-items  : center;
-  padding      : 2px 8px;
-  border-radius: var(--radius-full);
-  font-size    : var(--text-xs);
-  font-weight  : var(--weight-semibold);
-  letter-spacing: var(--tracking-wide);
-  border       : 1px solid transparent;
-
-  &--provisoire {
-    background  : var(--status-en-cours-bg);
-    color       : var(--status-en-cours-text);
-    border-color: var(--status-en-cours-border);
-  }
-  &--encours {
-    background  : var(--status-provisoire-bg);
-    color       : var(--status-provisoire-text);
-    border-color: var(--status-provisoire-border);
-  }
-}
-
-// ── KPIs ─────────────────────────────────────────────────
-.ctx-kpis {
-  display    : flex;
-  align-items: center;
-  gap        : 0;
-  flex-wrap  : wrap;
-}
-
-.ctx-kpi {
-  display       : flex;
-  flex-direction: column;
-  gap           : 2px;
-  padding       : 0 1.25rem;
-  min-width     : 130px;
-}
-
-.ctx-kpi__label {
-  font-size     : var(--text-xs);
-  font-weight   : var(--weight-semibold);
-  color         : var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
-  white-space   : nowrap;
-}
-
-.ctx-kpi__value {
-  font-size    : var(--text-lg);
-  font-weight  : var(--weight-bold);
-  color        : var(--color-text-primary);
-  white-space  : nowrap;
-  letter-spacing: -0.02em;
-  line-height  : 1.2;
-
-  &--pos   { color: var(--color-success); }
-  &--neg   { color: var(--color-danger);  }
-  &--muted { color: var(--color-text-muted); font-weight: var(--weight-medium); font-size: var(--text-sm); }
-}
-
-.ctx-kpi-sep {
-  width     : 1px;
-  height    : 36px;
-  background: var(--color-border);
-  flex-shrink: 0;
-}
-
-// ── Stats bar ─────────────────────────────────────────────
-.ctx-stats {
-  display    : flex;
-  align-items: center;
-  flex-wrap  : wrap;
-  gap        : 0;
-  padding    : 0.5rem 1.25rem;
-  background : var(--color-surface-2);
-  border-top : 1px solid var(--color-border);
-}
-
-.ctx-stat {
-  display    : flex;
-  align-items: center;
-  gap        : 5px;
-  padding    : 3px 10px;
-  white-space: nowrap;
-}
-
-.ctx-stat__dot {
-  width        : 7px;
-  height       : 7px;
-  border-radius: 50%;
-  flex-shrink  : 0;
-
-  &--debit  { background: var(--color-danger); }
-  &--credit { background: var(--color-success); }
-}
-
-.ctx-stat__label {
-  font-size: var(--text-xs);
-  color    : var(--color-text-muted);
-}
-
-.ctx-stat__value {
-  font-size  : var(--text-xs);
-  font-weight: var(--weight-bold);
-  color      : var(--color-text-primary);
-
-  &--debit  { color: var(--color-danger);  }
-  &--credit { color: var(--color-success); }
-}
-
-.ctx-stat-sep {
-  width     : 1px;
-  height    : 16px;
-  background: var(--color-border);
-  flex-shrink: 0;
-}
-
-// ── Skeleton ──────────────────────────────────────────────
-.ctx-skeleton {
-  background   : var(--color-surface);
-  border       : 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  padding      : 0.875rem 1.25rem;
-  display      : flex;
-  align-items  : center;
-  gap          : 0.75rem;
-}
-
-.ctx-skeleton__logo {
-  width        : 44px;
-  height       : 44px;
-  border-radius: var(--radius-md);
-  background   : var(--color-surface-3);
-  flex-shrink  : 0;
-  animation    : pulse 1.5s ease-in-out infinite;
-}
-
-.ctx-skeleton__lines {
-  display       : flex;
-  flex-direction: column;
-  gap           : 6px;
-  flex          : 1;
-}
-
-.ctx-skeleton__line {
-  height       : 10px;
-  border-radius: var(--radius-sm);
-  background   : var(--color-surface-3);
-  animation    : pulse 1.5s ease-in-out infinite;
-
-  &--wide   { width: 160px; }
-  &--narrow { width: 100px; }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1;   }
-  50%      { opacity: 0.5; }
-}
-
-// ── Couleurs montants positifs / négatifs ────────────────
-.num-credit { color: var(--color-success) !important; }
-.num-debit  { color: var(--color-danger)  !important; }
-.num-neutral{ color: var(--color-text-primary) !important; }
-
-// ── Labels blancs (surcharge text-500 PrimeNG) ───────────
-.stat-chip  .text-500,
-.kpi-item   .text-500 { color: var(--color-text-primary) !important; }
-
-// ── Badges montants stats bar ─────────────────────────────
-.amount-badge {
-  font-size  : var(--text-xs, 0.75rem);
-  font-weight: 700;
-  white-space: nowrap;
-}
-.debit-badge  { color: var(--color-danger)  !important; }
-.credit-badge { color: var(--color-success) !important; }
-
-// ── Surcharge spécificité dark mode ─────────────────────
-// La règle globale "span { color: primary }" peut écraser les muted,
-// on renforce avec !important ciblé sur ce composant.
-.ctx-kpi__label,
-.ctx-stat__label,
-.ctx-bank__period   { color: var(--color-text-secondary) !important; }
-
-.ctx-kpi__value,
-.ctx-bank__name,
-.ctx-stat__value    { color: var(--color-text-primary)   !important; }
-
-.ctx-kpi__value--pos,
-.ctx-stat__value--credit { color: var(--color-success)   !important; }
-
-.ctx-kpi__value--neg,
-.ctx-stat__value--debit  { color: var(--color-danger)    !important; }
-
-.ctx-kpi__value--muted   { color: var(--color-text-secondary) !important; }
+// La règle globale « span { color: primary } » écrase les libellés atténués :
+// on la contre ici, sur ce composant uniquement.
+.kpi-item .text-500 { color: var(--color-text-primary) !important; }

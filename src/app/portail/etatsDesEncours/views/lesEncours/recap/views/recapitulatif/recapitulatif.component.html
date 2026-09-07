@@ -1,86 +1,151 @@
 <p-toast></p-toast>
 
-<div class="flex flex-column gap-3 w-full">
+<div class="flex flex-column gap-2 w-full">
 
-  <!-- Section Recherche -->
-  <div class="pg-filters justify-content-around w-full" [formGroup]="searchForm">
-  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
-<span class="p-input-icon-left w-full">
-          <i class="pi pi-search"></i>
-          <input pInputText
-                 formControlName="libelle"
-                 type="text"
-                 placeholder="Rechercher par libellé..."
-                 class="w-full" />
-        </span>
-<span class="p-input-icon-left w-full">
-          <i class="pi pi-search"></i>
-          <input pInputText
-                 formControlName="observation"
-                 type="text"
-                 placeholder="Rechercher par observation..."
-                 class="w-full" />
-        </span>
-<p-multiSelect
-          formControlName="transactionSources"
-          [options]="transactionSourceOptions"
-          optionLabel="label"
-          placeholder="Type de transaction"
-          [showClear]="true"
-          appendTo="body"
-          [style]="{'width':'100%'}">
-        </p-multiSelect>
-<span class="flex flex-column w-full" style="min-width: 10rem;">
-          <label class="text-xs text-500 mb-1">Sens</label>
-          <p-dropdown formControlName="sens"
-                      [options]="sensOptions"
-                      optionLabel="label"
-                      optionValue="value"
-                      appendTo="body"
-                      styleClass="w-full">
-          </p-dropdown>
-        </span>
-<span class="p-input-icon-left w-full" style="max-width: 140px;">
-          <i class="pi pi-money-bill"></i>
-          <input pInputText
-                 formControlName="montant"
-                 type="number"
-                 placeholder="Montant exact"
-                 class="w-full" />
-        </span>
-<span class="flex flex-column w-full" style="min-width: 12rem;">
-          <label class="text-xs text-500 mb-1">Date de référence depuis</label>
-          <p-calendar formControlName="dateReferenceDepuis" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
-                      [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"
-                      pTooltip="Filtre chaque opération sur sa date de référence propre (date d'émission, date d'échéance, etc. selon la source) — indépendant de la borne « jusqu'au »."
-                      tooltipPosition="top"></p-calendar>
-        </span>
-<span class="flex flex-column w-full" style="min-width: 12rem;">
-          <label class="text-xs text-500 mb-1">Date de référence jusqu'au</label>
-          <p-calendar formControlName="dateReferenceJusqua" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
-                      [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"
-                      pTooltip="Filtre chaque opération sur sa date de référence propre (date d'émission, date d'échéance, etc. selon la source) — par défaut la fin du mois en cours."
-                      tooltipPosition="top"></p-calendar>
-        </span>
-<button type="button" pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf"
-        class="h-fit" size="small" severity="secondary"
-        [loading]="exporting" (click)="exportPdf()"></button>
-</div>
+  <!-- ── Barre de filtres ─────────────────────────────────────────────────────
+       Une seule surface au-dessus du tableau : les totaux et l'export sont
+       passés dans la caption du tableau (ils décrivent le résultat, pas la
+       recherche), et les deux bornes de date sont repliées derrière « Période ».
+       Objectif : rendre de la hauteur au tableau, qui n'était plus visible sans
+       scroller.
 
-  <!-- Bande de totaux -->
-  <div class="totals-bar flex align-items-center gap-1 flex-wrap">
-    <div class="stat-chip">
-      <span class="text-xs text-500">Total Débit</span>
-      <span class="amount-badge debit-badge">{{ totalDebit | number:'1.2-2' }} MAD</span>
+       La structure « form > champs en flex-column » est ce qui déclenche la
+       variante .pg-filters:has(form .flex-column) de styles.scss (retour à la
+       ligne + largeurs fluides) ; sans elle, .pg-filters passe en nowrap +
+       overflow-x et les filtres débordent horizontalement. -->
+  <div class="pg-filters">
+    <div class="recap-filters__bar flex align-items-center gap-2 flex-wrap w-full">
+      <button type="button" class="pg-filters__toggle"
+              (click)="toggleFilters()"
+              [attr.aria-expanded]="showFilters"
+              aria-controls="recap-filters-panel">
+        <i class="pi" [ngClass]="showFilters ? 'pi-chevron-down' : 'pi-chevron-right'" aria-hidden="true"></i>
+        <i class="pi pi-sliders-h" aria-hidden="true"></i>
+        <span>Filtres</span>
+        @if (activeFilterCount > 0) {
+          <span class="pg-filters__count">{{ activeFilterCount }}</span>
+        }
+      </button>
+
+      @if (!showFilters && activeFilterChips.length > 0) {
+        <div class="flex align-items-center gap-1 flex-wrap">
+          @for (chip of activeFilterChips; track $index) {
+            <span class="pg-filters__chip">{{ chip }}</span>
+          }
+        </div>
+      }
+
+      <span class="flex-auto"></span>
+
+      @if (activeFilterCount > 0) {
+        <p-button label="Effacer" icon="pi pi-times" severity="secondary" size="small"
+                  (onClick)="clearSearch()" [style]="{'white-space':'nowrap'}"></p-button>
+      }
     </div>
-    <div class="stat-divider"></div>
-    <div class="stat-chip">
-      <span class="text-xs text-500">Total Crédit</span>
-      <span class="amount-badge credit-badge">{{ totalCredit | number:'1.2-2' }} MAD</span>
-    </div>
+
+    @if (showFilters) {
+    <form id="recap-filters-panel" [formGroup]="searchForm" class="flex flex-wrap gap-3 align-items-end">
+
+      <div class="flex flex-column gap-1" style="min-width:150px;">
+        <label for="sens">Sens</label>
+        <p-dropdown inputId="sens" formControlName="sens" [options]="sensOptions"
+                    optionLabel="label" optionValue="value"
+                    appendTo="body" styleClass="w-full"></p-dropdown>
+      </div>
+
+      <div class="flex flex-column gap-1 flex-1" style="min-width:190px;">
+        <label for="transactionSources">Type de transaction</label>
+        <p-multiSelect inputId="transactionSources" formControlName="transactionSources"
+                       [options]="transactionSourceOptions"
+                       optionLabel="label" optionValue="value"
+                       placeholder="Tous les types"
+                       selectedItemsLabel="{0} types sélectionnés"
+                       [showClear]="true" [filter]="true"
+                       appendTo="body" styleClass="w-full"></p-multiSelect>
+      </div>
+
+      <div class="flex flex-column gap-1 flex-1" style="min-width:170px;">
+        <label for="libelle">Libellé</label>
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-search"></i>
+          <input id="libelle" pInputText type="text" formControlName="libelle"
+                 placeholder="Rechercher..." class="w-full" />
+        </span>
+      </div>
+
+      <div class="flex flex-column gap-1 flex-1" style="min-width:170px;">
+        <label for="observation">Observation</label>
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-search"></i>
+          <input id="observation" pInputText type="text" formControlName="observation"
+                 placeholder="Rechercher..." class="w-full" />
+        </span>
+      </div>
+
+      <div class="flex flex-column gap-1" style="min-width:140px;">
+        <label for="numero" class="flex align-items-center gap-1">
+          N° de pièce
+          <i class="pi pi-info-circle text-xs cursor-help"
+             [pTooltip]="numeroHelp" tooltipPosition="top" aria-hidden="true"></i>
+        </label>
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-hashtag"></i>
+          <input id="numero" pInputText type="text" formControlName="numero"
+                 placeholder="Ex. 616298" class="w-full" />
+        </span>
+      </div>
+
+      <div class="flex flex-column gap-1" style="min-width:130px;">
+        <label for="montant">Montant exact</label>
+        <input id="montant" pInputText type="number" formControlName="montant"
+               placeholder="0,00" class="w-full" />
+      </div>
+
+      <div class="flex-shrink-0">
+        <button pButton pRipple type="button"
+                [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+                icon="pi pi-calendar"
+                [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+                (click)="toggleDatePanel()"></button>
+      </div>
+
+      @if (showDatePanel) {
+        <div class="recap-dates flex flex-wrap gap-3 align-items-end">
+          <div class="flex flex-column gap-1" style="min-width:180px;">
+            <label for="dateReferenceDepuis" class="flex align-items-center gap-1">
+              Date de référence — depuis
+              <i class="pi pi-info-circle text-xs cursor-help"
+                 [pTooltip]="dateReferenceHelp" tooltipPosition="top" aria-hidden="true"></i>
+            </label>
+            <p-calendar inputId="dateReferenceDepuis" formControlName="dateReferenceDepuis"
+                        placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                        [showClear]="true" [showButtonBar]="true" appendTo="body"
+                        styleClass="w-full"></p-calendar>
+          </div>
+
+          <div class="flex flex-column gap-1" style="min-width:180px;">
+            <label for="dateReferenceJusqua" class="flex align-items-center gap-1">
+              Date de référence — jusqu'au
+              <i class="pi pi-info-circle text-xs cursor-help"
+                 [pTooltip]="dateReferenceHelp" tooltipPosition="top" aria-hidden="true"></i>
+            </label>
+            <p-calendar inputId="dateReferenceJusqua" formControlName="dateReferenceJusqua"
+                        placeholder="Fin du mois en cours" dateFormat="dd/mm/yy"
+                        [showClear]="true" [showButtonBar]="true" appendTo="body"
+                        styleClass="w-full"></p-calendar>
+          </div>
+
+          <span class="text-xs text-500 align-self-center" style="max-width:34rem;">
+            {{ dateReferenceHelp }}
+          </span>
+        </div>
+      }
+
+    </form>
+    }
   </div>
 
-  <!-- Section Tableau -->
+  <!-- ── Tableau (totaux + export dans sa caption) ─────────────────────────── -->
   <div class="pg-table">
     <p-table
       #dt
@@ -90,106 +155,133 @@
       [totalRecords]="totalRecords"
       [loading]="loading"
       [rowsPerPageOptions]="[5, 10, 25, 50]"
-      [lazy]="true" [sortField]="'dateEmission'" [sortOrder]="-1"
+      [lazy]="true" [sortField]="'dateReference'" [sortOrder]="-1"
       (onLazyLoad)="loadRecapitulatif($event)"
       [rowHover]="true"
-      dataKey="id"
       currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} opérations"
       [showCurrentPageReport]="true"
       styleClass="p-datatable-sm text-xs"
       [tableStyle]="{'min-width': '70rem'}">
 
+      <ng-template pTemplate="caption">
+        <div class="recap-summary flex align-items-center gap-1 flex-wrap">
+          <div class="stat-chip">
+            <span class="text-xs text-500">Total Débit prévisionnel</span>
+            <span class="amount-badge debit-badge" [class.is-zero]="!totalDebit">{{ totalDebit | number:'1.2-2' }} MAD</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-chip">
+            <span class="text-xs text-500">Total Crédit prévisionnel</span>
+            <span class="amount-badge credit-badge" [class.is-zero]="!totalCredit">{{ totalCredit | number:'1.2-2' }} MAD</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-chip">
+            <span class="text-xs text-500">Opérations</span>
+            <span class="count-badge">{{ totalRecords | number }}</span>
+          </div>
+
+          <span class="flex-auto"></span>
+
+          <button type="button" pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf"
+                  size="small" severity="secondary"
+                  pTooltip="Exporte exactement les lignes filtrées" tooltipPosition="left"
+                  [loading]="exporting" (click)="exportPdf()"></button>
+        </div>
+      </ng-template>
+
       <ng-template pTemplate="header">
         <tr>
-          <th pSortableColumn="id" class="white-space-nowrap">
-            ID
-              <p-sortIcon field="id"></p-sortIcon>
+          <th pSortableColumn="sens" class="text-center white-space-nowrap">
+            Sens
+              <p-sortIcon field="sens"></p-sortIcon>
           </th>
           <th pSortableColumn="dateEmission" class="white-space-nowrap">
             Date d'émission
               <p-sortIcon field="dateEmission"></p-sortIcon>
           </th>
-          <th pSortableColumn="dateEcheance" class="white-space-nowrap">
+          <th pSortableColumn="dateEcheanceAffichage" class="white-space-nowrap">
             Date d'échéance
-              <p-sortIcon field="dateEcheance"></p-sortIcon>
+              <p-sortIcon field="dateEcheanceAffichage"></p-sortIcon>
           </th>
-          <th pSortableColumn="sens" class="text-center white-space-nowrap">
-            Sens
-              <p-sortIcon field="sens"></p-sortIcon>
-          </th>
-          <th pSortableColumn="debit" class="text-right">
-            Débit
-              <p-sortIcon field="debit"></p-sortIcon>
-          </th>
-          <th pSortableColumn="credit" class="text-right">
-            Crédit
-              <p-sortIcon field="credit"></p-sortIcon>
-          </th>
-          <th pSortableColumn="id.sourceType">
-            Source
-              <p-sortIcon field="id.sourceType"></p-sortIcon>
+          <th pSortableColumn="libelle">
+            Libellé
+              <p-sortIcon field="libelle"></p-sortIcon>
           </th>
           <th pSortableColumn="observation">
             Observations
               <p-sortIcon field="observation"></p-sortIcon>
           </th>
-          <th pSortableColumn="libelle">
-            Libellé
-              <p-sortIcon field="libelle"></p-sortIcon>
+          <th pSortableColumn="id.sourceType" class="white-space-nowrap">
+            Source
+              <p-sortIcon field="id.sourceType"></p-sortIcon>
+          </th>
+          <th pSortableColumn="montant" class="text-right white-space-nowrap"
+              pTooltip="Tri par montant, tous sens confondus" tooltipPosition="top">
+            Débit
+              <p-sortIcon field="montant"></p-sortIcon>
+          </th>
+          <th pSortableColumn="montant" class="text-right white-space-nowrap"
+              pTooltip="Tri par montant, tous sens confondus" tooltipPosition="top">
+            Crédit
+              <p-sortIcon field="montant"></p-sortIcon>
+          </th>
+          <th pSortableColumn="id.entityId" class="text-right white-space-nowrap">
+            ID source
+              <p-sortIcon field="id.entityId"></p-sortIcon>
           </th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-item>
         <tr class="table-row">
-          <td class="white-space-nowrap">
-            <span class="text-700">{{ item.id }}</span>
+          <td class="text-center white-space-nowrap">
+            @if (item.sens === SensOperation.DECAISSEMENT) {
+              <span class="sens-badge sens-decaissement" pTooltip="Sortie de trésorerie">
+                <i class="pi pi-arrow-circle-down"></i> Décaissement
+              </span>
+            } @else {
+              <span class="sens-badge sens-encaissement" pTooltip="Entrée de trésorerie">
+                <i class="pi pi-arrow-circle-up"></i> Encaissement
+              </span>
+            }
           </td>
           <td class="white-space-nowrap">
             <span class="text-700">{{ item.dateEmission | date:'dd/MM/yyyy' }}</span>
           </td>
-          <td class="text-center white-space-nowrap">
-            <span class="text-700">{{ item.dateEcheance ? (item.dateEcheance | date:'dd/MM/yyyy') : '-' }}</span>
-          </td>
-          <td class="text-center white-space-nowrap">
-            @if (item.sens === SensOperation.DECAISSEMENT) {
-              <span class="sens-badge sens-decaissement" pTooltip="Décaissement">
-                <i class="pi pi-arrow-circle-up"></i> Décaissement
-              </span>
+          <td class="white-space-nowrap">
+            @if (item.dateEcheance) {
+              <span class="text-700">{{ item.dateEcheance | date:'dd/MM/yyyy' }}</span>
             } @else {
-              <span class="sens-badge sens-encaissement" pTooltip="Encaissement">
-                <i class="pi pi-arrow-circle-down"></i> Encaissement
-              </span>
-            }
-          </td>
-          <td class="text-right white-space-nowrap">
-            @if (item.debit) {
-            <span class="amount-badge debit-badge">
-              {{ item.debit | number:'1.2-2' }} MAD
-            </span>
-            }
-            @if (!item.debit) {
-            <span class="text-500">-</span>
-            }
-          </td>
-          <td class="text-right white-space-nowrap">
-            @if (item.credit) {
-            <span class="amount-badge credit-badge">
-              {{ item.credit | number:'1.2-2' }} MAD
-            </span>
-            }
-            @if (!item.credit) {
-            <span class="text-500">-</span>
+              <span class="text-400" pTooltip="Cette source n'a pas d'échéance distincte">—</span>
             }
           </td>
           <td>
-            <span class="text-700">{{ item.source }}</span>
+            <span class="font-medium text-900">{{ item.libelle }}</span>
           </td>
           <td>
             <span class="text-700">{{ item.observations }}</span>
           </td>
-          <td>
-            <span class="font-medium text-900">{{ item.libelle }}</span>
+          <td class="white-space-nowrap">
+            <app-source-badge [source]="item.source"></app-source-badge>
+          </td>
+          <td class="text-right white-space-nowrap">
+            @if (item.debit) {
+              <span class="amount-badge debit-badge">{{ item.debit | number:'1.2-2' }} MAD</span>
+            } @else {
+              <span class="text-400">—</span>
+            }
+          </td>
+          <td class="text-right white-space-nowrap">
+            @if (item.credit) {
+              <span class="amount-badge credit-badge">{{ item.credit | number:'1.2-2' }} MAD</span>
+            } @else {
+              <span class="text-400">—</span>
+            }
+          </td>
+          <td class="text-right white-space-nowrap">
+            <span class="id-cell" pTooltip="Identifiant dans la table source — unique seulement combiné à la source">
+              {{ item.id }}
+            </span>
           </td>
         </tr>
       </ng-template>
@@ -200,7 +292,13 @@
             <div class="flex flex-column align-items-center gap-3">
               <i class="pi pi-inbox text-4xl text-400"></i>
               <div class="text-700 font-semibold">Aucune opération trouvée</div>
-              <div class="text-500 text-sm">Il n'y a aucun encaissement ni décaissement pour le mois en cours.</div>
+              @if (hasActiveFilters()) {
+                <div class="text-500 text-sm">Aucune opération ne correspond aux filtres actifs.</div>
+                <p-button label="Effacer les filtres" icon="pi pi-times" severity="secondary"
+                          size="small" (onClick)="clearSearch()"></p-button>
+              } @else {
+                <div class="text-500 text-sm">Il n'y a aucun encaissement ni décaissement pour le mois en cours.</div>
+              }
             </div>
           </td>
         </tr>

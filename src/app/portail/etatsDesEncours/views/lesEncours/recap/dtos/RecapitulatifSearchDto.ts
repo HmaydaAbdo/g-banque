@@ -11,6 +11,11 @@ export interface RecapitulatifSearchDto {
   observation: string;
   libelle: string;
   /**
+   * Filtre optionnel sur le numéro de pièce (recherche partielle, insensible à la casse).
+   * Sans effet sur les sources qui n'en portent pas — elles sont alors exclues du résultat.
+   */
+  numero?: string;
+  /**
    * Filtre optionnel sur le sens de l'opération. `null`/`undefined` (valeur par défaut, « Tous »
    * côté écran) signifie « aucun filtre » — les deux sens sont retournés, entrelacés.
    */

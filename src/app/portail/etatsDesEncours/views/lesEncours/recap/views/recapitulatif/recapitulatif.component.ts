@@ -18,7 +18,8 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { RecapService } from "../../services/recap.service";
 import { RecaputilatifItem } from "../../dtos/RecaputilatifItem";
-import { TransactionSource } from "../../../../../../transactions/dtos/TransactionSource";
+import { TransactionSource, TransactionSourceLabels } from "../../../../../../transactions/dtos/TransactionSource";
+import { SourceBadgeComponent } from "../../../../../../global/shared-components/source-badge/source-badge.component";
 import { SensOperation } from "../../../../../../transactions/dtos/SensOperation";
 import { RecapitulatifSearchDto } from "../../dtos/RecapitulatifSearchDto";
 import { AgregatedRecapDto } from "../../dtos/AgregatedRecapDto";
@@ -46,6 +47,7 @@ interface SensOption {
     DropdownModule,
     ButtonModule,
     RippleModule,
+    SourceBadgeComponent,
   ],
   templateUrl: './recapitulatif.component.html',
   styleUrl: './recapitulatif.component.scss',
@@ -69,6 +71,23 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     { label: 'Décaissement', value: SensOperation.DECAISSEMENT },
   ];
   readonly SensOperation = SensOperation;
+
+  /** Explication du numéro de pièce — toutes les sources n'en portent pas. */
+  readonly numeroHelp =
+    'Numéro de la pièce chez sa source : chèque, LCN, virement, mise à disposition, '
+    + 'impayé, numéro de marché (préfinancement, factoring, droit constaté, décompte) '
+    + 'ou numéro de contrat (leasing). Les autres sources n\'en ont pas.';
+
+  /** Explication de « date de référence » — partagée par les deux bornes du filtre. */
+  readonly dateReferenceHelp =
+    'Chaque opération est filtrée sur sa propre date de référence : la date d\'échéance '
+    + 'pour le leasing, le CMT et les LCN, la date d\'émission pour toutes les autres sources.';
+
+  /** Barre de filtres repliee par defaut : le tableau prend toute la hauteur au chargement. */
+  showFilters = false;
+
+  /** Panneau des bornes de date, replie par defaut pour laisser la place au tableau. */
+  showDatePanel = false;
 
   @ViewChild('dt') dt: Table | undefined;
 
@@ -102,6 +121,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       transactionSources: [[]],
       libelle: [''],
       observation: [''],
+      numero: [''],
       sens: [null],
       dateReferenceDepuis: [null],
       dateReferenceJusqua: [null],
@@ -116,10 +136,12 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
   }
 
   populateTransactionSourceOptions(): void {
-    this.transactionSourceOptions = Object.values(TransactionSource).map(source => ({
-      label: source,
-      value: source
-    }));
+    this.transactionSourceOptions = Object.values(TransactionSource)
+      .map(source => ({
+        label: TransactionSourceLabels[source] ?? source,
+        value: source
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label, 'fr'));
   }
 
   onFilterChange(): void {
@@ -140,7 +162,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     const size = event.rows!;
     const sort = event.sortField && event.sortOrder
       ? `${event.sortField},${event.sortOrder === 1 ? 'asc' : 'desc'}`
-      : 'dateEmission,desc';
+      : 'dateReference,desc';
 
     const searchDto = this.buildSearchDto();
 
@@ -184,12 +206,105 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Remet tous les critères à leur valeur neutre et recharge la première page. */
+  clearSearch(): void {
+    this.searchForm.reset({
+      transactionSources: [],
+      libelle: '',
+      observation: '',
+      numero: '',
+      sens: null,
+      dateReferenceDepuis: null,
+      dateReferenceJusqua: null,
+      montant: null
+    });
+  }
+
+  /**
+   * Vrai dès qu'un critère est renseigné — pilote l'état du bouton « Effacer » et
+   * le message affiché quand le tableau est vide (aucun résultat vs aucune donnée).
+   */
+  hasActiveFilters(): boolean {
+    if (!this.searchForm) {
+      return false;
+    }
+    const value = this.searchForm.value;
+    return !!(value.libelle || value.observation || value.numero || value.sens || value.montant
+      || value.dateReferenceDepuis || value.dateReferenceJusqua
+      || (value.transactionSources && value.transactionSources.length > 0));
+  }
+
+  /** Ouvre / referme la barre de filtres. */
+  toggleFilters(): void {
+    this.showFilters = !this.showFilters;
+  }
+
+  /**
+   * Résumé des critères actifs, affiché en pastilles quand la barre est repliée —
+   * pour qu'un filtre en vigueur reste visible sans avoir à déplier.
+   */
+  get activeFilterChips(): string[] {
+    if (!this.searchForm) {
+      return [];
+    }
+    const value = this.searchForm.value;
+    const chips: string[] = [];
+
+    if (value.sens) {
+      const option = this.sensOptions.find(o => o.value === value.sens);
+      chips.push('Sens : ' + (option ? option.label : value.sens));
+    }
+    if (value.transactionSources && value.transactionSources.length > 0) {
+      chips.push(value.transactionSources.length === 1
+        ? 'Type : ' + (TransactionSourceLabels[value.transactionSources[0] as TransactionSource]
+                       ?? value.transactionSources[0])
+        : 'Types : ' + value.transactionSources.length);
+    }
+    if (value.libelle) {
+      chips.push('Libellé : ' + value.libelle);
+    }
+    if (value.observation) {
+      chips.push('Observation : ' + value.observation);
+    }
+    if (value.numero) {
+      chips.push('N° : ' + value.numero);
+    }
+    if (value.montant !== null && value.montant !== undefined && value.montant !== '') {
+      chips.push('Montant : ' + value.montant);
+    }
+    if (this.activeDateFilterCount > 0) {
+      chips.push('Période : ' + this.activeDateFilterCount
+        + (this.activeDateFilterCount > 1 ? ' bornes' : ' borne'));
+    }
+    return chips;
+  }
+
+  /** Nombre de critères actifs — badge du bouton « Filtres ». */
+  get activeFilterCount(): number {
+    return this.activeFilterChips.length;
+  }
+
+  /** Bascule le panneau des bornes de date de référence. */
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  /** Nombre de bornes de date renseignées — affiché sur le bouton « Période ». */
+  get activeDateFilterCount(): number {
+    if (!this.searchForm) {
+      return 0;
+    }
+    const value = this.searchForm.value;
+    return (value.dateReferenceDepuis ? 1 : 0) + (value.dateReferenceJusqua ? 1 : 0);
+  }
+
   /** Construit le DTO de recherche à partir du formulaire — partagé entre chargement et export. */
   private buildSearchDto(): RecapitulatifSearchDto {
     return {
       transactionSources: this.searchForm.get('transactionSources')?.value,
       libelle: this.searchForm.get('libelle')?.value,
       observation: this.searchForm.get('observation')?.value,
+      numero: this.searchForm.get('numero')?.value,
       sens: this.searchForm.get('sens')?.value,
       dateReferenceDepuis: this.searchForm.get('dateReferenceDepuis')?.value,
       dateReferenceJusqua: this.searchForm.get('dateReferenceJusqua')?.value,

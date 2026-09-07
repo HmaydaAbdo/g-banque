@@ -10,6 +10,7 @@ const SOURCE_COLOR: Record<TransactionSource, string> = {
   [TransactionSource.FACTORING]:              'var(--color-primary)',
 
   [TransactionSource.CHEQUE]:                 'var(--color-info)',
+  [TransactionSource.LCN]:                    'var(--color-info)',
   [TransactionSource.LCN_DECAISSEMENT]:       'var(--color-info)',
   [TransactionSource.LCN_ENCAISSEMENT]:       'var(--color-info)',
   [TransactionSource.LCN_ESCOMPTE]:           'var(--color-info)',
@@ -32,6 +33,7 @@ const SOURCE_COLOR: Record<TransactionSource, string> = {
   [TransactionSource.OPERATION_ERRONE]:       'var(--color-danger)',
 
   [TransactionSource.PROVISION]:              'var(--color-info)',
+  [TransactionSource.Importation]:            'var(--color-primary)',
 };
 
 @Component({

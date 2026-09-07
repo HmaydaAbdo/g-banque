@@ -2,6 +2,10 @@ export enum TransactionSource {
   CMT = "CMT",
   LEASING = "LEASING",
   CHEQUE = "CHEQUE",
+  /** Valeur générique héritée : jamais écrite par l'application, qui utilise les trois
+   *  constantes spécialisées ci-dessous. Conservée pour rester alignée sur le backend et
+   *  pouvoir relire d'anciennes lignes. */
+  LCN = "LCN",
   LCN_DECAISSEMENT = "LCN_DECAISSEMENT",
   LCN_ENCAISSEMENT = "LCN_ENCAISSEMENT",
   LCN_ESCOMPTE = "LCN_ESCOMPTE",
@@ -21,7 +25,8 @@ export enum TransactionSource {
   OPERATION_ERRONE = "OPERATION_ERRONE",
   VIREMENT_INTERNATIONAL="VIREMENT_INTERNATIONAL",
   IMPAYEE="IMPAYEE",
-  PROVISION="PROVISION"
+  PROVISION="PROVISION",
+  Importation = "Importation"
 }
 
 
@@ -29,6 +34,7 @@ export const TransactionSourceLabels: Record<TransactionSource, string> = {
   [TransactionSource.CMT]: "Crédit Moyen Terme",
   [TransactionSource.LEASING]: "Leasing",
   [TransactionSource.CHEQUE]: "Chèque",
+  [TransactionSource.LCN]: "LCN (ancien)",
   [TransactionSource.LCN_DECAISSEMENT]: "LCN Décaissement",
   [TransactionSource.LCN_ENCAISSEMENT]: "LCN Encaissement",
   [TransactionSource.LCN_ESCOMPTE]: "LCN Escompte",
@@ -48,7 +54,8 @@ export const TransactionSourceLabels: Record<TransactionSource, string> = {
   [TransactionSource.OPERATION_ERRONE]: "Opération erronée",
   [TransactionSource.VIREMENT_INTERNATIONAL]: "Virement international",
   [TransactionSource.IMPAYEE]: "Impayé",
-  [TransactionSource.PROVISION]: "Provision"
+  [TransactionSource.PROVISION]: "Provision",
+  [TransactionSource.Importation]: "Importation"
 };
 
 

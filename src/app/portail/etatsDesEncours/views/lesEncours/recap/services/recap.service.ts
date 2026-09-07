@@ -24,7 +24,7 @@ export class RecapService {
    * @param searchDto
    * @param page The page number to retrieve (default: 0).
    * @param size The number of items per page (default: 10).
-   * @param sort The sorting criteria (e.g., 'dateEmission,desc' or 'debit,desc').
+   * @param sort The sorting criteria (e.g., 'dateReference,desc' or 'debit,desc').
    * @returns Observable<AgregatedRecapDto> An observable of the pageable response.
    */
   getRecapitulatif(
@@ -32,7 +32,7 @@ export class RecapService {
     searchDto: RecapitulatifSearchDto,
     page: number = 0,
     size: number = 10,
-    sort: string = 'dateEmission,desc'
+    sort: string = 'dateReference,desc'
   ): Observable<AgregatedRecapDto> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -108,6 +108,10 @@ export class RecapService {
       searchDto.transactionSources.forEach(source => {
         params = params.append('transactionSources', source);
       });
+    }
+
+    if (searchDto.numero && searchDto.numero.length > 0) {
+      params = params.append('numero', searchDto.numero);
     }
 
     if (searchDto.libelle && searchDto.libelle.length > 0) {

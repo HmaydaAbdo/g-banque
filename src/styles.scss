@@ -305,6 +305,51 @@ div.flex.flex-column.gap-1.px-2 {
   p-calendar .p-calendar,
   .p-calendar   { width: 140px !important; }
 }
+// Barre de filtres repliable — chrome partagé par les écrans qui replient leurs
+// critères (Récapitulatifs, Rapprochement en cours). Vit ici et non dans un
+// composant : deux écrans l'utilisent, et les styles de composant sont
+// encapsulés, donc non partageables.
+.pg-filters__toggle {
+  display      : inline-flex;
+  align-items  : center;
+  gap          : 0.4rem;
+  background   : transparent;
+  border       : none;
+  padding      : 0.25rem 0.25rem 0.25rem 0;
+  cursor       : pointer;
+  font-size    : var(--text-xs);
+  font-weight  : var(--weight-medium);
+  color        : var(--color-text-muted);
+  white-space  : nowrap;
+  border-radius: var(--radius-sm);
+
+  &:hover { color: var(--color-text-primary); }
+  &:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+}
+
+.pg-filters__count {
+  display        : inline-flex;
+  align-items    : center;
+  justify-content: center;
+  min-width      : 1.15rem;
+  height         : 1.15rem;
+  padding        : 0 0.3rem;
+  border-radius  : 999px;
+  background     : var(--color-primary);
+  color          : #fff;
+  font-size      : 0.68rem;
+  font-weight    : var(--weight-semibold);
+}
+
+.pg-filters__chip {
+  padding      : 0.1rem 0.45rem;
+  border-radius: var(--radius-sm);
+  background   : var(--color-surface-3);
+  color        : var(--color-text-secondary);
+  font-size    : 0.7rem;
+  white-space  : nowrap;
+}
+
 .pg-filters__label {
   font-size  : var(--text-xs);
   font-weight: var(--weight-medium);

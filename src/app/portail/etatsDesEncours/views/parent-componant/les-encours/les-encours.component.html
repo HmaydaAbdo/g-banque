@@ -73,6 +73,7 @@
 
     <!-- Header avec Breadcrumb et Action -->
     <div class="flex align-items-center justify-content-between">
+      <div class="flex align-items-center gap-2 flex-wrap">
       <p-breadcrumb [model]="breadcrumbItems" [style]="{'background-color': 'transparent', 'border': 'none'}">
         <ng-template pTemplate="item" let-item>
           @if (item.route) {
@@ -86,6 +87,22 @@
           }
         </ng-template>
       </p-breadcrumb>
+
+      <!-- Nature de l'écran : lever l'ambiguïté entre ce qui est attendu et ce qui est passé -->
+      @if (natureEcran === 'realise') {
+        <span class="nature-badge nature-badge--realise"
+              pTooltip="Transactions effectivement passées sur le compte"
+              tooltipPosition="bottom">
+          <i class="pi pi-check-circle" aria-hidden="true"></i> Réalisé
+        </span>
+      } @else {
+        <span class="nature-badge nature-badge--previsionnel"
+              pTooltip="Opérations attendues ce mois — pas encore passées en banque"
+              tooltipPosition="bottom">
+          <i class="pi pi-clock" aria-hidden="true"></i> Prévisionnel
+        </span>
+      }
+      </div>
 
       <p-button
         [label]="isProvisoire ? 'Clôture définitive' : 'Clôture provisoire'"

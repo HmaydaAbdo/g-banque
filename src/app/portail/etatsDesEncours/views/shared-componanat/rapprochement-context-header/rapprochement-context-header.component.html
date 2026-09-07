@@ -86,47 +86,6 @@
 
   </div>
 
-  <!-- Séparateur -->
-  <div class="border-top-1 surface-border my-2"></div>
-
-  <!-- Ligne 2 : Agrégats transactions -->
-  <div class="flex align-items-center gap-1 flex-wrap">
-
-    <div class="stat-chip">
-      <span class="text-xs text-500">Débit</span>
-      <span class="amount-badge debit-badge">{{ (agregats?.totalDebit ?? 0) | number:'1.2-2' }}</span>
-    </div>
-    <div class="stat-divider"></div>
-
-    <div class="stat-chip">
-      <span class="text-xs text-500">Crédit</span>
-      <span class="amount-badge credit-badge">{{ (agregats?.totalCredit ?? 0) | number:'1.2-2' }}</span>
-    </div>
-    <div class="stat-divider"></div>
-
-    <div class="stat-chip">
-      <span class="text-xs text-500">TVA Déd.</span>
-      <span class="amount-badge credit-badge">{{ (agregats?.totalTvaDeductible ?? 0) | number:'1.2-2' }}</span>
-    </div>
-    <div class="stat-divider"></div>
-
-    <div class="stat-chip">
-      <span class="text-xs text-500">TVA Col.</span>
-      <span class="amount-badge debit-badge">{{ (agregats?.totalTvaCollectee ?? 0) | number:'1.2-2' }}</span>
-    </div>
-    <div class="stat-divider"></div>
-
-    <div class="stat-chip">
-      <span class="text-xs text-500">TVA Due</span>
-      <span class="amount-badge white-space-nowrap"
-            [class.debit-badge]="(agregats?.tvaDue ?? 0) < 0"
-            [class.credit-badge]="(agregats?.tvaDue ?? 0) > 0">
-        {{ (agregats?.tvaDue ?? 0) | number:'1.2-2' }}
-      </span>
-    </div>
-
-  </div>
-
 </div>
 }
 
