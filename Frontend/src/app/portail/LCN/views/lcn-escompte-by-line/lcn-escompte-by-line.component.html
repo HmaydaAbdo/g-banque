@@ -1,0 +1,131 @@
+<p-toast></p-toast>
+
+<div class="card flex flex-column gap-2 p-2 w-full h-full overflow-y-scroll">
+  <!-- Breadcrumb -->
+  <div class="portail-section flex justify-content-between bg-transparent">
+    <div class="flex justify-content-center align-items-center">
+      <p-breadcrumb [model]="items">
+        <ng-template pTemplate="item" let-item>
+          @if (item.route) {
+            <a [routerLink]="item.route" class="p-menuitem-link">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
+              <span class="text-black-alpha-90 p-2 text-sm font-bold">{{ item.label }}</span>
+            </a>
+          } @else {
+            <span class="text-color text-sm text-center">{{ item.label }}</span>
+          }
+        </ng-template>
+      </p-breadcrumb>
+    </div>
+  </div>
+
+  <!-- Carte d'informations agrégées - Spécifique LCN ESCOMPTE -->
+  @if (aggregatedData) {
+    <div class="flex flex-row justify-content-between  align-items-center p-2 shadow-3">
+        <p> Banque :<strong> {{ aggregatedData.banqueName }}</strong></p>
+        <p>Total des Encaissements ESCOMPTE <strong> {{ aggregatedData.total | number: '1.2-2' }}</strong></p>
+    </div>
+  }
+
+  <!-- Tableau des LCN -->
+  <div class="pb-8">
+    <p-table
+      #dt
+      [value]="lcnList"
+      [paginator]="true"
+      [rows]="10"
+      [totalRecords]="totalRecords"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} éléments"
+      [loading]="loading"
+      [rowsPerPageOptions]="[5, 10, 25, 50]"
+      [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
+      responsiveLayout="scroll"
+      [scrollable]="true"
+      (onLazyLoad)="loadLcnLines($event)"
+      [columns]="[
+        {field: 'id', header: 'ID', sortable: true},
+        {field: 'dateEmission', header: 'Date Émission', sortable: true},
+        {field: 'dateEcheance', header: 'Date Échéance', sortable: true},
+        {field: 'emetteur', header: 'Émetteur', sortable: false},
+        {field: 'dateOperation', header: 'Date Opération', sortable: true},
+        {field: 'dateValeur', header: 'Date Valeur', sortable: true},
+        {field: 'montant', header: 'Montant', sortable: true},
+        {field: 'natureLcn', header: 'Nature', sortable: false},
+        {field: 'type', header: 'Type', sortable: true},
+        {field: 'libelle', header: 'Libellé', sortable: true},
+        {field: 'observation', header: 'Observation', sortable: true},
+        {field: 'active', header: 'Statut', sortable: true}
+      ]"
+      styleClass="p-datatable-gridlines p-datatable-striped text-xs"
+      [globalFilterFields]="['numero', 'emetteur', 'observation', 'libelle']"
+    >
+
+      <ng-template pTemplate="header" let-columns>
+        <tr class="white-space-nowrap">
+          @for (col of columns; track col.field) {
+            <th [pSortableColumn]="col.sortable ? col.field : null">
+              <div class="flex align-items-center">
+                {{ col.header }}
+                @if (col.sortable) {
+                  <p-sortIcon [field]="col.field"></p-sortIcon>
+                }
+              </div>
+            </th>
+          }
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-lcn>
+        <tr>
+
+          <td >{{ lcn.id }}</td>
+          <td >{{ lcn.dateEmission | date: 'dd/MM/yyyy' }}</td>
+          <td >{{lcn.dateEcheance | date: 'dd/MM/yyyy'}}</td>
+          <td>{{lcn.emetteur}}</td>
+          <td>{{ lcn.dateOperation ? (lcn.dateOperation | date:'dd/MM/yyyy') : '*' }}</td>
+          <td>{{ lcn.dateValeur ? (lcn.dateValeur | date:'dd/MM/yyyy') : '*' }}</td>
+          <td >{{lcn.montant | number}}</td>
+          <td > {{lcn.natureLcn | uppercase}}</td>
+          <td>{{lcn.type}}</td>
+          <td>{{ lcn.libelle }}</td>
+          <td>{{ lcn.observation }}</td>
+          <td >{{( lcn.active ? "prévu": "payé" )| uppercase}}</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="12" class="text-center p-5">
+            <div class="flex flex-column align-items-center justify-content-center gap-3">
+              <i class="pi pi-inbox text-6xl text-400"></i>
+              <div>
+                <p class="text-xl font-semibold text-600 m-0">Aucun LCN Escompte trouvé</p>
+                <p class="text-500 mt-2">
+                  Aucun LCN de nature ESCOMPTE n'est associé à cette ligne fonctionnelle.
+                </p>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td [attr.colspan]="12" class="text-center p-5">
+            <div class="flex flex-column align-items-center justify-content-center gap-3">
+              <i class="pi pi-spin pi-spinner text-6xl text-primary"></i>
+              <div>
+                <p class="text-xl font-semibold text-primary m-0">Chargement en cours...</p>
+                <p class="text-500 mt-2">
+                  Récupération des LCN Escompte. Veuillez patienter.
+                </p>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+</div>

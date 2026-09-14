@@ -1,0 +1,238 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="flex flex-column  w-full h-full overflow-y-scroll  gap-3 p-3 pb-6 "
+    >
+
+  <!-- ═══ HEADER ═══════════════════════════════════════════════════ -->
+  <div class="flex flex-column md:flex-row md:align-items-center justify-content-between gap-2">
+
+    <div class="flex flex-column gap-1">
+      <h2 class="text-900 font-bold m-0" style="font-size:1.15rem;letter-spacing:-0.01em">Calcul des Agios</h2>
+      <p-breadcrumb [model]="items" styleClass="border-none p-0"
+                    [style]="{'background':'transparent','padding':'0','font-size':'0.78rem'}">
+        <ng-template pTemplate="item" let-item>
+          @if (item.route) {
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
+              <span class="text-400 text-xs ml-1">{{ item.label }}</span>
+            </a>
+          } @else {
+            <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
+          }
+        </ng-template>
+      </p-breadcrumb>
+    </div>
+
+    <div class="flex align-items-center gap-2 flex-shrink-0" >
+      <button pButton pRipple
+              label="Exporter PDF"
+              icon="pi pi-file-pdf"
+              class="p-button-outlined p-button-danger"
+              size="small"
+              [loading]="exporting"
+              (click)="exportPdf()"
+              pTooltip="Exporter les résultats en PDF"
+              tooltipPosition="bottom">
+      </button>
+      <button pButton pRipple
+              label="Recalculer tout"
+              icon="pi pi-refresh"
+              severity="warning"
+              size="small"
+              [loading]="recalculEnCours"
+              (click)="recalculer(dt)"
+              pTooltip="Recalcul global — toutes les banques, trimestre en cours"
+              tooltipPosition="bottom">
+      </button>
+    </div>
+  </div>
+
+  @if (recalculEnCours) {
+    <p-progressBar mode="indeterminate"
+                   [style]="{'height':'2px','border-radius':'2px','margin':'-6px 0 0'}">
+    </p-progressBar>
+  }
+
+  <!-- ═══ FILTRES ══════════════════════════════════════════════════ -->
+  <div class="surface-card border-round-xl border-1 surface-border p-3"
+       style="box-shadow:0 1px 6px rgba(0,0,0,0.05)"
+       [formGroup]="searchForm">
+    <div class="flex flex-wrap gap-2 align-items-center">
+
+      <span class="text-500 text-xs font-medium mr-1" style="white-space:nowrap">
+        <i class="pi pi-sliders-h mr-1"></i>Filtres
+      </span>
+
+      <p-dropdown [options]="banques" formControlName="banqueId"
+                  optionLabel="nom" optionValue="id" placeholder="Toutes les banques"
+                  [virtualScroll]="true" [virtualScrollItemSize]="40" [lazy]="true"
+                  [loading]="banquesLoading" (onLazyLoad)="loadBanquesLazy($event)"
+                  [showClear]="true" appendTo="body"
+                  [style]="{'min-width':'200px'}">
+      </p-dropdown>
+
+      <p-dropdown [options]="typeOptions" formControlName="type"
+                  optionLabel="label" optionValue="value" placeholder="Type d'agios"
+                  [showClear]="true" appendTo="body"
+                  [style]="{'min-width':'170px'}">
+      </p-dropdown>
+
+      <p-inputNumber formControlName="annee" placeholder="Année"
+                     [useGrouping]="false" [min]="2000" [max]="2099"
+                     [style]="{'width':'90px'}" [inputStyle]="{'width':'100%'}">
+      </p-inputNumber>
+
+      <p-dropdown [options]="trimestreOptions" formControlName="trimestre"
+                  optionLabel="label" optionValue="value" placeholder="Trimestre"
+                  [showClear]="true" appendTo="body"
+                  [style]="{'min-width':'130px'}">
+      </p-dropdown>
+
+      <p-dropdown [options]="statutOptions" formControlName="statut"
+                  optionLabel="label" optionValue="value" placeholder="Statut"
+                  [showClear]="true" appendTo="body"
+                  [style]="{'min-width':'130px'}">
+      </p-dropdown>
+
+      <button pButton pRipple icon="pi pi-times"
+              class="p-button-text p-button-secondary p-button-sm"
+              (click)="clearFilters(dt)"
+              pTooltip="Réinitialiser" tooltipPosition="bottom">
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ TABLE ════════════════════════════════════════════════════ -->
+  <div class="surface-card border-round-xl border-1 surface-border "
+       style="box-shadow:0 1px 10px rgba(0,0,0,0.06)">
+
+    <p-table #dt
+             [value]="trimestres"
+             [lazy]="true"
+             [paginator]="true"
+             [rows]="rows"
+             [totalRecords]="totalRecords"
+             [rowsPerPageOptions]="[10, 25, 50]"
+             [loading]="loading"
+             [first]="first"
+             (onLazyLoad)="loadTrimestres($event)"
+             responsiveLayout="scroll"
+             styleClass="p-datatable-sm"
+             [showCurrentPageReport]="true"
+             currentPageReportTemplate="{first}–{last} sur {totalRecords}"
+             sortField="annee"
+             [sortOrder]="-1"
+             rowHover>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="banque.nom" style="min-width:155px">
+            Banque <p-sortIcon field="banque.nom"></p-sortIcon>
+          </th>
+          <th pSortableColumn="typeAgios" style="min-width:130px">
+            Type <p-sortIcon field="typeAgios"></p-sortIcon>
+          </th>
+          <th pSortableColumn="trimestre" class="text-center" style="width:80px">
+            Trim. <p-sortIcon field="trimestre"></p-sortIcon>
+          </th>
+          <th pSortableColumn="annee" class="text-center" style="width:76px">
+            Année <p-sortIcon field="annee"></p-sortIcon>
+          </th>
+          <th pSortableColumn="totalAgiosTTC" class="text-right" style="min-width:145px">
+            Total TTC <p-sortIcon field="totalAgiosTTC"></p-sortIcon>
+          </th>
+          <th class="text-center" style="width:90px" pSortableColumn="nbJoursCalcules">Jours <p-sortIcon field="nbJoursCalcules"></p-sortIcon></th>
+          <th pSortableColumn="statut" class="text-center" style="width:105px">
+            Statut <p-sortIcon field="statut"></p-sortIcon>
+          </th>
+          <th class="text-center" style="width:120px">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-trim>
+        <tr>
+
+          <td class="font-semibold text-800">{{ trim.banqueNom }}</td>
+
+          <td class="text-600 text-sm">{{ getTypeLabel(trim) }}</td>
+
+          <td class="text-center">
+            <span class="inline-flex align-items-center justify-content-center border-round font-bold text-sm"
+                  style="width:1.9rem;height:1.9rem;background:var(--color-info-light);color:var(--color-info-text)">
+              T{{ trim.trimestre }}
+            </span>
+          </td>
+
+          <td class="text-center font-semibold text-700">{{ trim.annee }}</td>
+
+          <td class="text-right">
+            <span class="font-bold text-900" style="font-size:0.92rem">
+              {{ trim.totalAgiosTTC | number:'1.2-2' }}
+            </span>
+            <span class="text-400 text-xs ml-1">MAD</span>
+          </td>
+
+          <td class="text-center">
+            <span class="font-semibold text-700 text-sm">{{ trim.nbJoursCalcules }}</span>
+            <span class="text-400 text-xs"> / {{ trim.nbJoursTotal }}</span>
+          </td>
+
+          <td class="text-center">
+            <p-tag [value]="getStatutLabel(trim.statut)"
+                   [severity]="getStatutSeverity(trim.statut)"
+                   styleClass="text-xs">
+            </p-tag>
+          </td>
+
+
+
+          <td>
+            <div class="flex align-items-center justify-content-center gap-1">
+              <button pButton pRipple icon="pi pi-eye"
+                      class="p-button-rounded p-button-text p-button-info p-button-sm"
+                      pTooltip="Voir le détail" tooltipPosition="top"
+                      (click)="voirDetail(trim)">
+              </button>
+
+              @if (isAdmin() && trim.statut === StatutTrimestre.OUVERT) {
+                <button pButton pRipple icon="pi pi-refresh"
+                        class="p-button-rounded p-button-text p-button-warning p-button-sm"
+                        pTooltip="Recalculer" tooltipPosition="top"
+                        (click)="recalculerParBanque(trim, dt)">
+                </button>
+                <button pButton pRipple icon="pi pi-lock"
+                        class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                        pTooltip="Clôturer" tooltipPosition="top"
+                        (click)="cloturer(trim, dt)">
+                </button>
+              }
+            </div>
+          </td>
+
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="9">
+            <div class="flex flex-column align-items-center gap-2 py-5">
+              <div class="text-600 font-medium">Aucun trimestre trouvé</div>
+              <div class="text-400 text-sm">Modifiez les filtres ou lancez un recalcul global.</div>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td [attr.colspan]="9" class="text-center p-4 text-500 text-sm">
+            <i class="pi pi-spin pi-spinner mr-2"></i>Chargement…
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+
+</div>

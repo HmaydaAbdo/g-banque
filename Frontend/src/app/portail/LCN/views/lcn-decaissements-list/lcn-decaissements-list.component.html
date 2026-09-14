@@ -1,0 +1,208 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="flex flex-column gap-2 px-2 h-full w-full overflow-y-scroll">
+
+  <div class="flex justify-content-between align-items-center bg-transparent">
+    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
+      <ng-template pTemplate="item" let-item>
+        @if (item.route) {
+          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold text-sm">{{ item.label }}</span>
+          </a>
+        } @else {
+          <a [href]="item.url">
+            <span class="text-color text-sm text-center">{{ item.label }}</span>
+          </a>
+        }
+      </ng-template>
+    </p-breadcrumb>
+    <button pButton pRipple label="Exporter PDF" class="h-fit" size="small" icon="pi pi-file-pdf"
+            severity="secondary" [loading]="exporting" (click)="exportPdf()">
+    </button>
+  </div>
+
+  <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" class="flex flex-wrap align-items-end">
+
+    <div class="flex flex-column gap-2 flex-1" style="min-width: 150px;">
+      <label for="numero">N° LCN</label>
+      <span class="p-input-icon-left w-full">
+        <i class="pi pi-search"></i>
+        <input id="numero" pInputText type="text" formControlName="numero"
+               placeholder="Rechercher par N°..." class="w-full" />
+      </span>
+    </div>
+
+    <div class="flex flex-column gap-2 flex-1" style="min-width: 180px;">
+      <label for="beneficiaire">Bénéficiaire</label>
+      <span class="p-input-icon-left w-full">
+        <i class="pi pi-search"></i>
+        <input id="beneficiaire" pInputText type="text" formControlName="beneficiaire"
+               placeholder="Rechercher par bénéficiaire..." class="w-full" />
+      </span>
+    </div>
+
+    <div class="flex flex-column gap-2 flex-1" style="min-width: 180px;">
+      <label for="nomBanque">Nom Banque</label>
+      <p-dropdown id="nomBanque" [options]="banqueOptions" formControlName="nomBanque"
+                  optionLabel="label" optionValue="value"
+                  placeholder="Sélectionner une banque"
+                  [showClear]="true" [styleClass]="'w-full'">
+      </p-dropdown>
+    </div>
+
+    <div class="flex flex-column gap-2 flex-1">
+      <label for="statut">Statut</label>
+      <p-dropdown id="statut" [options]="statusOptions" formControlName="statut"
+                  optionLabel="label" optionValue="value"
+                  placeholder="Tous les LCN"
+                  [showClear]="true" [styleClass]="'w-full'">
+      </p-dropdown>
+    </div>
+
+    <div class="flex-shrink-0">
+      <button pButton pRipple type="button"
+              [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+              icon="pi pi-calendar"
+              [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+              (click)="toggleDatePanel()">
+      </button>
+    </div>
+
+    <div class="flex-shrink-0">
+      <p-button icon="pi pi-times" severity="secondary"
+                (onClick)="clearSearch()" [style]="{'white-space': 'nowrap'}">
+      </p-button>
+    </div>
+
+  </form>
+</div>
+
+  @if (showDatePanel) {
+  <div class="p-3 bg-white border-round shadow-1">
+    <form [formGroup]="searchForm" class="grid">
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Émission — du</label>
+        <p-calendar formControlName="dateEmissionFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Émission — au</label>
+        <p-calendar formControlName="dateEmissionTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Échéance — du</label>
+        <p-calendar formControlName="dateEcheanceFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Échéance — au</label>
+        <p-calendar formControlName="dateEcheanceTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Opération — du</label>
+        <p-calendar formControlName="dateOperationFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Opération — au</label>
+        <p-calendar formControlName="dateOperationTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Valeur — du</label>
+        <p-calendar formControlName="dateValeurFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Valeur — au</label>
+        <p-calendar formControlName="dateValeurTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+    </form>
+  </div>
+  }
+
+  <div class="pb-8">
+    <p-table #dt
+             [value]="lcns"
+             [paginator]="true"
+             [rows]="10"
+             [totalRecords]="totalRecords"
+             [loading]="loading"
+             [rowsPerPageOptions]="[3,5,10,25,50]"
+             [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
+             (onLazyLoad)="loadLcns($event)"
+             responsiveLayout="scroll"
+             [scrollable]="true"
+             columnResizeMode="expand"
+             [rowHover]="true"
+             dataKey="numero"
+             currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} LCNs"
+             [showCurrentPageReport]="true"
+             styleClass="p-datatable-gridlines text-xs">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
+          <th pSortableColumn="dateEmission">Date d'Émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
+          <th pSortableColumn="dateEcheance">Date d'Échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
+          <th pSortableColumn="beneficiaire">Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon></th>
+          <th pSortableColumn="banque.nom">Banque <p-sortIcon field="banque.nom"></p-sortIcon></th>
+          <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
+          <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
+          <th pSortableColumn="observation">Observation <p-sortIcon field="observation"></p-sortIcon></th>
+          <th style="width: 8rem;" pSortableColumn="statut">Statut <p-sortIcon field="statut"></p-sortIcon></th>
+          @if (isAdmin) {
+            <th style="width: 8rem;">Action</th>
+          }
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-lcn>
+        <tr>
+          <td>{{ lcn.id }}</td>
+          <td>{{ lcn.dateEmission | date:'dd/MM/yyyy' }}</td>
+          <td>{{ lcn.dateEcheance ? (lcn.dateEcheance | date:'dd/MM/yyyy') : 'N/A' }}</td>
+          <td>{{ lcn.beneficiaire }}</td>
+          <td>{{ lcn.banqueName }}</td>
+          <td>{{ lcn.montant | number:'1.2-2' }}</td>
+          <td>{{ lcn.libelle }}</td>
+          <td>{{ lcn.observation }}</td>
+          <td>
+            <p-tag [value]="getStatutLabel(lcn.statut)"
+                   [severity]="getStatutSeverity(lcn.statut)">
+            </p-tag>
+          </td>
+          <td class="flex flex-row align-items-center gap-2">
+            @if (isAdmin) {
+              <p-inputSwitch
+                [ngModel]="lcn.statut === StatutMoyenPaiement.ENCOURS"
+                [disabled]="lcn.statut === StatutMoyenPaiement.ANNULE"
+                (onChange)="confirmToggleStatus(lcn)">
+              </p-inputSwitch>
+              <button pButton pRipple icon="pi pi-trash"
+                      class="p-button-rounded p-button-outlined p-button-danger"
+                      [disabled]="lcn.statut === StatutMoyenPaiement.REGLE"
+                      (click)="deleteLcn(lcn)">
+              </button>
+            }
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptyMessage">
+        <tr><td colspan="10">Aucun LCN trouvé.</td></tr>
+      </ng-template>
+      <ng-template pTemplate="loadingbody">
+        <tr><td colspan="10">Chargement des LCNs. Veuillez patienter...</td></tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+</div>

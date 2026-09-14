@@ -1,0 +1,166 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="flex flex-column w-full h-full overflow-y-scroll gap-3 p-3 pb-6">
+
+  <!-- ═══ HEADER ═══════════════════════════════════════════════════════════ -->
+  <div class="pg-header">
+    <div class="pg-header__left">
+      <h2 class="pg-header__title">Commissions sur cautions — Configuration</h2>
+      <p-breadcrumb [model]="items" styleClass="border-none p-0"
+                    [style]="{'background':'transparent','padding':'0','font-size':'var(--text-breadcrumb)'}">
+      </p-breadcrumb>
+    </div>
+    <div class="pg-header__actions">
+      <button pButton pRipple
+              label="Nouvelle configuration"
+              icon="pi pi-plus"
+              size="small"
+              [disabled]="availableBanqueOptions.length === 0"
+              (click)="openCreate()">
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ FILTRES ══════════════════════════════════════════════════════════ -->
+  <div class="pg-filters">
+    <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+
+    <form [formGroup]="filterForm" class="flex flex-wrap align-items-center gap-2">
+
+      <span class="p-input-icon-left">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text"
+               formControlName="search"
+               placeholder="Rechercher une banque…"/>
+      </span>
+
+      <p-dropdown formControlName="banqueId"
+                  [options]="banqueOptions"
+                  optionLabel="label" optionValue="value"
+                  placeholder="Toutes les banques" [filter]="true"
+                  [showClear]="true" appendTo="body">
+      </p-dropdown>
+
+      <p-button icon="pi pi-times" severity="secondary"
+                (onClick)="clearFilters()" [style]="{'white-space': 'nowrap'}">
+      </p-button>
+    </form>
+  </div>
+
+  <!-- ═══ TABLE (la page entière défile) ══════════════════════════════════ -->
+  <div class="pg-table" style="flex-shrink:0; overflow:visible;">
+    <p-table #dt [value]="configs" [loading]="loading" dataKey="id"
+             [lazy]="true" [sortField]="'id'" [sortOrder]="-1" (onLazyLoad)="load($event)"
+             [paginator]="true" [rows]="rows" [totalRecords]="totalRecords"
+             [rowsPerPageOptions]="[15,25,50]"
+             [showCurrentPageReport]="true"
+             currentPageReportTemplate="{first}–{last} sur {totalRecords}"
+             styleClass="p-datatable-sm" rowHover>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="banque.nom">Banque <p-sortIcon field="banque.nom"></p-sortIcon></th>
+          <th class="text-right" pSortableColumn="montantMinimum">Montant minimum (MAD) <p-sortIcon field="montantMinimum"></p-sortIcon></th>
+          <th class="text-right" pSortableColumn="diviseur">Diviseur (prorata journalier) <p-sortIcon field="diviseur"></p-sortIcon></th>
+          <th class="text-center" style="width:8rem">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-cfg>
+        <tr>
+          <td class="font-semibold">{{ cfg.banqueNom }}</td>
+          <td class="text-right">{{ cfg.montantMinimum | number:'1.2-2' }}</td>
+          <td class="text-right">{{ cfg.diviseur | number:'1.0-2' }}</td>
+          <td>
+            <div class="flex align-items-center justify-content-center gap-1">
+              <button pButton pRipple icon="pi pi-pencil"
+                      class="p-button-rounded p-button-text p-button-secondary p-button-sm"
+                      pTooltip="Modifier" tooltipPosition="top"
+                      (click)="openEdit(cfg)">
+              </button>
+              <button pButton pRipple icon="pi pi-trash"
+                      class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                      pTooltip="Supprimer" tooltipPosition="top"
+                      (click)="confirmDelete(cfg, $event)">
+              </button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="4">
+            <div class="flex flex-column align-items-center gap-2 py-5">
+              <i class="pi pi-percentage text-300" style="font-size:var(--text-icon)"></i>
+              <div class="text-600 font-medium">Aucune configuration</div>
+              <div class="text-400 text-sm">Ajoutez une configuration par banque pour activer la génération automatique des commissions sur cautions.</div>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td [attr.colspan]="4" class="text-center p-4 text-500 text-sm">
+            <i class="pi pi-spin pi-spinner mr-2"></i>Chargement…
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+</div>
+
+<!-- ═══ DIALOG CRÉATION / MODIFICATION ═══════════════════════════════════ -->
+<p-dialog [(visible)]="dialogVisible"
+          [header]="editingId ? 'Modifier une configuration' : 'Nouvelle configuration'"
+          [modal]="true" [draggable]="false"
+          styleClass="pg-dialog"
+          [style]="{ width: '440px' }">
+
+  <form [formGroup]="form" class="flex flex-column gap-3 pt-2">
+
+    <div class="flex flex-column gap-1">
+      <label class="text-sm font-medium">Banque <span class="text-red-500">*</span></label>
+      <p-dropdown formControlName="banqueId" [options]="availableBanqueOptions"
+                  optionLabel="label" optionValue="value"
+                  placeholder="Sélectionner une banque…" [filter]="true"
+                  [disabled]="editingId !== null"
+                  appendTo="body" styleClass="w-full">
+      </p-dropdown>
+      <span class="text-400 text-xs" *ngIf="editingId === null">Seules les banques sans configuration existante sont proposées.</span>
+    </div>
+
+    <div class="flex flex-column gap-1">
+      <label class="text-sm font-medium">Montant minimum (MAD) <span class="text-red-500">*</span></label>
+      <p-inputNumber formControlName="montantMinimum" [minFractionDigits]="2" [maxFractionDigits]="2"
+                     mode="decimal" locale="fr-FR" styleClass="w-full">
+      </p-inputNumber>
+      <span class="text-400 text-xs">Si le calcul au prorata donne un montant inférieur, ce seuil s'applique.</span>
+    </div>
+
+    <div class="flex flex-column gap-1">
+      <label class="text-sm font-medium">Diviseur du prorata journalier <span class="text-red-500">*</span></label>
+      <p-inputNumber formControlName="diviseur" [minFractionDigits]="0" [maxFractionDigits]="2"
+                     mode="decimal" locale="fr-FR" styleClass="w-full">
+      </p-inputNumber>
+      <span class="text-400 text-xs">Base conventionnelle bancaire habituelle : 36 000.</span>
+    </div>
+
+  </form>
+
+  <ng-template pTemplate="footer">
+    <button pButton pRipple label="Annuler" icon="pi pi-times"
+            class="p-button-text p-button-secondary"
+            (click)="dialogVisible = false">
+    </button>
+    <button pButton pRipple [label]="editingId ? 'Enregistrer' : 'Créer'"
+            icon="pi pi-check"
+            [disabled]="form.invalid"
+            (click)="save()">
+    </button>
+  </ng-template>
+
+</p-dialog>

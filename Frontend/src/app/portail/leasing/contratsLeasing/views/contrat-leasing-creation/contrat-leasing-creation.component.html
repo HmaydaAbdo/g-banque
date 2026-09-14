@@ -1,0 +1,44 @@
+<div class="lw">
+  <div class="lw__head">
+    <h2 class="lw__title">Création d'un Contrat Leasing</h2>
+    <p class="lw__subtitle">Suivez les étapes pour configurer votre nouveau contrat.</p>
+    <p-steps [model]="items" [activeIndex]="activeIndex" (activeIndexChange)="onStepChange($event)" [readonly]="false"></p-steps>
+  </div>
+
+  <div class="lw__body">
+    <router-outlet (activate)="onActivate($event)"></router-outlet>
+  </div>
+
+  <div class="lw__actions">
+    <p-button
+      label="Précédent"
+      icon="pi pi-arrow-left"
+      (onClick)="navigateToStep('prev')"
+      [disabled]="activeIndex === 0"
+      severity="secondary"
+    ></p-button>
+
+    @if (activeIndex < items.length - 1) {
+      <p-button
+        label="Suivant"
+        icon="pi pi-arrow-right"
+        iconPos="right"
+        (onClick)="navigateToStep('next')"
+        [disabled]="!isCurrentStepGloballyValid"
+        severity="primary"
+      ></p-button>
+    }
+
+    @if (activeIndex === items.length - 1) {
+      <p-button
+        label="Soumettre"
+        icon="pi pi-check"
+        iconPos="left"
+        (onClick)="submitContract()"
+        [disabled]="!isSubmitEnabled()"
+        severity="success"
+      ></p-button>
+    }
+  </div>
+</div>
+<p-confirmDialog></p-confirmDialog>

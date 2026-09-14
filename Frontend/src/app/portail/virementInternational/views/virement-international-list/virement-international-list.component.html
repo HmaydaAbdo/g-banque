@@ -1,0 +1,288 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="flex flex-column gap-2 py-2 px-2 h-full w-full overflow-y-scroll">
+
+  <!-- Breadcrumb -->
+  <div class="portail-section flex justify-content-between bg-transparent">
+    <div class="flex justify-content-center align-items-center">
+      <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
+        <ng-template pTemplate="item" let-item>
+          @if (item.route) {
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
+              <span class="text-black-alpha-90 p-2 font-bold text-sm">{{ item.label }}</span>
+            </a>
+          } @else {
+            <a [href]="item.url">
+              <span class="text-color text-sm text-center">{{ item.label }}</span>
+            </a>
+          }
+        </ng-template>
+      </p-breadcrumb>
+    </div>
+    <div class="flex align-items-center gap-2">
+      <button
+        pButton
+        pRipple
+        label="Exporter PDF"
+        icon="pi pi-file-pdf"
+        class="p-button-secondary"
+        [loading]="exporting"
+        (click)="exportPdf()"
+      >
+      </button>
+      <button
+        pButton
+        pRipple
+        label="Ajouter"
+        icon="pi pi-plus"
+        class="p-button-primary"
+        [routerLink]="['/portail/virements-internationaux/new']"
+      >
+      </button>
+    </div>
+  </div>
+
+  <!-- Search form in Toolbar -->
+
+      <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" class=" flex flex-row gap-1 align-items-end justify-content-around ">
+
+        <!-- Montant -->
+        <div class="flex flex-column gap-2" >
+          <label for="montant" class="text-sm">Montant</label>
+          <p-inputNumber id="montant"
+                         formControlName="montant"
+                         placeholder="Montant..."
+                         mode="decimal"
+                         [showClear]="true"
+                         [styleClass]="'w-full'"
+                         [inputStyleClass]="'w-full'">
+          </p-inputNumber>
+        </div>
+
+        <!--
+        <div class="flex flex-column gap-2" >
+          <label for="beneficiaire" class="text-sm">Bénéficiaire</label>
+          <span class="p-input-icon-left w-full">
+            <i class="pi pi-search"></i>
+            <input id="beneficiaire" pInputText type="text" formControlName="beneficiaire"
+                   placeholder="Bénéficiaire..." class="w-full" />
+          </span>
+        </div>
+
+        <div class="flex flex-column gap-2" >
+          <label for="emetteur" class="text-sm">Émetteur</label>
+          <span class="p-input-icon-left w-full">
+            <i class="pi pi-search"></i>
+            <input id="emetteur" pInputText type="text" formControlName="emetteur"
+                   placeholder="Émetteur..." class="w-full" />
+          </span>
+        </div>
+      -->
+        <!-- Banque -->
+        <div class="flex flex-column gap-2" >
+          <label for="banqueId" class="text-sm">Banque</label>
+          <p-dropdown id="banqueId"
+                      [options]="banqueOptions"
+                      formControlName="banqueId"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Banque..."
+                      [showClear]="true"
+                      [styleClass]="'w-full'">
+          </p-dropdown>
+        </div>
+
+        <!-- Type -->
+        <div class="flex flex-column gap-2" >
+          <label for="type" class="text-sm">Type</label>
+          <p-dropdown id="type"
+                      [options]="typeOptions"
+                      formControlName="type"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Type..."
+                      [showClear]="true"
+                      [styleClass]="'w-full'">
+          </p-dropdown>
+        </div>
+
+        <!-- Statut -->
+        <div class="flex flex-column gap-2" >
+          <label for="status" class="text-sm">Statut</label>
+          <p-dropdown id="status"
+                      [options]="statusOptions"
+                      formControlName="statut"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Statut..."
+                      [showClear]="true"
+                      [styleClass]="'w-full'">
+          </p-dropdown>
+        </div>
+
+        <!-- Période -->
+        <div class="flex-shrink-0">
+          <button pButton pRipple type="button"
+                  [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+                  icon="pi pi-calendar"
+                  [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+                  (click)="toggleDatePanel()">
+          </button>
+        </div>
+
+        <!-- Clear button -->
+        <div class="flex-shrink-0">
+          <p-button icon="pi pi-times" severity="secondary"
+                    (onClick)="clearSearch()" [style]="{'white-space': 'nowrap'}">
+          </p-button>
+        </div>
+
+      </form>
+</div>
+
+  @if (showDatePanel) {
+  <div class="p-3 bg-white border-round shadow-1">
+    <form [formGroup]="searchForm" class="grid">
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Émission — du</label>
+        <p-calendar formControlName="dateEmissionFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Émission — au</label>
+        <p-calendar formControlName="dateEmissionTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Opération — du</label>
+        <p-calendar formControlName="dateOperationFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Opération — au</label>
+        <p-calendar formControlName="dateOperationTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Valeur — du</label>
+        <p-calendar formControlName="dateValeurFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Valeur — au</label>
+        <p-calendar formControlName="dateValeurTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+    </form>
+  </div>
+  }
+
+  <!-- Table -->
+  <div class="pb-8">
+    <p-table #dt
+             [value]="virements"
+             [paginator]="true"
+             [rows]="10"
+             [totalRecords]="totalRecords"
+             [loading]="loading"
+             [rowsPerPageOptions]="[3, 5, 10, 25, 50]"
+             [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
+             (onLazyLoad)="loadVirements($event)"
+             responsiveLayout="scroll"
+             [scrollable]="true"
+             columnResizeMode="expand"
+             [rowHover]="true"
+             dataKey="id"
+             currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} virements"
+             [showCurrentPageReport]="true"
+             styleClass="p-datatable-gridlines text-xs">
+
+      <ng-template pTemplate="header">
+        <tr class="white-space-nowrap">
+          <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
+          <th pSortableColumn="dateEmission">Date d'Émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
+          <th pSortableColumn="dateOperation">Date d'Opération <p-sortIcon field="dateOperation"></p-sortIcon></th>
+          <th pSortableColumn="dateValeur">Date de Valeur <p-sortIcon field="dateValeur"></p-sortIcon></th>
+          <th pSortableColumn="beneficiaire">Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon></th>
+          <th pSortableColumn="emetteur">Émetteur <p-sortIcon field="emetteur"></p-sortIcon></th>
+          <th pSortableColumn="banque.nom">Banque <p-sortIcon field="banque.nom"></p-sortIcon></th>
+          <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
+          <th pSortableColumn="type">Type <p-sortIcon field="type"></p-sortIcon></th>
+          <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
+          <th pSortableColumn="observation">Observation <p-sortIcon field="observation"></p-sortIcon></th>
+          <th pSortableColumn="statut">Statut <p-sortIcon field="statut"></p-sortIcon></th>
+          <th>Action</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-virement>
+        <tr>
+          <td>{{ virement.id }}</td>
+          <td>{{ virement.dateEmission | date:'dd/MM/yyyy' }}</td>
+          <td>{{ virement.dateOperation ? (virement.dateOperation | date:'dd/MM/yyyy') : 'N/A' }}</td>
+          <td>{{ virement.dateValeur ? (virement.dateValeur | date:'dd/MM/yyyy') : 'N/A' }}</td>
+          <td>{{ virement.beneficiaire }}</td>
+          <td>{{ virement.emetteur }}</td>
+          <td>{{ virement.banqueNom ? virement.banqueNom : '--' }}</td>
+          <td>{{ virement.montant | number:'1.2-2' }}</td>
+          <td>
+            <p-tag [value]="virement.type"
+                   [severity]="virement.type === 'ENCAISSEMENT' ? 'success' : 'warning'">
+            </p-tag>
+          </td>
+          <td>{{ virement.libelle }}</td>
+          <td>{{ virement.observation }}</td>
+          <td>
+            <p-tag [value]="getStatutLabel(virement.statut)"
+                   [severity]="getStatutSeverity(virement.statut)">
+            </p-tag>
+          </td>
+          <td class="flex flex-row align-items-center justify-content-center gap-2">
+            <button
+              pButton
+              pRipple
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-outlined p-button-primary"
+              [routerLink]="['/portail/virements-internationaux/edit',virement.id]"
+              [disabled]="virement.statut === StatutMoyenPaiement.REGLE"
+              pTooltip="Modifier"
+              tooltipPosition="top">
+            </button>
+            @if (isAdmin) {
+              <p-inputSwitch [ngModel]="virement.statut === StatutMoyenPaiement.ENCOURS"
+                             [disabled]="virement.statut === StatutMoyenPaiement.ANNULE"
+                             (onChange)="confirmToggleStatus(virement)">
+              </p-inputSwitch>
+              <button pButton
+                      pRipple
+                      icon="pi pi-trash"
+                      class="p-button-rounded p-button-outlined p-button-danger"
+                      [disabled]="virement.statut === StatutMoyenPaiement.REGLE"
+                      (click)="deleteVirement(virement)"
+                      pTooltip="Supprimer"
+                      tooltipPosition="top">
+              </button>
+            }
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptyMessage">
+        <tr>
+          <td colspan="13">Aucun virement trouvé.</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td colspan="13">Chargement des virements. Veuillez patienter...</td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+</div>

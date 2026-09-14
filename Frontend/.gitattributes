@@ -1,0 +1,52 @@
+# Conventions de fins de ligne — Frontend
+#
+# Sans ce fichier, et core.autocrlf n'étant défini ni localement ni globalement,
+# git stocke les octets tels quels : un éditeur Windows qui réenregistre un
+# fichier en CRLF le fait apparaître intégralement réécrit. Au 07/09/2026,
+# 403 fichiers ressortaient « modifiés » pour cette seule raison — dont
+# .editorconfig, package.json et angular.json, jamais ouverts.
+#
+# Même dispositif que le dépôt Backend, à ceci près qu'il couvre les types de
+# fichiers du frontend. `eol=lf` normalise le dépôt ET la copie de travail :
+# la convention devient uniforme, et il n'y a plus de convention par fichier
+# à préserver au cas par cas.
+
+# ── Sources ──────────────────────────────────────────────
+*.ts     text eol=lf
+*.js     text eol=lf
+*.mjs    text eol=lf
+*.cjs    text eol=lf
+*.html   text eol=lf
+*.scss   text eol=lf
+*.css    text eol=lf
+*.svg    text eol=lf
+
+# ── Configuration ────────────────────────────────────────
+*.json   text eol=lf
+*.yml    text eol=lf
+*.yaml   text eol=lf
+*.md     text eol=lf
+*.conf   text eol=lf
+.editorconfig  text eol=lf
+.gitignore     text eol=lf
+.dockerignore  text eol=lf
+.gitattributes text eol=lf
+Dockerfile     text eol=lf
+
+# ── Scripts : le shell exige LF, le batch Windows exige CRLF ──
+*.sh     text eol=lf
+*.cmd    text eol=crlf
+*.bat    text eol=crlf
+
+# ── Binaires : aucune conversion ─────────────────────────
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.webp   binary
+*.pdf    binary
+*.woff   binary
+*.woff2  binary
+*.ttf    binary
+*.eot    binary

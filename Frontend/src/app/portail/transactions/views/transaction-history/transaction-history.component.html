@@ -1,0 +1,201 @@
+<p-toast></p-toast>
+
+<div class=" flex flex-column gap-2 p-2 w-full h-full overflow-y-scroll">
+
+  <div class="portail-section flex justify-content-between">
+
+  <p-breadcrumb [model]="items" class="bg-transparent">
+      <ng-template pTemplate="item" let-item>
+          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+          </a>
+
+        <ng-template #elseBlock>
+          <span class="text-color text-sm md:text-xl font-medium">{{ item.label }}</span>
+        </ng-template>
+      </ng-template>
+    </p-breadcrumb>
+  </div>
+  <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-2 p-3 bg-white border-round-sm shadow-1">
+    <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" class="flex flex-wrap gap-2 align-items-center">
+
+        <span class="p-input-icon-left">
+          <i class="pi pi-search"></i>
+          <input pInputText type="text" formControlName="libelle"
+                 placeholder="Libellé..." class="p-inputtext-sm" style="width: 180px" />
+        </span>
+
+        <span class="p-float-label">
+            <input
+              id="montant"
+              type="number"
+              pInputText
+              formControlName="montant"
+            />
+            <label for="montant">Montant</label>
+          </span>
+
+        <p-dropdown [options]="banquesOptions" formControlName="banqueId"
+                    placeholder="Banque" [showClear]="true" [filter]="true"
+                    filterBy="label" appendTo="body" class="p-inputtext-sm"
+                    [style]="{'min-width': '180px'}">
+        </p-dropdown>
+
+        <p-multiSelect [options]="sourcesOptions"
+                       formControlName="transactionSources"
+                       display="chip"
+                       appendTo="body"
+                       placeholder="Sources des transactions"
+                       class="p-inputtext-sm"
+                       [style]="{'min-width': '200px'}">
+        </p-multiSelect>
+
+        <p-dropdown [options]="statutOptions" formControlName="statutRapprochement"
+                    placeholder="Statut" [showClear]="true"
+                    appendTo="body" class="p-inputtext-sm"
+                    [style]="{'min-width': '140px'}">
+        </p-dropdown>
+      </form>
+</div>
+
+    <div class="flex gap-2 align-items-center flex-shrink-0">
+      <button pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf"
+              class="p-button-outlined p-button-danger p-button-sm"
+              [loading]="exporting" (click)="exportPdf()">
+      </button>
+      <button pButton pRipple type="button"
+              [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+              icon="pi pi-calendar"
+              [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+              (click)="toggleDatePanel()">
+      </button>
+      <p-button icon="pi pi-times" severity="secondary"
+                (onClick)="clearSearch()" [style]="{'white-space': 'nowrap'}">
+      </p-button>
+    </div>
+  </div>
+
+  @if (showDatePanel) {
+  <div class="p-3 bg-white border-round shadow-1">
+    <form [formGroup]="searchForm" class="grid">
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Émission — du</label>
+        <p-calendar formControlName="dateEmissionDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Émission — au</label>
+        <p-calendar formControlName="dateEmissionFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Opération — du</label>
+        <p-calendar formControlName="dateOperationDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Opération — au</label>
+        <p-calendar formControlName="dateOperationFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Valeur — du</label>
+        <p-calendar formControlName="dateValeurDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Valeur — au</label>
+        <p-calendar formControlName="dateValeurFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+    </form>
+  </div>
+  }
+
+  <div class="pb-8 px-1">
+    <p-table #dt
+             [value]="transactions"
+             [paginator]="true"
+             [rows]="10"
+             [totalRecords]="totalRecords"
+             [loading]="loading"
+             [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
+             (onLazyLoad)="loadTransactions($event)"
+             [rowsPerPageOptions]="[10, 25, 50]"
+             styleClass="p-datatable-gridlines p-datatable-sm text-xs"
+             [responsiveLayout]="'scroll'"
+             currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} transactions"
+             [showCurrentPageReport]="true"
+             [scrollable]="true"
+             scrollHeight="flex"
+             [rowHover]="true">
+
+      <ng-template pTemplate="header">
+        <tr class="white-space-nowrap">
+          <th pSortableColumn="id" >ID<p-sortIcon field="id"></p-sortIcon></th>
+          <th pSortableColumn="banqueDePrelevement.nom">Banque <p-sortIcon field="banqueDePrelevement.nom"></p-sortIcon></th>
+          <th pSortableColumn="dateEmission" >Date émission<p-sortIcon field="dateEmission"></p-sortIcon></th>
+          <th pSortableColumn="dateOperations" >Date opération<p-sortIcon field="dateOperations"></p-sortIcon></th>
+          <th pSortableColumn="dateValeur" >Date valuer<p-sortIcon field="dateValeur"></p-sortIcon></th>
+          <th pSortableColumn="debit" >Débit <p-sortIcon field="debit"></p-sortIcon></th>
+          <th pSortableColumn="credit" >Crédit <p-sortIcon field="credit"></p-sortIcon></th>
+          <th pSortableColumn="tvaDeductible">TVA Déductible <p-sortIcon field="tvaDeductible"></p-sortIcon></th>
+          <th pSortableColumn="tvaCollectee">TVA Collectée <p-sortIcon field="tvaCollectee"></p-sortIcon></th>
+          <th pSortableColumn="transactionSource">Source <p-sortIcon field="transactionSource"></p-sortIcon></th>
+          <th class="text-center" pSortableColumn="rapprochement.statut">Statut <p-sortIcon field="rapprochement.statut"></p-sortIcon></th>
+          <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
+          <th pSortableColumn="observation">Observation <p-sortIcon field="observation"></p-sortIcon></th>
+          <th pSortableColumn="referent">Référent <p-sortIcon field="referent"></p-sortIcon></th>
+
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-transaction>
+        <tr class="white-space-nowrap">
+          <td >{{ transaction.id }}</td>
+          <td>{{ transaction.banqueDePrelevementNom }}</td>
+          <td>{{ transaction.dateEmission ? (transaction.dateEmission | date:'dd/MM/yyyy') : '****' }}</td>
+          <td>{{ transaction.dateOperations ? (transaction.dateOperations | date:'dd/MM/yyyy') : '****' }}</td>
+          <td>{{ transaction.dateValeur ? (transaction.dateValeur | date:'dd/MM/yyyy') : '****' }}</td>
+          <td class="text-red-600">
+            {{ transaction.debit > 0 ? (transaction.debit | currency: 'MAD': '') : '-' }}
+          </td>
+          <td class="text-green-600">
+            {{ transaction.credit > 0 ? (transaction.credit | currency: 'MAD': '') : '-' }}
+          </td>
+
+          <td class="text-red-600">{{transaction.tvaDeductible | number:'1.2-2'}}</td>
+          <td class="text-green-600">{{transaction.tvaCollectee | number:'1.2-2'}}</td>
+
+          <td>{{transaction.transactionSource}}</td>
+
+
+          <td class="text-center">
+            <p-tag
+              [value]="getStatutLabel(transaction.statutRapprochement)"
+              [severity]="getStatutSeverity(transaction.statutRapprochement)">
+            </p-tag>
+          </td>
+
+          <td class="white-space-normal" style="max-width: 8rem;" >
+            {{ transaction.libelle }}
+          </td>
+          <td class="white-space-normal" style="max-width: 8rem;" >
+            {{ transaction.observation }}
+          </td>
+          <td>{{ transaction.referent ?? 'N/A' }}</td>
+
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptyMessage">
+        <tr>
+          <td colspan="14" class="text-center p-4">Aucune transaction trouvée.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

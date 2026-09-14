@@ -1,0 +1,119 @@
+<p-sidebar #sidebarRef [(visible)]="sidebarVisible" styleClass="w-20rem">
+  <ng-template pTemplate="headless">
+    <div class="flex flex-column text-xs sidebar-shell">
+      <div class="flex justify-content-between">
+        <span class="inline-flex align-items-center pt-2 pl-4">
+          <img src="assets/staportLogo.png" alt="Your Logo" class="block mx-auto" style="height: 3rem; width: 8.86rem;" />
+        </span>
+        <span class="align-self-start pt-2 pr-2">
+          <p-button type="button" (onClick)="closeCallback()" icon="pi pi-times" rounded="true" outlined="true" styleClass="h-2rem w-2rem"></p-button>
+        </span>
+      </div>
+
+      <hr class="mt-3 mx-3 border-top-1 border-3 surface-border" />
+
+      <div class="sidebar-scroll">
+        <ul class="list-none p-3 m-0">
+          @for (item of filteredSidebarItems; track item.label) {
+
+            @if (item.separator) {
+              <li>
+                <hr class="mb-3 mx-3 border-top-1 border-3 surface-border" />
+              </li>
+            }
+
+            @if (item.routerLink && !item.items) {
+              <li class="white-space-nowrap">
+                <a pRipple
+                   [routerLink]="item.routerLink"
+                   routerLinkActive="active-sidebar-link"
+                   (click)="closeCallback()"
+                   class="flex align-items-center cursor-pointer p-3 border-round-xl text-700 hover:bg-blue-50 transition-duration-150 transition-colors p-ripple sidebar-link">
+                  @if (item.icon) {
+                    <i [class]="item.icon + ' mr-2'"></i>
+                  }
+                  <span class="font-medium">{{ item.label }}</span>
+                </a>
+              </li>
+            }
+
+            @if (item.items) {
+              <li>
+                <div
+                  pRipple
+                  (click)="toggleMenuItem(item)"
+                  [ngClass]="item.styleClass || 'p-3 flex align-items-center justify-content-between text-600 cursor-pointer p-ripple white-space-nowrap sidebar-link'">
+                  <div class="flex align-items-center">
+                    @if (item.icon) {
+                      <i [class]="item.icon + ' mr-2'"></i>
+                    }
+                    <span class="font-medium">{{ item.label }}</span>
+                  </div>
+                  <i [class]="item.expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></i>
+                </div>
+
+                <ul class="list-none p-0 m-0 overflow-hidden white-space-nowrap sidebar-link" [ngClass]="{'hidden': !item.expanded}">
+                  @for (subItem of item.items; track subItem.label) {
+
+                    @if (subItem.routerLink && !subItem.items) {
+                      <li>
+                        <a pRipple
+                           [routerLink]="subItem.routerLink"
+                           routerLinkActive="active-sidebar-link"
+                           (click)="closeCallback()"
+                           class="flex align-items-center cursor-pointer p-3 pl-5 border-round-xl text-700 hover:bg-blue-50 transition-duration-150 transition-colors p-ripple sidebar-link">
+                          @if (subItem.icon) {
+                            <i [class]="subItem.icon + ' mr-2'"></i>
+                          }
+                          <span class="font-medium">{{ subItem.label }}</span>
+                          @if (subItem.badge) {
+                            <span [class]="subItem.badgeClass">{{ subItem.badge }}</span>
+                          }
+                        </a>
+                      </li>
+                    }
+
+                    @if (subItem.items) {
+                      <li>
+                        <div
+                          pRipple
+                          (click)="toggleMenuItem(subItem)"
+                          class="flex align-items-center cursor-pointer p-3 pl-5 border-round text-700 hover:bg-blue-50 transition-duration-150 transition-colors p-ripple sidebar-link">
+                          @if (subItem.icon) {
+                            <i [class]="subItem.icon + ' mr-2'"></i>
+                          }
+                          <span class="font-medium">{{ subItem.label }}</span>
+                          <i [class]="subItem.expanded ? 'pi pi-chevron-down ml-auto' : 'pi pi-chevron-right ml-auto'"></i>
+                        </div>
+
+                        <ul class="list-none py-0 pl-3 pr-0 m-0 overflow-hidden" [ngClass]="{'hidden': !subItem.expanded}">
+                          @for (subSubItem of subItem.items; track subSubItem.label) {
+                            <li>
+                              <a pRipple
+                                 [routerLink]="subSubItem.routerLink"
+                                 routerLinkActive="active-sidebar-link"
+                                 (click)="closeCallback()"
+                                 class="flex align-items-center cursor-pointer p-3 pl-7 border-round-xl text-700 hover:bg-blue-50 transition-duration-150 transition-colors p-ripple sidebar-link">
+                                @if (subSubItem.icon) {
+                                  <i [class]="subSubItem.icon + ' mr-2'"></i>
+                                }
+                                <span class="font-medium">{{ subSubItem.label }}</span>
+                                @if (subSubItem.badge) {
+                                  <span [class]="subSubItem.badgeClass">{{ subSubItem.badge }}</span>
+                                }
+                              </a>
+                            </li>
+                          }
+                        </ul>
+                      </li>
+                    }
+                  }
+                </ul>
+              </li>
+            }
+          }
+        </ul>
+      </div>
+    </div>
+  </ng-template>
+</p-sidebar>

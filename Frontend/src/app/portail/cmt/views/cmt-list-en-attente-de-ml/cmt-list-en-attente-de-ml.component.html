@@ -1,0 +1,162 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="card flex flex-column gap-2 p-2  w-full h-full overflow-y-auto">
+
+  <div class="flex justify-content-between align-items-center bg-transparent gap-3">
+
+    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
+      <ng-template pTemplate="item" let-item>
+        @if (item.route) {
+          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
+            <span class="text-black-alpha-90  text-sm p-2 font-bold">{{ item.label }}</span>
+          </a>
+        } @else {
+          <a [href]="item.url">
+            <span class="text-color text-sm  text-center">{{ item.label }}</span>
+          </a>
+        }
+      </ng-template>
+    </p-breadcrumb>
+
+    <button pButton pRipple label="Exporter PDF" class="p-button-outlined p-button-danger h-fit" size="small" icon="pi pi-file-pdf" [loading]="exporting" (click)="exportPdf()"></button>
+  </div>
+
+  <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" class="flex justify-content-between flex-wrap gap-3">
+
+    <div>
+      <span class="p-input-icon-left w-full">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text"
+               formControlName="designation"
+               placeholder="Rechercher par désignation..."
+               class="w-full" />
+      </span>
+    </div>
+
+    <div>
+      <p-dropdown
+        [options]="banqueOptions"
+        formControlName="banqueId"
+        placeholder="Banque"
+        [showClear]="true"
+        appendTo="body"
+        class="w-full"
+      ></p-dropdown>
+    </div>
+
+
+
+    <div class="flex-shrink-0">
+      <button pButton pRipple type="button"
+              [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+              icon="pi pi-calendar"
+              [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+              (click)="toggleDatePanel()">
+      </button>
+    </div>
+
+    <div>
+      <p-button
+        icon="pi pi-times"
+        severity="secondary"
+        (onClick)="clearSearch()"
+        class="w-full"
+      ></p-button>
+    </div>
+  </form>
+</div>
+
+  @if (showDatePanel) {
+  <div class="p-3 bg-white border-round shadow-1">
+    <form [formGroup]="searchForm" class="grid">
+      <div class="col-6 md:col-3">
+        <label class="block text-xs text-500 mb-1">Date début — du</label>
+        <p-calendar formControlName="dateDebutMin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-3">
+        <label class="block text-xs text-500 mb-1">Date début — au</label>
+        <p-calendar formControlName="dateDebutMax" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+    </form>
+  </div>
+  }
+
+  <div class="pb-8">
+    <p-table
+      #dt
+      [value]="credits"
+      [paginator]="true"
+      [rows]="10"
+      [totalRecords]="totalRecords"
+      [loading]="loading"
+      [rowsPerPageOptions]="[3,5,10, 25, 50]"
+      [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
+      (onLazyLoad)="loadCredits($event)"
+      responsiveLayout="scroll"
+      [scrollable]="true"
+      [resizableColumns]="true"
+      columnResizeMode="expand"
+      [rowHover]="true"
+      dataKey="id"
+      currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} crédits"
+      [showCurrentPageReport]="true"
+      styleClass="p-datatable-gridlines text-xs"
+      [globalFilterFields]="['designation', 'banque.nom']"
+      [selectionMode]="'single'" >
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
+          <th pSortableColumn="designation">Désignation <p-sortIcon field="designation"></p-sortIcon></th>
+          <th pSortableColumn="banque.nom">Banque <p-sortIcon field="banque.nom"></p-sortIcon></th>
+          <th pSortableColumn="nominal">Nominal <p-sortIcon field="nominal"></p-sortIcon></th>
+          <th pSortableColumn="taux">Taux <p-sortIcon field="taux"></p-sortIcon></th>
+          <th pSortableColumn="periodicite">Périodicité <p-sortIcon field="periodicite"></p-sortIcon></th>
+          <th pSortableColumn="duree">Durée <p-sortIcon field="duree"></p-sortIcon></th>
+          <th pSortableColumn="echeance">Montant Échéance <p-sortIcon field="echeance"></p-sortIcon></th>
+          <th pSortableColumn="dateDebut">Date Début <p-sortIcon field="dateDebut"></p-sortIcon></th>
+          <th pSortableColumn="completed">Statut <p-sortIcon field="completed"></p-sortIcon></th>
+          <th style="width: 15rem;">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-credit>
+        <tr >
+          <td>{{ credit.id }}</td>
+          <td>{{ credit.designation }}</td>
+          <td>{{ credit.banque.nom }}</td>
+          <td>{{ credit.nominal | number }} MAD</td>
+          <td>{{ credit.taux | number }} %</td>
+          <td>{{ credit.periodicite }} mois</td>
+          <td>{{ credit.duree }} mois</td>
+          <td>{{ credit.echeance | number }} MAD</td>
+          <td>{{ credit.dateDebut | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <p-tag [severity]="credit.completed ? 'success' : 'info'" [value]="credit.completed ? 'Terminé' : 'En Cours'"></p-tag>
+          </td>
+
+          <td class="flex flex-row gap-2">
+            <button pButton pRipple icon="pi pi-table" class="p-button-rounded p-button-outlined p-button-secondary mr-2" pTooltip="Tableau d'Amortissement" (click)="viewAmortizationTable(credit.id)"></button>
+            <button pButton pRipple icon="pi pi-folder" class="p-button-rounded p-button-outlined p-button-success mr-2" pTooltip="Archiver" (click)="confirmArchiveCredit(credit)"></button>
+          </td>
+
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptyMessage">
+        <tr>
+          <td [attr.colspan]="9">Aucun crédit trouvé.</td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td [attr.colspan]="9">Chargement des crédits. Veuillez patienter...</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

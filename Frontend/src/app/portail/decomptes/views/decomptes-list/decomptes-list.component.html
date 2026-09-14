@@ -1,0 +1,208 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="card flex flex-column gap-2 p-2 w-full h-full overflow-y-scroll">
+
+  <div class="portail-section flex justify-content-between align-items-center bg-transparent">
+    <p-breadcrumb [model]="items">
+      <ng-template pTemplate="item" let-item>
+        <a [routerLink]="item.route" class="p-menuitem-link">
+          <span [ngClass]="item.icon" class="text-color"></span>
+          <span class="text-black-alpha-90 p-2 text-sm font-bold">{{ item.label }}</span>
+        </a>
+      </ng-template>
+    </p-breadcrumb>
+
+    <div class="flex gap-2">
+      <button pButton pRipple
+              label="Exporter PDF"
+              icon="pi pi-file-pdf"
+              [loading]="exporting"
+              class="p-button-outlined p-button-danger h-fit p-button-sm"
+              (click)="exportPdf()">
+      </button>
+      <button pButton pRipple label="Ajouter Décompte" icon="pi pi-plus" size="small"
+              class="h-fit" routerLink="/portail/decomptes/new"></button>
+    </div>
+  </div>
+
+  <div class="flex flex-column gap-2">
+  <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-2 p-3 bg-white border-round shadow-1">
+    <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" class="flex flex-wrap gap-2">
+
+      <p-dropdown
+        formControlName="marcheId"
+        [options]="marchesOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Sélectionner un marché"
+        [filter]="true"
+        (onFilter)="onFilterMarches($event)"
+        [virtualScroll]="true"
+        [virtualScrollItemSize]="38"
+        [lazy]="true"
+        [virtualScrollOptions]="marchesScrollerOptions"
+        [loading]="marchesLoading"
+        [showClear]="true"
+        appendTo="body"
+        styleClass="w-full md:w-15rem">
+        <ng-template let-item pTemplate="item">
+          <div class="flex align-items-center gap-2" style="height: 38px">
+            @if (item.label) {
+              <span>{{ item.label }}</span>
+            } @else {
+              <i class="pi pi-spin pi-spinner text-gray-400"></i>
+            }
+          </div>
+        </ng-template>
+      </p-dropdown>
+
+      <p-dropdown
+        formControlName="banqueId"
+        [options]="banquesOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Banque d'encaissement"
+        [showClear]="true"
+        [filter]="true"
+        appendTo="body"
+        styleClass="w-full md:w-14rem">
+      </p-dropdown>
+
+      <p-dropdown
+        formControlName="status"
+        [options]="[{label:'Tous les statuts', value:null}, {label:'Prévu', value:Status.PREVU}, {label:'Payé', value:Status.PAYE}]"
+        placeholder="Statut"
+        [showClear]="true"
+        appendTo="body"
+        styleClass="w-full md:w-10rem">
+      </p-dropdown>
+
+      <p-inputNumber
+        formControlName="montant"
+        placeholder="Montant"
+        mode="decimal"
+        [minFractionDigits]="2"
+        [maxFractionDigits]="2"
+        [useGrouping]="true"
+        locale="fr-FR"
+        styleClass="w-full md:w-9rem">
+      </p-inputNumber>
+
+      <button pButton pRipple type="button"
+              [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+              icon="pi pi-calendar"
+              [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+              (click)="toggleDatePanel()">
+      </button>
+    </form>
+</div>
+
+    <p-button icon="pi pi-times" severity="secondary"
+              (onClick)="clearFilters()" [style]="{'white-space': 'nowrap'}">
+    </p-button>
+  </div>
+
+  @if (showDatePanel) {
+  <div class="p-3 bg-white border-round shadow-1">
+    <form [formGroup]="searchForm" class="grid">
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Émission — du</label>
+        <p-calendar formControlName="dateEmissionFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Émission — au</label>
+        <p-calendar formControlName="dateEmissionTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Opération — du</label>
+        <p-calendar formControlName="dateOperationFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Opération — au</label>
+        <p-calendar formControlName="dateOperationTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Valeur — du</label>
+        <p-calendar formControlName="dateValeurFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Valeur — au</label>
+        <p-calendar formControlName="dateValeurTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+    </form>
+  </div>
+  }
+  </div>
+
+  <div class="pb-8">
+    <p-table #dt [value]="decomptes" [paginator]="true" [rows]="10" [totalRecords]="totalRecords"
+             [loading]="loading" [lazy]="true" (onLazyLoad)="loadDecomptes($event)"
+             [rowsPerPageOptions]="[10, 25, 50]" responsiveLayout="scroll" [scrollable]="true"
+             styleClass="p-datatable-gridlines text-xs shadow-1 mt-2"
+             [showCurrentPageReport]="true"
+             currentPageReportTemplate="{first}-{last} / {totalRecords}"
+             [sortField]="'id'" [sortOrder]="-1">
+
+      <ng-template pTemplate="header">
+        <tr class="white-space-nowrap">
+          <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
+          <th pSortableColumn="marche.numero">Marché <p-sortIcon field="marche.numero"></p-sortIcon></th>
+          <th pSortableColumn="banqueEncaissement.nom">Banque <p-sortIcon field="banqueEncaissement.nom"></p-sortIcon></th>
+          <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
+          <th pSortableColumn="observation">Observation <p-sortIcon field="observation"></p-sortIcon></th>
+          <th pSortableColumn="dateEmission">Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
+          <th pSortableColumn="dateOperation">Date d'opération <p-sortIcon field="dateOperation"></p-sortIcon></th>
+          <th pSortableColumn="dateValeur">Date valeur <p-sortIcon field="dateValeur"></p-sortIcon></th>
+          <th pSortableColumn="status">Statut <p-sortIcon field="status"></p-sortIcon></th>
+          <th style="width: 10rem">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-d>
+        <tr>
+          <td>{{ d.id }}</td>
+          <td class="font-bold">{{ d.marcheNumero }}</td>
+          <td>{{ d.banqueEncaissementName }}</td>
+          <td class="font-bold">{{ d.montant | number:'1.2-2' }} MAD</td>
+          <td class="text-overflow-ellipsis">{{ d.observation || '***' }}</td>
+          <td>{{ d.dateEmission ? (d.dateEmission | date:'dd/MM/yyyy') : '***' }}</td>
+          <td>{{ d.dateOperation ? (d.dateOperation | date:'dd/MM/yyyy') : '***' }}</td>
+          <td>{{ d.dateValeur ? (d.dateValeur | date:'dd/MM/yyyy') : '***' }}</td>
+          <td>
+            <p-tag [value]="d.status" [severity]="d.status === Status.PAYE ? 'success' : 'danger'"></p-tag>
+          </td>
+          <td>
+            <div class="flex gap-2 align-items-center justify-content-center">
+              @if (isAdmin) {
+                <p-inputSwitch [ngModel]="d.status === Status.PAYE"
+                               (onChange)="toggleStatus(d)"
+                               pTooltip="Changer statut"></p-inputSwitch>
+              }
+              <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary"
+                      [routerLink]="['/portail/decomptes/edit', d.id]"></button>
+              @if (isAdmin) {
+                <button pButton icon="pi pi-trash"
+                        class="p-button-rounded p-button-outlined p-button-danger"
+                        [disabled]="d.status === Status.PAYE"
+                        (click)="deleteDecompte(d)"></button>
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptyMessage">
+        <tr><td colspan="10" class="text-center p-4">Aucune décompte trouvée.</td></tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

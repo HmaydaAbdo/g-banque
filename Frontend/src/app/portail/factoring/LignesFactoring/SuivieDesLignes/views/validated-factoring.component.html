@@ -1,0 +1,99 @@
+<p-toast></p-toast>
+
+<div class="card flex flex-column gap-2 p-2  w-full h-full overflow-y-scroll">
+  <div class="portail-section flex justify-content-between bg-transparent">
+    <div class="flex justify-content-center align-items-center">
+      <p-breadcrumb [model]="items">
+        <ng-template pTemplate="item" let-item>
+          @if (item.route) {
+            <a [routerLink]="item.route" class="p-menuitem-link">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
+              <span class="text-black-alpha-90 p-2 text-sm font-bold">{{ item.label }}</span>
+            </a>
+          } @else {
+            <span class="text-color text-sm text-center">{{ item.label }}</span>
+          }
+        </ng-template>
+      </p-breadcrumb>
+    </div>
+  </div>
+
+  @if (aggregatedData) {
+    <div class="p-card p-2">
+      <div class="flex flex-wrap text-sm justify-content-between items-center">
+        <p>Banque : <strong>{{ aggregatedData.banqueName }}</strong></p>
+        <p>Marché : <strong>{{ aggregatedData.marcheName }}</strong></p>
+        <p>Numéro de Marché: <strong>{{ aggregatedData.marcheNumero }}</strong></p>
+        <p>Total Crédit: <strong class="num num-credit">{{ aggregatedData.totalCredit | number: '1.2-2' }}</strong></p>
+        <p>Total Débit: <strong class="num num-debit">{{ aggregatedData.totalDebit | number: '1.2-2' }}</strong></p>
+        <p>Reste: <strong class="text-blue-700">{{ aggregatedData.reste | number: '1.2-2' }}</strong></p>
+      </div>
+    </div>
+  }
+
+  <div class="pb-8">
+    <p-table
+      #dt
+      [value]="factoringLines"
+      [paginator]="true"
+      [rows]="10"
+      [totalRecords]="totalRecords"
+      [loading]="loading"
+      [rowsPerPageOptions]="[5, 10, 25, 50]"
+      [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
+      responsiveLayout="scroll"
+      [scrollable]="true"
+      (onLazyLoad)="loadFactoringLines($event)"
+      [columns]="[
+        {field: 'id', header: 'ID', sortable: true},
+        {field: 'dateEmission', header: 'Date Emission', sortable: true},
+        {field: 'dateOperation', header: 'Date Opération', sortable: true},
+        {field: 'dateValeur', header: 'Date Valeur', sortable: true},
+        {field: 'libelle', header: 'Libellé', sortable: false},
+        {field: 'montant', header: 'Débit', sortable: true},
+        {field: 'montant', header: 'Crédit', sortable: true},
+        {field: 'observation', header: 'Observation', sortable: false},
+        {field: 'status', header: 'Statut', sortable: true},
+        {field: 'type', header: 'Type', sortable: true}
+      ]"
+      styleClass="p-datatable-gridlines text-xs"
+    >
+      <ng-template pTemplate="header" let-columns>
+        <tr class="white-space-nowrap">
+          @for (col of columns; track col.field) {
+            <th [pSortableColumn]="col.sortable ? col.field : null">
+              {{ col.header }}
+              @if (col.sortable) {
+                <p-sortIcon [field]="col.field"></p-sortIcon>
+              }
+            </th>
+          }
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-line>
+        <tr>
+          <td>{{ line.id }}</td>
+          <td class="text-center">{{ line.dateEmission ? (line.dateEmission | date: 'dd/MM/yyyy') : '-' }}</td>
+          <td class="text-center">{{ line.dateOperation ? (line.dateOperation | date: 'dd/MM/yyyy') : '-' }}</td>
+          <td class="text-center">{{ line.dateValeur ? (line.dateValeur | date: 'dd/MM/yyyy') : '-' }}</td>
+          <td>{{ line.libelle }}</td>
+          <td class="num num-debit">{{ line.debit != null ? (line.debit | number:'1.2-2') : '-' }}</td>
+          <td class="num num-credit">{{ line.credit != null ? (line.credit | number:'1.2-2') : '-' }}</td>
+          <td>{{ line.observation }}</td>
+          <td>{{ line.status | uppercase }}</td>
+          <td>{{ line.type | uppercase }}</td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptyMessage">
+        <tr>
+          <td [attr.colspan]="10">Aucun encours factoring trouvé pour cette ligne fonctionnelle.</td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td [attr.colspan]="10">Chargement des encours factoring. Veuillez patienter...</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

@@ -1,0 +1,5 @@
+
+export enum NatureLcn {
+  ESCOMPTE="ESCOMPTE",
+  ENCAISSEMENT="ENCAISSEMENT"
+}

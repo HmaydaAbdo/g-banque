@@ -1,0 +1,253 @@
+<p-toast position="center"></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="card flex flex-column gap-2 p-2 w-full h-full overflow-y-scroll">
+
+  <!-- En-tête -->
+  <div class="portail-section flex flex-wrap justify-content-between align-items-center">
+    <h3 class="m-0">Les Contrats Cadres</h3>
+    <div class="flex gap-2">
+      <button pButton pRipple label="Exporter PDF" class="p-button-outlined p-button-danger h-fit" size="small"
+              icon="pi pi-file-pdf" [loading]="exporting" (click)="exportPdf()"></button>
+      @if (canModify()) {
+        <p-button label="Nouveau Contrat Cadre" icon="pi pi-plus" severity="primary"
+                  (click)="openCreateDialog()" />
+      }
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="pg-filters">
+    <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+    <form [formGroup]="searchForm" class="flex flex-wrap gap-3 align-items-end">
+
+      <div class="flex flex-column gap-1">
+        <label class="text-xs">Organisme</label>
+        <p-dropdown formControlName="organismeId"
+                    [options]="organismeOptions"
+                    optionLabel="label" optionValue="value"
+                    placeholder="Tous les organismes"
+                    [showClear]="true"
+                    [style]="{ width: '220px' }">
+        </p-dropdown>
+      </div>
+
+      <div class="flex flex-column gap-1">
+        <label class="text-xs">Statut</label>
+        <p-dropdown formControlName="statut"
+                    [options]="statutOptions"
+                    optionLabel="label" optionValue="value"
+                    placeholder="Tous les statuts"
+                    [showClear]="true"
+                    [style]="{ width: '180px' }">
+        </p-dropdown>
+      </div>
+
+      <button pButton pRipple icon="pi pi-times"
+              class="p-button-text p-button-secondary p-button-sm"
+              type="button" (click)="clearFilters()"
+              pTooltip="Réinitialiser" tooltipPosition="bottom"></button>
+    </form>
+  </div>
+
+  <!-- Table -->
+  <div class="pb-8">
+    <p-table
+      #dt
+      [value]="contratsCadres"
+      [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
+      (onLazyLoad)="load($event)"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[5, 10, 25, 50]"
+      [totalRecords]="totalRecords"
+      [loading]="loading"
+      [rowHover]="true"
+      dataKey="id"
+      currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} contrats"
+      [showCurrentPageReport]="true"
+      columnResizeMode="expand"
+      responsiveLayout="scroll"
+      [scrollable]="true"
+      styleClass="p-datatable-gridlines text-xs"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="id" style="width: 5rem;">ID <p-sortIcon field="id"></p-sortIcon></th>
+          <th pSortableColumn="organisme.nom">Organisme <p-sortIcon field="organisme.nom"></p-sortIcon></th>
+          <th pSortableColumn="plafond">Plafond <p-sortIcon field="plafond"></p-sortIcon></th>
+          <th pSortableColumn="dateDebut">Date Début <p-sortIcon field="dateDebut"></p-sortIcon></th>
+          <th pSortableColumn="dateFin">Date Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
+          <th pSortableColumn="statut">Statut <p-sortIcon field="statut"></p-sortIcon></th>
+          <th pSortableColumn="dateCreation">Créé le <p-sortIcon field="dateCreation"></p-sortIcon></th>
+          @if (canModify()) { <th style="width: 9rem;">Actions</th> }
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-cadre>
+        <tr>
+          <td>{{ cadre.id }}</td>
+          <td>{{ cadre.organismeNom }}</td>
+          <td><span class="num">{{ cadre.plafond | number:'1.2-2' }}</span></td>
+          <td>{{ cadre.dateDebut | date:'dd/MM/yyyy' }}</td>
+          <td>{{ cadre.dateFin | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <p-tag [value]="cadre.statut" [severity]="statutSeverity(cadre.statut)"></p-tag>
+          </td>
+          <td>{{ cadre.dateCreation | date:'dd/MM/yyyy' }}</td>
+          @if (canModify()) {
+            <td class="flex flex-row gap-2">
+              <!-- Modifier : toujours disponible pour Finance/Admin -->
+              <button pButton pRipple icon="pi pi-pencil"
+                      class="p-button-rounded p-button-outlined p-button-success"
+                      (click)="openEditDialog(cadre)"
+                      pTooltip="Modifier" tooltipPosition="top">
+              </button>
+              <!-- Archiver : uniquement si ACTIF -->
+              @if (cadre.statut === 'ACTIF') {
+                <button pButton pRipple icon="pi pi-inbox"
+                        class="p-button-rounded p-button-outlined p-button-warning"
+                        (click)="confirmArchiver(cadre)"
+                        pTooltip="Archiver" tooltipPosition="top">
+                </button>
+              }
+            </td>
+          }
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="canModify() ? 8 : 7" class="text-center">
+            Aucun contrat cadre trouvé.
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td [attr.colspan]="canModify() ? 8 : 7" class="text-center">
+            Chargement des contrats cadres...
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Dialogue : Nouveau Contrat Cadre                             -->
+<!-- ============================================================ -->
+<p-dialog header="Nouveau Contrat Cadre" [(visible)]="showCreateDialog" [modal]="true"
+          [style]="{ width: '520px' }" [draggable]="false">
+
+  <form [formGroup]="createForm" (ngSubmit)="onSubmitCreate()">
+    <div class="p-fluid p-formgrid grid">
+
+      <div class="field col-12">
+        <label for="cOrganisme">Organisme <span class="p-error">*</span></label>
+        <p-dropdown id="cOrganisme" formControlName="organismeId"
+                    [options]="organismeOptions"
+                    optionLabel="label" optionValue="value"
+                    placeholder="Sélectionner un organisme"
+                    [ngClass]="{'ng-dirty': fc['organismeId'].invalid && fc['organismeId'].touched}">
+        </p-dropdown>
+        @if (fc['organismeId'].invalid && fc['organismeId'].touched) {
+          <small class="p-error">L'organisme est requis.</small>
+        }
+      </div>
+
+      <div class="field col-12">
+        <label for="cPlafond">Plafond <span class="p-error">*</span></label>
+        <p-inputNumber id="cPlafond" formControlName="plafond"
+                       mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2"
+                       [ngClass]="{'ng-dirty': fc['plafond'].invalid && fc['plafond'].touched}">
+        </p-inputNumber>
+        @if (fc['plafond'].invalid && fc['plafond'].touched) {
+          <small class="p-error">Le plafond est requis (valeur positive).</small>
+        }
+      </div>
+
+      <div class="field col-12 md:col-6">
+        <label for="cDateDebut">Date Début <span class="p-error">*</span></label>
+        <p-calendar id="cDateDebut" formControlName="dateDebut" dateFormat="dd/mm/yy"
+                    [showIcon]="true" [iconDisplay]="'input'" appendTo="body" placeholder="JJ/MM/AA"
+                    [ngClass]="{'ng-dirty': fc['dateDebut'].invalid && fc['dateDebut'].touched}">
+        </p-calendar>
+        @if (fc['dateDebut'].invalid && fc['dateDebut'].touched) {
+          <small class="p-error">La date de début est requise.</small>
+        }
+      </div>
+
+      <div class="field col-12 md:col-6">
+        <label for="cDateFin">Date Fin <span class="p-error">*</span></label>
+        <p-calendar id="cDateFin" formControlName="dateFin" dateFormat="dd/mm/yy"
+                    [showIcon]="true" [iconDisplay]="'input'" appendTo="body" placeholder="JJ/MM/AA"
+                    [ngClass]="{'ng-dirty': fc['dateFin'].invalid && fc['dateFin'].touched}">
+        </p-calendar>
+        @if (fc['dateFin'].invalid && fc['dateFin'].touched) {
+          <small class="p-error">La date de fin est requise.</small>
+        }
+      </div>
+    </div>
+
+    <div class="flex justify-content-end gap-2 mt-3">
+      <button pButton pRipple label="Annuler" icon="pi pi-times" class="p-button-text"
+              type="button" (click)="showCreateDialog = false"></button>
+      <button pButton pRipple label="Créer" icon="pi pi-check" type="submit"
+              [loading]="submittingCreate" [disabled]="submittingCreate"></button>
+    </div>
+  </form>
+</p-dialog>
+
+<!-- ============================================================ -->
+<!-- Dialogue : Modifier Contrat Cadre                            -->
+<!-- ============================================================ -->
+<p-dialog header="Modifier Contrat Cadre" [(visible)]="showEditDialog" [modal]="true"
+          [style]="{ width: '480px' }" [draggable]="false">
+
+  <form [formGroup]="editForm" (ngSubmit)="onSubmitEdit()">
+    <div class="p-fluid p-formgrid grid">
+
+      <div class="field col-12">
+        <label for="ePlafond">Plafond <span class="p-error">*</span></label>
+        <p-inputNumber id="ePlafond" formControlName="plafond"
+                       mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2"
+                       [ngClass]="{'ng-dirty': fe['plafond'].invalid && fe['plafond'].touched}">
+        </p-inputNumber>
+        @if (fe['plafond'].invalid && fe['plafond'].touched) {
+          <small class="p-error">Le plafond est requis (valeur positive).</small>
+        }
+      </div>
+
+      <div class="field col-12 md:col-6">
+        <label for="eDateDebut">Date Début <span class="p-error">*</span></label>
+        <p-calendar id="eDateDebut" formControlName="dateDebut" dateFormat="dd/mm/yy"
+                    [showIcon]="true" [iconDisplay]="'input'" appendTo="body" placeholder="JJ/MM/AA"
+                    [ngClass]="{'ng-dirty': fe['dateDebut'].invalid && fe['dateDebut'].touched}">
+        </p-calendar>
+        @if (fe['dateDebut'].invalid && fe['dateDebut'].touched) {
+          <small class="p-error">La date de début est requise.</small>
+        }
+      </div>
+
+      <div class="field col-12 md:col-6">
+        <label for="eDateFin">Date Fin <span class="p-error">*</span></label>
+        <p-calendar id="eDateFin" formControlName="dateFin" dateFormat="dd/mm/yy"
+                    [showIcon]="true" [iconDisplay]="'input'" appendTo="body" placeholder="JJ/MM/AA"
+                    [ngClass]="{'ng-dirty': fe['dateFin'].invalid && fe['dateFin'].touched}">
+        </p-calendar>
+        @if (fe['dateFin'].invalid && fe['dateFin'].touched) {
+          <small class="p-error">La date de fin est requise.</small>
+        }
+      </div>
+    </div>
+
+    <div class="flex justify-content-end gap-2 mt-3">
+      <button pButton pRipple label="Annuler" icon="pi pi-times" class="p-button-text"
+              type="button" (click)="showEditDialog = false"></button>
+      <button pButton pRipple label="Mettre à jour" icon="pi pi-check" type="submit"
+              [loading]="submittingEdit" [disabled]="submittingEdit"></button>
+    </div>
+  </form>
+</p-dialog>

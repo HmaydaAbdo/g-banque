@@ -1,0 +1,282 @@
+import {Component, OnDestroy, OnInit, ViewChild, inject} from '@angular/core';
+import {Router} from '@angular/router';
+import {ConfirmationService, MenuItem, MessageService} from "primeng/api";
+import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
+import {debounceTime, distinctUntilChanged, Subscription} from 'rxjs';
+import {CommonModule} from '@angular/common';
+import {FormBuilder, FormGroup, ReactiveFormsModule} from '@angular/forms';
+import {CardModule} from 'primeng/card';
+import {ButtonModule} from 'primeng/button';
+import {ToastModule} from 'primeng/toast';
+import {InputTextModule} from 'primeng/inputtext';
+import {DropdownModule} from 'primeng/dropdown';
+import {TagModule} from 'primeng/tag';
+import {TooltipModule} from 'primeng/tooltip';
+import {ConfirmDialogModule} from 'primeng/confirmdialog';
+import {RippleModule} from "primeng/ripple";
+import {DialogModule} from 'primeng/dialog';
+import {CalendarModule} from 'primeng/calendar';
+import {CreditMoyenTermeResponseDto} from "../../dtos/CreditMoyenTermeResponseDto";
+import {CmtService} from "../../services/CmtService";
+import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
+import {PageResponse} from "../../../global/types/PageResponse";
+import {BanqueResponse} from "../../../comptes-bancaire/dtos/BanqueResponse";
+import {CreditMoyenTermeSearchDto} from "../../dtos/CreditMoyenTermeSearchDto";
+import {BreadcrumbModule} from "primeng/breadcrumb";
+import {AuthService} from "../../../../auth/services/auth.service";
+
+@Component({
+  selector: 'app-cmt-list-actifs',
+  templateUrl: './cmt-list.component.html',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    CardModule,
+    ButtonModule,
+    ToastModule,
+    InputTextModule,
+    DropdownModule,
+    TableModule,
+    TagModule,
+    TooltipModule,
+    ConfirmDialogModule,
+    RippleModule,
+    DialogModule,
+    BreadcrumbModule,
+    CalendarModule
+  ],
+  providers: [MessageService, ConfirmationService]
+})
+export class CmtListComponent implements OnInit, OnDestroy {
+
+  credits: CreditMoyenTermeResponseDto[] = [];
+  totalRecords: number = 0;
+  loading: boolean = false;
+  exporting: boolean = false;
+
+  searchForm!: FormGroup;
+
+  banqueOptions: { label: string, value: number }[] = [];
+
+  @ViewChild('dt') dt: Table | undefined;
+
+  private subscriptions: Subscription[] = [];
+  private lastLazyLoadEvent: TableLazyLoadEvent = {
+    first: 0,
+    rows: 10,
+    sortField: 'id',
+    sortOrder: 1,
+    filters: {}
+  };
+  items: MenuItem[] | undefined;
+
+
+  private readonly cmtService = inject(CmtService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly fb = inject(FormBuilder);
+
+  ngOnInit(): void {
+
+    this.items = [
+      { icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" },
+      { icon: 'pi pi-list', route: '/portail/cmt', label:"Les Crédits Moyens Termes Actifs" },
+    ]
+    this.initSearchForm();
+    this.loadDropdownOptions();
+
+    const designationSub = this.searchForm.get('designation')?.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe(() => this.onSearch());
+
+    const banqueSub = this.searchForm.get('banqueId')?.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe(() => this.onSearch());
+
+    const dateDebutMinSub = this.searchForm.get('dateDebutMin')?.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe(() => this.onSearch());
+
+    const dateDebutMaxSub = this.searchForm.get('dateDebutMax')?.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe(() => this.onSearch());
+
+    this.subscriptions.push(designationSub!, banqueSub!, dateDebutMinSub!, dateDebutMaxSub!);
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  initSearchForm(): void {
+    this.searchForm = this.fb.group({
+      designation: [''],
+      banqueId: [null],
+      dateDebutMin: [null as Date | null],
+      dateDebutMax: [null as Date | null],
+    });
+  }
+
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut). */
+  showDatePanel = false;
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.searchForm.value;
+    return (v.dateDebutMin || v.dateDebutMax) ? 1 : 0;
+  }
+
+  loadDropdownOptions(): void {
+    this.banqueService.getAllBanques({}, 0, 1000).subscribe({
+      next: (response: PageResponse<BanqueResponse>) => {
+        this.banqueOptions = response.content.map(banque => ({
+          label: banque.nom,
+          value: banque.id
+        }));
+      },
+      error: () => {}
+    });
+  }
+
+  loadCredits(event: TableLazyLoadEvent): void {
+    this.loading = true;
+    this.lastLazyLoadEvent = event;
+
+    const currentPage = event.first! / event.rows!;
+    const pageSize = event.rows!;
+
+    let sort: string = 'id,asc';
+    if (event.sortField && event.sortOrder) {
+      const actualSortField = Array.isArray(event.sortField) ? event.sortField[0] : event.sortField;
+      sort = `${actualSortField},${event.sortOrder === 1 ? 'asc' : 'desc'}`;
+    }
+
+    const searchCriteria: CreditMoyenTermeSearchDto = {
+      designation: this.searchForm.get('designation')?.value,
+      banqueId:this.searchForm.get('banqueId')?.value,
+      dateDebutMin: this.searchForm.get('dateDebutMin')?.value ?? undefined,
+      dateDebutMax: this.searchForm.get('dateDebutMax')?.value ?? undefined,
+      page: currentPage,
+      size: pageSize,
+      sort: sort
+    };
+
+    this.cmtService.searchActiveCredits(searchCriteria).subscribe({
+      next: (page: PageResponse<CreditMoyenTermeResponseDto>) => {
+        this.credits = page.content;
+        this.totalRecords = page.page.totalElements;
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+      }
+    });
+  }
+
+  onSearch(): void {
+    if (this.dt) {
+      this.dt.first = 0;
+      this.loadCredits(this.dt.createLazyLoadMetadata());
+    } else {
+      this.loadCredits({
+        ...this.lastLazyLoadEvent,
+        first: 0
+      });
+    }
+  }
+
+  clearSearch(): void {
+    this.searchForm.reset({
+      designation: '',
+      banqueId: null,
+      dateDebutMin: null,
+      dateDebutMax: null,
+    });
+    if (this.dt) {
+      this.dt.clear();
+      this.dt.first = 0;
+      this.loadCredits(this.dt.createLazyLoadMetadata());
+    } else {
+      this.loadCredits(this.lastLazyLoadEvent);
+    }
+  }
+
+  createNewCredit(): void {
+    // Navigate to the creation form. The route should be defined in cmt.routes.ts.
+    this.router.navigate(['portail/cmt/new']);
+  }
+
+  exportPdf(): void {
+    this.exporting = true;
+    const searchCriteria: CreditMoyenTermeSearchDto = {
+      designation: this.searchForm.get('designation')?.value,
+      banqueId: this.searchForm.get('banqueId')?.value,
+      dateDebutMin: this.searchForm.get('dateDebutMin')?.value ?? undefined,
+      dateDebutMax: this.searchForm.get('dateDebutMax')?.value ?? undefined,
+    };
+
+    this.cmtService.exportActiveCreditsPdf(searchCriteria).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `credits_cmt_actifs_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.exporting = false;
+      }
+    });
+  }
+
+  viewAmortizationTable(creditId: number): void {
+    this.router.navigate(['portail/cmt', creditId, 'tableau-amortissement']);
+  }
+
+  editCredit(id: number): void {
+    this.router.navigate(['portail/cmt/edit', id]);
+  }
+
+  confirmDeleteCredit(credit: CreditMoyenTermeResponseDto): void {
+    this.confirmationService.confirm({
+      message: `Êtes-vous sûr de vouloir supprimer le crédit : ${credit.designation} ?`,
+      header: 'Confirmation de suppression',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Oui',
+      rejectLabel: 'Non',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-text',
+      accept: () => {
+        this.deleteCredit(credit.id);
+      }
+    });
+  }
+
+  deleteCredit(id: number): void {
+    this.cmtService.deleteCredit(id).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Crédit supprimé avec succès.' });
+        if (this.dt) {
+          this.loadCredits(this.dt.createLazyLoadMetadata());
+        } else {
+          this.loadCredits(this.lastLazyLoadEvent);
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  isAdmin():boolean {
+   return  this.authService.isSystemAdmin()
+  }
+}

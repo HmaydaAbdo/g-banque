@@ -1,0 +1,154 @@
+<div class="p-fluid">
+  <div [formGroup]="formGroup" class="px-6 py-4">
+    <div class="flex justify-content-between align-items-center mb-3">
+      <h3>Phases du Contrat</h3>
+      <p-button
+        label="Ajouter une Phase"
+        icon="pi pi-plus"
+        (onClick)="openNewPhaseDialog()"
+        severity="success"
+        [disabled]="!canAddPhase()"
+      ></p-button>
+    </div>
+
+    @if (showPhasesRequiredForTypeError()) {
+      <div class="mb-3">
+        <p-message severity="error" [text]="phasesRequiredForTypeMessage"></p-message>
+      </div>
+    }
+
+    @if (showTotalDurationMismatchError()) {
+      <div class="mb-3">
+        <p-message severity="error" [text]="totalDurationMismatchMessage"></p-message>
+      </div>
+    }
+
+    @if (showProgressiveOrderError()) {
+      <div class="mb-3">
+        <p-message severity="error" [text]="getProgressiveOrderMessage()"></p-message>
+      </div>
+    }
+
+    @if (showDegressiveOrderError()) {
+      <div class="mb-3">
+        <p-message severity="error" [text]="getDegressiveOrderMessage()"></p-message>
+      </div>
+    }
+
+    <p-table
+      [value]="(phasesForTable$ | async) || []"
+      [paginator]="true"
+      [rows]="5"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} phases"
+      [rowsPerPageOptions]="[5,10,20]"
+      [sortField]="'value.numeroPhase'"
+      [sortMode]="'single'"
+      [sortOrder]="1"
+      dataKey="value.numeroPhase"
+      [tableStyle]="{'min-width': '50rem'}"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="value.numeroPhase">Numéro Phase <p-sortIcon field="value.numeroPhase"></p-sortIcon></th>
+          <th pSortableColumn="value.dureeMois">Durée (Mois) <p-sortIcon field="value.dureeMois"></p-sortIcon></th>
+          <th pSortableColumn="value.mensualiteTTC">Mensualité TTC <p-sortIcon field="value.mensualiteTTC"></p-sortIcon></th>
+          <th>Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-phaseControl let-rowIndex="rowIndex">
+        <tr>
+          <td>{{ phaseControl.get('numeroPhase')?.value }}</td>
+          <td>{{ phaseControl.get('dureeMois')?.value }}</td>
+          <td><span class="num">{{ phaseControl.get('mensualiteTTC')?.value | number:'1.2-2' }} MAD</span></td>
+          <td>
+            <p-button icon="pi pi-pencil" severity="info" class="mr-2" (onClick)="editPhase(rowIndex)"></p-button>
+            <p-button icon="pi pi-trash" severity="danger" (onClick)="deletePhase(rowIndex)"></p-button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="4" class="text-center">Aucune phase ajoutée. Cliquez sur "Ajouter une Phase" pour commencer.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-dialog
+    [(visible)]="displayPhaseDialog"
+    [modal]="true"
+    [style]="{width: '50vw'}"
+    [breakpoints]="{'960px': '75vw', '640px': '95vw'}"
+    [header]="phaseDialogHeader"
+    (onHide)="cancelPhaseDialog()"
+  >
+    <form [formGroup]="phaseForm" class="p-fluid">
+      <div class="field mb-3">
+        <label for="dialogNumeroPhase">Numéro Phase</label>
+        <p-inputNumber
+          id="dialogNumeroPhase"
+          formControlName="numeroPhase"
+          [min]="1"
+          [readonly]="true"
+          class="w-full"
+        ></p-inputNumber>
+      </div>
+
+      <div class="field mb-3">
+        <label for="dialogDureeMois">Durée (Mois) <span class="p-error">*</span></label>
+        <p-inputNumber
+          id="dialogDureeMois"
+          formControlName="dureeMois"
+          [min]="1"
+          [showButtons]="true"
+          buttonLayout="horizontal"
+          decrementButtonIcon="pi pi-minus"
+          incrementButtonIcon="pi pi-plus"
+          [ngClass]="{'ng-invalid ng-dirty': dialogDureeMoisControl?.invalid && (dialogDureeMoisControl?.dirty || dialogDureeMoisControl?.touched)}"
+        ></p-inputNumber>
+        @if (dialogDureeMoisControl?.invalid && (dialogDureeMoisControl?.dirty || dialogDureeMoisControl?.touched)) {
+          <div class="p-error">
+            @if (dialogDureeMoisControl?.errors?.['required']) {
+              <p-message severity="error" text="La durée est requise."></p-message>
+            }
+            @if (dialogDureeMoisControl?.errors?.['min']) {
+              <p-message severity="error" text="La durée doit être au moins de 1 mois."></p-message>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="field mb-3">
+        <label for="dialogMensualiteTTC">Mensualité TTC <span class="p-error">*</span></label>
+        <p-inputNumber
+          id="dialogMensualiteTTC"
+          formControlName="mensualiteTTC"
+          mode="currency"
+          currency="MAD"
+          locale="fr-FR"
+          [min]="0.01"
+          class="w-full"
+          [ngClass]="{'ng-invalid ng-dirty': dialogMensualiteTTCControl?.invalid && (dialogMensualiteTTCControl?.dirty || dialogMensualiteTTCControl?.touched)}"
+        ></p-inputNumber>
+        @if (dialogMensualiteTTCControl?.invalid && (dialogMensualiteTTCControl?.dirty || dialogMensualiteTTCControl?.touched)) {
+          <div class="p-error">
+            @if (dialogMensualiteTTCControl?.errors?.['required']) {
+              <p-message severity="error" text="La mensualité est requise."></p-message>
+            }
+            @if (dialogMensualiteTTCControl?.errors?.['min']) {
+              <p-message severity="error" text="La mensualité doit être supérieure à 0."></p-message>
+            }
+          </div>
+        }
+      </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+      <p-button label="Annuler" icon="pi pi-times" severity="secondary" (onClick)="cancelPhaseDialog()"></p-button>
+      <p-button label="Enregistrer" icon="pi pi-check" (onClick)="savePhase()"></p-button>
+    </ng-template>
+  </p-dialog>
+
+  <p-confirmDialog></p-confirmDialog>
+</div>

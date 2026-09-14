@@ -1,0 +1,156 @@
+// recapitulatif.component.scss
+// Règles p-inputtext / p-multiselect hover → supprimées (centralisées dans styles.scss)
+
+.stat-card {
+  transition: all 0.3s ease;
+  cursor    : pointer;
+}
+.stat-card:hover {
+  background: var(--color-surface-3);
+  transform : scale(1.02);
+}
+
+.stat-icon {
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+.stat-card:hover .stat-icon {
+  transform : scale(1.1) rotate(5deg);
+  box-shadow: var(--shadow-md);
+}
+
+// ── Badges montants ─────────────────────────────────────
+.amount-badge {
+  padding      : 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-weight  : var(--weight-semibold);
+  transition   : all 0.3s ease;
+  display      : inline-block;
+}
+
+.debit-badge {
+  background: var(--color-danger-light);
+  color     : var(--color-danger-text);
+}
+.credit-badge {
+  background: var(--color-success-light);
+  color     : var(--color-success-text);
+}
+
+.amount-badge:hover { transform: scale(1.05); }
+
+.debit-badge:hover  { background: color-mix(in srgb, var(--color-danger-light) 70%, var(--color-danger) 30%); }
+.credit-badge:hover { background: color-mix(in srgb, var(--color-success-light) 70%, var(--color-success) 30%); }
+
+// ── Badge de sens (icône + libellé, une ligne peut être encaissement ou
+// décaissement depuis la fusion des deux écrans du 06/09/2026) ─────────
+.sens-badge {
+  display      : inline-flex;
+  align-items  : center;
+  gap          : 4px;
+  padding      : 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-weight  : var(--weight-semibold);
+  font-size    : var(--text-xs);
+  white-space  : nowrap;
+}
+.sens-decaissement {
+  background: var(--color-danger-light);
+  color     : var(--color-danger-text);
+}
+.sens-encaissement {
+  background: var(--color-success-light);
+  color     : var(--color-success-text);
+}
+
+// ── Bande de totaux ──────────────────────────────────────
+.totals-bar {
+  flex-shrink  : 0;
+  background   : var(--color-surface);
+  border       : 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding      : 0.5rem 1rem;
+  box-shadow   : var(--shadow-sm);
+}
+.stat-chip {
+  display      : flex;
+  align-items  : center;
+  gap          : 5px;
+  padding      : 3px 8px;
+  border-radius: var(--radius-sm);
+  white-space  : nowrap;
+}
+.stat-divider {
+  width      : 1px;
+  height     : 16px;
+  background : var(--color-border);
+  flex-shrink: 0;
+}
+
+// ── Lignes tableau ──────────────────────────────────────
+.table-row {
+  transition: all 0.2s ease;
+}
+.table-row:hover {
+  background: var(--color-surface-3) !important;
+  transform : scale(1.001);
+  box-shadow: var(--shadow-sm);
+}
+
+// ── Spécificité dark mode ────────────────────────────────
+.text-500  { color: var(--color-text-secondary) !important; }
+.text-400  { color: var(--color-text-muted)     !important; }
+.text-900  { color: var(--color-text-primary)   !important; }
+.text-red-600, .text-red-500   { color: var(--color-danger)   !important; }
+.text-green-600, .text-green-500 { color: var(--color-success) !important; }
+.text-orange-600               { color: var(--color-warning)  !important; }
+
+// ── Forcer texte blanc dans les cellules tableau ──────────
+.p-datatable .p-datatable-tbody > tr > td { color: var(--color-text-primary) !important; }
+.p-datatable .p-datatable-thead > tr > th { color: var(--color-text-secondary) !important; }
+.text-700, .text-600 { color: var(--color-text-primary) !important; }
+
+// ── Compteur d'opérations de la bande de totaux ──────────
+.count-badge {
+  padding      : 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-weight  : var(--weight-semibold);
+  background   : var(--color-surface-3);
+  color        : var(--color-text-primary);
+  display      : inline-block;
+}
+
+// Un total à zéro n'est pas une anomalie : c'est le sens exclu par le filtre.
+// On le désature pour qu'il ne tire pas l'oeil comme un montant réel.
+.amount-badge.is-zero {
+  background : var(--color-surface-3);
+  color      : var(--color-text-muted);
+  font-weight: var(--weight-medium);
+}
+.amount-badge.is-zero:hover { transform: none; background: var(--color-surface-3); }
+
+// ── Identifiant technique (dernier de la ligne, jamais l'info principale) ──
+.id-cell {
+  font-family   : var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size     : var(--text-xs);
+  color         : var(--color-text-muted);
+  letter-spacing: -0.02em;
+  cursor        : help;
+}
+
+// Icônes d'aide des libellés de filtre
+.pg-filters label .pi-info-circle { color: var(--color-text-muted); }
+
+// ── Bandeau de synthèse (caption du tableau) ─────────────
+// Totaux + export vivent dans l'en-tête du tableau plutôt que dans une
+// troisième carte : une surface de moins, et autant de hauteur rendue aux
+// lignes, qui n'étaient plus visibles sans scroller.
+.recap-summary { width: 100%; }
+
+// Bornes de date repliables : ligne complète sous les filtres quand ouvertes
+.recap-dates {
+  flex          : 1 0 100%;
+  border-top    : 1px dashed var(--color-border);
+  margin-top    : 0.5rem;
+  padding-top   : 0.75rem;
+}

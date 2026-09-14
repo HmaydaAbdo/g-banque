@@ -1,0 +1,195 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="flex flex-column w-full h-full overflow-y-scroll gap-3 p-3 pb-6"
+    >
+
+  <!-- ═══ HEADER ═══════════════════════════════════════════════════════════ -->
+  <div class="flex flex-column gap-1">
+    <h2 class="text-900 font-bold m-0" style="font-size:var(--text-title);letter-spacing:var(--tracking-tight)">
+      {{ isEditMode ? 'Modifier la banque' : 'Nouvelle banque' }}
+    </h2>
+    <p-breadcrumb [model]="items" styleClass="border-none p-0"
+                  [style]="{'background':'transparent','padding':'0','font-size':'var(--text-breadcrumb)'}">
+      <ng-template pTemplate="item" let-item>
+        <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
+          <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
+          <span class="text-400 text-xs ml-1">{{ item.label }}</span>
+        </a>
+      </ng-template>
+    </p-breadcrumb>
+  </div>
+
+  <!-- ═══ FORM CARD ════════════════════════════════════════════════════════ -->
+  <div class="surface-card border-round-xl border-1 surface-border p-4"
+       style="box-shadow:var(--shadow-md)">
+
+    <form [formGroup]="banqueForm" (ngSubmit)="saveBanque()" class="p-fluid">
+      <div class="formgrid grid">
+
+        <!-- Nom -->
+        <div class="field col-12 md:col-6">
+          <label for="nom" class="font-semibold block mb-2 text-700 text-sm">
+            Nom <span class="text-red-500">*</span>
+          </label>
+          <input type="text" pInputText id="nom" formControlName="nom" autofocus />
+          @if (f['nom'].invalid && f['nom'].touched) {
+            <small class="p-error">
+              @if (f['nom'].errors?.['required']) {
+                <span>Obligatoire.</span>
+              }
+            </small>
+          }
+        </div>
+
+        <!-- Numéro de compte -->
+        <div class="field col-12 md:col-6">
+          <label for="numeroDeCompte" class="font-semibold block mb-2 text-700 text-sm">
+            Numéro de compte <span class="text-red-500">*</span>
+          </label>
+          <input type="text" pInputText id="numeroDeCompte" formControlName="numeroDeCompte" />
+          @if (f['numeroDeCompte'].invalid && f['numeroDeCompte'].touched) {
+            <small class="p-error">
+              @if (f['numeroDeCompte'].errors?.['required']) {
+                <span>Obligatoire.</span>
+              }
+              @if (f['numeroDeCompte'].errors?.['pattern']) {
+                <span>Chiffres uniquement.</span>
+              }
+              @if (f['numeroDeCompte'].errors?.['minlength'] || f['numeroDeCompte'].errors?.['maxlength']) {
+                <span>24 chiffres requis.</span>
+              }
+            </small>
+          }
+          @if (isEditMode) {
+            <small class="text-400 text-xs">Non modifiable après création.</small>
+          }
+        </div>
+
+        <!-- Devise -->
+        <div class="field col-12 md:col-6">
+          <label for="devise" class="font-semibold block mb-2 text-700 text-sm">
+            Devise <span class="text-red-500">*</span>
+          </label>
+          <p-dropdown id="devise" formControlName="devise"
+                      [options]="devises"
+                      placeholder="Sélectionner une devise"
+                      appendTo="body">
+          </p-dropdown>
+          @if (f['devise'].invalid && f['devise'].touched) {
+            <small class="p-error">
+              @if (f['devise'].errors?.['required']) {
+                <span>Obligatoire.</span>
+              }
+            </small>
+          }
+        </div>
+
+        <!-- Adresse -->
+        <div class="field col-12 md:col-6">
+          <label for="adresse" class="font-semibold block mb-2 text-700 text-sm">
+            Adresse <span class="text-red-500">*</span>
+          </label>
+          <input type="text" pInputText id="adresse" formControlName="adresse" />
+          @if (f['adresse'].invalid && f['adresse'].touched) {
+            <small class="p-error">
+              @if (f['adresse'].errors?.['required']) {
+                <span>Obligatoire.</span>
+              }
+            </small>
+          }
+        </div>
+
+        <!-- Agence -->
+        <div class="field col-12 md:col-6">
+          <label for="agence" class="font-semibold block mb-2 text-700 text-sm">
+            Agence <span class="text-red-500">*</span>
+          </label>
+          <input type="text" pInputText id="agence" formControlName="agence" />
+          @if (f['agence'].invalid && f['agence'].touched) {
+            <small class="p-error">
+              @if (f['agence'].errors?.['required']) {
+                <span>Obligatoire.</span>
+              }
+            </small>
+          }
+        </div>
+
+        <!-- Solde initial (création uniquement) -->
+        @if (!isEditMode) {
+          <div class="field col-12 md:col-6">
+            <label for="soldeInitial" class="font-semibold block mb-2 text-700 text-sm">
+              Solde initial <span class="text-red-500">*</span>
+            </label>
+            <input type="number" pInputText id="soldeInitial" formControlName="soldeInitial" min="0" step="0.01" />
+            @if (f['soldeInitial'].invalid && f['soldeInitial'].touched) {
+              <small class="p-error">
+                @if (f['soldeInitial'].errors?.['required']) {
+                  <span>Obligatoire.</span>
+                }
+                @if (f['soldeInitial'].errors?.['min']) {
+                  <span>Le solde initial doit être positif ou nul.</span>
+                }
+              </small>
+            }
+            <small class="text-400 text-xs">
+              Solde de départ du premier rapprochement, ouvert automatiquement à la création.
+            </small>
+          </div>
+        }
+
+        <!-- Logo -->
+        <div class="field col-12">
+          <label class="font-semibold block mb-2 text-700 text-sm">Logo</label>
+          <div class="flex flex-column gap-2">
+            <p-fileUpload #fileUpload
+                          mode="basic"
+                          name="logoFile"
+                          accept="image/*"
+                          [maxFileSize]="1000000"
+                          (onSelect)="onLogoSelect($event)"
+                          chooseLabel="Choisir un logo">
+            </p-fileUpload>
+            @if (!isEditMode && !logoFile && banqueForm.touched) {
+              <small class="p-error">
+                Logo obligatoire pour une nouvelle banque.
+              </small>
+            }
+            @if (isEditMode && originalBanqueResponse?.logoBase64 && !logoFile) {
+              <div class="mt-1">
+                <span class="text-500 text-xs block mb-1">Logo actuel :</span>
+                <p-image [src]="'data:image/png;base64,' + originalBanqueResponse?.logoBase64"
+                         alt="Logo actuel" width="80">
+                </p-image>
+              </div>
+            }
+            @if (logoFile) {
+              <small class="text-600 text-xs">
+                <i class="pi pi-check-circle text-green-500 mr-1"></i>
+                Nouveau logo : {{ logoFile.name }}
+              </small>
+            }
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-content-end gap-2 mt-4 pt-3 border-top-1 surface-border">
+        <button pButton pRipple type="button"
+                label="Annuler"
+                icon="pi pi-times"
+                class="p-button-text p-button-secondary"
+                [routerLink]="['/portail/comptes-bancaires']">
+        </button>
+        <button pButton pRipple type="submit"
+                label="Enregistrer"
+                icon="pi pi-check"
+                [disabled]="loading">
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>

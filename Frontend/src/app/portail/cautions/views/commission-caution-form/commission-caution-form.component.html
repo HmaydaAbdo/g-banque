@@ -1,0 +1,141 @@
+<p-toast />
+<p-confirmDialog />
+
+<div class="flex flex-column gap-3 p-3 w-full h-full overflow-y-scroll" >
+
+  <!-- Breadcrumb -->
+  <p-breadcrumb [model]="breadcrumbItems" styleClass="border-none surface-ground border-round-xl px-3 py-2" />
+
+  <!-- Card formulaire -->
+  <div class="surface-card border-round-xl shadow-1 p-4">
+
+    <div class="flex align-items-center gap-2 mb-4">
+      <i class="pi pi-pencil text-primary text-xl"></i>
+      <h2 class="text-xl font-semibold m-0">Modifier la commission</h2>
+    </div>
+
+    <!-- Bandeau info : TVA recalculée automatiquement -->
+    <div class="flex align-items-start gap-2 p-3 border-round-lg bg-blue-50 border-left-3 border-blue-400 mb-4">
+      <i class="pi pi-info-circle text-blue-500 mt-1"></i>
+      <span class="text-sm text-blue-700">
+        La TVA associée à cette commission sera automatiquement recalculée lors de la sauvegarde (10 % du montant).
+      </span>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="formgrid grid pb-4">
+
+      <!-- Banque -->
+      <div class="field col-12 md:col-4">
+        <label class="font-medium text-sm mb-1 block">
+          Banque <span class="text-red-500">*</span>
+        </label>
+        <p-dropdown
+          formControlName="banqueId"
+          [options]="banques"
+          placeholder="Sélectionner une banque"
+          [filter]="true"
+          filterPlaceholder="Rechercher..."
+          styleClass="w-full"
+          [ngClass]="{ 'ng-invalid ng-dirty': f['banqueId'].invalid && f['banqueId'].touched }" />
+        @if (f['banqueId'].invalid && f['banqueId'].touched) {
+          <small class="p-error">
+            La banque est requise.
+          </small>
+        }
+      </div>
+
+      <!-- Date d'émission -->
+      <div class="field col-12 md:col-4">
+        <label class="font-medium text-sm mb-1 block">
+          Date d'émission <span class="text-red-500">*</span>
+        </label>
+        <p-calendar
+          formControlName="dateEmission"
+          dateFormat="dd/mm/yy"
+          [showIcon]="true"
+          styleClass="w-full"
+          [ngClass]="{ 'ng-invalid ng-dirty': f['dateEmission'].invalid && f['dateEmission'].touched }" />
+        @if (f['dateEmission'].invalid && f['dateEmission'].touched) {
+          <small class="p-error">
+            La date d'émission est requise.
+          </small>
+        }
+      </div>
+
+
+      <!-- Montant -->
+      <div class="field col-12 md:col-4">
+        <label class="font-medium text-sm mb-1 block">
+          Montant (MAD) <span class="text-red-500">*</span>
+        </label>
+        <p-inputNumber
+          formControlName="montant"
+          mode="decimal"
+          [minFractionDigits]="2"
+          [maxFractionDigits]="2"
+          [min]="0.01"
+          placeholder="0.00"
+          styleClass="w-full"
+          [ngClass]="{ 'ng-invalid ng-dirty': f['montant'].invalid && f['montant'].touched }" />
+        @if (f['montant'].invalid && f['montant'].touched) {
+          <small class="p-error">
+            Le montant est requis et doit être supérieur à 0.
+          </small>
+        }
+      </div>
+
+      <!-- Libellé -->
+      <div class="field col-12 md:col-6">
+        <label class="font-medium text-sm mb-1 block">
+          Libellé <span class="text-red-500">*</span>
+        </label>
+        <textarea
+          pInputTextarea
+          formControlName="libelle"
+          rows="3"
+          placeholder="Ex : caution RB N° 2024-001"
+          class="w-full"
+          [ngClass]="{ 'ng-invalid ng-dirty': f['libelle'].invalid && f['libelle'].touched }" >
+        </textarea>
+
+        @if (f['libelle'].invalid && f['libelle'].touched) {
+          <small class="p-error">
+            Le libellé est requis.
+          </small>
+        }
+      </div>
+
+
+      <!-- Observation -->
+      <div class="field col-12 md:col-6">
+        <label class="font-medium text-sm mb-1 block">Observation</label>
+        <textarea
+          pInputTextarea
+          formControlName="observation"
+          rows="3"
+          placeholder="Observation optionnelle..."
+          class="w-full resize-none">
+        </textarea>
+      </div>
+
+      <!-- Boutons -->
+      <div class="col-12 flex justify-content-end gap-2 mt-2">
+        <p-button
+          label="Annuler"
+          icon="pi pi-times"
+          severity="secondary"
+          [outlined]="true"
+          type="button"
+          (onClick)="onCancel()" />
+        <p-button
+          label="Enregistrer"
+          icon="pi pi-check"
+          type="submit"
+          [loading]="loading"
+          [disabled]="form.invalid" />
+      </div>
+
+    </form>
+  </div>
+
+</div>

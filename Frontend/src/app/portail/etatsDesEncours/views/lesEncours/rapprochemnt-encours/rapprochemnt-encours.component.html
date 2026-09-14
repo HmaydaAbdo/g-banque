@@ -1,0 +1,413 @@
+<p-toast></p-toast>
+<p-confirmDialog [style]="{width: '50vw'}" [baseZIndex]="1000"></p-confirmDialog>
+
+<div class="flex flex-column gap-3 w-full">
+
+  <!-- ── Filtres ──────────────────────────────────────────────────────────────
+       Même structure que l'écran Récapitulatifs : `form > champs en flex-column`
+       (déclenche la variante .pg-filters:has(form .flex-column) de styles.scss,
+       sinon les filtres débordent en scroll horizontal), barre repliable, et
+       pastilles résumant les critères actifs quand elle est fermée. -->
+  <div class="pg-filters">
+    <div class="pg-filters__bar flex align-items-center gap-2 flex-wrap w-full">
+      <button type="button" class="pg-filters__toggle"
+              (click)="toggleFilters()"
+              [attr.aria-expanded]="showFilters"
+              aria-controls="rappro-filters-panel">
+        <i class="pi" [class.pi-chevron-down]="showFilters" [class.pi-chevron-right]="!showFilters" aria-hidden="true"></i>
+        <i class="pi pi-sliders-h" aria-hidden="true"></i>
+        <span>Filtres</span>
+        @if (activeFilterCount > 0) {
+          <span class="pg-filters__count">{{ activeFilterCount }}</span>
+        }
+      </button>
+
+      @if (!showFilters && activeFilterChips.length > 0) {
+        <div class="flex align-items-center gap-1 flex-wrap">
+          @for (chip of activeFilterChips; track $index) {
+            <span class="pg-filters__chip">{{ chip }}</span>
+          }
+        </div>
+      }
+
+      <span class="flex-auto"></span>
+
+      @if (activeFilterCount > 0) {
+        <p-button label="Effacer" icon="pi pi-times" severity="secondary" size="small"
+                  (onClick)="clearSearch()" [style]="{'white-space':'nowrap'}"></p-button>
+      }
+    </div>
+
+    @if (showFilters) {
+    <form id="rappro-filters-panel" [formGroup]="searchForm" class="flex flex-wrap gap-3 align-items-end">
+
+      <div class="flex flex-column gap-1 flex-1" style="min-width:210px;">
+        <label for="transactionSources">Source</label>
+        <p-multiSelect inputId="transactionSources" formControlName="transactionSources"
+                       [options]="transactionSourceOptions"
+                       optionLabel="label" optionValue="value"
+                       placeholder="Toutes les sources"
+                       selectedItemsLabel="{0} sources sélectionnées"
+                       [showClear]="true" [filter]="true"
+                       appendTo="body" styleClass="w-full"></p-multiSelect>
+      </div>
+
+      <div class="flex flex-column gap-1 flex-1" style="min-width:190px;">
+        <label for="libelle">Libellé</label>
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-search"></i>
+          <input id="libelle" pInputText type="text" formControlName="libelle"
+                 placeholder="Rechercher..." class="w-full" />
+        </span>
+      </div>
+
+      <div class="flex flex-column gap-1 flex-1" style="min-width:190px;">
+        <label for="observation">Observation</label>
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-search"></i>
+          <input id="observation" pInputText type="text" formControlName="observation"
+                 placeholder="Rechercher..." class="w-full" />
+        </span>
+      </div>
+
+      <div class="flex flex-column gap-1" style="min-width:140px;">
+        <label for="montant">Montant</label>
+        <input id="montant" pInputText type="number" formControlName="montant"
+               placeholder="0,00" class="w-full" />
+      </div>
+
+      <div class="flex flex-column gap-1" style="min-width:165px;">
+        <label for="dateOperationDebut">Date d'opération — depuis</label>
+        <p-calendar inputId="dateOperationDebut" formControlName="dateOperationDebut"
+                    placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body"
+                    styleClass="w-full"></p-calendar>
+      </div>
+
+      <div class="flex flex-column gap-1" style="min-width:165px;">
+        <label for="dateOperationFin">Date d'opération — jusqu'au</label>
+        <p-calendar inputId="dateOperationFin" formControlName="dateOperationFin"
+                    placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body"
+                    styleClass="w-full"></p-calendar>
+      </div>
+
+    </form>
+    }
+  </div>
+
+  <!-- Section Tableau -->
+  <div class="pg-table">
+    <p-table
+      #dt
+      [value]="transactions"
+      [paginator]="true"
+      [rows]="10"
+      [totalRecords]="totalRecords"
+      [loading]="loading"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
+      (onLazyLoad)="loadTransactions($event)"
+      [rowHover]="true"
+      dataKey="id"
+      currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} transactions"
+      [showCurrentPageReport]="true"
+      styleClass="p-datatable-sm p-datatable-gridlines"
+      [tableStyle]="{'min-width': '50rem'}"
+    >
+
+      <ng-template pTemplate="caption">
+        <div class="rappro-summary flex align-items-center gap-1 flex-wrap">
+          <div class="stat-chip">
+            <span class="text-xs text-500">Total Débit réalisé</span>
+            <span class="amount-badge debit-badge">{{ (agregatedData?.totalDebit ?? 0) | number:'1.2-2' }} MAD</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-chip">
+            <span class="text-xs text-500">Total Crédit réalisé</span>
+            <span class="amount-badge credit-badge">{{ (agregatedData?.totalCredit ?? 0) | number:'1.2-2' }} MAD</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-chip">
+            <span class="text-xs text-500">TVA Déd.</span>
+            <span class="amount-badge credit-badge">{{ (agregatedData?.totalTvaDeductible ?? 0) | number:'1.2-2' }}</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-chip">
+            <span class="text-xs text-500">TVA Col.</span>
+            <span class="amount-badge debit-badge">{{ (agregatedData?.totalTvaCollectee ?? 0) | number:'1.2-2' }}</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-chip">
+            <span class="text-xs text-500"
+                  pTooltip="TVA collectée moins TVA déductible. Négatif = crédit de TVA en votre faveur."
+                  tooltipPosition="top">TVA Due</span>
+            <span class="amount-badge"
+                  [class.debit-badge]="(agregatedData?.tvaDue ?? 0) > 0"
+                  [class.credit-badge]="(agregatedData?.tvaDue ?? 0) < 0">
+              {{ (agregatedData?.tvaDue ?? 0) | number:'1.2-2' }}
+            </span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-chip">
+            <span class="text-xs text-500">Transactions</span>
+            <span class="count-badge">{{ totalRecords | number }}</span>
+          </div>
+
+          <span class="flex-auto"></span>
+
+          <button type="button" pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf"
+                  size="small" severity="secondary"
+                  pTooltip="Exporte exactement les lignes filtrées" tooltipPosition="left"
+                  [loading]="exporting" (click)="exportPdf()"></button>
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="dateEmission" class="white-space-nowrap">
+            D.émission
+              <p-sortIcon field="dateEmission"></p-sortIcon>
+          </th>
+          <th pSortableColumn="dateOperations" class="white-space-nowrap">
+            D.opération
+              <p-sortIcon field="dateOperations"></p-sortIcon>
+          </th>
+          <th pSortableColumn="dateValeur" class="white-space-nowrap">
+            D.valeur
+              <p-sortIcon field="dateValeur"></p-sortIcon>
+          </th>
+          <th pSortableColumn="libelle">
+            Libellé
+              <p-sortIcon field="libelle"></p-sortIcon>
+          </th>
+          <th pSortableColumn="debit" class="text-right">
+            Débit
+              <p-sortIcon field="debit"></p-sortIcon>
+          </th>
+          <th pSortableColumn="credit" class="text-right">
+            Crédit
+              <p-sortIcon field="credit"></p-sortIcon>
+          </th>
+          <th pSortableColumn="tvaDeductible" class="text-right white-space-nowrap">
+            TVA Déductible
+              <p-sortIcon field="tvaDeductible"></p-sortIcon>
+          </th>
+          <th pSortableColumn="tvaCollectee" class="text-right white-space-nowrap">
+            TVA Collectée
+              <p-sortIcon field="tvaCollectee"></p-sortIcon>
+          </th>
+          <th pSortableColumn="observation">
+            Observation
+              <p-sortIcon field="observation"></p-sortIcon>
+          </th>
+          <th pSortableColumn="transactionSource">
+            Source
+              <p-sortIcon field="transactionSource"></p-sortIcon>
+          </th>
+          <th class="text-center">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-transaction>
+        <tr class="hover:surface-hover transition-duration-150">
+          <td class="white-space-nowrap">
+            <span class="text-700">{{ transaction.dateEmission | date:'dd/MM/yyyy' }}</span>
+          </td>
+          <td class="white-space-nowrap">
+            <span class="text-700">{{ transaction.dateOperations | date:'dd/MM/yyyy' }}</span>
+          </td>
+          <td class="white-space-nowrap">
+            <span class="text-700">{{ transaction.dateValeur | date:'dd/MM/yyyy' }}</span>
+          </td>
+          <td>
+            <span class="font-medium text-900">{{ transaction.libelle }}</span>
+          </td>
+          <td class="text-right white-space-nowrap">
+            @if (transaction.debit !== 0) {
+            <span class="amount-badge debit-badge">
+              {{ transaction.debit | number:'1.2-2' }}
+            </span>
+            }
+            @if (transaction.debit === 0) {
+            <span class="text-500">—</span>
+            }
+          </td>
+          <td class="text-right white-space-nowrap">
+            @if (transaction.credit !== 0) {
+            <span class="amount-badge credit-badge">
+              {{ transaction.credit | number:'1.2-2' }}
+            </span>
+            }
+            @if (transaction.credit === 0) {
+            <span class="text-500">—</span>
+            }
+          </td>
+          <td class="text-right white-space-nowrap">
+            @if (transaction.tvaDeductible !== null) {
+            <span class="amount-badge credit-badge">
+              {{ transaction.tvaDeductible | number:'1.2-2' }}
+            </span>
+            }
+            @if (transaction.tvaDeductible === null) {
+            <span class="text-500">—</span>
+            }
+          </td>
+          <td class="text-right white-space-nowrap">
+            @if (transaction.tvaCollectee !== null) {
+            <span class="amount-badge debit-badge">
+              {{ transaction.tvaCollectee | number:'1.2-2' }}
+            </span>
+            }
+            @if (transaction.tvaCollectee === null) {
+            <span class="text-500">—</span>
+            }
+          </td>
+          <td>
+            <span class="text-700">{{ transaction.observation }}</span>
+          </td>
+          <td>
+            <app-source-badge [source]="transaction.transactionSource"></app-source-badge>
+          </td>
+          <td>
+            <div class="flex flex-row gap-1 justify-content-center align-items-center">
+            <p-button
+              [outlined]="true"
+              [rounded]="true"
+              severity="primary"
+              pTooltip="Modifier"
+              tooltipPosition="left"
+              size="small"
+              icon="pi pi-pencil"
+              (onClick)="openEditDialog(transaction)">
+            </p-button>
+            <p-button
+              [outlined]="true"
+              [rounded]="true"
+              severity="danger"
+              pTooltip="Supprimer"
+              tooltipPosition="left"
+              size="small"
+              icon="pi pi-trash"
+              (onClick)="rollbackTransaction(transaction.id)">
+            </p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="11" class="text-center p-4">
+            <div class="flex flex-column align-items-center gap-3">
+              <i class="pi pi-inbox text-4xl text-400"></i>
+              <div class="text-700 font-semibold">Aucune transaction trouvée</div>
+              <div class="text-500 text-sm">Il n'y a aucune transaction pour cette banque.</div>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        @for (i of [1,2,3,4,5,6]; track i) {
+        <tr>
+          <td><p-skeleton width="5.5rem" height="1rem"></p-skeleton></td>
+          <td><p-skeleton width="5.5rem" height="1rem"></p-skeleton></td>
+          <td><p-skeleton width="5.5rem" height="1rem"></p-skeleton></td>
+          <td><p-skeleton width="7rem" height="1rem"></p-skeleton></td>
+          <td><p-skeleton width="5rem" height="1rem" styleClass="ml-auto"></p-skeleton></td>
+          <td><p-skeleton width="5rem" height="1rem" styleClass="ml-auto"></p-skeleton></td>
+          <td><p-skeleton width="4rem" height="1rem" styleClass="ml-auto"></p-skeleton></td>
+          <td><p-skeleton width="4rem" height="1rem" styleClass="ml-auto"></p-skeleton></td>
+          <td><p-skeleton width="6rem" height="1rem"></p-skeleton></td>
+          <td><p-skeleton width="5rem" height="1.5rem" borderRadius="1rem"></p-skeleton></td>
+          <td><p-skeleton width="4rem" height="1.75rem" borderRadius="var(--radius-md)"></p-skeleton></td>
+        </tr>
+        }
+      </ng-template>
+
+    </p-table>
+  </div>
+
+  <p-dialog
+    header="Modifier une transaction"
+    [(visible)]="displayEditDialog"
+    [modal]="true"
+    [closable]="true">
+
+    <form [formGroup]="editDateForm">
+      <!-- Date d'opération -->
+      <div class=" flex flex-column  mb-3">
+        <label class="font-semibold text-sm">Date d'opération</label>
+        <p-calendar
+          formControlName="dateOperation"
+          dateFormat="dd/mm/yy"
+          appendTo="body"
+          [showIcon]="true"
+          [readonlyInput]="true"
+          [showOnFocus]="false"
+          [inputStyle]="{'cursor':'pointer'}">
+        </p-calendar>
+        @if (editDateForm.get('dateOperation')?.invalid && editDateForm.get('dateOperation')?.touched) {
+        <small class="text-red-500">
+          La date d'opération est obligatoire
+        </small>
+        }
+      </div>
+
+      <!-- Date de valeur -->
+      <div class=" flex flex-column  mb-3">
+        <label class="font-semibold text-sm">Date de valeur</label>
+        <p-calendar
+          formControlName="dateValeur"
+          dateFormat="dd/mm/yy"
+          appendTo="body"
+          [showOnFocus]="false"
+          [showIcon]="true"
+          [readonlyInput]="true"
+          [inputStyle]="{'cursor':'pointer'}">
+        </p-calendar>
+        @if (editDateForm.get('dateValeur')?.invalid && editDateForm.get('dateValeur')?.touched) {
+        <small class="text-red-500">
+          La date de valeur est obligatoire
+        </small>
+        }
+      </div>
+
+      <!-- TVA Déductible -->
+      <div class=" flex flex-column  mb-3">
+        <label class="font-semibold text-sm">TVA Déductible</label>
+        <input type="number"
+               pInputText
+               formControlName="tvaDeductible"
+               class="w-full"/>
+        @if (editDateForm.get('tvaDeductible')?.invalid && editDateForm.get('tvaDeductible')?.touched) {
+        <small class="text-red-500">
+          Ce champ est obligatoire
+        </small>
+        }
+      </div>
+
+      <!-- TVA Collectée -->
+      <div class=" flex flex-column  mb-3">
+        <label class="font-semibold text-sm">TVA Collectée</label>
+        <input type="number"
+               pInputText
+               formControlName="tvaCollecte"
+               class="w-full"/>
+        @if (editDateForm.get('tvaCollecte')?.invalid && editDateForm.get('tvaCollecte')?.touched) {
+        <small class="text-red-500">
+          Ce champ est obligatoire
+        </small>
+        }
+      </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+      <p-button label="Annuler" severity="secondary" (click)="closeEditDialog()"></p-button>
+      <p-button label="Enregistrer" severity="success" (click)="updateTransaction()" [disabled]="editDateForm.invalid"></p-button>
+    </ng-template>
+  </p-dialog>
+
+
+</div>

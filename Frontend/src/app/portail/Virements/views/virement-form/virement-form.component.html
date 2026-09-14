@@ -1,0 +1,111 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="portail-section w-full h-full overflow-y-scroll pt-2 pb-8 px-5">
+
+  <div class="flex justify-content-center w-full">
+    <p-breadcrumb [model]="items">
+      <ng-template pTemplate="item" let-item>
+        <ng-container>
+          <a [routerLink]="item.routerLink" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold text-sm">{{ item.label }}</span>
+          </a>
+        </ng-container>
+      </ng-template>
+    </p-breadcrumb>
+  </div>
+
+  <p class="text-center font-bold ">{{ isEditMode ? 'Modifier un Virement' : 'Ajouter un Virement' }}</p>
+
+  @if (loading) {
+    <div class="flex justify-content-center my-5">
+      <p-progressSpinner></p-progressSpinner>
+    </div>
+  }
+
+  @if (!loading && virementForm) {
+    <form [formGroup]="virementForm" (ngSubmit)="saveVirement()">
+      <div class="p-fluid formgrid grid">
+
+        <div class="col-12 md:col-6 field">
+          <label for="banqueBeneficiaireId">Banque d'encaissement <span class="p-text-danger">*</span></label>
+          <p-dropdown
+            formControlName="banqueBeneficiaireId"
+            [options]="banques"
+            optionLabel="nom"
+            optionValue="id"
+            placeholder="Sélectionner une banque"
+            [filter]="true"
+            filterBy="nom"
+            [virtualScroll]="true"
+            [lazy]="true"
+            [virtualScrollItemSize]="38"
+            (onLazyLoad)="loadBanques($event)"/>
+          @if (f['banqueBeneficiaireId'].invalid && f['banqueBeneficiaireId'].touched) {
+            <small class="p-error">
+              @if (f['banqueBeneficiaireId'].errors?.['required']) {
+                <span>La banque bénéficiaire est obligatoire.</span>
+              }
+            </small>
+          }
+        </div>
+
+        <div class="col-12 md:col-6 field">
+          <label for="dateReception">Date de Réception <span class="p-text-danger">*</span></label>
+          <p-calendar id="dateReception" formControlName="dateReception"  dateFormat="dd/mm/yy"   [showOnFocus]="false" placeholder="JJ/MM/YYYY"></p-calendar>
+          @if (f['dateReception'].invalid && f['dateReception'].touched) {
+            <small class="p-error">
+              @if (f['dateReception'].errors?.['required']) {
+                <span>La date de réception est obligatoire.</span>
+              }
+            </small>
+          }
+        </div>
+
+        <div class="col-12 md:col-6 field">
+          <label for="montant">Montant <span class="p-text-danger">*</span></label>
+          <p-inputNumber id="montant" formControlName="montant" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" inputId="decimal" suffix=" MAD"></p-inputNumber>
+          @if (f['montant'].invalid && f['montant'].touched) {
+            <small class="p-error">
+              @if (f['montant'].errors?.['required']) {
+                <span>Le montant est obligatoire.</span>
+              }
+              @if (f['montant'].errors?.['min']) {
+                <span>Le montant doit être supérieur à zéro.</span>
+              }
+            </small>
+          }
+        </div>
+
+        <div class="col-12 md:col-6 field">
+          <label for="emetteur">Émetteur <span class="p-text-danger">*</span></label>
+          <input type="text" pInputText id="emetteur" formControlName="emetteur" />
+          @if (f['emetteur'].invalid && f['emetteur'].touched) {
+            <small class="p-error">
+              @if (f['emetteur'].errors?.['required']) {
+                <span>L'émetteur est obligatoire.</span>
+              }
+            </small>
+          }
+        </div>
+
+        <div class="col-12 md:col-6 field">
+          <label for="beneficiaire">Bénéficiaire</label>
+          <input type="text" pInputText id="beneficiaire" formControlName="beneficiaire"  />
+        </div>
+
+        <div class="col-12 md:col-6 field">
+          <label for="type">Type de Virement</label>
+          <input type="text" pInputText id="type" formControlName="type"  />
+        </div>
+
+      </div>
+
+      <div class="col-12 flex justify-content-end gap-2 mt-4">
+        <button pButton pRipple label="Annuler" size="small" icon="pi pi-times" (click)="location.back()"  type="button" severity="secondary"></button>
+        <button pButton pRipple label="Enregistrer" size="small" icon="pi pi-check" type="submit" [disabled]="loading || virementForm.invalid"></button>
+      </div>
+    </form>
+  }
+</div>

@@ -1,0 +1,125 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="portail-section w-full h-full overflow-y-scroll pt-2 pb-8 px-5">
+
+  <div class="flex justify-content-center w-full">
+    <p-breadcrumb [model]="items">
+      <ng-template pTemplate="item" let-item>
+        <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+          <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
+          <span class="text-black-alpha-90 p-2 text-sm font-bold">{{ item.label }}</span>
+        </a>
+      </ng-template>
+    </p-breadcrumb>
+  </div>
+
+  <p class="text-center font-bold ">{{ isEditMode ? 'Modifier un Marché' : 'Ajouter un Marché' }}</p>
+
+  <form [formGroup]="marcheForm" (ngSubmit)="saveMarche()">
+    <div class="p-fluid formgrid grid">
+
+      <div class="col-12 md:col-6 field">
+        <label for="banque">Banque <span class="p-text-danger">*</span></label>
+        <p-dropdown
+          formControlName="banqueId"
+          [options]="banques"
+          optionLabel="nom"
+          optionValue="id"
+          placeholder="Sélectionner une banque"
+          [filter]="true"                  filterBy="nom"                   [virtualScroll]="true"
+          [lazy]="true"                    [virtualScrollItemSize]="38"     [loading]="loadingBanques"
+          (onLazyLoad)="loadBanques($event)">
+        </p-dropdown>
+        @if (f['banqueId'].invalid && f['banqueId'].touched) {
+          <small class="p-error">
+            @if (f['banqueId'].errors?.['required']) {
+              <span>La banque est obligatoire.</span>
+            }
+          </small>
+        }
+      </div>
+
+      <div class="col-12 md:col-6 field">
+
+        <label for="numero">Numéro du Marché <span class="p-text-danger">*</span></label>
+        <input type="text" pInputText id="numero" formControlName="numero" autofocus />
+        @if (f['numero'].invalid && f['numero'].touched) {
+          <small class="p-error">
+            @if (f['numero'].errors?.['required']) {
+              <span>Le numéro du marché est obligatoire.</span>
+            }
+          </small>
+        }
+      </div>
+
+      <div class="col-12 md:col-6 field">
+        <label for="nom">Nom du Marché <span class="p-text-danger">*</span></label>
+        <input type="text" pInputText id="nom" formControlName="nom" />
+        @if (f['nom'].invalid && f['nom'].touched) {
+          <small class="p-error">
+            @if (f['nom'].errors?.['required']) {
+              <span>Le nom du marché est obligatoire.</span>
+            }
+          </small>
+        }
+      </div>
+
+      <div class="col-12 md:col-6 field">
+        <label for="montant">Montant <span class="p-text-danger">*</span></label>
+        <p-inputNumber id="montant" formControlName="montant" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" inputId="decimal" suffix=" MAD"></p-inputNumber>
+        @if (f['montant'].invalid && f['montant'].touched) {
+          <small class="p-error">
+            @if (f['montant'].errors?.['required']) {
+              <span>Le montant est obligatoire.</span>
+            }
+            @if (f['montant'].errors?.['min']) {
+              <span>Le montant doit être supérieur à zéro.</span>
+            }
+          </small>
+        }
+      </div>
+
+      <div class="col-12 md:col-6 field">
+        <label for="maitreDouvrage">Maître d'ouvrage <span class="p-text-danger">*</span></label>
+        <input type="text" pInputText id="maitreDouvrage" formControlName="maitreDouvrage" />
+        @if (f['maitreDouvrage'].invalid && f['maitreDouvrage'].touched) {
+          <small class="p-error">
+            @if (f['maitreDouvrage'].errors?.['required']) {
+              <span>Le maître d'ouvrage est obligatoire.</span>
+            }
+          </small>
+        }
+      </div>
+
+      <div class="col-12 md:col-6 field">
+        <label for="dateDebutDesTravaux">Date de début des travaux </label>
+        <p-calendar id="dateDebutDesTravaux" formControlName="dateDebutDesTravaux"  [showOnFocus]="false" [iconDisplay]="'input'" [showIcon]="true"  appendTo="body"  dateFormat="dd/mm/yy"></p-calendar>
+        @if (f['dateDebutDesTravaux'].invalid && f['dateDebutDesTravaux'].touched) {
+          <small class="p-error">
+            @if (f['dateDebutDesTravaux'].errors?.['required']) {
+              <span>La date de début des travaux est obligatoire.</span>
+            }
+          </small>
+        }
+      </div>
+
+      <div class="col-12 md:col-6 field">
+        <label for="dateDAchievementDesTravaux">Date d'achèvement des travaux </label>
+        <p-calendar id="dateDAchievementDesTravaux" formControlName="dateDAchievementDesTravaux"  [showOnFocus]="false" [iconDisplay]="'input'" [showIcon]="true"  appendTo="body"  dateFormat="dd/mm/yy"></p-calendar>
+        @if (f['dateDAchievementDesTravaux'].invalid && f['dateDAchievementDesTravaux'].touched) {
+          <small class="p-error">
+            @if (f['dateDAchievementDesTravaux'].errors?.['required']) {
+              <span>La date d'achèvement des travaux est obligatoire.</span>
+            }
+          </small>
+        }
+      </div>
+    </div>
+
+    <div class="col-12 flex justify-content-end gap-2 ">
+      <button pButton pRipple label="Annuler" size="small" icon="pi pi-times" [routerLink]="['/portail/marches']" type="button" severity="secondary"></button>
+      <button pButton pRipple label="Enregistrer" size="small" icon="pi pi-check" type="submit" [disabled]="loading"></button>
+    </div>
+  </form>
+</div>

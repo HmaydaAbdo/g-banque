@@ -1,0 +1,368 @@
+import {Component, inject, OnInit, ViewChild} from '@angular/core';
+import {ActivatedRoute, Router, RouterLink} from '@angular/router';
+import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
+import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
+import {CardModule} from 'primeng/card';
+import {ButtonModule} from 'primeng/button';
+import {ToastModule} from 'primeng/toast';
+import {TooltipModule} from 'primeng/tooltip';
+import {PaginatorModule} from 'primeng/paginator';
+import {ConfirmationService, MessageService} from 'primeng/api';
+import {RippleModule} from 'primeng/ripple';
+import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
+import {ValidationService} from "../../../../services/validation/validation.service";
+import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
+import {DividerModule} from "primeng/divider";
+import {InputTextareaModule} from "primeng/inputtextarea";
+import {CalendarModule} from "primeng/calendar";
+import {DialogModule} from "primeng/dialog";
+import {InputTextModule} from "primeng/inputtext";
+import {DropdownModule} from "primeng/dropdown";
+import {InputNumberModule} from "primeng/inputnumber";
+import {debounceTime, distinctUntilChanged} from "rxjs/operators";
+import {ConfirmDialogModule} from "primeng/confirmdialog";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import {VirementInternationalTransactionRequestDto} from "../../../../dtos/virementsInternationaux/VirementInternationalTransactionRequestDto";
+import {
+  VirementInternationalResponseDto
+} from "../../../../../virementInternational/dtos/VirementInternationalResponseDto";
+import {
+  EncoursVirementsInternationalSearchDto
+} from "../../../../../virementInternational/dtos/EncoursVirementsInternationalSearchDto";
+import {
+  VirementInternationalService
+} from "../../../../../virementInternational/service/virement-international.service";
+import {
+  EncoursVirementInternationalResponseDto
+} from "../../../../../virementInternational/dtos/EncoursVirementInternationalResponseDto";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
+import {SensOperation} from "../../../../../transactions/dtos/SensOperation";
+import {BatchValidationResponseDto} from "../../../../dtos/lot/BatchValidationResponseDto";
+import {ValidationLotModalComponent} from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import {TvaInputComponent} from "../../shared/tva-input/tva-input.component";
+import {
+  decrireSaisieTva,
+  messageErreurTva,
+  SaisieTva,
+  saisieTvaParDefaut
+} from "../../shared/tva-input/saisie-tva.model";
+import {TableSelectionState} from "../../shared/table-selection.state";
+
+@Component({
+  selector: 'app-virement-international-encours-decaissement',
+  standalone: true,
+  imports: [
+    CommonModule,
+    TableModule,
+    CardModule,
+    ButtonModule,
+    ToastModule,
+    TooltipModule,
+    PaginatorModule,
+    DatePipe,
+    RippleModule,
+    DividerModule,
+    InputTextareaModule,
+    CalendarModule,
+    ReactiveFormsModule,
+    DialogModule,
+    InputTextModule,
+    DropdownModule,
+    InputNumberModule,
+    ConfirmDialogModule,
+    RouterLink,
+    ValidationLotModalComponent,
+    TvaInputComponent,
+  ],
+  templateUrl: './virement-international-encours-decaissement.component.html',
+  providers: [MessageService, ConfirmationService, DecimalPipe],
+})
+export class VirementInternationalEncoursDecaissementComponent implements OnInit {
+  virements: VirementInternationalResponseDto[] = [];
+  totalRecords: number = 0;
+  loading: boolean = false;
+  exporting: boolean = false;
+  banqueIdFromRoute!: number;
+  totalEncours!: number;
+  currentMonthYear: string | null = null;
+  @ViewChild('dt') dt: Table | undefined;
+
+  // Propriétés pour la modale de validation
+  displayModal: boolean = false;
+  rapprochementForm!: FormGroup;
+  selectedVirement: VirementInternationalResponseDto | null = null;
+
+  // Propriétés pour la recherche et TVA
+  searchForm!: FormGroup;
+  currentSearchDto: EncoursVirementsInternationalSearchDto = {};
+
+  isSubmitting: boolean = false;
+
+  /** Exposé au template pour le message d'erreur du champ TVA. */
+  readonly messageErreurTva = messageErreurTva;
+
+  /** Borne haute du montant de TVA saisissable, exposée au template. */
+  get montantMaxTva(): number | null {
+    return this.selectedVirement?.montant ?? null;
+  }
+
+  // Validation en lot
+  selectionState = new TableSelectionState<VirementInternationalResponseDto>(v => v.id);
+  displayLotModal: boolean = false;
+  readonly TransactionSource = TransactionSource;
+  readonly SensOperation = SensOperation;
+
+  get pageSelection(): VirementInternationalResponseDto[] {
+    return this.selectionState.getPageSelection(this.virements);
+  }
+
+  onSelectionChange(selection: VirementInternationalResponseDto[]): void {
+    this.selectionState.onPageSelectionChange(this.virements, selection);
+  }
+
+  get selectedCount(): number {
+    return this.selectionState.count;
+  }
+
+  get selectedIds(): number[] {
+    return this.selectionState.selectedIds;
+  }
+
+  get montantTotalSelection(): number {
+    return this.selectionState.sumBy(v => v.montant);
+  }
+
+  clearSelection(): void {
+    this.selectionState.clear();
+  }
+
+  onLotValidated(response: BatchValidationResponseDto): void {
+    this.selectionState.clear();
+    this.loadOutstandingVirements();
+    this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+    this.bankStateService.notifyValidation();
+  }
+
+  private readonly virementInternationalService = inject(VirementInternationalService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly messageService = inject(MessageService);
+  private readonly datePipe = inject(DatePipe);
+  private readonly rapprochementService = inject(ValidationService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly decimalPipe = inject(DecimalPipe);
+  private readonly fb = inject(FormBuilder);
+  private readonly bankStateService = inject(BankStateService);
+
+  ngOnInit(): void {
+    // Récupérer l'ID de la banque depuis les paramètres de la route parente
+    this.route.parent!.paramMap.subscribe((params) => {
+      const id = params.get('banqueId');
+      if (id) {
+        this.banqueIdFromRoute = +id;
+        this.loadOutstandingVirements();
+      }
+    });
+    this.initSearchForm();
+    this.initRapprochementForm();
+  }
+
+  initSearchForm(): void {
+    this.searchForm = this.fb.group({
+      dateEmission: [''],
+      beneficiaire: [''],
+      montant: [null]
+    });
+
+    this.searchForm.valueChanges
+      .pipe(
+        debounceTime(400),
+        distinctUntilChanged()
+      )
+      .subscribe((searchDto: EncoursVirementsInternationalSearchDto) => {
+        this.currentSearchDto = searchDto;
+        this.loadOutstandingVirements();
+      });
+  }
+
+  initRapprochementForm(): void {
+    this.rapprochementForm = this.fb.group({
+      dateEmission: [null, Validators.required],
+      dateValeur: [null, Validators.required],
+      dateOperation: [null, Validators.required],
+      observation: ['', Validators.required],
+      tva: [saisieTvaParDefaut()],
+      libelle: ['', Validators.required],
+    });
+  }
+
+  openRapprochementModal(virement: VirementInternationalResponseDto): void {
+    this.selectedVirement = virement;
+    this.initRapprochementForm();
+
+    this.rapprochementForm.patchValue({
+      dateEmission: parseLocalDate(virement.dateEmission)!,
+      libelle: virement.libelle,
+      observation: virement.observation
+    });
+
+    this.displayModal = true;
+  }
+
+  confirmRapprochement(): void {
+    if (this.rapprochementForm.invalid) {
+      this.rapprochementForm.markAllAsTouched();
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Veuillez remplir tous les champs obligatoires et corriger les erreurs.'
+      });
+      return;
+    }
+
+    if (this.rapprochementForm.valid && this.selectedVirement) {
+      const formValue = this.rapprochementForm.getRawValue();
+      const selectedVirement = this.selectedVirement;
+
+      // Formatage des dates pour l'affichage
+      const dateEmissionFormatted = this.datePipe.transform(formValue.dateEmission, 'dd/MM/yyyy');
+      const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
+      const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
+
+      // Création du message de récapitulatif en HTML
+      const recapMessage = `
+        Êtes-vous sûr de vouloir rapprocher ce virement international ?
+        <br><br>
+        <strong>Bénéficiaire:</strong> ${selectedVirement.beneficiaire}
+        <br>
+        <strong>Émetteur:</strong> ${selectedVirement.emetteur || 'N/A'}
+        <br>
+        <strong>Montant:</strong> ${this.decimalPipe.transform(selectedVirement.montant, "1.2-2", 'fr-FR')} MAD
+        <br><br>
+        <strong>Détails du Rapprochement:</strong>
+        <ul>
+          <li><strong>Date d'émission:</strong> ${dateEmissionFormatted}</li>
+          <li><strong>Date de valeur:</strong> ${dateValeurFormatted || '-'}</li>
+          <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
+          <li><strong>Libellé:</strong> ${formValue.libelle}</li>
+          <li><strong>Observation:</strong> ${formValue.observation}</li>
+          <li><strong>TVA:</strong> ${decrireSaisieTva(formValue.tva)}</li>
+        </ul>
+      `;
+
+      this.confirmationService.confirm({
+        message: recapMessage,
+        header: 'Confirmation de Rapprochement Virement International',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Confirmer',
+        rejectLabel: 'Annuler',
+        accept: () => {
+          this.submitRapprochement();
+        },
+        reject: () => {
+          // L'utilisateur a annulé, aucune action
+        }
+      });
+    }
+  }
+
+  submitRapprochement(): void {
+    if (this.rapprochementForm.valid && this.selectedVirement) {
+      const formValue = this.rapprochementForm.getRawValue();
+      const rapprochementId = this.bankStateService.getRapprochementId();
+
+      const virementInternationalTransactionRequest: VirementInternationalTransactionRequestDto = {
+        id: this.selectedVirement.id,
+        dateEmission: this.datePipe.transform(formValue.dateEmission,'yyyy-MM-dd') as string ,
+        dateValeur: this.datePipe.transform(formValue.dateValeur,'yyyy-MM-dd') as string,
+        dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd' ) as string,
+        observation: formValue.observation,
+        tauxTva: (formValue.tva as SaisieTva).tauxTva,
+        montantTva: (formValue.tva as SaisieTva).montantTva,
+        transactionSource: TransactionSource.VIREMENT_INTERNATIONAL,
+        libelle: formValue.libelle,
+        rapprochementId: rapprochementId!
+      };
+
+      this.isSubmitting = true;
+      this.rapprochementService.virementInternationalDecaissementToRapprochement(virementInternationalTransactionRequest)
+        .subscribe({
+          next: (response) => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Succès',
+              detail: 'Virement international rapproché avec succès.'
+            });
+            this.isSubmitting = false;
+            this.loadOutstandingVirements();
+            this.displayModal = false;
+            this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+            this.bankStateService.notifyValidation();
+          },
+          error: (error) => {
+            this.isSubmitting = false;
+          }
+        });
+    }
+  }
+
+  isInvalid(controlName: string): boolean {
+    const control = this.rapprochementForm.get(controlName);
+    return !!(control && control.invalid && (control.dirty || control.touched));
+  }
+
+  /**
+   * Charge les virements internationaux en cours pour la banque.
+   * @param event L'événement de chargement lazy de la table PrimeNG.
+   */
+  clearSearch(): void {
+    this.searchForm.reset({ dateEmission: '', beneficiaire: '', montant: null });
+    if (this.dt) {
+      this.dt.clear();
+      this.dt.first = 0;
+      this.loadOutstandingVirements(this.dt.createLazyLoadMetadata());
+    }
+  }
+
+  loadOutstandingVirements(event?: TableLazyLoadEvent): void {
+    this.loading = true;
+    const page = event ? event.first! / event.rows! : 0;
+    const size = event ? event.rows! : 10;
+    const sort = event?.sortField
+      ? `${event.sortField},${event.sortOrder === 1 ? 'asc' : 'desc'}`
+      : 'dateEmission,desc';
+
+    this.virementInternationalService
+      .getEncoursDecaissement(this.banqueIdFromRoute, this.currentSearchDto, page, size, sort)
+      .subscribe({
+        next: (response: EncoursVirementInternationalResponseDto) => {
+          this.virements = response.page.content;
+          this.totalRecords = response.page.page.totalElements;
+          this.loading = false;
+          this.totalEncours = response.totalDesEncours;
+          this.currentMonthYear = this.datePipe.transform(new Date(), 'MM/yyyy');
+        },
+        error: (error: Error) => {
+          this.loading = false;
+        },
+      });
+  }
+
+  exportPdf(): void {
+    this.exporting = true;
+    this.virementInternationalService.exportEncoursDecaissementPdf(this.banqueIdFromRoute, this.currentSearchDto).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `virements_internationaux_encours_decaissement_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.exporting = false;
+      }
+    });
+  }
+
+}

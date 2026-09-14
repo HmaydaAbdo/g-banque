@@ -1,0 +1,81 @@
+<div class="w-full flex justify-content-between p-1 border-bottom-1"
+     style="background:var(--color-surface);border-color:var(--color-border)">
+
+  <!-- Logo -->
+  <div class="flex align-items-center">
+    <img src="assets/staportLogo.png" alt="G-Banque" class="block mx-auto" style="height:var(--size-navbar-logo-height);width:var(--size-navbar-logo-width);" />
+  </div>
+
+  <!-- Navigation principale (desktop) -->
+  <div>
+    <nav class="hidden lg:flex align-items-center">
+      <ul class="list-none flex justify-content-between p-0 m-0">
+        @for (item of filteredMenuItems; track item.routerLink) {
+          <li>
+            <a pRipple [routerLink]="item.routerLink" routerLinkActive="active-nav-link"
+               class="flex align-items-center nav-link border-round-xl p-3">
+              <span [class]="item.icon"></span>
+              <span class="ml-2 nav-label">{{ item.label }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+  </div>
+
+  <!-- Actions -->
+  <div class="flex gap-2 align-items-center">
+
+    <!-- Menu hamburger -->
+    <button class="nav-action-btn" (click)="openSidebar.emit()"
+            pTooltip="Menu de navigation" tooltipPosition="bottom">
+      <i class="pi pi-bars text-xl"></i>
+    </button>
+
+    <!-- Notifications -->
+    <button class="nav-action-btn p-overlay-badge" (click)="showNotificationDialog()"
+            pTooltip="Notifications" tooltipPosition="bottom">
+      <i class="pi pi-bell text-lg"></i>
+      @if (unreadCount > 0) {
+        <p-badge [value]="unreadCount" severity="danger" styleClass="mt-2 p-0"></p-badge>
+      }
+    </button>
+
+    <!-- Toggle dark / light mode -->
+    <button class="nav-action-btn"
+            [class.nav-action-btn--active]="themeService.isDark"
+            (click)="themeService.toggle()"
+            [pTooltip]="themeService.isDark ? 'Passer en mode clair' : 'Passer en mode sombre'"
+            tooltipPosition="bottom">
+      <i [class]="themeService.isDark ? 'pi pi-sun text-lg' : 'pi pi-moon text-lg'"></i>
+    </button>
+
+    <!-- Déconnexion -->
+    <button class="nav-action-btn nav-action-btn--danger" (click)="confirmLogout($event)"
+            pTooltip="Se déconnecter" tooltipPosition="bottom">
+      <i class="pi pi-power-off text-lg" [class.p-button-loading]="loading"></i>
+    </button>
+
+  </div>
+
+</div>
+
+<!-- Dialog Notifications -->
+<p-dialog
+  header="Notifications"
+  [(visible)]="notificationDialogVisible"
+  [modal]="true"
+  [style]="{width: '800px'}"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="true">
+  <ng-template pTemplate="content">
+    <app-notification-list
+      [notificationService]="notificationService"
+      (notificationMarkedAsRead)="notificationDialogVisible = false">
+    </app-notification-list>
+  </ng-template>
+</p-dialog>
+
+<p-confirmDialog header="Confirmer la déconnexion" icon="pi pi-exclamation-triangle"></p-confirmDialog>
+<p-toast></p-toast>

@@ -1,0 +1,417 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<!-- ── Dialog Clôture ──────────────────────────────────────────────────── -->
+<p-dialog
+  header="Clôturer la caution"
+  [(visible)]="showCloturerDialog"
+  [modal]="true"
+  [style]="{ width: '440px' }"
+  [draggable]="false"
+  [resizable]="false">
+
+  @if (cloturerTarget) {
+    <div class="surface-ground border-round p-3 mb-4">
+      <div class="grid" style="row-gap:0.5rem">
+
+        <div class="col-5 text-xs text-color-secondary font-medium uppercase">N° Caution</div>
+        <div class="col-7 text-sm font-semibold">{{ cloturerTarget.numeroCaution }}</div>
+
+        <div class="col-5 text-xs text-color-secondary font-medium uppercase">Banque</div>
+        <div class="col-7 text-sm">{{ cloturerTarget.banqueNom }}</div>
+
+        <div class="col-5 text-xs text-color-secondary font-medium uppercase">Organisme</div>
+        <div class="col-7 text-sm">{{ cloturerTarget.organisme }}</div>
+
+        <div class="col-5 text-xs text-color-secondary font-medium uppercase">Montant</div>
+        <div class="col-7 text-sm font-semibold text-primary">{{ cloturerTarget.montant | number:'1.2-2' }} MAD</div>
+
+        <div class="col-5 text-xs text-color-secondary font-medium uppercase">Taux</div>
+        <div class="col-7 text-sm">{{ cloturerTarget.taux | number:'1.6-6' }} %</div>
+
+        <div class="col-5 text-xs text-color-secondary font-medium uppercase">Date de prise</div>
+        <div class="col-7 text-sm">{{ cloturerTarget.dateDePrise | date:'dd/MM/yyyy' }}</div>
+
+      </div>
+    </div>
+  }
+
+  <form [formGroup]="cloturerForm" class="flex flex-column gap-3">
+    <div class="flex flex-column gap-1">
+      <label class="font-medium text-sm">
+        Date de main levée <span class="text-red-500">*</span>
+      </label>
+      <p-calendar
+        formControlName="dateDeMainLevee"
+        dateFormat="dd/mm/yy"
+        [showIcon]="true"
+        [showOnFocus]="false"
+        appendTo="body"
+        placeholder="jj/mm/aaaa">
+      </p-calendar>
+      @if (cloturerForm.get('dateDeMainLevee')?.invalid && cloturerForm.get('dateDeMainLevee')?.touched) {
+        <small class="text-red-500">La date de main levée est obligatoire.</small>
+      }
+    </div>
+    <div class="flex align-items-center gap-2 p-3 border-round surface-100 text-sm text-color-secondary">
+      <i class="pi pi-info-circle text-primary"></i>
+      <span>Une commission de clôture sera générée automatiquement selon la stratégie de la banque.</span>
+    </div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Annuler"
+      icon="pi pi-times"
+      severity="secondary"
+      [outlined]="true"
+      (onClick)="showCloturerDialog = false" />
+    <p-button
+      label="Confirmer la clôture"
+      icon="pi pi-lock"
+      severity="warning"
+      [loading]="cloturerLoading"
+      [disabled]="cloturerForm.invalid"
+      (onClick)="confirmerCloture()" />
+  </ng-template>
+</p-dialog>
+
+<div class="flex flex-column w-full h-full overflow-y-scroll gap-3 p-3 pb-6"
+    >
+
+  <!-- ═══ HEADER ══════════════════════════════════════════════════════════ -->
+  <div class="flex flex-column md:flex-row md:align-items-center justify-content-between gap-2">
+
+    <div class="flex flex-column gap-1">
+      <h2 class="text-900 font-bold m-0" style="font-size:1.15rem;letter-spacing:-0.01em">
+        Cautions
+      </h2>
+      <p-breadcrumb [model]="breadcrumbItems" styleClass="border-none p-0"
+                    [style]="{'background':'transparent','padding':'0','font-size':'0.78rem'}">
+        <ng-template pTemplate="item" let-item>
+          @if (item.route) {
+            <a [routerLink]="item.route" class="p-menuitem-link">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
+              <span class="text-400 text-xs ml-1">{{ item.label }}</span>
+            </a>
+          } @else {
+            <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
+          }
+        </ng-template>
+      </p-breadcrumb>
+    </div>
+
+    <div class="flex align-items-center gap-2 flex-shrink-0" >
+      <button pButton pRipple
+              label="Exporter PDF"
+              icon="pi pi-file-pdf"
+              [loading]="exporting"
+              class="p-button-outlined p-button-danger h-fit p-button-sm"
+              (click)="toggleExportPanel($event)">
+      </button>
+      <p-overlayPanel #exportColumnsPanel [style]="{ width: '300px' }" [showCloseIcon]="true">
+        <div class="flex flex-column gap-3">
+          <div class="flex justify-content-between align-items-center">
+            <span class="text-sm font-semibold">Colonnes à exporter</span>
+          </div>
+
+          <div class="flex justify-content-between gap-2">
+            <button pButton pRipple type="button" label="Tout" class="p-button-text p-button-sm p-0"
+                    (click)="toggleAllColumns(true)"></button>
+            <button pButton pRipple type="button" label="Aucune" class="p-button-text p-button-sm p-0"
+                    (click)="toggleAllColumns(false)"></button>
+          </div>
+
+          <div class="flex flex-column gap-2">
+            @for (col of exportColumns; track col.key) {
+              <div class="flex align-items-center gap-2">
+                <p-checkbox [binary]="true" [(ngModel)]="col.checked" [inputId]="'col-' + col.key"></p-checkbox>
+                <label [for]="'col-' + col.key" class="text-sm cursor-pointer">{{ col.label }}</label>
+              </div>
+            }
+          </div>
+
+          @if (!hasSelectedColumns) {
+            <small class="text-red-500">Sélectionnez au moins une colonne.</small>
+          }
+
+          <button pButton pRipple type="button" label="Exporter"
+                  icon="pi pi-file-pdf"
+                  [loading]="exporting"
+                  [disabled]="!hasSelectedColumns"
+                  class="w-full p-button-sm"
+                  (click)="confirmExport()">
+          </button>
+        </div>
+      </p-overlayPanel>
+      <button pButton pRipple
+              label="Nouvelle caution"
+              icon="pi pi-plus"
+              size="small"
+              routerLink="/portail/cautions/new">
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ FILTRES ══════════════════════════════════════════════════════════ -->
+  <div class="pg-filters">
+    <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+    <form [formGroup]="filterForm" class="flex flex-wrap gap-3 align-items-end">
+
+      <!-- Banque -->
+      <p-dropdown
+        [options]="banques"
+        formControlName="banque"
+        optionLabel="nom"
+        placeholder="Banque"
+        [filter]="true"
+        filterBy="nom"
+        [showClear]="true"
+        appendTo="body"
+        [style]="{'min-width':'165px'}">
+      </p-dropdown>
+
+      <!-- Nature -->
+      <p-dropdown
+        [options]="natures"
+        formControlName="nature"
+        optionLabel="label"
+        placeholder="Nature"
+        [filter]="true"
+        filterBy="label"
+        [showClear]="true"
+        appendTo="body"
+        [style]="{'min-width':'165px'}">
+      </p-dropdown>
+
+      <!-- Marché (virtual scroll + lazy) -->
+      <p-dropdown
+        [options]="marchesOptions"
+        formControlName="marcheId"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="N° Marché"
+        [virtualScroll]="true"
+        [virtualScrollItemSize]="38"
+        [lazy]="true"
+        (onLazyLoad)="onLazyLoadMarches($event)"
+        [filter]="true"
+        (onFilter)="onFilterMarches($event)"
+        [loading]="marchesLoading"
+        [showClear]="true"
+        appendTo="body"
+        [style]="{'min-width':'165px'}">
+        <ng-template let-marche pTemplate="item">
+          <div class="flex align-items-center gap-2" style="height:38px">
+            @if (marche?.label) {
+              <i class="pi pi-file text-400 text-xs"></i>
+              <span class="text-sm">{{ marche.label }}</span>
+            } @else {
+              <i class="pi pi-spin pi-spinner text-400 text-xs"></i>
+              <span class="text-400 text-xs italic">Chargement…</span>
+            }
+          </div>
+        </ng-template>
+      </p-dropdown>
+
+      <!-- Statut -->
+      <p-dropdown
+        [options]="actifOptions"
+        formControlName="actif"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Statut"
+        [showClear]="true"
+        appendTo="body"
+        [style]="{'min-width':'130px'}">
+      </p-dropdown>
+
+      <!-- N° caution -->
+      <input pInputText type="text"
+             formControlName="numeroCaution"
+             placeholder="N° caution"
+             [style]="{'width':'140px'}"/>
+
+      <!-- Organisme -->
+      <input pInputText type="text"
+             formControlName="organisme"
+             placeholder="Organisme"
+             [style]="{'width':'140px'}"/>
+
+      <!-- Montant -->
+      <p-inputNumber
+        formControlName="montant"
+        placeholder="Montant"
+        mode="decimal"
+        [minFractionDigits]="2"
+        [style]="{'width':'130px'}"
+        [inputStyle]="{'width':'100%'}">
+      </p-inputNumber>
+
+      <!-- Période -->
+      <div class="flex-shrink-0">
+        <button pButton pRipple type="button"
+                [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+                icon="pi pi-calendar"
+                [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+                (click)="toggleDatePanel()">
+        </button>
+      </div>
+
+      <!-- Réinitialiser -->
+      <div class="flex-shrink-0">
+        <p-button icon="pi pi-times" severity="secondary"
+                  (onClick)="clearFilters()" [style]="{'white-space': 'nowrap'}">
+        </p-button>
+      </div>
+
+    </form>
+  </div>
+
+  @if (showDatePanel) {
+  <div class="p-3 bg-white border-round shadow-1">
+    <form [formGroup]="filterForm" class="grid">
+      <div class="col-6 md:col-3">
+        <label class="block text-xs text-500 mb-1">Date de prise — du</label>
+        <p-calendar formControlName="dateDePriseDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-3">
+        <label class="block text-xs text-500 mb-1">Date de prise — au</label>
+        <p-calendar formControlName="dateDePriseFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-3">
+        <label class="block text-xs text-500 mb-1">Main levée — du</label>
+        <p-calendar formControlName="dateDeMainLeveeDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-3">
+        <label class="block text-xs text-500 mb-1">Main levée — au</label>
+        <p-calendar formControlName="dateDeMainLeveeFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+    </form>
+  </div>
+  }
+
+  <!-- ═══ TABLE ════════════════════════════════════════════════════════════ -->
+  <div class="surface-card border-round-xl border-1 surface-border"
+       style="box-shadow:0 1px 10px rgba(0,0,0,0.06)">
+
+    <p-table
+      #dt
+      [value]="(cautions$ | async) ?? []"
+      [totalRecords]="(totalElements$ | async) ?? 0"
+      [loading]="(loading$ | async) ?? false"
+      [lazy]="true"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first}–{last} sur {totalRecords}"
+      (onLazyLoad)="loadCautions($event)"
+      sortField="dateDePrise"
+      [sortOrder]="-1"
+      styleClass="p-datatable-sm"
+      responsiveLayout="scroll"
+      rowHover>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="numeroCaution" >
+            N° Caution <p-sortIcon field="numeroCaution"></p-sortIcon>
+          </th>
+          <th pSortableColumn="banque.nom">Banque <p-sortIcon field="banque.nom"></p-sortIcon></th>
+          <th pSortableColumn="nature.label">Nature <p-sortIcon field="nature.label"></p-sortIcon></th>
+          <th pSortableColumn="marche.numero">Marché <p-sortIcon field="marche.numero"></p-sortIcon></th>
+          <th pSortableColumn="organisme">Organisme <p-sortIcon field="organisme"></p-sortIcon></th>
+          <th pSortableColumn="montant" class="text-right" >
+            Montant <p-sortIcon field="montant"></p-sortIcon>
+          </th>
+          <th pSortableColumn="dateDePrise" >
+            Date de prise <p-sortIcon field="dateDePrise"></p-sortIcon>
+          </th>
+          <th pSortableColumn="dateDeMainLevee" >
+            Date main levée <p-sortIcon field="dateDeMainLevee"></p-sortIcon>
+          </th>
+          <th class="text-center" pSortableColumn="taux">Taux <p-sortIcon field="taux"></p-sortIcon></th>
+          <th class="text-center" pSortableColumn="actif">Statut <p-sortIcon field="actif"></p-sortIcon></th>
+          <th class="text-center" >Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-caution>
+        <tr>
+          <td class="text-600 text-sm">{{ caution.numeroCaution }}</td>
+          <td class="text-600 text-sm">{{ caution.banqueNom }}</td>
+          <td class="text-600 text-sm">{{ caution.natureLabel }}</td>
+          <td class="text-600 text-sm">{{ caution.marcheNumero ?? '—' }}</td>
+          <td class="text-600 text-sm">{{ caution.organisme }}</td>
+          <td class="text-right">{{ caution.montant | number:'1.2-2' }}</td>
+          <td class="text-600 text-sm">{{ caution.dateDePrise | date:'dd/MM/yyyy' }}</td>
+          <td class="text-600 text-sm">
+            @if (caution.dateDeMainLevee) {
+              {{ caution.dateDeMainLevee | date:'dd/MM/yyyy' }}
+            } @else {
+              <span class="text-400">—</span>
+            }
+          </td>
+          <td class="text-right">{{ caution.taux | number:'1.2-2' }} %</td>
+          <td class="text-center">
+            <p-tag
+              [value]="caution.actif ? 'Active' : 'Inactive'"
+              [severity]="getActifSeverity(caution.actif)"
+              styleClass="text-xs">
+            </p-tag>
+          </td>
+          <td>
+            <div class="flex align-items-center justify-content-center gap-1">
+              @if (caution.actif) {
+                <button pButton pRipple icon="pi pi-pencil"
+                        class="p-button-rounded p-button-text p-button-info p-button-sm"
+                        [routerLink]="['/portail/cautions/edit', caution.id]"
+                        pTooltip="Modifier" tooltipPosition="top">
+                </button>
+                <button pButton pRipple icon="pi pi-lock"
+                        class="p-button-rounded p-button-text p-button-warning p-button-sm"
+                        (click)="ouvrirCloturerDialog(caution)"
+                        pTooltip="Clôturer" tooltipPosition="top">
+                </button>
+                @if (isSystemAdmin) {
+                  <button pButton pRipple icon="pi pi-trash"
+                          class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                          (click)="supprimer(caution)"
+                          pTooltip="Supprimer" tooltipPosition="top">
+                  </button>
+                }
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="10">
+            <div class="flex flex-column align-items-center gap-2 py-5">
+              <i class="pi pi-shield text-300" style="font-size:2rem"></i>
+              <div class="text-600 font-medium">Aucune caution trouvée</div>
+              <div class="text-400 text-sm">Modifiez les filtres ou créez une nouvelle caution.</div>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td [attr.colspan]="10" class="text-center p-4 text-500 text-sm">
+            <i class="pi pi-spin pi-spinner mr-2"></i>Chargement…
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+
+</div>

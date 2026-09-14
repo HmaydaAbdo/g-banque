@@ -1,0 +1,181 @@
+import {Injectable, inject} from '@angular/core';
+import {HttpClient, HttpParams} from '@angular/common/http';
+import {Observable} from 'rxjs';
+import {environment} from "../../../../environments/environment";
+import {MarcheRequestDTO} from "../dtos/marche-request.dto";
+import {MarcheResponseDTO} from "../dtos/marche-response.dto";
+import {MarcheSearchDTO} from "../dtos/marche-search.dto";
+import {PageResponse} from "../../global/types/PageResponse";
+
+
+@Injectable({
+  providedIn: 'root'
+})
+export class MarcheService {
+
+  private apiUrl = `${environment.apiUrl}marches`;
+
+  private readonly http = inject(HttpClient);
+
+  /**
+   * Crée un nouveau marché.
+   * @param marcheRequest Les données du marché.
+   * @returns Un Observable de MarcheResponseDTO.
+   */
+  createMarche(marcheRequest: MarcheRequestDTO): Observable<MarcheResponseDTO> {
+    return this.http.post<MarcheResponseDTO>(this.apiUrl, marcheRequest);
+  }
+
+  /**
+   * Récupère un marché par son ID.
+   * @param id L'ID du marché.
+   * @returns Un Observable de MarcheResponseDTO.
+   */
+  getMarcheById(id: number): Observable<MarcheResponseDTO> {
+    return this.http.get<MarcheResponseDTO>(`${this.apiUrl}/${id}`);
+  }
+
+  /**
+   * Récupère tous les marchés avec recherche, pagination et tri.
+   * @param criteria Les critères de recherche.
+   * @param page Le numéro de page (0-indexed).
+   * @param size Le nombre d'éléments par page.
+   * @param sort La chaîne de tri (ex: "id,asc").
+   * @returns Un Observable de PageResponse<MarcheResponseDTO>.
+   */
+  getAllMarches(
+    criteria: MarcheSearchDTO,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'id,asc'
+  ): Observable<PageResponse<MarcheResponseDTO>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    // Ajouter les critères de recherche si présents
+    if (criteria.nom) {
+      params = params.set('nom', criteria.nom);
+    }
+    if (criteria.numero) {
+      params = params.set('numero', criteria.numero);
+    }
+    if (criteria.maitreDouvrage) {
+      params = params.set('maitreDouvrage', criteria.maitreDouvrage);
+    }
+
+    if (criteria.banqueId){
+      params = params.set('banqueId', criteria.banqueId);
+    }
+
+    if (criteria.actif !== undefined && criteria.actif !== null) {
+      params = params.set('actif', criteria.actif);
+    }
+
+    params = this.appendDateRangeParams(params, criteria);
+
+    return this.http.get<PageResponse<MarcheResponseDTO>>(this.apiUrl, {params});
+  }
+
+  /** Ajoute les 2 paires de plages de dates (début/achèvement des travaux) si renseignées. */
+  private appendDateRangeParams(params: HttpParams, criteria: MarcheSearchDTO): HttpParams {
+    if (criteria.dateDebutDesTravauxFrom) params = params.set('dateDebutDesTravauxFrom', this.toIsoDate(criteria.dateDebutDesTravauxFrom));
+    if (criteria.dateDebutDesTravauxTo) params = params.set('dateDebutDesTravauxTo', this.toIsoDate(criteria.dateDebutDesTravauxTo));
+    if (criteria.dateDAchievementDesTravauxFrom) params = params.set('dateDAchievementDesTravauxFrom', this.toIsoDate(criteria.dateDAchievementDesTravauxFrom));
+    if (criteria.dateDAchievementDesTravauxTo) params = params.set('dateDAchievementDesTravauxTo', this.toIsoDate(criteria.dateDAchievementDesTravauxTo));
+    return params;
+  }
+
+  /** Formate un objet Date en chaîne ISO yyyy-MM-dd pour Spring. */
+  private toIsoDate(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+
+  /**
+   * Récupère les marchés avec pagination et tri, sans critères de recherche.
+   * @param page Le numéro de page (0-indexé).
+   * @param size Le nombre d'éléments par page.
+   * @param sort La chaîne de tri (ex: "id,asc").
+   * @returns Un Observable de PageResponse<MarcheResponseDTO>.
+   */
+  getAllMarchesForLazyLoad(
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'id,asc'
+  ): Observable<PageResponse<MarcheResponseDTO>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    return this.http.get<PageResponse<MarcheResponseDTO>>(this.apiUrl, {params});
+  }
+  /**
+   * Met à jour un marché existant.
+   * @param id L'ID du marché à mettre à jour.
+   * @param marcheRequest Les données du marché mises à jour.
+   * @returns Un Observable de MarcheResponseDTO.
+   */
+  updateMarche(id: number, marcheRequest: MarcheRequestDTO): Observable<MarcheResponseDTO> {
+    return this.http.put<MarcheResponseDTO>(`${this.apiUrl}/${id}`, marcheRequest);
+  }
+
+  /**
+   * Supprime un marché par son ID.
+   * @param id L'ID du marché à supprimer.
+   * @returns Un Observable<void>.
+   */
+  deleteMarche(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  /**
+   * Archive un marché : il reste consultable mais sort définitivement des calculs futurs
+   * (agios, encours des lignes fonctionnelles).
+   * @param id L'ID du marché à archiver.
+   */
+  archiverMarche(id: number): Observable<MarcheResponseDTO> {
+    return this.http.patch<MarcheResponseDTO>(`${this.apiUrl}/${id}/archiver`, {});
+  }
+
+  /**
+   * Désarchive un marché : il redevient pris en compte dans les calculs futurs.
+   * @param id L'ID du marché à désarchiver.
+   */
+  desarchiverMarche(id: number): Observable<MarcheResponseDTO> {
+    return this.http.patch<MarcheResponseDTO>(`${this.apiUrl}/${id}/desarchiver`, {});
+  }
+
+  /**
+   * Exporte en PDF l'intégralité des marchés correspondant aux critères fournis (mêmes filtres
+   * que {@link getAllMarches}, sans pagination — le PDF contient tous les résultats filtrés, pas
+   * seulement la page actuellement affichée).
+   */
+  exportPdf(criteria: MarcheSearchDTO): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (criteria.nom) {
+      params = params.set('nom', criteria.nom);
+    }
+    if (criteria.numero) {
+      params = params.set('numero', criteria.numero);
+    }
+    if (criteria.maitreDouvrage) {
+      params = params.set('maitreDouvrage', criteria.maitreDouvrage);
+    }
+    if (criteria.banqueId) {
+      params = params.set('banqueId', criteria.banqueId);
+    }
+    if (criteria.actif !== undefined && criteria.actif !== null) {
+      params = params.set('actif', criteria.actif);
+    }
+    params = this.appendDateRangeParams(params, criteria);
+
+    return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
+  }
+}

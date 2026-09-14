@@ -1,0 +1,89 @@
+
+<canvas #canvas class="login-canvas"></canvas>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="login-page">
+
+  <!-- Nav retour -->
+  <a routerLink="/" class="login-back">
+    <i class="pi pi-arrow-left"></i>
+    Accueil
+  </a>
+
+  <div class="login-card">
+
+    <!-- Logo -->
+    <div class="login-brand">
+      <div class="login-brand-mark">G</div>
+      <span class="login-brand-name">G-Banque</span>
+    </div>
+
+    <div class="login-divider"></div>
+
+    <h1 class="login-title">Connexion</h1>
+    <p class="login-sub">Accédez à votre espace de gestion bancaire</p>
+
+    <form [formGroup]="loginForm" (ngSubmit)="login()" class="login-form">
+
+      <!-- Username -->
+      <div class="form-field">
+        <label class="field-label">Nom d'utilisateur</label>
+        <div class="field-input-wrap">
+          <i class="pi pi-user field-icon"></i>
+          <input
+            pInputText
+            type="text"
+            placeholder="Entrez votre identifiant"
+            formControlName="username"
+            class="field-input"
+          />
+        </div>
+        @if (loginForm.get('username')?.invalid && loginForm.get('username')?.touched) {
+          <small class="field-error">
+            Nom d'utilisateur est requis.
+          </small>
+        }
+      </div>
+
+      <!-- Password -->
+      <div class="form-field">
+        <label class="field-label">Mot de passe</label>
+        <div class="field-input-wrap">
+          <i class="pi pi-lock field-icon"></i>
+          <input
+            pInputText
+            [type]="passwordInputType"
+            placeholder="Entrez votre mot de passe"
+            formControlName="password"
+            class="field-input"
+          />
+          <i
+            [class]="'pi ' + (passwordVisible ? 'pi-eye-slash' : 'pi-eye') + ' field-icon-right'"
+            (click)="togglePasswordVisibility()"
+          ></i>
+        </div>
+        @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+          <small class="field-error">
+            Mot de passe est requis.
+          </small>
+        }
+      </div>
+
+      <!-- Submit -->
+      <button
+        type="submit"
+        class="btn-login"
+        [disabled]="loginForm.invalid || isLoading"
+      >
+        @if (!isLoading) {
+          <span>Se connecter <span class="btn-arrow">→</span></span>
+        } @else {
+          <span><i class="pi pi-spin pi-spinner"></i> Connexion...</span>
+        }
+      </button>
+
+    </form>
+
+  </div>
+</div>

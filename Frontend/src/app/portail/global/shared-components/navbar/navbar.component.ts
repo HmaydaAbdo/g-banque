@@ -1,0 +1,148 @@
+import { Component, EventEmitter, Output, OnInit, OnDestroy, inject } from '@angular/core';
+import { ButtonModule } from 'primeng/button';
+import { RippleModule } from 'primeng/ripple';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService, MessageService } from 'primeng/api';
+import { Subject, takeUntil } from 'rxjs';
+import { AuthService } from "../../../../auth/services/auth.service";
+import { TooltipModule } from "primeng/tooltip";
+import { BadgeModule } from 'primeng/badge';
+import { ToastModule } from 'primeng/toast';
+import { NotificationService } from "../../../notification/service/NotificationService";
+import { NotificationListComponent } from "../../../notification/views/notification-list/notification-list.component";
+import { DialogModule } from "primeng/dialog";
+import { ThemeService } from "../../services/ThemeService";
+import { hasRequiredMenuAuthority } from "../../utils/menu-authority.util";
+
+interface MenuItem {
+  label: string;
+  icon: string;
+  routerLink: string;
+  requiredAuthority?: string | string[];
+}
+
+@Component({
+  selector: 'app-navbar',
+  standalone: true,
+  imports: [
+    ButtonModule,
+    RippleModule,
+    RouterLink,
+    RouterLinkActive,
+    ConfirmDialogModule,
+    TooltipModule,
+    BadgeModule,
+    ToastModule,
+    NotificationListComponent,
+    DialogModule
+  ],
+  templateUrl: './navbar.component.html',
+  styleUrl: './navbar.component.scss',
+  providers: [
+    ConfirmationService,
+    MessageService
+  ]
+})
+export class NavbarComponent implements OnInit, OnDestroy {
+  @Output() openSidebar = new EventEmitter<void>();
+
+  loading: boolean = false;
+  private destroy$ = new Subject<void>();
+  private authService = inject(AuthService);
+  private confirmationService = inject(ConfirmationService);
+  private messageService = inject(MessageService);
+  notificationService = inject(NotificationService);
+  themeService = inject(ThemeService);
+
+  unreadCount: number = 0;
+  notificationDialogVisible: boolean = false;
+
+  allMenuItems: MenuItem[] = [
+    { label: 'Accueil', icon: 'pi pi-home', routerLink: '/portail/accueil' },
+    { label: 'Historique des Rapprochements', routerLink: '/portail/rapprochement/historique', icon: 'pi pi-history' },
+    { label: 'Comptes Bancaires', icon: 'pi pi-wallet', routerLink: '/portail/comptes-bancaires', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+    { label: 'Lignes Ponctuelles', icon: 'pi pi-receipt', routerLink: '/portail/lignes-fonctionnelles-encours', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+  ];
+
+  filteredMenuItems: MenuItem[] = [];
+
+  ngOnInit(): void {
+    this.filterMenuItems();
+
+    this.authService.isAuthenticated$.pipe(takeUntil(this.destroy$)).subscribe(isAuthenticated => {
+      this.filterMenuItems();
+      const username = this.authService.getUsername();
+
+      if (isAuthenticated && username) {
+        // --- LOGGED IN: Initialize Services and Subscriptions ---
+        this.notificationService.initializeNotifications();
+
+        // 1. Subscribe to unread notification count
+        this.notificationService.unreadCount$
+          .pipe(takeUntil(this.destroy$))
+          .subscribe(count => {
+            this.unreadCount = count;
+          });
+
+
+
+
+      } else {
+        this.notificationService.resetNotifications();
+        this.unreadCount = 0;
+      }
+    });
+  }
+
+  showNotificationDialog(): void {
+    this.notificationDialogVisible = true;
+  }
+
+  private filterMenuItems(): void {
+    const isSystemAdmin = this.authService.isSystemAdmin();
+    const authorities = this.authService.getAuthorities();
+    this.filteredMenuItems = this.allMenuItems.filter(item =>
+      hasRequiredMenuAuthority(item.requiredAuthority, isSystemAdmin, authorities)
+    );
+  }
+
+  confirmLogout(event: Event) {
+    this.confirmationService.confirm({
+      target: event.target as EventTarget,
+      message: 'Êtes-vous sûr de vouloir vous déconnecter ?',
+      acceptLabel: 'Oui, Déconnexion',
+      rejectLabel: 'Annuler',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-text p-button-secondary',
+      accept: () => {
+        this.logout();
+      },
+      reject: () => {
+        this.messageService.add({ severity: 'info', summary: 'Annulé', detail: 'La déconnexion a été annulée.' });
+      }
+    });
+  }
+
+  logout() {
+    // AuthService.logout() est purement local (suppression du token + navigation,
+    // pas d'appel HTTP) : il n'émet jamais false et n'erreure jamais. Pas de branche
+    // d'erreur ici — un échec HTTP réel serait géré par l'interceptor, pas ce composant.
+    this.loading = true;
+    this.authService.logout().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Vous avez été déconnecté(e) avec succès !' });
+      },
+      complete: () => {
+        this.loading = false;
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+}

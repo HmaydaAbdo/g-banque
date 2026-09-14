@@ -1,0 +1,965 @@
+// =============================================================================
+// G-Banque — Global Styles
+// =============================================================================
+// Order matters:
+//  1. Google Fonts (Inter)
+//  2. Design tokens  (_tokens.scss)
+//  3. PrimeNG theme
+//  4. PrimeNG / PrimeFlex
+//  5. Global resets & typography
+//  6. PrimeNG overrides
+// =============================================================================
+
+// 1. Typography — Inter
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+// 2. Design tokens (colors, spacing, radius, status badges…)
+@import 'styles/tokens';
+
+// 3–4. PrimeNG
+@import "primeng/resources/themes/lara-light-indigo/theme.css";
+@import "primeng/resources/primeng.css";
+@import "primeicons/primeicons.css";
+@import "primeflex/primeflex.css";
+
+// =============================================================================
+// Global reset & base typography
+// =============================================================================
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin     : 0;
+  padding    : 0;
+  height     : 100%;
+  overflow   : hidden;
+  font-family: var(--font-primary);
+  font-size  : var(--text-base);
+  line-height: var(--leading-normal);
+  color      : var(--color-text-primary);
+  background : var(--color-page-bg);
+  font-optical-sizing: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family : var(--font-primary);
+  font-weight : var(--weight-semibold);
+  line-height : var(--leading-tight);
+  color       : var(--color-text-primary);
+  margin      : 0;
+}
+h1 { font-size: var(--text-3xl); }
+h2 { font-size: var(--text-2xl); }
+h3 { font-size: var(--text-xl);  }
+h4 { font-size: var(--text-lg);  }
+h5 { font-size: var(--text-md);  font-weight: var(--weight-medium); }
+h6 { font-size: var(--text-base); font-weight: var(--weight-medium); }
+
+code, kbd, pre {
+  font-family: var(--font-mono);
+  font-size  : 0.9em;
+}
+
+// =============================================================================
+// Utility — financial numbers
+// Use class="num" on any amount span/td for monospace + tabular alignment
+// =============================================================================
+.num {
+  font-family        : var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing     : 0.01em;
+  white-space        : nowrap;
+  display            : inline-block;
+}
+.num .num-dec {
+  color  : var(--color-text-secondary);
+  font-size: 0.85em;
+}
+// Coloured amount helpers (replaces raw tailwind classes)
+.num-debit  { color: var(--color-danger);  }
+.num-credit { color: var(--color-success); }
+.num-neutral{ color: var(--color-text-primary); }
+
+// ── Amount badges — table cells ─────────────────────────
+.amount-badge {
+  display              : inline-block;
+  font-family          : var(--font-mono);
+  font-variant-numeric : tabular-nums;
+  font-size            : 0.8rem;
+  font-weight          : 700;
+  padding              : 2px 8px;
+  border-radius        : var(--radius-sm, 4px);
+  white-space          : nowrap;
+  letter-spacing       : 0.01em;
+}
+.debit-badge  { color: var(--color-danger)  !important; background: rgba(220, 38, 38, 0.10); }
+.credit-badge { color: var(--color-success) !important; background: rgba(34, 197, 94, 0.10); }
+
+// ── Total summary band — between filters and table ──────
+.total-band {
+  display      : flex;
+  align-items  : center;
+  gap          : 0.6rem;
+  padding      : 0.45rem 1rem;
+  border-radius: var(--radius-lg, 8px);
+  border       : 1px solid transparent;
+
+  &__label {
+    font-size      : var(--text-xs, 0.75rem);
+    font-weight    : var(--weight-semibold, 600);
+    color          : var(--color-text-muted);
+    text-transform : uppercase;
+    letter-spacing : 0.06em;
+    flex           : 1;
+  }
+
+  &__amount {
+    font-family          : var(--font-mono);
+    font-variant-numeric : tabular-nums;
+    font-size            : var(--text-base, 1rem);
+    font-weight          : 700;
+    white-space          : nowrap;
+  }
+
+  .pi { font-size: 0.95rem; flex-shrink: 0; }
+
+  &--debit {
+    background  : rgba(220, 38, 38, 0.06);
+    border-color: rgba(220, 38, 38, 0.18);
+    .total-band__amount { color: var(--color-danger);       }
+    .total-band__label  { color: var(--color-text-muted);   }
+    .pi                 { color: var(--color-danger);        }
+  }
+
+  &--credit {
+    background  : rgba(34, 197, 94, 0.06);
+    border-color: rgba(34, 197, 94, 0.18);
+    .total-band__amount { color: var(--color-success);      }
+    .total-band__label  { color: var(--color-text-muted);   }
+    .pi                 { color: var(--color-success);       }
+  }
+}
+
+// =============================================================================
+// PrimeNG overrides — light mode base
+// =============================================================================
+.p-component {
+  font-family: var(--font-primary) !important;
+  font-size  : var(--text-base) !important;
+}
+
+// =============================================================================
+// Landing page & Login — shared utilities (canvas, orbs, animations, sections)
+// =============================================================================
+
+// Background canvas
+.landing-canvas {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 0; opacity: 0.4;
+}
+
+// Atmospheric orbs
+.lp-orb {
+  position: fixed; border-radius: 50%;
+  filter: blur(120px); pointer-events: none; z-index: 0;
+}
+.lp-orb-1 { width:600px; height:600px; background:rgba(79,70,229,0.18); top:-200px; right:-150px; }
+.lp-orb-2 { width:500px; height:500px; background:rgba(99,102,241,0.10); bottom:-150px; left:-100px; }
+.lp-orb-3 { width:350px; height:350px; background:rgba(129,140,248,0.08); top:50%; left:40%; transform:translate(-50%,-50%); }
+
+// Section utilities
+.lp-section-label {
+  font-size:var(--text-xs); letter-spacing:var(--tracking-wider); text-transform:uppercase;
+  color:var(--color-primary); margin-bottom:1rem; text-align:center;
+}
+.lp-section-title {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(1.8rem,4vw,3rem); font-weight:500;
+  color:var(--color-text-primary); text-align:center; margin-bottom:1rem; line-height:1.2;
+}
+.lp-section-sub {
+  font-size:var(--text-md); color:var(--color-text-secondary); text-align:center;
+  max-width:520px; margin:0 auto 5rem; line-height:var(--leading-relaxed);
+}
+.lp-divider {
+  width:100%; height:1px; background:var(--color-border); position:relative; z-index:1;
+}
+
+// Shared buttons
+.lp-btn-primary {
+  padding:0.9rem 2.5rem; border-radius:var(--radius-lg);
+  background:var(--color-primary); color:#fff;
+  font-size:var(--text-base); font-weight:var(--weight-semibold);
+  letter-spacing:var(--tracking-wide); text-transform:uppercase;
+  border:none; cursor:pointer; text-decoration:none;
+  transition:background 0.2s, transform 0.2s, box-shadow 0.2s;
+  box-shadow:var(--shadow-lg);
+  &:hover { background:var(--color-primary-hover); transform:translateY(-2px); box-shadow:var(--shadow-xl); }
+}
+.lp-btn-ghost {
+  padding:0.9rem 2.5rem; border-radius:var(--radius-lg);
+  border:1px solid var(--color-border-strong); background:transparent;
+  color:var(--color-text-secondary); font-size:var(--text-base);
+  letter-spacing:var(--tracking-wide); text-transform:uppercase;
+  cursor:pointer; text-decoration:none;
+  transition:border-color 0.2s, background 0.2s, color 0.2s;
+  &:hover { border-color:var(--color-primary); color:var(--color-primary); background:var(--color-primary-light); }
+}
+
+// Scroll reveal
+.reveal {
+  opacity:0; transform:translateY(30px);
+  transition:opacity 0.7s ease, transform 0.7s ease;
+  &.visible { opacity:1; transform:none; }
+}
+
+// Animations
+@keyframes lp-fadeInDown { from{opacity:0;transform:translateY(-16px)} to{opacity:1;transform:none} }
+@keyframes lp-fadeInUp   { from{opacity:0;transform:translateY(20px)}  to{opacity:1;transform:none} }
+@keyframes lp-pulse {
+  0%,100%{ box-shadow:0 0 6px  var(--color-primary); }
+  50%    { box-shadow:0 0 14px var(--color-primary); }
+}
+
+// =============================================================================
+// Page-level layout utilities  (pg-wrap, pg-header, pg-filters, pg-table)
+// =============================================================================
+
+// Outer page shell — normalise old wrappers without HTML changes
+// Targets: .card.flex.flex-column  /  .flex.flex-column.gap-2.px-2  /  .pg-wrap
+.pg-wrap,
+.card.flex.flex-column,
+div.flex.flex-column.gap-2.px-2,
+div.flex.flex-column.gap-1.px-2 {
+  display       : flex !important;
+  flex-direction: column !important;
+  gap           : 1rem !important;
+  padding       : 1.25rem !important;
+  min-height    : 100vh;
+  overflow-y    : auto;
+  width         : 100%;
+  box-sizing    : border-box;
+  // Remove raw bg-white that conflicts with dark mode
+  background    : var(--color-page-bg) !important;
+}
+
+// Old breadcrumb header rows — no visible change needed, just normalize flex gap
+.portail-section.flex {
+  display    : flex;
+  align-items: center;
+  gap        : 0.5rem;
+  min-height : 2.5rem;
+}
+
+// Page header row — title + breadcrumb left, actions right
+.pg-header {
+  display        : flex;
+  align-items    : center;
+  justify-content: space-between;
+  flex-wrap      : wrap;
+  gap            : 0.75rem;
+}
+.pg-header__left  { display: flex; flex-direction: column; gap: 2px; }
+.pg-header__title {
+  font-size     : 1.15rem;
+  font-weight   : var(--weight-bold);
+  color         : var(--color-text-primary);
+  margin        : 0;
+  letter-spacing: -0.01em;
+}
+.pg-header__actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+// Filter bar
+.pg-filters {
+  flex-shrink  : 0;   // jamais compressé par le tableau dans les shells flex h-screen
+  background   : var(--color-surface);
+  border       : 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding      : 0.5rem 1rem;
+  box-shadow   : var(--shadow-sm);
+  display      : flex;
+  flex-wrap    : nowrap;   // single row — scrolls horizontally if needed
+  gap          : 0.5rem;
+  align-items  : center;
+  overflow-x   : auto;
+
+  // Override w-full on inputs/spans inside filters — keep them compact
+  .p-input-icon-left,
+  span.p-input-icon-left {
+    width    : auto !important;
+    flex-shrink: 0;
+
+    input.p-inputtext,
+    .p-inputtext { width: 170px !important; }
+  }
+
+  p-multiSelect .p-multiselect,
+  .p-multiselect { min-width: 160px !important; max-width: 200px !important; }
+
+  p-dropdown .p-dropdown,
+  .p-dropdown   { min-width: 150px !important; max-width: 200px !important; }
+
+  p-calendar    { min-width: 140px !important; flex-shrink: 0; }
+  p-calendar .p-calendar,
+  .p-calendar   { width: 140px !important; }
+}
+// Barre de filtres repliable — chrome partagé par les écrans qui replient leurs
+// critères (Récapitulatifs, Rapprochement en cours). Vit ici et non dans un
+// composant : deux écrans l'utilisent, et les styles de composant sont
+// encapsulés, donc non partageables.
+.pg-filters__toggle {
+  display      : inline-flex;
+  align-items  : center;
+  gap          : 0.4rem;
+  background   : transparent;
+  border       : none;
+  padding      : 0.25rem 0.25rem 0.25rem 0;
+  cursor       : pointer;
+  font-size    : var(--text-xs);
+  font-weight  : var(--weight-medium);
+  color        : var(--color-text-muted);
+  white-space  : nowrap;
+  border-radius: var(--radius-sm);
+
+  &:hover { color: var(--color-text-primary); }
+  &:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+}
+
+.pg-filters__count {
+  display        : inline-flex;
+  align-items    : center;
+  justify-content: center;
+  min-width      : 1.15rem;
+  height         : 1.15rem;
+  padding        : 0 0.3rem;
+  border-radius  : 999px;
+  background     : var(--color-primary);
+  color          : #fff;
+  font-size      : 0.68rem;
+  font-weight    : var(--weight-semibold);
+}
+
+.pg-filters__chip {
+  padding      : 0.1rem 0.45rem;
+  border-radius: var(--radius-sm);
+  background   : var(--color-surface-3);
+  color        : var(--color-text-secondary);
+  font-size    : 0.7rem;
+  white-space  : nowrap;
+}
+
+.pg-filters__label {
+  font-size  : var(--text-xs);
+  font-weight: var(--weight-medium);
+  color      : var(--color-text-muted);
+  white-space: nowrap;
+  display    : flex;
+  align-items: center;
+  gap        : 4px;
+  margin-right: 0.25rem;
+}
+
+// Variante : filtres avec labels empilés (8 pages moyens de paiement)
+// Ces pages utilisent <div class="flex flex-column ..."><label/>champ</div>.
+// La version compacte ci-dessus (nowrap + largeurs fixes) écrase ce layout,
+// donc on rétablit ici le wrap et les largeurs fluides.
+.pg-filters:has(form .flex-column) {
+  flex-wrap  : wrap;
+  align-items: flex-end;
+  overflow-x : visible;
+  padding    : 0.75rem 1rem;
+
+  > form { flex: 1 1 auto; min-width: 0; }
+
+  .pg-filters__label { align-self: center; }
+
+  label {
+    font-size  : var(--text-xs);
+    font-weight: var(--weight-medium);
+    color      : var(--color-text-muted);
+    white-space: nowrap;
+  }
+
+  // Rétablir les largeurs pleines à l'intérieur des champs empilés
+  .p-input-icon-left,
+  span.p-input-icon-left {
+    width      : 100% !important;
+    flex-shrink: 1;
+
+    input.p-inputtext,
+    .p-inputtext { width: 100% !important; }
+  }
+
+  p-multiSelect .p-multiselect,
+  .p-multiselect { width: 100% !important; min-width: 0 !important; max-width: none !important; }
+
+  p-dropdown .p-dropdown,
+  .p-dropdown { width: 100% !important; min-width: 0 !important; max-width: none !important; }
+
+  p-calendar { width: 100% !important; min-width: 0 !important; }
+  p-calendar .p-calendar,
+  .p-calendar { width: 100% !important; }
+
+  p-inputnumber,
+  p-inputnumber .p-inputnumber,
+  .p-inputnumber { width: 100% !important; }
+}
+
+// Table wrapper
+.pg-table {
+  background   : var(--color-surface);
+  border       : 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  overflow     : hidden;
+  box-shadow   : var(--shadow-sm);
+}
+
+// =============================================================================
+// Global p-breadcrumb normalisation — applies to ALL pages without HTML changes
+// =============================================================================
+.p-breadcrumb {
+  background: transparent !important;
+  border    : none !important;
+  padding   : 0 !important;
+
+  // ── PrimeNG native template (.p-menuitem-text) ──────────
+  .p-breadcrumb-list li .p-menuitem-link {
+    padding: 0 !important;
+
+    .p-menuitem-text {
+      font-size  : 0.75rem !important;
+      color      : var(--color-text-muted) !important;
+      font-weight: var(--weight-regular) !important;
+    }
+    &:hover .p-menuitem-text { color: var(--color-primary) !important; }
+  }
+
+  // ── Custom template (old pages use <span class="text-black-alpha-90">) ──
+  a .text-black-alpha-90,
+  a span:not([class*="pi"]) {
+    font-size  : 0.75rem !important;
+    color      : var(--color-text-muted) !important;
+    font-weight: var(--weight-regular) !important;
+    padding    : 0 2px !important;
+  }
+
+  // Active link — both patterns
+  .active-breadcrumb .p-menuitem-text,
+  .active-breadcrumb .text-black-alpha-90,
+  .active-breadcrumb span:not([class*="pi"]),
+  li:last-child .p-menuitem-link .p-menuitem-text,
+  li:last-child .text-500 {
+    color      : var(--color-text-primary) !important;
+    font-weight: var(--weight-semibold) !important;
+  }
+
+  // Hover on any link
+  a:hover span:not([class*="pi"]) {
+    color: var(--color-primary) !important;
+  }
+
+  // Separator chevron
+  .p-breadcrumb-chevron {
+    font-size: 0.6rem !important;
+    color    : var(--color-text-disabled) !important;
+    margin   : 0 3px !important;
+  }
+}
+
+// =============================================================================
+// Global p-toolbar → becomes pg-filters visually (zero HTML changes needed)
+// =============================================================================
+.p-toolbar {
+  background   : var(--color-surface) !important;
+  border       : 1px solid var(--color-border) !important;
+  border-radius: var(--radius-xl) !important;
+  padding      : 0.6rem 1rem !important;
+  box-shadow   : var(--shadow-sm) !important;
+  flex-wrap    : wrap !important;
+  gap          : 0.5rem !important;
+}
+
+// =============================================================================
+// Global consistency — buttons, inputs, cards, radius
+// =============================================================================
+
+// Button press micro-interaction
+.p-button {
+  transition: transform 0.1s ease, box-shadow 0.15s ease !important;
+  &:active { transform: scale(0.97) !important; }
+}
+
+// Input focus ring
+.p-inputtext:focus,
+.p-dropdown:focus-within,
+.p-multiselect:focus-within {
+  outline    : none !important;
+  border-color: var(--color-primary) !important;
+  box-shadow : 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent) !important;
+}
+
+// Cards use consistent radius + shadow
+.p-card        { border-radius: var(--radius-xl) !important; box-shadow: var(--shadow-card) !important; }
+.surface-card  { border-radius: var(--radius-xl) !important; }
+
+// Panels / dropdowns get depth
+.p-dropdown-panel,
+.p-multiselect-panel { box-shadow: var(--shadow-2xl) !important; border-radius: var(--radius-lg) !important; }
+
+.p-toolbar {
+  background  : var(--color-surface);
+  border-color: var(--color-border);
+}
+
+// =============================================================================
+// Global datatable — gridlines + centrage + responsive (no overflow)
+// =============================================================================
+.p-datatable {
+  width    : 100% !important;
+  max-width: 100% !important;
+
+  // Empêche le tableau de dépasser la largeur disponible
+  .p-datatable-wrapper {
+    width    : 100% !important;
+    overflow-x: auto;   // scroll horizontal si vraiment nécessaire
+  }
+
+  table {
+    width       : 100% !important;
+    min-width   : unset !important;  // écrase les [tableStyle]="{'min-width': ...}"
+    table-layout: auto;
+  }
+
+  // Headers
+  .p-datatable-thead > tr > th {
+    background    : var(--color-surface-2);
+    border        : 1px solid var(--color-border);
+    color         : var(--color-text-secondary);
+    font-weight   : var(--weight-semibold);
+    font-size     : var(--text-sm);
+    letter-spacing: var(--tracking-wider);
+    text-transform: uppercase;
+    text-align    : center !important;
+    white-space   : nowrap;           // les headers restent sur une ligne
+    padding       : 0.5rem 0.75rem;
+
+    .p-column-header-content { justify-content: center; }
+  }
+
+  // Cellules — texte long autorisé à passer en plusieurs lignes
+  .p-datatable-tbody > tr > td {
+    border         : 1px solid var(--color-border);
+    color          : var(--color-text-primary);
+    text-align     : center !important;
+    white-space    : normal;           // retour à la ligne autorisé
+    overflow-wrap  : break-word;       // coupe les mots trop longs
+    word-break     : break-word;
+    max-width      : 220px;            // plafond par colonne
+    padding        : 0.4rem 0.75rem;
+    vertical-align : middle;
+  }
+}
+
+.p-datatable .p-datatable-tbody > tr:nth-child(even) > td {
+  background: var(--color-surface-2);
+}
+
+// ── Découvert row — agios calcul detail ────────────────────────────────────
+// Cible les <td> directement car PrimeNG applique son stripe sur les td,
+// pas sur le tr — un style sur le tr est donc invisible sur les lignes paires.
+.p-datatable .p-datatable-tbody > tr.row-decouvert > td {
+  background-color: var(--color-danger-light) !important;
+}
+
+.solde-negatif { color: var(--color-danger)  !important; }
+.solde-positif { color: var(--color-success) !important; }
+
+// Tags PrimeNG — jamais de coupure au milieu d'un mot (LINEAIRE, En Cours, etc.)
+.p-tag, .p-tag .p-tag-value { white-space: nowrap; }
+
+.p-inputtext:enabled:focus,
+.p-dropdown:not(.p-disabled).p-focus,
+.p-multiselect:not(.p-disabled).p-focus {
+  border-color: var(--color-border-focus) !important;
+  box-shadow  : 0 0 0 0.15rem color-mix(in srgb, var(--color-border-focus) 20%, transparent) !important;
+}
+
+.p-inputtext:enabled:hover,
+.p-dropdown:not(.p-disabled):hover,
+.p-multiselect:not(.p-disabled):hover {
+  border-color: var(--color-border-strong);
+}
+
+.p-card {
+  background  : var(--color-surface);
+  border      : 1px solid var(--color-border);
+  box-shadow  : var(--shadow-card);
+}
+
+// =============================================================================
+// Dark mode — PrimeNG overrides
+// =============================================================================
+[data-theme="dark"] {
+  .p-component { color: var(--color-text-primary) !important; }
+
+  // Sidebar
+  .p-sidebar,
+  .p-sidebar-header,
+  .p-sidebar-content,
+  .p-sidebar-footer {
+    background  : var(--color-surface) !important;
+    border-color: var(--color-border)  !important;
+    color       : var(--color-text-primary);
+  }
+  .p-sidebar-close,
+  .p-sidebar .p-button.p-button-outlined {
+    color       : var(--color-text-secondary) !important;
+    border-color: var(--color-border)         !important;
+    background  : transparent                 !important;
+    &:hover {
+      background  : var(--color-surface-3)      !important;
+      border-color: var(--color-border-strong)  !important;
+    }
+  }
+
+  // Dialog
+  .p-dialog {
+    box-shadow  : var(--shadow-xl) !important;
+    border-radius: var(--radius-xl) !important;
+  }
+  .p-dialog,
+  .p-dialog .p-dialog-header,
+  .p-dialog .p-dialog-content,
+  .p-dialog .p-dialog-footer {
+    background  : var(--color-surface);
+    border-color: var(--color-border);
+    color       : var(--color-text-primary);
+  }
+
+  // Toolbar / Card / Surface
+  .p-toolbar     { background: var(--color-surface);   border-color: var(--color-border); }
+  .p-card        { background: var(--color-surface);   border-color: var(--color-border); }
+  .surface-card  { background: var(--color-surface)  !important; }
+
+  // DataTable
+  .p-datatable .p-datatable-thead > tr > th {
+    background  : var(--color-surface-2);
+    border-color: var(--color-border);
+    color       : var(--color-text-secondary);
+  }
+  .p-datatable .p-datatable-tbody > tr > td {
+    background  : var(--color-surface);
+    border-color: var(--color-border);
+    color       : var(--color-text-primary);
+  }
+  .p-datatable .p-datatable-tbody > tr:nth-child(even) > td { background: var(--color-surface-2); }
+  .p-datatable .p-datatable-tbody > tr:hover > td           { background: var(--color-surface-3) !important; }
+
+  // Inputs
+  .p-inputtext   { background: var(--color-surface-2); color: var(--color-text-primary); border-color: var(--color-border); }
+  .p-dropdown    { background: var(--color-surface-2); color: var(--color-text-primary); border-color: var(--color-border); }
+  .p-multiselect { background: var(--color-surface-2); color: var(--color-text-primary); border-color: var(--color-border); }
+  // ── Dropdown / Multiselect / Select panels ──────────────
+  .p-dropdown-panel,
+  .p-multiselect-panel,
+  .p-select-panel,
+  .p-autocomplete-panel {
+    background  : var(--color-surface)  !important;
+    border      : 1px solid var(--color-border) !important;
+    color       : var(--color-text-primary);
+    box-shadow  : 0 4px 20px rgba(0,0,0,0.4) !important;
+  }
+
+  // Header (search input row inside panel)
+  .p-dropdown-panel .p-dropdown-header,
+  .p-multiselect-panel .p-multiselect-header,
+  .p-select-panel .p-select-header,
+  .p-autocomplete-panel .p-autocomplete-header {
+    background  : var(--color-surface-2) !important;
+    border-color: var(--color-border)    !important;
+    color       : var(--color-text-primary);
+  }
+
+  // Items list wrapper
+  .p-dropdown-panel .p-dropdown-items-wrapper,
+  .p-multiselect-panel .p-multiselect-items-wrapper,
+  .p-select-panel .p-select-list-wrapper,
+  .p-autocomplete-panel .p-autocomplete-items-wrapper {
+    background  : var(--color-surface) !important;
+  }
+
+  // Individual items
+  .p-dropdown-item,
+  .p-multiselect-item,
+  .p-select-option,
+  .p-autocomplete-item {
+    background  : var(--color-surface)       !important;
+    color       : var(--color-text-primary)  !important;
+    border-color: transparent;
+
+    &:hover,
+    &.p-focus:not(.p-highlight) {
+      background: var(--color-surface-3) !important;
+      color     : var(--color-text-primary) !important;
+    }
+
+    &.p-highlight {
+      background: color-mix(in srgb, var(--color-primary) 20%, var(--color-surface)) !important;
+      color     : var(--color-primary) !important;
+    }
+
+    &.p-highlight.p-focus {
+      background: color-mix(in srgb, var(--color-primary) 30%, var(--color-surface)) !important;
+    }
+  }
+
+  // Filter input inside panel
+  .p-dropdown-filter,
+  .p-multiselect-filter,
+  .p-select-filter {
+    background  : var(--color-surface-2) !important;
+    color       : var(--color-text-primary) !important;
+    border-color: var(--color-border) !important;
+  }
+
+  // Empty / group messages
+  .p-dropdown-empty-message,
+  .p-multiselect-empty-message,
+  .p-select-empty-message {
+    background  : var(--color-surface) !important;
+    color       : var(--color-text-secondary) !important;
+  }
+
+  // Menu / overlay
+  .p-menu, .p-tieredmenu, .p-contextmenu {
+    background  : var(--color-surface);
+    border-color: var(--color-border);
+    .p-menuitem-link       { color: var(--color-text-primary); }
+    .p-menuitem-link:hover { background: var(--color-surface-3); }
+  }
+
+  // Toast
+  .p-toast .p-toast-message {
+    background  : var(--color-surface-2);
+    border-color: var(--color-border);
+    color       : var(--color-text-primary);
+  }
+
+  // Paginator
+  .p-paginator {
+    background  : var(--color-surface);
+    border-color: var(--color-border);
+    color       : var(--color-text-primary);
+  }
+  .p-paginator .p-paginator-page,
+  .p-paginator .p-paginator-next,
+  .p-paginator .p-paginator-prev {
+    color: var(--color-text-secondary);
+    &:hover       { background: var(--color-surface-3); }
+    &.p-highlight { background: var(--color-primary-light); color: var(--color-primary); }
+  }
+
+  // Calendar
+  .p-datepicker {
+    background  : var(--color-surface);
+    border-color: var(--color-border);
+    color       : var(--color-text-primary);
+  }
+  .p-datepicker .p-datepicker-header {
+    background  : var(--color-surface-2);
+    border-color: var(--color-border);
+    color       : var(--color-text-primary);
+  }
+  .p-datepicker table td > span {
+    color: var(--color-text-primary);
+    &:hover       { background: var(--color-surface-3); }
+    &.p-highlight { background: var(--color-primary-light); color: var(--color-primary); }
+  }
+}
+
+// =============================================================================
+// Breadcrumb — responsive scale
+// =============================================================================
+.portail-section {
+  .p-breadcrumb {
+    background-color: transparent;
+    box-shadow      : none;
+    border          : none;
+    padding         : var(--space-2) 0;
+    display         : flex;
+    white-space     : nowrap;
+    font-size       : var(--text-sm);
+  }
+  @media (min-width: 1024px) { .p-breadcrumb { font-size: var(--text-base); } }
+  @media (min-width: 1440px) { .p-breadcrumb { font-size: var(--text-md);   } }
+}
+
+// =============================================================================
+// Shared PrimeNG hover rules
+// =============================================================================
+.p-inputtext,
+.p-dropdown,
+.p-multiselect {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.p-datatable-tbody > tr {
+  transition: background 0.15s ease;
+  &:hover { background: var(--color-surface-3) !important; }
+}
+
+.p-datatable-thead > tr > th:hover {
+  background: var(--color-surface-3) !important;
+}
+
+// =============================================================================
+// Dark mode — PrimeFlex text/bg utility class overrides
+// text-900/800/700 etc. sont hardcodés, ils ne s'adaptent pas au thème
+// =============================================================================
+[data-theme="dark"] {
+  // Texte
+  .text-900, .text-800                    { color: var(--color-text-primary)   !important; }
+  .text-700, .text-600                    { color: var(--color-text-secondary) !important; }
+  .text-500, .text-400                    { color: var(--color-text-muted)     !important; }
+  .text-300, .text-200, .text-100         { color: var(--color-text-disabled)  !important; }
+
+  // Surfaces PrimeFlex
+  .surface-card, .surface-section,
+  .surface-overlay, .surface-ground       { background: var(--color-surface)   !important; color: var(--color-text-primary); }
+  .surface-border                         { border-color: var(--color-border)  !important; }
+  .surface-100, .surface-50              { background: var(--color-surface-2) !important; }
+  .surface-200, .surface-300             { background: var(--color-surface-3) !important; }
+
+  // Breadcrumb & liens
+  .p-breadcrumb                           { background: transparent !important; }
+  .p-menuitem-text, .p-menuitem-link span { color: var(--color-text-primary) !important; }
+
+  // Texte noir explicite
+  .text-black-alpha-90                    { color: var(--color-text-primary) !important; }
+
+  // bg-white explicite
+  .bg-white                               { background: var(--color-surface) !important; }
+}
+
+// =============================================================================
+// Dark mode — corrections supplémentaires (caution-list + composants similaires)
+// =============================================================================
+[data-theme="dark"] {
+  // text-600 utilisé massivement dans les cellules tableau → texte principal
+  .text-600 { color: var(--color-text-primary) !important; }
+
+  // Classes PrimeNG (différentes de PrimeFlex)
+  .text-color-secondary,
+  .p-text-secondary     { color: var(--color-text-secondary) !important; }
+
+  // Surfaces PrimeNG
+  .surface-ground       { background: var(--color-page-bg)   !important; }
+  .surface-100          { background: var(--color-surface-2) !important; }
+  .surface-0            { background: var(--color-surface)   !important; }
+  .surface-border       { border-color: var(--color-border)  !important; }
+
+  // Icônes neutres
+  .text-300             { color: var(--color-text-disabled)  !important; }
+
+  // Couleur primaire PrimeNG (p-tag "MAD", liens primaires)
+  .text-primary         { color: var(--color-primary) !important; }
+
+  // border
+  .border-1, .border-round,
+  .border-round-xl, .border-round-lg { border-color: var(--color-border) !important; }
+}
+
+// =============================================================================
+// Dark mode — PrimeFlex bg-* utilities + class card
+// =============================================================================
+[data-theme="dark"] {
+  .bg-white,
+  .bg-gray-50,
+  .bg-gray-100  { background: var(--color-surface-2) !important; color: var(--color-text-primary); }
+  .bg-gray-200  { background: var(--color-surface-3) !important; }
+
+  // class="card ..." utilisée comme wrapper de page
+  .card         { background: var(--color-surface)   !important; color: var(--color-text-primary); }
+
+  // Labels de formulaire (text-900 font-medium)
+  label         { color: var(--color-text-primary); }
+}
+
+// =============================================================================
+// Dark mode — couleurs sémantiques PrimeFlex (text-*-700/800/900 trop sombres)
+// =============================================================================
+[data-theme="dark"] {
+  // Vert (crédit, déblocage)
+  .text-green-900, .text-green-800,
+  .text-green-700, .text-green-600 { color: var(--color-success) !important; }
+
+  // Rouge (débit, remboursement)
+  .text-red-700, .text-red-600     { color: var(--color-danger)  !important; }
+
+  // Bleu (reste, info)
+  .text-blue-800, .text-blue-700   { color: var(--color-primary) !important; }
+
+  // Orange
+  .text-orange-600, .text-orange-500 { color: var(--color-warning) !important; }
+
+  // Gris sombre → secondaire
+  .text-gray-800, .text-gray-700,
+  .text-gray-600, .text-gray-500   { color: var(--color-text-secondary) !important; }
+  .text-gray-400                   { color: var(--color-text-muted)     !important; }
+
+  // Purple
+  .text-purple-900, .text-purple-800 { color: #c4b5fd !important; }
+
+  // text-black-alpha-90 (breadcrumbs, labels)
+  .text-black-alpha-90             { color: var(--color-text-primary)   !important; }
+}
+
+// =============================================================================
+// Dark mode — variables CSS PrimeNG natives (écrasent body color en dark)
+// =============================================================================
+[data-theme="dark"] {
+  // Remap les variables PrimeNG vers nos tokens dark
+  --text-color           : var(--color-text-primary);
+  --text-color-secondary : var(--color-text-secondary);
+  --surface-a            : var(--color-surface);
+  --surface-b            : var(--color-surface-2);
+  --surface-c            : var(--color-surface-3);
+  --surface-d            : var(--color-surface-3);
+  --surface-border       : var(--color-border);
+  --surface-ground       : var(--color-page-bg);
+  --surface-section      : var(--color-surface);
+  --surface-card         : var(--color-surface);
+  --surface-overlay      : var(--color-surface);
+  --surface-hover        : var(--color-surface-3);
+
+  // Assure que tous les éléments héritent du bon texte
+  * { color: inherit; }
+  p, span, td, th, label, li, a:not([class*="p-button"]) {
+    color: var(--color-text-primary);
+  }
+
+  // Liens dans les tableaux / listes
+  a { color: var(--color-primary); }
+}
+
+// =============================================================================
+// Dark mode — forcer texte clair dans TOUS les td/th (PrimeNG --text-color
+// écrase sans !important les cellules de tableau)
+// =============================================================================
+[data-theme="dark"] {
+  .p-datatable .p-datatable-tbody > tr > td { color: var(--color-text-primary) !important; background: var(--color-surface) !important; vertical-align: middle; }
+  .p-datatable .p-datatable-tbody > tr:hover > td { background: var(--color-surface-3) !important; }
+  .p-datatable .p-datatable-thead > tr > th { color: var(--color-text-secondary) !important; background: var(--color-surface-2) !important; }
+  .p-datatable .p-datatable-tbody > tr > td .text-500 { color: var(--color-text-secondary) !important; }
+  .p-datatable .p-datatable-tbody > tr > td .text-400 { color: var(--color-text-muted) !important; }
+}
+
+// =============================================================================
+// Dark mode — text-700 doit être text-primary (blanc), pas secondaire
+// =============================================================================
+[data-theme="dark"] {
+  .text-700 { color: var(--color-text-primary)   !important; }
+  .text-600 { color: var(--color-text-primary)   !important; }
+}

@@ -1,0 +1,124 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="flex flex-column w-full h-full overflow-y-scroll gap-3 p-3 pb-6"
+    >
+
+  <!-- ═══ HEADER ═══════════════════════════════════════════════════════════ -->
+  <div class="flex flex-column gap-1">
+    <h2 class="text-900 font-bold m-0" style="font-size:1.15rem;letter-spacing:-0.01em">
+      {{ isEditMode ? 'Modifier la nature' : 'Nouvelle nature' }}
+    </h2>
+    <p-breadcrumb [model]="items" styleClass="border-none p-0"
+                  [style]="{'background':'transparent','padding':'0','font-size':'0.78rem'}">
+      <ng-template pTemplate="item" let-item>
+        @if (item.route) {
+          <a [routerLink]="item.route" class="p-menuitem-link">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
+            <span class="text-400 text-xs ml-1">{{ item.label }}</span>
+          </a>
+        } @else {
+          <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
+        }
+      </ng-template>
+    </p-breadcrumb>
+  </div>
+
+  <!-- ═══ FORM CARD ════════════════════════════════════════════════════════ -->
+  <div class="surface-card border-round-xl border-1 surface-border p-4"
+       style="box-shadow:0 1px 10px rgba(0,0,0,0.06)">
+
+    <form [formGroup]="natureLigneForm" (ngSubmit)="onSubmit()" class="p-fluid">
+      <div class="formgrid grid">
+
+        <!-- Code -->
+        <div class="field col-12">
+          <label for="code" class="font-semibold block mb-2 text-700 text-sm">
+            Code <span class="text-red-500">*</span>
+            @if (isEditMode) {
+              <span class="text-400 font-normal text-xs ml-2">(immuable)</span>
+            }
+          </label>
+          <input id="code" type="text" pInputText formControlName="code"
+                 placeholder="Ex : FC01"
+                 [ngClass]="{'ng-invalid ng-dirty': f['code'].invalid && f['code'].touched}"/>
+          @if (f['code'].invalid && f['code'].touched) {
+            <small class="p-error">
+              @if (f['code'].errors?.['required']) { <span>Obligatoire.</span> }
+              @if (f['code'].errors?.['maxlength']) { <span>20 caractères maximum.</span> }
+            </small>
+          }
+        </div>
+
+        <!-- Libellé -->
+        <div class="field col-12">
+          <label for="label" class="font-semibold block mb-2 text-700 text-sm">
+            Libellé <span class="text-red-500">*</span>
+          </label>
+          <input id="label" type="text" pInputText formControlName="label"
+                 [ngClass]="{'ng-invalid ng-dirty': f['label'].invalid && f['label'].touched}"/>
+          @if (f['label'].invalid && f['label'].touched) {
+            <small class="p-error">
+              @if (f['label'].errors?.['required']) { <span>Obligatoire.</span> }
+              @if (f['label'].errors?.['pattern']) { <span>Lettres et espaces uniquement.</span> }
+            </small>
+          }
+        </div>
+
+        <!-- Description -->
+        <div class="field col-12">
+          <label for="description" class="font-semibold block mb-2 text-700 text-sm">
+            Description <span class="text-red-500">*</span>
+          </label>
+          <input id="description" type="text" pInputText formControlName="description"
+                 [ngClass]="{'ng-invalid ng-dirty': f['description'].invalid && f['description'].touched}"/>
+          @if (f['description'].invalid && f['description'].touched) {
+            <small class="p-error">
+              @if (f['description'].errors?.['required']) { <span>Obligatoire.</span> }
+            </small>
+          }
+        </div>
+
+        <!-- Portée -->
+        <div class="field col-12">
+          <label for="portee" class="font-semibold block mb-2 text-700 text-sm">
+            Portée <span class="text-red-500">*</span>
+          </label>
+          <p-dropdown
+            id="portee"
+            formControlName="portee"
+            [options]="porteeOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionner une portée"
+            appendTo="body"
+            [ngClass]="{'ng-invalid ng-dirty': f['portee'].invalid && f['portee'].touched}">
+          </p-dropdown>
+          @if (f['portee'].invalid && f['portee'].touched) {
+            <small class="p-error">
+              @if (f['portee'].errors?.['required']) { <span>Obligatoire.</span> }
+            </small>
+          }
+        </div>
+
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-content-end gap-2 mt-4 pt-3 border-top-1 surface-border">
+        <button pButton pRipple type="button"
+                label="Annuler"
+                icon="pi pi-times"
+                class="p-button-text p-button-secondary"
+                (click)="onCancel()">
+        </button>
+        <button pButton pRipple type="submit"
+                [label]="isEditMode ? 'Modifier' : 'Créer'"
+                icon="pi pi-check"
+                [disabled]="loading">
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>

@@ -1,0 +1,48 @@
+// =============================================================================
+// Tableau d'Amortissement — Styles du composant
+// Toutes les valeurs utilisent les design tokens définis dans _tokens.scss
+// =============================================================================
+
+:host {
+
+  // Colonne Action (toggle + bouton édition) — largeur fixe via token
+  .col-action {
+    width: 10rem;
+    min-width: 10rem;
+  }
+
+  // Breadcrumb transparent (remplace l'inline [style])
+  .breadcrumb-transparent ::ng-deep .p-breadcrumb {
+    background: transparent;
+    border: none;
+    padding: 0;
+  }
+
+  // Texte primaire via token (remplace text-black-alpha-90)
+  .pg-text-primary {
+    color: var(--color-text-primary);
+  }
+
+  // Résumé financier au-dessus du tableau
+  .summary-row {
+    display        : flex;
+    flex-direction : row;
+    justify-content: space-around;
+    gap            : var(--space-2);
+    font-size      : var(--text-base);
+    color          : var(--color-text-secondary);
+
+    strong {
+      color      : var(--color-text-primary);
+      font-weight: var(--weight-semibold);
+    }
+  }
+
+  // Actions dans les cellules du tableau
+  .cell-actions {
+    display        : flex;
+    align-items    : center;
+    justify-content: center;
+    gap            : var(--space-2);
+  }
+}

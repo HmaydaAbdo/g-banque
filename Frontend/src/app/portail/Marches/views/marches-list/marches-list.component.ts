@@ -1,0 +1,342 @@
+import {Component, OnInit, ViewChild, inject} from '@angular/core';
+import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
+import {FormBuilder, FormGroup, ReactiveFormsModule} from '@angular/forms';
+import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
+import {InputTextModule} from 'primeng/inputtext';
+import {ButtonModule} from 'primeng/button';
+import {RippleModule} from 'primeng/ripple';
+import {ImageModule} from 'primeng/image';
+import {ToastModule} from 'primeng/toast';
+import {ConfirmationService, MenuItem, MessageService} from 'primeng/api';
+import {ConfirmDialogModule} from 'primeng/confirmdialog';
+import {ToolbarModule} from 'primeng/toolbar';
+import {TooltipModule} from 'primeng/tooltip';
+import {CalendarModule} from 'primeng/calendar';
+import {debounceTime, distinctUntilChanged} from 'rxjs/operators';
+import {Router, RouterLink, RouterLinkActive} from '@angular/router';
+import {BreadcrumbModule} from 'primeng/breadcrumb';
+
+// Import DTOs, service, and models for Marche
+import {MarcheResponseDTO} from '../../dtos/marche-response.dto';
+import {MarcheSearchDTO} from '../../dtos/marche-search.dto';
+import {MarcheService} from "../../service/marche-service.service";
+import {PageResponse} from "../../../global/types/PageResponse";
+import {DropdownModule} from "primeng/dropdown";
+import {TagModule} from "primeng/tag";
+import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
+import {AuthService} from "../../../../auth/services/auth.service";
+
+
+@Component({
+  selector: 'app-marches-list',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    TableModule,
+    InputTextModule,
+    ButtonModule,
+    RippleModule,
+    ImageModule,
+    ToastModule,
+    ConfirmDialogModule,
+    ToolbarModule,
+    TooltipModule,
+    RouterLink,
+    BreadcrumbModule,
+    RouterLinkActive,
+    DropdownModule,
+    TagModule,
+    CalendarModule
+  ],
+  templateUrl: './marches-list.component.html',
+  styleUrls: ['./marches-list.component.scss'],
+  providers: [MessageService, ConfirmationService, DecimalPipe, DatePipe]
+})
+export class MarchesListComponent implements OnInit {
+
+  @ViewChild('dt') dt: Table | undefined;
+
+  marches!: MarcheResponseDTO[];
+  items: MenuItem[] | undefined;
+  totalRecords: number = 0;
+  loading: boolean = false;
+  first: number | undefined = 0;
+  rows: number | undefined = 10;
+  sortField: string | string[] = 'id';
+  sortOrder: number = 1;
+  searchForm!: FormGroup;
+
+  banques: { id: number; nom: string }[] = [];
+  loadingBanques: boolean = false;
+
+  /** Indicateur de chargement du bouton "Exporter PDF". */
+  exporting = false;
+
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut pour ne pas surcharger la barre de filtres). */
+  showDatePanel = false;
+
+  statutOptions: { label: string; value: boolean | null }[] = [
+    { label: 'Actifs', value: true },
+    { label: 'Archivés', value: false },
+    { label: 'Tous', value: null }
+  ];
+
+  private readonly marcheService = inject(MarcheService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly fb = inject(FormBuilder);
+
+  ngOnInit(): void {
+    this.items = [{ icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' }, { icon: 'pi pi-file-o', route: '/portail/marches',label: 'Liste des marchés' }];
+    this.initSearchForm();
+    this.searchForm.valueChanges
+      .pipe(
+        debounceTime(800),
+        distinctUntilChanged()
+      )
+      .subscribe(() => {
+        this.onSearch();
+      });
+  }
+
+  initSearchForm(): void {
+    this.searchForm = this.fb.group({
+      nom: [''],
+      numero: [''],
+      maitreDouvrage: [''],
+      banqueId: [null],
+      actif: [null],
+      dateDebutDesTravauxFrom: [null],
+      dateDebutDesTravauxTo: [null],
+      dateDAchievementDesTravauxFrom: [null],
+      dateDAchievementDesTravauxTo: [null]
+    });
+  }
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.searchForm.value;
+    let count = 0;
+    if (v.dateDebutDesTravauxFrom || v.dateDebutDesTravauxTo) count++;
+    if (v.dateDAchievementDesTravauxFrom || v.dateDAchievementDesTravauxTo) count++;
+    return count;
+  }
+
+  loadMarches(event: TableLazyLoadEvent = { first: this.first, rows: this.rows, sortField: this.sortField, sortOrder: this.sortOrder, filters: {} }): void {
+    this.loading = true;
+    const first = event.first !== undefined ? event.first : this.first;
+    const rows = event.rows !== undefined ? event.rows : this.rows;
+    const sortField = event.sortField || this.sortField;
+    const sortOrder = event.sortOrder === 1 ? 1 : -1;
+
+    const page = (first as number) / (rows as number);
+
+    const actualSortField = Array.isArray(sortField) ? sortField[0] : sortField;
+    const sort = `${actualSortField},${sortOrder === 1 ? 'asc' : 'desc'}`;
+
+    const searchCriteria: MarcheSearchDTO = this.searchForm.value;
+
+    this.marcheService.getAllMarches(searchCriteria, page, rows as number, sort)
+      .subscribe({
+        next: (response: PageResponse<MarcheResponseDTO>) => {
+          this.marches = response.content;
+          this.totalRecords = response.page.totalElements;
+          this.loading = false;
+        },
+        error: () => {
+          this.loading = false;
+        }
+      });
+  }
+
+
+  loadBanques(event: any) {
+    this.loadingBanques = true;
+
+    const page = event.first / event.rows || 0;
+    const size = event.rows || 10;
+
+    const criteria = { nom: event.filter }; // filtre par nom si tapé
+
+    this.banqueService.getAllBanques(criteria, page, size).subscribe({
+      next: (data) => {
+        this.banques = data.content.map(b => ({ id: b.id, nom: b.nom }));
+        this.loadingBanques = false;
+      },
+      error: () => {
+        this.loadingBanques = false;
+      }
+    });
+  }
+
+  onSearch(): void {
+    this.first = 0;
+    if (this.dt) {
+      this.dt.reset();
+    } else {
+      this.loadMarches({
+        first: this.first,
+        rows: this.rows,
+        sortField: this.sortField,
+        sortOrder: this.sortOrder,
+        filters: {}
+      } as TableLazyLoadEvent);
+    }
+  }
+
+  clearSearch(): void {
+    this.searchForm.reset();
+    this.first = 0;
+    if (this.dt) {
+      this.dt.clear();
+      this.loadMarches(this.dt.createLazyLoadMetadata());
+    } else {
+      this.loadMarches({
+        first: this.first,
+        rows: this.rows,
+        sortField: this.sortField,
+        sortOrder: this.sortOrder,
+        filters: {}
+      } as TableLazyLoadEvent);
+    }
+  }
+
+  /**
+   * Échappe les caractères HTML spéciaux avant interpolation dans un message de confirmation
+   * PrimeNG (rendu via `[innerHTML]` par `p-confirmDialog`) — `marche.nom` est une donnée libre
+   * saisie par un utilisateur Finance et ne doit jamais être insérée telle quelle dans du HTML
+   * (frontend.md, section Sécurité).
+   */
+  private escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  deleteMarche(marche: MarcheResponseDTO): void {
+    const nomEchappe = this.escapeHtml(marche.nom);
+    const confirmationMessageHtml = `
+    <div class="text-center">
+        <i class="pi pi-exclamation-triangle" style="margin-right: 5px;"></i>
+        <p>Êtes-vous sûr de vouloir supprimer le marché "<strong>${nomEchappe}</strong>" ?</p>
+        <p style="color: #ef4444; font-weight: bold;">Cette action est irréversible.</p>
+    </div>
+    `;
+
+    this.confirmationService.confirm({
+      message: confirmationMessageHtml,
+      header: 'Confirmation de Suppression',
+      icon: 'none',
+      acceptLabel: 'Confirmer',
+      rejectLabel: 'Annuler',
+      accept: () => {
+        this.loading = true;
+        this.marcheService.deleteMarche(marche.id!)
+          .subscribe({
+            next: () => {
+              this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Le marché a été supprimé avec succès.', life: 3000 });
+              if (this.dt) {
+                this.loadMarches(this.dt.createLazyLoadMetadata());
+              } else {
+                this.loadMarches();
+              }
+              this.loading = false;
+            },
+            error: () => {
+              this.loading = false;
+            }
+          });
+      }
+    });
+  }
+
+  archiverMarche(marche: MarcheResponseDTO): void {
+    const nomEchappe = this.escapeHtml(marche.nom);
+    this.confirmationService.confirm({
+      message: `Êtes-vous sûr de vouloir archiver le marché "<strong>${nomEchappe}</strong>" ? Il ne sera plus pris en compte dans les calculs d'agios et d'encours.`,
+      header: 'Confirmation d\'archivage',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Archiver',
+      rejectLabel: 'Annuler',
+      accept: () => {
+        this.loading = true;
+        this.marcheService.archiverMarche(marche.id!).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Le marché a été archivé.', life: 3000 });
+            this.dt ? this.loadMarches(this.dt.createLazyLoadMetadata()) : this.loadMarches();
+            this.loading = false;
+          },
+          error: () => {
+            this.loading = false;
+          }
+        });
+      }
+    });
+  }
+
+  desarchiverMarche(marche: MarcheResponseDTO): void {
+    const nomEchappe = this.escapeHtml(marche.nom);
+    this.confirmationService.confirm({
+      message: `Êtes-vous sûr de vouloir désarchiver le marché "<strong>${nomEchappe}</strong>" ? Il sera de nouveau pris en compte dans les calculs d'agios et d'encours.`,
+      header: 'Confirmation de désarchivage',
+      icon: 'pi pi-info-circle',
+      acceptLabel: 'Désarchiver',
+      rejectLabel: 'Annuler',
+      accept: () => {
+        this.loading = true;
+        this.marcheService.desarchiverMarche(marche.id!).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Le marché a été désarchivé.', life: 3000 });
+            this.dt ? this.loadMarches(this.dt.createLazyLoadMetadata()) : this.loadMarches();
+            this.loading = false;
+          },
+          error: () => {
+            this.loading = false;
+          }
+        });
+      }
+    });
+  }
+
+  viewSpecificLines(marcheId: number): void {
+    this.router.navigate(['/portail/lignes-fonctionnelles-specifiques/marche', marcheId]);
+  }
+
+  isAdmin():boolean{
+    return this.authService.isSystemAdmin()
+  }
+
+  /**
+   * Exporte en PDF l'intégralité des marchés correspondant aux filtres actuellement
+   * appliqués — pas seulement la page affichée à l'écran.
+   */
+  exportPdf(): void {
+    this.exporting = true;
+    const searchCriteria: MarcheSearchDTO = this.searchForm.value;
+    this.marcheService.exportPdf(searchCriteria).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `marches_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.exporting = false;
+      },
+    });
+  }
+}

@@ -1,0 +1,600 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="px-2 w-full h-full overflow-y-scroll">
+
+  <!-- Breadcrumb -->
+  <div class="portail-section flex justify-content-between bg-transparent mb-2">
+    <div class="flex justify-content-center align-items-center">
+      <p-breadcrumb [model]="items">
+        <ng-template pTemplate="item" let-item>
+          @if (item.route) {
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb"
+               #rla="routerLinkActive">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-sm']"></span>
+              <span class="text-black-alpha-90 p-2 font-bold text-sm">{{ item.label }}</span>
+            </a>
+          } @else {
+            <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+          }
+        </ng-template>
+      </p-breadcrumb>
+    </div>
+  </div>
+
+  @if (rapprochementDetails) {
+  <div>
+
+    <!-- Section Statistiques du Rapprochement -->
+      <div class="surface-card border-round-xl px-1 mb-2 shadow-2">
+        <div class="flex align-items-center justify-content-between flex-wrap py-3 gap-3">
+
+          <!-- Banque + Date -->
+          <div class="flex align-items-center gap-3 flex-shrink-0">
+            <div class="flex align-items-center justify-content-center border-round-lg"
+                 style="width: 48px; height: 48px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+              <i class="pi pi-building text-white text-xl"></i>
+            </div>
+            <div>
+              <div class="font-bold text-lg text-900 white-space-nowrap">
+                {{ rapprochementDetails.banqueNom }}
+              </div>
+              <div class="text-xs text-600">
+                {{ rapprochementDetails.dateRapprochement | date:'MM/YYYY' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Solde Début -->
+          <div class="flex align-items-center gap-2 flex-shrink-0">
+            <div class="flex align-items-center justify-content-center border-round-lg"
+                 style="width: 48px; height: 48px; background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);">
+              <i class="pi pi-flag text-xl" style="color: #2196F3;"></i>
+            </div>
+            <div>
+              <div class="text-xs text-500 mb-1">Solde Début</div>
+              <div class="font-bold text-lg num white-space-nowrap"
+                   [class.num-credit]="rapprochementDetails.soldeDebut >= 0"
+                   [class.num-debit]="rapprochementDetails.soldeDebut < 0">
+                {{ rapprochementDetails.soldeDebut | number:'1.2-2' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Solde Fin -->
+          <div class="flex align-items-center gap-2 flex-shrink-0">
+            <div class="flex align-items-center justify-content-center border-round-lg"
+                 style="width: 48px; height: 48px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+              <i class="pi pi-wallet text-white text-xl"></i>
+            </div>
+            <div>
+              <div class="text-xs text-500 mb-1">Solde Fin</div>
+              <div class="font-bold text-lg num white-space-nowrap"
+                   [class.num-credit]="rapprochementDetails.soldeFin >= 0"
+                   [class.num-debit]="rapprochementDetails.soldeFin < 0">
+                {{ rapprochementDetails.soldeFin | number:'1.2-2' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Débit -->
+          <div class="flex align-items-center gap-2 flex-shrink-0">
+            <div class="flex align-items-center justify-content-center border-round-lg bg-red-500"
+                 style="width: 48px; height: 48px;">
+              <i class="pi pi-arrow-down text-white text-xl"></i>
+            </div>
+            <div>
+              <div class="text-xs text-500 mb-1">Total Débit</div>
+              <div class="font-bold text-lg num num-debit white-space-nowrap">
+                {{ rapprochementDetails.totalDebit | number:'1.2-2' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Crédit -->
+          <div class="flex align-items-center gap-2 flex-shrink-0">
+            <div class="flex align-items-center justify-content-center border-round-lg bg-green-500"
+                 style="width: 48px; height: 48px;">
+              <i class="pi pi-arrow-up text-white text-xl"></i>
+            </div>
+            <div>
+              <div class="text-xs text-500 mb-1">Total Crédit</div>
+              <div class="font-bold text-lg num num-credit white-space-nowrap">
+                {{ rapprochementDetails.totalCredit | number:'1.2-2' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- TVA Déductible -->
+          <div class="flex align-items-center gap-2 flex-shrink-0">
+            <div class="flex align-items-center justify-content-center border-round-lg"
+                 style="width: 48px; height: 48px; background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%);">
+              <i class="pi pi-minus text-xl" style="color: #D32F2F;"></i>
+            </div>
+            <div>
+              <div class="text-xs text-500 mb-1">TVA Déductible</div>
+              <div class="font-bold text-lg text-900 white-space-nowrap">
+                {{ rapprochementDetails.tvaDeductible | number:'1.2-2' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- TVA Collectée -->
+          <div class="flex align-items-center gap-2 flex-shrink-0">
+            <div class="flex align-items-center justify-content-center border-round-lg"
+                 style="width: 48px; height: 48px; background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);">
+              <i class="pi pi-plus text-xl" style="color: #388E3C;"></i>
+            </div>
+            <div>
+              <div class="text-xs text-500 mb-1">TVA Collectée</div>
+              <div class="font-bold text-lg text-900 white-space-nowrap">
+                {{ rapprochementDetails.tvaCollectee | number:'1.2-2' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- TVA Due -->
+          <div class="flex align-items-center gap-2 flex-shrink-0">
+            <div class="flex align-items-center justify-content-center border-round-lg"
+                 [ngStyle]="{
+                   'width': '48px',
+                   'height': '48px',
+                   'background': (rapprochementDetails.tvaDue ) >= 0 ? '#FFA726' : '#66BB6A'
+                 }">
+              <i class="text-white text-xl"
+                 [ngClass]="(rapprochementDetails.tvaDue ) >= 0 ? 'pi pi-exclamation-triangle' : 'pi pi-check-circle'"></i>
+            </div>
+            <div>
+              <div class="text-xs text-500 mb-1">TVA Due</div>
+              <div class="font-bold text-lg white-space-nowrap"
+                   [ngStyle]="{
+                     'color': (rapprochementDetails.tvaDue ) >= 0 ? '#E65100' : '#2E7D32'
+                   }">
+                {{ rapprochementDetails.tvaDue | number:'1.2-2' }}
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+
+    <!-- Section Filtres de Recherche -->
+    <form [formGroup]="searchForm">
+      <div class="pg-filters mb-3">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+
+          <div class="flex flex-wrap md:flex-nowrap gap-3 align-items-center">
+
+            <!-- Libelle -->
+            <span class="p-input-icon-left">
+          <i class="pi pi-search"></i>
+          <input
+            pInputText
+            formControlName="libelle"
+            placeholder="Libellé..."
+            class="w-12rem"
+          />
+        </span>
+
+            <!-- Observation -->
+            <span class="p-input-icon-left">
+          <i class="pi pi-search"></i>
+          <input
+            pInputText
+            formControlName="observation"
+            placeholder="Observation..."
+            class="w-12rem"
+          />
+        </span>
+
+            <!-- Montant -->
+            <span class="p-input-icon-left">
+          <i class="pi pi-money-bill"></i>
+          <input
+            pInputText
+            type="number"
+            formControlName="montant"
+            placeholder="Montant..."
+            class="w-10rem"
+          />
+        </span>
+
+            <!-- Source -->
+            <p-multiSelect
+              formControlName="transactionSources"
+              [options]="transactionSourceOptions"
+              optionLabel="label"
+              placeholder="Source"
+              appendTo="body"
+              class="w-12rem"
+            ></p-multiSelect>
+
+            <!-- Période -->
+            <button type="button" pButton pRipple
+                    [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+                    icon="pi pi-calendar"
+                    [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+                    (click)="toggleDatePanel()">
+            </button>
+
+          </div>
+
+          <button type="button" pButton pRipple label="Exporter PDF" class="h-fit mr-2" size="small"
+                  icon="pi pi-file-pdf" severity="secondary" [loading]="exportingReport" (click)="exportReport()"></button>
+          <div class="flex-shrink-0">
+            <p-button icon="pi pi-times" severity="secondary"
+                      (onClick)="clearSearch()" [style]="{'white-space': 'nowrap'}">
+            </p-button>
+          </div>
+
+      </div>
+    </form>
+
+    @if (showDatePanel) {
+    <div class="p-3 bg-white border-round shadow-1 mb-3">
+      <form [formGroup]="searchForm" class="grid">
+        <div class="col-6 md:col-2">
+          <label class="block text-xs text-500 mb-1">Émission — du</label>
+          <p-calendar formControlName="dateEmissionDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                      [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+        </div>
+        <div class="col-6 md:col-2">
+          <label class="block text-xs text-500 mb-1">Émission — au</label>
+          <p-calendar formControlName="dateEmissionFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                      [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+        </div>
+        <div class="col-6 md:col-2">
+          <label class="block text-xs text-500 mb-1">Opération — du</label>
+          <p-calendar formControlName="dateOperationDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                      [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+        </div>
+        <div class="col-6 md:col-2">
+          <label class="block text-xs text-500 mb-1">Opération — au</label>
+          <p-calendar formControlName="dateOperationFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                      [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+        </div>
+        <div class="col-6 md:col-2">
+          <label class="block text-xs text-500 mb-1">Valeur — du</label>
+          <p-calendar formControlName="dateValeurDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                      [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+        </div>
+        <div class="col-6 md:col-2">
+          <label class="block text-xs text-500 mb-1">Valeur — au</label>
+          <p-calendar formControlName="dateValeurFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                      [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+        </div>
+      </form>
+    </div>
+    }
+    <!-- Section Tableau des Transactions -->
+    <div class="pb-8">
+      <p-table #dt
+               [value]="transactions"
+               [paginator]="true"
+               [rows]="rows"
+               [totalRecords]="totalTransactionsRecords"
+               [loading]="loadingTransactions"
+               [rowsPerPageOptions]="[5, 10, 25, 50]"
+               [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
+               (onLazyLoad)="loadTransactionsLazy($event)"
+               scrollHeight="flex"
+               columnResizeMode="expand"
+               [rowHover]="true"
+               dataKey="id"
+               currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} transactions"
+               [showCurrentPageReport]="true"
+               styleClass="p-datatable-gridlines p-datatable-sm"
+               [tableStyle]="{'min-width': '70rem'}"
+               [selectionMode]="'single'">
+
+        <ng-template pTemplate="header">
+          <tr class="white-space-nowrap text-xs">
+            <th pSortableColumn="id" [style.width]="'4rem'">
+              <div class="flex align-items-center gap-2">
+                ID
+                <p-sortIcon field="id"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="dateEmission">
+              <div class="flex align-items-center gap-2">
+                D.émission
+                <p-sortIcon field="dateEmission"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="dateOperations">
+              <div class="flex align-items-center gap-2">
+                D.opération
+                <p-sortIcon field="dateOperations"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="dateValeur">
+              <div class="flex align-items-center gap-2">
+                D.valeur
+                <p-sortIcon field="dateValeur"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="libelle">
+              <div class="flex align-items-center gap-2">
+                Libellé
+                <p-sortIcon field="libelle"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="debit" class="text-right">
+              <div class="flex align-items-center justify-content-end gap-2">
+                Débit
+                <p-sortIcon field="debit"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="credit" class="text-right">
+              <div class="flex align-items-center justify-content-end gap-2">
+                Crédit
+                <p-sortIcon field="credit"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="tvaDeductible" class="text-right">
+              <div class="flex align-items-center justify-content-end gap-2">
+                TVA Déductible
+                <p-sortIcon field="tvaDeductible"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="tvaCollectee" class="text-right">
+              <div class="flex align-items-center justify-content-end gap-2">
+                TVA Collectée
+                <p-sortIcon field="tvaCollectee"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="observation">
+              <div class="flex align-items-center gap-2">
+                Observation
+                <p-sortIcon field="observation"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="transactionSource">
+              <div class="flex align-items-center gap-2">
+                Source
+                <p-sortIcon field="transactionSource"></p-sortIcon>
+              </div>
+            </th>
+            <th class="w-fit"> Actions</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-transaction>
+          <tr class="text-sm hover:surface-hover transition-duration-150">
+            <td>{{ transaction.id }}</td>
+            <td class="white-space-nowrap">
+              <span class="text-700">{{ transaction.dateEmission | date:'dd/MM/yyyy' }}</span>
+            </td>
+            <td class="white-space-nowrap">
+              <span class="text-700">{{ transaction.dateOperations | date:'dd/MM/yyyy' }}</span>
+            </td>
+            <td class="white-space-nowrap">
+              <span class="text-700">{{ transaction.dateValeur | date:'dd/MM/yyyy' }}</span>
+            </td>
+            <td>
+              <span class="font-medium text-900">{{ transaction.libelle }}</span>
+            </td>
+
+            <td class="text-right white-space-nowrap">
+              @if (transaction.debit !== 0) {
+                <span class="num num-debit font-semibold">
+                  {{ transaction.debit | number:'1.2-2' }}
+                </span>
+              } @else {
+                <span class="text-500">—</span>
+              }
+            </td>
+
+            <td class="text-right white-space-nowrap">
+              @if (transaction.credit !== 0) {
+                <span class="num num-credit font-semibold">
+                  {{ transaction.credit | number:'1.2-2' }}
+                </span>
+              } @else {
+                <span class="text-500">—</span>
+              }
+            </td>
+
+            <td class="text-right white-space-nowrap">
+              @if (transaction.tvaDeductible !== null && transaction.tvaDeductible > 0) {
+                <span class="num num-neutral">
+                  {{ transaction.tvaDeductible | number:'1.2-2' }}
+                </span>
+              } @else {
+                <span class="text-500">—</span>
+              }
+            </td>
+
+            <td class="text-right white-space-nowrap">
+              @if (transaction.tvaCollectee !== null && transaction.tvaCollectee > 0) {
+                <span class="num num-neutral">
+                  {{ transaction.tvaCollectee | number:'1.2-2' }}
+                </span>
+              } @else {
+                <span class="text-500">—</span>
+              }
+            </td>
+
+            <td>
+              <span class="text-700">{{ transaction.observation }}</span>
+            </td>
+            <td>
+              <app-source-badge [source]="transaction.transactionSource"></app-source-badge>
+            </td>
+
+            <td>
+              <button
+                      pButton pRipple icon="pi pi-pencil"
+                      class="p-button-rounded p-button-outlined p-button-secondary"
+                      pTooltip="Modifier la transaction"
+                      (click)="openEditDialog(transaction)"></button>
+
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="11" class="text-center p-4">
+              <div class="flex flex-column align-items-center gap-3">
+                <i class="pi pi-inbox text-4xl text-400"></i>
+                <div class="text-700 font-semibold">Aucune transaction trouvée</div>
+                <div class="text-500 text-sm">Aucune transaction ne correspond à vos critères de recherche.</div>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="loadingbody">
+          <tr>
+            <td colspan="11" class="text-center p-4">
+              <div class="flex flex-column align-items-center gap-3">
+                <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
+                <div class="text-700 font-semibold">Chargement des transactions...</div>
+                <div class="text-500 text-sm">Veuillez patienter</div>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+      </p-table>
+    </div>
+
+  </div>
+  }
+
+</div>
+
+
+<p-dialog
+  header="Modifier une transaction"
+  [(visible)]="displayEditDialog"
+  [modal]="true"
+  [closable]="true">
+
+  <form [formGroup]="editDateForm">
+    <!-- Date d'opération -->
+    <div class=" flex flex-column  mb-3">
+      <label class="font-semibold text-sm">Date d'opération</label>
+      <p-calendar
+        formControlName="dateOperation"
+        dateFormat="dd/mm/yy"
+        appendTo="body"
+        [showIcon]="true"
+        [readonlyInput]="true"
+        [showOnFocus]="false"
+        [inputStyle]="{'cursor':'pointer'}">
+      </p-calendar>
+      @if (editDateForm.get('dateOperation')?.invalid && editDateForm.get('dateOperation')?.touched) {
+        <small class="text-red-500">
+          La date d'opération est obligatoire
+        </small>
+      }
+    </div>
+
+    <!-- Date de valeur -->
+    <div class=" flex flex-column  mb-3">
+      <label class="font-semibold text-sm">Date de valeur</label>
+      <p-calendar
+        formControlName="dateValeur"
+        dateFormat="dd/mm/yy"
+        appendTo="body"
+        [showOnFocus]="false"
+        [showIcon]="true"
+        [readonlyInput]="true"
+        [inputStyle]="{'cursor':'pointer'}">
+      </p-calendar>
+      @if (editDateForm.get('dateValeur')?.invalid && editDateForm.get('dateValeur')?.touched) {
+        <small class="text-red-500">
+          La date de valeur est obligatoire
+        </small>
+      }
+    </div>
+
+    <!-- TVA Déductible -->
+    <div class=" flex flex-column  mb-3">
+      <label class="font-semibold text-sm">TVA Déductible</label>
+      <input type="number"
+             pInputText
+             formControlName="tvaDeductible"
+             class="w-full"/>
+      @if (editDateForm.get('tvaDeductible')?.invalid && editDateForm.get('tvaDeductible')?.touched) {
+        <small class="text-red-500">
+          Ce champ est obligatoire
+        </small>
+      }
+    </div>
+
+    <!-- TVA Collectée -->
+    <div class=" flex flex-column  mb-3">
+      <label class="font-semibold text-sm">TVA Collectée</label>
+      <input type="number"
+             pInputText
+             formControlName="tvaCollecte"
+             class="w-full"/>
+      @if (editDateForm.get('tvaCollecte')?.invalid && editDateForm.get('tvaCollecte')?.touched) {
+        <small class="text-red-500">
+          Ce champ est obligatoire
+        </small>
+      }
+    </div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Annuler" severity="secondary" (click)="closeEditDialog()"></p-button>
+    <p-button label="Enregistrer" severity="success" (click)="updateTransaction()" [disabled]="editDateForm.invalid"></p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal choix type de rapport (export PDF filtré) -->
+<p-dialog
+  header="Choisir le type de rapport"
+  [(visible)]="showReportTypeModal"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '420px' }"
+  [draggable]="false">
+
+  <div class="flex flex-column gap-3 p-3">
+
+    <p class="text-color-secondary m-0">
+      Sélectionnez la version du rapport à télécharger. Seules les transactions correspondant aux
+      filtres actuellement appliqués ci-dessus seront incluses.
+    </p>
+
+    <p-selectButton
+      [options]="reportTypeOptions"
+      [formControl]="reportTypeControl"
+      optionLabel="label"
+      optionValue="value"
+      styleClass="w-full flex"
+      [style]="{ width: '100%' }">
+
+      <ng-template pTemplate="item" let-option>
+        <div class="flex flex-row align-items-center justify-content-center gap-2 px-3 py-2 w-full">
+          <div class="flex flex-column align-items-start">
+            <span class="font-semibold">{{ option.label }}</span>
+          </div>
+        </div>
+      </ng-template>
+
+    </p-selectButton>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Annuler"
+      icon="pi pi-times"
+      styleClass="p-button-text"
+      (click)="showReportTypeModal = false">
+    </p-button>
+    <p-button
+      label="Télécharger"
+      icon="pi pi-download"
+      [disabled]="!reportTypeControl.value"
+      (click)="confirmExportReport()">
+    </p-button>
+  </ng-template>
+
+</p-dialog>

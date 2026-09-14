@@ -1,0 +1,271 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="card flex flex-column gap-2 p-2 w-full h-full overflow-y-auto">
+
+  <!-- Breadcrumb et bouton nouveau contrat -->
+  <div class="flex justify-content-between align-items-center bg-transparent gap-3">
+    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
+      <ng-template pTemplate="item" let-item>
+        @if (item.route) {
+          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+          </a>
+        } @else {
+          <a [href]="item.url">
+            <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+          </a>
+        }
+      </ng-template>
+    </p-breadcrumb>
+    <div class="flex gap-2">
+      <button pButton pRipple label="Exporter PDF" class="p-button-outlined p-button-danger h-fit" size="small" icon="pi pi-file-pdf" [loading]="exporting" (click)="exportPdf()"></button>
+      <button pButton pRipple label="Nouveau Contrat" class="hidden md:block h-fit" size="small" icon="pi pi-plus" severity="primary" (click)="createNewContrat()"></button>
+      <button pButton pRipple pTooltip="Nouveau Contrat" class="md:hidden h-fit" size="small" icon="pi pi-plus" severity="primary" (click)="createNewContrat()"></button>
+    </div>
+  </div>
+
+  <!-- Formulaire de recherche -->
+  <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" class="w-full">
+    <div class="flex flex-row justify-content-between gap-1 w-full">
+      <!-- Numéro de contrat -->
+      <span class="p-input-icon-left flex-1">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text"
+               formControlName="numeroContrat"
+               placeholder="N° Contrat..."
+               class="w-full" />
+      </span>
+
+      <!-- Immobilisation -->
+      <span class="p-input-icon-left flex-1">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text"
+               formControlName="immobilisation"
+               placeholder="Immobilisation..."
+               class="w-full" />
+      </span>
+
+      <!-- Montant Échéance -->
+      <span class="flex-1">
+        <p-inputNumber
+          formControlName="montantEcheance"
+          placeholder="Montant Échéance..."
+          [minFractionDigits]="2"
+          [maxFractionDigits]="2"
+          mode="decimal"
+          [showButtons]="false"
+          styleClass="w-full"
+        ></p-inputNumber>
+      </span>
+
+      <!-- Type de contrat -->
+      <p-dropdown
+        [options]="typeContratOptions"
+        formControlName="typeContrat"
+        placeholder="Type de contrat"
+        [showClear]="true"
+        appendTo="body"
+        class="flex-1"
+        styleClass="w-full"
+      ></p-dropdown>
+
+      <!-- Organisme Leasing -->
+      <p-dropdown
+        [options]="organismeLeasingOptions"
+        formControlName="organismeLeasingId"
+        placeholder="Organisme Leasing"
+        [showClear]="true"
+        appendTo="body"
+        class="flex-1"
+        styleClass="w-full"
+      ></p-dropdown>
+
+      <!-- Banque de Prélèvement -->
+      <p-dropdown
+        [options]="banqueOptions"
+        formControlName="banqueDePrelevementId"
+        placeholder="Banque de Prélèvement"
+        [showClear]="true"
+        appendTo="body"
+        class="flex-1"
+        styleClass="w-full"
+      ></p-dropdown>
+
+      <!-- Bouton Période -->
+      <button pButton pRipple type="button"
+              [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+              icon="pi pi-calendar"
+              [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary flex-shrink-0' : 'p-button-sm p-button-outlined p-button-secondary flex-shrink-0'"
+              (click)="toggleDatePanel()">
+      </button>
+
+      <!-- Bouton Clear -->
+      <p-button
+        icon="pi pi-times"
+        severity="secondary"
+        (onClick)="clearSearch()"
+        class="flex-shrink-0"
+        pTooltip="Effacer les filtres"
+      ></p-button>
+    </div>
+  </form>
+</div>
+
+  @if (showDatePanel) {
+  <div class="p-3 bg-white border-round shadow-1">
+    <form [formGroup]="searchForm" class="grid">
+      <div class="col-6 md:col-3">
+        <label class="block text-xs text-500 mb-1">Date début — du</label>
+        <p-calendar formControlName="dateDebutMin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-3">
+        <label class="block text-xs text-500 mb-1">Date début — au</label>
+        <p-calendar formControlName="dateDebutMax" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+    </form>
+  </div>
+  }
+
+  <!-- Tableau des contrats -->
+  <div class="pb-8">
+    <p-table
+      #dt
+      [value]="contrats"
+      [paginator]="true"
+      [rows]="10"
+      [totalRecords]="totalRecords"
+      [loading]="loading"
+      [rowsPerPageOptions]="[3, 5, 10, 25, 50]"
+      [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
+      (onLazyLoad)="loadContrats($event)"
+      responsiveLayout="scroll"
+      [scrollable]="true"
+      scrollHeight="flex"
+      columnResizeMode="expand"
+      [rowHover]="true"
+      dataKey="id"
+      currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} contrats"
+      [showCurrentPageReport]="true"
+      styleClass="p-datatable-gridlines text-xs white-space-nowrap"
+      [globalFilterFields]="['numeroContrat', 'immobilisation', 'typeContrat', 'nomBanqueDePrelevement', 'nomOrganismeLeasing']"
+      >
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="id">Id <p-sortIcon field="id"></p-sortIcon></th>
+          <th pSortableColumn="numeroContrat">N° Contrat <p-sortIcon field="numeroContrat"></p-sortIcon></th>
+          <th pSortableColumn="banqueDePrelevement.nom">Banque <p-sortIcon field="banqueDePrelevement.nom"></p-sortIcon></th>
+          <th pSortableColumn="contratCadre.organisme.nom">Organisme Leasing </th>
+          <th pSortableColumn="typeContrat">Type <p-sortIcon field="typeContrat"></p-sortIcon></th>
+          <th pSortableColumn="montantAchatTTC">Montant Achat TTC <p-sortIcon field="montantAchatTTC"></p-sortIcon></th>
+          <th pSortableColumn="plafond">Plafond <p-sortIcon field="plafond"></p-sortIcon></th>
+          <th>Échéances</th>
+          <th pSortableColumn="dateDebut">Début <p-sortIcon field="dateDebut"></p-sortIcon></th>
+          <th pSortableColumn="periodeEnMois">Durée <p-sortIcon field="periodeEnMois"></p-sortIcon></th>
+          <th pSortableColumn="dateFin">Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
+          <th pSortableColumn="completed">Statut <p-sortIcon field="completed"></p-sortIcon></th>
+          <th style="width: 8rem;">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-contrat>
+        <tr [pSelectableRow]="contrat">
+          <td>{{ contrat.id }}</td>
+          <td>{{ contrat.numeroContrat }}</td>
+          <td>{{ contrat.nomBanqueDePrelevement }}</td>
+          <td>{{ contrat.nomOrganismeLeasing }}</td>
+          <td>
+            <p-tag
+              [value]="contrat.typeContrat"
+              [severity]="contrat.typeContrat === 'LINEAIRE' ? 'info' : (contrat.typeContrat === 'PROGRESSIF' ? 'success' : 'warning')">
+            </p-tag>
+          </td>
+          <td><span class="num">{{ contrat.montantAchatTTC | number:'1.2-2' }} MAD</span></td>
+          <td><span class="num">{{ contrat.plafond | number:'1.2-2' }} MAD</span></td>
+          <td>
+            <div class="flex align-items-center gap-2">
+              <span class="num font-semibold">{{ getEcheancesDisplay(contrat) }}</span>
+              @if (contrat.phases && contrat.phases.length > 1) {
+                <p-tag
+                  [value]="contrat.phases.length + ' phases'"
+                  severity="info"
+                  [pTooltip]="getEcheancesTooltip(contrat)"
+                  tooltipPosition="top"
+                  [escape]="false">
+                </p-tag>
+                <i
+                  class="pi pi-info-circle text-primary cursor-pointer"
+                  [pTooltip]="getEcheancesTooltip(contrat)"
+                  tooltipPosition="top"
+                  [escape]="false">
+                </i>
+              }
+            </div>
+          </td>
+          <td class="white-space-nowrap">{{ contrat.dateDebut | date:'dd/MM/yyyy' }}</td>
+          <td>{{ contrat.periodeEnMois }} mois</td>
+          <td class="white-space-nowrap">{{ contrat.dateFin | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <p-tag
+              [severity]="contrat.completed ? 'success' : 'info'"
+              [value]="contrat.completed ? 'Terminé' : 'En Cours'">
+            </p-tag>
+          </td>
+          <td class="flex flex-row justify-content-between gap-2">
+
+            <p-button
+              icon="pi pi-table"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              [rounded]="true"
+              pTooltip="Tableau d'Amortissement"
+              (onClick)="viewAmortizationTable(contrat.id)">
+            </p-button>
+            <p-button
+              icon="pi pi-pencil"
+              severity="info"
+              [outlined]="true"
+              size="small"
+              [rounded]="true"
+              pTooltip="Modifier"
+              (onClick)="editContrat(contrat.id)">
+            </p-button>
+            @if (isSystemAdmin()) {
+              <p-button
+                icon="pi pi-trash"
+                severity="danger"
+                [outlined]="true"
+                size="small"
+                [rounded]="true"
+                pTooltip="Supprimer"
+                (onClick)="confirmDeleteContrat(contrat)">
+              </p-button>
+            }
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptyMessage">
+        <tr>
+          <td [attr.colspan]="13">Aucun contrat trouvé.</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td [attr.colspan]="13">Chargement des contrats. Veuillez patienter...</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+
+
+</div>

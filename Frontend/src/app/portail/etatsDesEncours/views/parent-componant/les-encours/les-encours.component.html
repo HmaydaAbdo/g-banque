@@ -1,0 +1,157 @@
+<p-toast></p-toast>
+<p-confirmDialog [style]="{width: '42vw'}" [baseZIndex]="1000"></p-confirmDialog>
+
+
+<!-- Layout Principal -->
+<div class="flex h-full w-full">
+
+  <!-- Sidebar navigation encours -->
+  <div class="sidebar-nav flex flex-column h-full">
+    <ul class="sidebar-nav__scroll list-none p-2 m-0">
+      @for (item of items; track item.url) {
+        <!-- Items sans sous-menu -->
+        @if (item.routerLink && !item.items) {
+        <li class="mb-1">
+          <a pRipple
+             [routerLink]="item.routerLink"
+             routerLinkActive="active-sidebar-link"
+             [pTooltip]="item.label"
+             tooltipPosition="right"
+             class="flex align-items-center cursor-pointer p-2 border-round-lg transition-all transition-duration-150 p-ripple sidebar-link hover:surface-hover">
+            @if (item.icon) {
+            <i [class]="item.icon" class="nav-icon"></i>
+            }
+            <span class="nav-label">{{ item.label }}</span>
+          </a>
+        </li>
+        }
+
+        <!-- Items avec sous-menu -->
+        @if (item.items) {
+        <li class="mb-1">
+          <div pRipple (click)="toggleMenuItem(item)"
+               class="flex align-items-center justify-content-between p-2 cursor-pointer border-round-lg hover:surface-hover transition-all transition-duration-150 p-ripple"
+               [pTooltip]="item.label"
+               tooltipPosition="right">
+            <div class="flex align-items-center min-w-0">
+              @if (item.icon) {
+              <i [class]="item.icon" class="nav-icon"></i>
+              }
+              <span class="nav-label">{{ item.label }}</span>
+            </div>
+            <i [class]="item.expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" class="nav-chevron text-xs flex-shrink-0"></i>
+          </div>
+
+          <!-- Sous-menu -->
+          <ul class="nav-submenu list-none pl-0 mt-1" [ngClass]="{'hidden': !item.expanded}">
+            @for (subItem of item.items; track subItem.url) {
+              @if (subItem.routerLink && !subItem.items) {
+              <li class="mb-1">
+                <a pRipple
+                   [routerLink]="subItem.routerLink"
+                   routerLinkActive="active-sidebar-link"
+                   [pTooltip]="subItem.label"
+                   tooltipPosition="right"
+                   class="flex align-items-center cursor-pointer m-0 px-2 py-2 border-round-lg transition-all transition-duration-150 p-ripple sidebar-link hover:surface-hover">
+                  @if (subItem.icon) {
+                  <i [class]="subItem.icon" class="nav-icon nav-icon--sub"></i>
+                  }
+                  <span class="nav-label font-medium">{{ subItem.label }}</span>
+                </a>
+              </li>
+              }
+            }
+          </ul>
+        </li>
+        }
+      }
+    </ul>
+  </div>
+
+  <!-- Zone de Contenu Principale -->
+  <div class="flex flex-column px-2 gap-2 overflow-y-auto flex-1" style="background:var(--color-surface)">
+
+    <!-- Header avec Breadcrumb et Action -->
+    <div class="flex align-items-center justify-content-between">
+      <div class="flex align-items-center gap-2 flex-wrap">
+      <p-breadcrumb [model]="breadcrumbItems" [style]="{'background-color': 'transparent', 'border': 'none'}">
+        <ng-template pTemplate="item" let-item>
+          @if (item.route) {
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
+              <span class="text-700 font-medium ml-2">{{ item.label }}</span>
+            </a>
+          } @else {
+            <a [href]="item.url">
+              <span class="text-700 font-medium">{{ item.label }}</span>
+            </a>
+          }
+        </ng-template>
+      </p-breadcrumb>
+
+      <!-- Nature de l'écran : lever l'ambiguïté entre ce qui est attendu et ce qui est passé -->
+      @if (natureEcran === 'realise') {
+        <span class="nature-badge nature-badge--realise"
+              pTooltip="Transactions effectivement passées sur le compte"
+              tooltipPosition="bottom">
+          <i class="pi pi-check-circle" aria-hidden="true"></i> Réalisé
+        </span>
+      } @else {
+        <span class="nature-badge nature-badge--previsionnel"
+              pTooltip="Opérations attendues ce mois — pas encore passées en banque"
+              tooltipPosition="bottom">
+          <i class="pi pi-clock" aria-hidden="true"></i> Prévisionnel
+        </span>
+      }
+      </div>
+
+      <p-button
+        [label]="isProvisoire ? 'Clôture définitive' : 'Clôture provisoire'"
+        [icon]="isProvisoire ? 'pi pi-lock' : 'pi pi-lock-open'"
+        [pTooltip]="isProvisoire ? 'Clôturer définitivement ce mois' : 'Passer en clôture provisoire'"
+        tooltipPosition="left"
+        [styleClass]="isProvisoire ? 'p-button-danger p-button-sm' : 'p-button-primary p-button-sm'"
+        (onClick)="showClotureDialog()">
+      </p-button>
+    </div>
+
+    <app-rapprochement-context-header></app-rapprochement-context-header>
+
+    <div class="pb-8"><router-outlet></router-outlet></div>
+
+  </div>
+</div>
+
+<!-- Dialog Clôture -->
+<p-dialog [(visible)]="displayClotureDialog" [header]="isProvisoire ? 'Clôture définitive' : 'Clôture provisoire'" [modal]="true"
+          [style]="{width: '38rem'}" [draggable]="false" [resizable]="false">
+
+  <div class="flex flex-column align-items-center gap-3 py-3">
+    <div class="flex align-items-center justify-content-center border-round-xl"
+         class="cloture-dialog-icon">
+      <i [class]="(isProvisoire ? 'pi pi-lock' : 'pi pi-lock-open') + ' text-2xl'" class="cloture-dialog-icon__i"></i>
+    </div>
+    <div class="text-center">
+      <p class="text-900 font-semibold text-lg m-0">{{ isProvisoire ? 'Confirmer la clôture définitive' : 'Confirmer la clôture provisoire' }}</p>
+      @if (!isProvisoire) {
+      <p class="text-500 text-sm mt-2 mb-0">
+        Le système clôturera provisoirement le rapprochement en cours.<br>
+        Vous pourrez encore ajuster les opérations avant la clôture définitive.
+      </p>
+      }
+      @if (isProvisoire) {
+      <p class="text-500 text-sm mt-2 mb-0">
+        Cette action est <strong>irréversible</strong>. Le rapprochement sera définitivement clôturé.
+      </p>
+      }
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Annuler" icon="pi pi-times" (click)="displayClotureDialog = false"
+              styleClass="p-button-text p-button-secondary"></p-button>
+    <p-button [label]="isProvisoire ? 'Clôturer définitivement' : 'Clôturer provisoirement'" icon="pi pi-check" (click)="confirmCloture()"
+              [disabled]="clotureLoading"
+              [loading]="clotureLoading"
+              [styleClass]="isProvisoire ? 'p-button-danger' : 'p-button-warning'"></p-button>
+  </ng-template>
+</p-dialog>

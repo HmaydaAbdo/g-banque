@@ -1,0 +1,441 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<!-- ========== MODAL SOUS-LIGNE ========== -->
+<p-dialog
+  header="{{ sousLigneEditMode ? 'Modifier' : 'Ajouter' }} une Sous-ligne"
+  [(visible)]="displaySousLigneDialog"
+  [modal]="true"
+  [style]="{width: '50vw'}"
+  (onHide)="onSousLigneDialogHide()">
+
+  <form [formGroup]="sousLigneForm" (ngSubmit)="saveSousLigne()" class="p-fluid">
+    <div class="formgrid grid p-2">
+
+      <div class="field col-12">
+        <label for="nature_dialog" class="block text-900 font-medium mb-2">
+          Nature <span class="p-text-danger">*</span>
+        </label>
+        <p-dropdown
+          id="nature_dialog"
+          formControlName="natureLigneFonctionnelleId"
+          [options]="natureLigneOptions"
+          placeholder="Sélectionnez une nature"
+          optionLabel="label"
+          optionValue="value"
+          [showClear]="true"
+          styleClass="w-full"
+          [ngClass]="{'ng-invalid ng-dirty': sousLigneForm.get('natureLigneFonctionnelleId')?.invalid && sousLigneForm.get('natureLigneFonctionnelleId')?.touched}">
+        </p-dropdown>
+        @if (sousLigneForm.get('natureLigneFonctionnelleId')?.invalid && sousLigneForm.get('natureLigneFonctionnelleId')?.touched) {
+          <small class="p-error">
+            La nature de la sous-ligne est obligatoire.
+          </small>
+        }
+      </div>
+
+      <div class="field col-12">
+        <label for="plafond_dialog" class="block text-900 font-medium mb-2">Plafond</label>
+        <p-inputNumber
+          id="plafond_dialog"
+          formControlName="plafond"
+          mode="decimal"
+          [minFractionDigits]="2"
+          [maxFractionDigits]="2"
+          [min]="0.01"
+          styleClass="w-full"
+          [ngClass]="{'ng-invalid ng-dirty': sousLigneForm.get('plafond')?.invalid && sousLigneForm.get('plafond')?.touched}">
+        </p-inputNumber>
+        @if (sousLigneForm.get('plafond')?.invalid && sousLigneForm.get('plafond')?.touched) {
+          <small class="p-error">
+            Le plafond doit être supérieur ou égal à 0.01 s'il est renseigné.
+          </small>
+        }
+      </div>
+
+    </div>
+
+    <div class="flex justify-content-end gap-2 mt-4">
+      <button
+        pButton
+        pRipple
+        type="button"
+        label="Annuler"
+        class="p-button-secondary p-button-text"
+        (click)="displaySousLigneDialog = false">
+      </button>
+      <button
+        pButton
+        pRipple
+        type="submit"
+        label="{{ sousLigneEditMode ? 'Sauvegarder' : 'Ajouter' }}"
+        [disabled]="sousLigneForm.invalid">
+      </button>
+    </div>
+  </form>
+</p-dialog>
+
+<!-- ========== MAIN CONTENT ========== -->
+<div class="w-full h-full overflow-y-scroll">
+
+  <!-- Breadcrumb -->
+  <div class="portail-section flex justify-content-center align-items-center">
+    <p-breadcrumb
+      [model]="items"
+      [style]="{'background-color': 'transparent', 'border': 'none'}">
+      <ng-template pTemplate="item" let-item>
+        @if (item.route) {
+          <a
+            [routerLink]="item.route"
+            class="p-menuitem-link"
+            routerLinkActive="active-breadcrumb"
+            #rla="routerLinkActive">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+          </a>
+        } @else {
+          <a [href]="item.url">
+            <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+          </a>
+        }
+      </ng-template>
+    </p-breadcrumb>
+  </div>
+
+  <!-- Title -->
+  <h4 class="text-center">
+    {{ isEditMode ? 'Modifier une Ligne Fonctionnelle' : 'Ajouter une Ligne Fonctionnelle' }}
+  </h4>
+
+  <!-- Form Container -->
+  <div class="flex justify-content-center mb-8">
+    <div style="width: 100%; max-width: 1000px;">
+      <form [formGroup]="ligneFonctionnelleForm" (ngSubmit)="onSubmit()" class="p-fluid">
+
+        <div class="formgrid grid">
+
+          <!-- ========== BANQUE ========== -->
+          <div class="field col-12 md:col-6">
+            <label for="banque" class="block text-900 font-medium mb-2">
+              Banque <span class="p-text-danger">*</span>
+            </label>
+            <p-dropdown
+              id="banque"
+              formControlName="banqueId"
+              [options]="banquesOptions"
+              placeholder="Sélectionnez une banque"
+              optionLabel="label"
+              optionValue="value"
+              [filter]="true"
+              filterBy="label"
+              [showClear]="true"
+              styleClass="w-full"
+              [ngClass]="{'ng-invalid ng-dirty': f['banqueId'].invalid && f['banqueId'].touched}">
+            </p-dropdown>
+            @if (f['banqueId'].invalid && f['banqueId'].touched) {
+              <small class="p-error">
+                @if (f['banqueId'].errors?.['required']) {
+                  <span>La banque est obligatoire.</span>
+                }
+              </small>
+            }
+          </div>
+
+          <!-- ========== NATURE ========== -->
+          <div class="field col-12 md:col-6">
+            <label for="nature" class="block text-900 font-medium mb-2">
+              Nature <span class="p-text-danger">*</span>
+            </label>
+            <p-dropdown
+              id="nature"
+              formControlName="natureLigneFonctionnelleId"
+              [options]="natureLigneOptions"
+              placeholder="Sélectionnez une nature"
+              optionLabel="label"
+              optionValue="value"
+              [showClear]="true"
+              styleClass="w-full"
+              [ngClass]="{'ng-invalid ng-dirty': f['natureLigneFonctionnelleId'].invalid && f['natureLigneFonctionnelleId'].touched}">
+            </p-dropdown>
+            @if (f['natureLigneFonctionnelleId'].invalid && f['natureLigneFonctionnelleId'].touched) {
+              <small class="p-error">
+                @if (f['natureLigneFonctionnelleId'].errors?.['required']) {
+                  <span>La nature est obligatoire.</span>
+                }
+              </small>
+            }
+          </div>
+
+          <!-- ========== MARCHÉS (OPTIONNEL — ManyToMany) ========== -->
+          <div class="field col-12">
+            <label for="marcheIds" class="block text-900 font-medium mb-2">
+              Marchés associés
+              <span class="text-500 font-normal text-sm ml-1">(optionnel — plusieurs possibles)</span>
+            </label>
+            <p-multiSelect
+              id="marcheIds"
+              formControlName="marcheIds"
+              [options]="marchesOptions"
+              optionLabel="label"
+              optionValue="value"
+              [filter]="true"
+              filterBy="label"
+              placeholder="Sélectionnez un ou plusieurs marchés"
+              [showClear]="true"
+              [disabled]="!selectedBanqueId"
+              [loading]="loadingMarches"
+              (onFilter)="onFilterMarches($event)"
+              styleClass="w-full"
+              display="chip"
+              emptyMessage="Aucun marché disponible pour cette banque"
+              emptyFilterMessage="Aucun marché correspondant">
+            </p-multiSelect>
+            <small class="text-500 mt-1 block">
+              <i class="pi pi-info-circle mr-1"></i>
+              Laissez vide pour une ligne générale non liée à un marché spécifique.
+            </small>
+          </div>
+
+          <!-- ========== PLAFOND ========== -->
+          <div class="field col-12 md:col-6">
+            <label for="plafond" class="block text-900 font-medium mb-2">
+              Plafond <span class="p-text-danger">*</span>
+            </label>
+            <p-inputNumber
+              id="plafond"
+              formControlName="plafond"
+              mode="decimal"
+              [minFractionDigits]="2"
+              [maxFractionDigits]="2"
+              [min]="0.01"
+              styleClass="w-full"
+              [ngClass]="{'ng-invalid ng-dirty': f['plafond'].invalid && f['plafond'].touched}">
+            </p-inputNumber>
+            @if (f['plafond'].invalid && f['plafond'].touched) {
+              <small class="p-error">
+                @if (f['plafond'].errors?.['required']) {
+                  <span>Le plafond est obligatoire.</span>
+                }
+                @if (f['plafond'].errors?.['min']) {
+                  <span>Le plafond doit être supérieur à zéro.</span>
+                }
+                @if (f['plafond'].errors?.['pattern']) {
+                  <span>Format invalide (ex: 123.45).</span>
+                }
+              </small>
+            }
+          </div>
+
+          <!-- ========== TAUX ========== -->
+          <div class="field col-12 md:col-6">
+            <label for="taux" class="block text-900 font-medium mb-2">
+              Taux (%) <span class="p-text-danger">*</span>
+            </label>
+            <p-inputNumber
+              id="taux"
+              formControlName="taux"
+              mode="decimal"
+              [minFractionDigits]="2"
+              [maxFractionDigits]="2"
+              [min]="0"
+              [max]="100"
+              suffix="%"
+              styleClass="w-full"
+              [ngClass]="{'ng-invalid ng-dirty': f['taux'].invalid && f['taux'].touched}">
+            </p-inputNumber>
+            @if (f['taux'].invalid && f['taux'].touched) {
+              <small class="p-error">
+                @if (f['taux'].errors?.['required']) {
+                  <span>Le taux est obligatoire.</span>
+                }
+                @if (f['taux'].errors?.['min'] || f['taux'].errors?.['max']) {
+                  <span>Le taux doit être entre 0 et 100.</span>
+                }
+                @if (f['taux'].errors?.['pattern']) {
+                  <span>Format invalide (ex: 5.75).</span>
+                }
+              </small>
+            }
+          </div>
+
+          <!-- ========== DATE DÉPART ========== -->
+          <div class="field col-12 md:col-6">
+            <label for="dateDepart" class="block text-900 font-medium mb-2">
+              Date de Départ <span class="p-text-danger">*</span>
+            </label>
+            <p-calendar
+              id="dateDepart"
+              formControlName="dateDepart"
+              [showIcon]="true"
+              dateFormat="dd/mm/yy"
+              appendTo="body"
+              [ngClass]="{'ng-invalid ng-dirty': f['dateDepart'].invalid && f['dateDepart'].touched}">
+            </p-calendar>
+            @if (f['dateDepart'].invalid && f['dateDepart'].touched) {
+              <small class="p-error">
+                @if (f['dateDepart'].errors?.['required']) {
+                  <span>La date de départ est obligatoire.</span>
+                }
+              </small>
+            }
+          </div>
+
+          <!-- ========== DATE FIN ========== -->
+          <div class="field col-12 md:col-6">
+            <label for="dateFin" class="block text-900 font-medium mb-2">
+              Date de Fin <span class="p-text-danger">*</span>
+            </label>
+            <p-calendar
+              id="dateFin"
+              formControlName="dateFin"
+              [showIcon]="true"
+              dateFormat="dd/mm/yy"
+              appendTo="body"
+              [ngClass]="{'ng-invalid ng-dirty': f['dateFin'].invalid && f['dateFin'].touched}">
+            </p-calendar>
+            @if (f['dateFin'].invalid && f['dateFin'].touched) {
+              <small class="p-error">
+                @if (f['dateFin'].errors?.['required']) {
+                  <span>La date de fin est obligatoire.</span>
+                }
+                @if (f['dateFin'].errors?.['minDate']) {
+                  <span>La date de fin ne peut pas être antérieure à la date de départ.</span>
+                }
+              </small>
+            }
+          </div>
+
+        </div>
+
+        <!-- ========== SECTION SOUS-LIGNES (Caution Administrative uniquement) ========== -->
+        @if (isCautionAdministrativeSelected && !isEditMode) {
+        <div class="mt-5 p-3 border-1 border-round surface-hover">
+
+          <!-- Header -->
+          <div class="flex gap-2 justify-content-between align-items-center">
+            <span class="white-space-nowrap font-semibold">Gestion des Sous-lignes</span>
+            <button
+              pButton
+              pRipple
+              icon="pi pi-plus"
+              label="Ajouter"
+              class="p-button-sm"
+              type="button"
+              (click)="openAddSousLigneDialog()">
+            </button>
+          </div>
+
+          <!-- Error Messages -->
+          @if (sousLignesArray.hasError('duplicateSousLigneNature')) {
+            <p class="p-error font-bold mt-2">
+              <i class="pi pi-exclamation-circle mr-2"></i>
+              <strong>Erreur Unicité :</strong> Une nature de sous-ligne ne peut être ajoutée qu'une seule fois.
+            </p>
+          }
+
+          @if (ligneFonctionnelleForm.hasError('totalPlafondExceeded')) {
+            <p class="p-error font-bold mt-2">
+              <i class="pi pi-exclamation-circle mr-2"></i>
+              <strong>Erreur Plafond :</strong>
+              La somme des plafonds des sous-lignes ({{ totalSousLignesPlafond | number:'1.2-2' }})
+              dépasse le plafond de la Ligne Mère ({{ f['plafond'].value | number:'1.2-2' }}).
+            </p>
+          }
+
+          <!-- Table Sous-lignes -->
+          <p-table
+            [value]="sousLignesArray.controls"
+            [responsive]="true"
+            [paginator]="false"
+            styleClass="p-datatable-sm mt-3">
+
+            <ng-template pTemplate="header">
+              <tr>
+                <th style="width: 50%;">Nature</th>
+                <th style="width: 30%;">Plafond</th>
+                <th style="width: 20%;" class="text-center">Actions</th>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-control let-i="rowIndex">
+              <tr [class.ng-invalid]="control.get('natureLigneFonctionnelleId')?.hasError('duplicateNature')">
+                <td>
+                  {{ getNatureLabel(control.get('natureLigneFonctionnelleId')?.value) }}
+                  @if (control.get('natureLigneFonctionnelleId')?.hasError('duplicateNature')) {
+                    <small class="p-error block">
+                      <i class="pi pi-exclamation-triangle mr-1"></i>(Nature dupliquée)
+                    </small>
+                  }
+                </td>
+                <td>{{ control.get('plafond')?.value | number:'1.2-2' }}</td>
+                <td class="text-center">
+                  <button
+                    pButton
+                    pRipple
+                    icon="pi pi-pencil"
+                    class="p-button-text p-button-sm p-button-info mr-2"
+                    (click)="openEditSousLigneDialog(i)"
+                    type="button"
+                    pTooltip="Modifier">
+                  </button>
+                  <button
+                    pButton
+                    pRipple
+                    icon="pi pi-trash"
+                    class="p-button-text p-button-sm p-button-danger"
+                    (click)="removeSousLigne(i)"
+                    type="button"
+                    pTooltip="Supprimer">
+                  </button>
+                </td>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="3" class="text-center text-500 py-4">
+                  <i class="pi pi-info-circle mr-2"></i>
+                  Aucune sous-ligne ajoutée.
+                </td>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="summary">
+              <div class="flex justify-content-end font-bold">
+                <span class="mr-2">Total Plafonds Sous-lignes:</span>
+                <span [class.p-error]="ligneFonctionnelleForm.hasError('totalPlafondExceeded')">
+                  {{ totalSousLignesPlafond | number:'1.2-2' }}
+                </span>
+              </div>
+            </ng-template>
+          </p-table>
+        </div>
+        }
+
+        <!-- ========== FORM ACTIONS ========== -->
+        <div class="flex justify-content-end mt-4 gap-2">
+          <button
+            pButton
+            pRipple
+            label="Annuler"
+            icon="pi pi-times"
+            class="p-button-secondary"
+            (click)="onCancel()"
+            type="button">
+          </button>
+          <button
+            pButton
+            pRipple
+            [label]="isEditMode ? 'Modifier' : 'Créer'"
+            [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"
+            class="p-button-primary"
+            type="submit"
+            [disabled]="loading || ligneFonctionnelleForm.invalid"
+            [loading]="loading">
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>

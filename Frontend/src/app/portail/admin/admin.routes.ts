@@ -1,0 +1,55 @@
+import { Routes } from '@angular/router';
+
+/**
+ * Routes du module Administration — départements et utilisateurs.
+ * Protégées au niveau parent par `systemAdminGuard` (voir portail.routes.ts),
+ * pas besoin de le répéter sur chaque route enfant.
+ */
+export const ADMIN_ROUTES: Routes = [
+  { path: '', redirectTo: 'departements', pathMatch: 'full' },
+  {
+    path: 'departements',
+    loadComponent: () => import('./departements/views/departements-list/departements-list.component')
+      .then(m => m.DepartementsListComponent)
+  },
+  {
+    path: 'utilisateurs',
+    loadComponent: () => import('./utilisateurs/views/utilisateurs-list/utilisateurs-list.component')
+      .then(m => m.UtilisateursListComponent)
+  },
+  {
+    path: 'utilisateurs/:id',
+    loadComponent: () => import('./utilisateurs/views/utilisateur-detail/utilisateur-detail.component')
+      .then(m => m.UtilisateurDetailComponent)
+  },
+  {
+    path: 'commission-config',
+    loadComponent: () => import('./commission-config/views/commission-config-list/commission-config-list.component')
+      .then(m => m.CommissionConfigListComponent)
+  },
+  {
+    path: 'leasing-config',
+    loadComponent: () => import('./leasing-config/views/leasing-config/leasing-config.component')
+      .then(m => m.LeasingConfigComponent)
+  },
+  {
+    path: 'cmt-config',
+    loadComponent: () => import('./cmt-config/views/cmt-config/cmt-config.component')
+      .then(m => m.CmtConfigComponent)
+  },
+  {
+    path: 'lignes-fonctionnelles-config',
+    loadComponent: () => import('./lignes-fonctionnelles-config/views/ligne-fonctionnelle-config/ligne-fonctionnelle-config.component')
+      .then(m => m.LigneFonctionnelleConfigComponent)
+  },
+  {
+    path: 'caution-commission-config',
+    loadComponent: () => import('./caution-commission-config/views/caution-commission-config-list/caution-commission-config-list.component')
+      .then(m => m.CautionCommissionConfigListComponent)
+  },
+  {
+    path: 'charges-fixes-config',
+    loadComponent: () => import('./charges-fixes-config/views/charge-fixe-config-list/charge-fixe-config-list.component')
+      .then(m => m.ChargeFixeConfigListComponent)
+  }
+];

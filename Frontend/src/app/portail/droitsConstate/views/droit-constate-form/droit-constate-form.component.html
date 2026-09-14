@@ -1,0 +1,196 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="w-full h-full overflow-y-scroll pt-2 pb-6 px-5">
+  <div class="portail-section flex justify-content-center align-items-center">
+    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
+      <ng-template pTemplate="item" let-item>
+        <a [routerLink]="item.routerLink" class="p-menuitem-link">
+          <span [ngClass]="item.icon" class="text-color text-2xl"></span>
+          <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+        </a>
+      </ng-template>
+    </p-breadcrumb>
+  </div>
+
+  <div class="card p-4 shadow-sm w-full lg:w-9 md:w-10 mx-auto mt-4">
+    <div class="card-header text-center mb-4">
+      <h2 class="text-2xl font-bold">{{ isEditMode ? 'Modifier le Droit Constaté' : 'Ajouter un Nouveau Droit Constaté' }}</h2>
+    </div>
+
+    <form [formGroup]="droitConstateForm" (ngSubmit)="onSubmit()">
+      <div class="p-fluid grid formgrid">
+
+        <div class="field col-12 md:col-6">
+          <label for="marcheId" class="block font-medium mb-2">Marché *</label>
+          <p-dropdown
+            id="marcheId"
+            formControlName="marcheId"
+            [options]="marchesOptions"
+            placeholder="Rechercher par numéro de marché"
+            optionLabel="label"
+            optionValue="value"
+            [showClear]="true"
+            [filter]="true"
+            filterBy="label"
+            (onFilter)="onFilterMarches($event)"
+            [virtualScroll]="true"
+            [virtualScrollItemSize]="38"
+            [lazy]="true"
+            [virtualScrollOptions]="marchesScrollerOptions"
+            [loading]="loadingMarches"
+            [ngClass]="{ 'ng-invalid ng-dirty': f['marcheId'].invalid && f['marcheId'].touched }">
+
+            <ng-template pTemplate="selectedItem" let-selectedOption>
+              @if (selectedOption) {
+                <div class="flex align-items-center gap-2">
+                  <i class="pi pi-file p-text-secondary"></i>
+                  <div>{{ selectedOption.label }}</div>
+                </div>
+              }
+            </ng-template>
+
+            <ng-template let-marche pTemplate="item">
+              <div class="flex align-items-center gap-2" style="height: 38px">
+                @if (marche && marche.label) {
+                  <i class="pi pi-file"></i>
+                  <div>{{ marche.label }}</div>
+                } @else {
+                  <i class="pi pi-spin pi-spinner text-secondary"></i>
+                  <span class="text-secondary pl-2">Chargement...</span>
+                }
+              </div>
+            </ng-template>
+          </p-dropdown>
+          @if (f['marcheId'].invalid && f['marcheId'].touched) {
+            <small class="p-error">
+              Le marché est requis.
+            </small>
+          }
+        </div>
+
+
+        <!-- ─── Banque ─────────────────────────────────────────────────────────── -->
+        <div class="field col-12 md:col-6">
+          <label for="banqueId" class="block font-medium mb-2">{{ banqueLabel }}</label>
+          <p-dropdown
+            id="banqueId"
+            formControlName="banqueId"
+            [options]="banquesOptions"
+            [loading]="loadingBanques"
+            placeholder="Sélectionner une banque"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            filterBy="label"
+            [showClear]="false"
+            [ngClass]="{ 'ng-invalid ng-dirty': f['banqueId'].invalid && f['banqueId'].touched }">
+            <ng-template pTemplate="selectedItem" let-selected>
+              @if (selected) {
+                <div class="flex align-items-center gap-2">
+                  <i class="pi pi-building"></i>
+                  <span>{{ selected.label }}</span>
+                </div>
+              }
+            </ng-template>
+            <ng-template let-b pTemplate="item">
+              <div class="flex align-items-center gap-2">
+                <i class="pi pi-building text-secondary"></i>
+                <span>{{ b.label }}</span>
+              </div>
+            </ng-template>
+          </p-dropdown>
+          <small class="text-color-secondary block mt-1">
+            <i class="pi pi-info-circle mr-1"></i>{{ banqueHelperText }}
+          </small>
+          @if (f['banqueId'].invalid && f['banqueId'].touched) {
+            <small class="p-error">
+              La banque est requise.
+            </small>
+          }
+        </div>
+
+        <!-- ─── Montant ────────────────────────────────────────────────────────── -->
+        <div class="field col-12 md:col-6">
+          <label for="montant" class="block font-medium mb-2">Montant (MAD) *</label>
+          <p-inputNumber
+            id="montant"
+            formControlName="montant"
+            mode="decimal"
+            [minFractionDigits]="2"
+            [maxFractionDigits]="2"
+            placeholder="0.00"
+            [ngClass]="{ 'ng-invalid ng-dirty': f['montant'].invalid && f['montant'].touched }"
+          ></p-inputNumber>
+          @if (f['montant'].invalid && f['montant'].touched) {
+            <small class="p-error">
+              Le montant est requis et doit être positif.
+            </small>
+          }
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label for="type" class="block font-medium mb-2">Type d'opération *</label>
+          <p-dropdown
+            id="type"
+            formControlName="type"
+            [options]="typeOptions"
+            placeholder="Sélectionner un type d'opération"
+            optionLabel="label"
+            optionValue="value"
+            [ngClass]="{ 'ng-invalid ng-dirty': f['type'].invalid && f['type'].touched }">
+            <ng-template pTemplate="selectedItem" let-selected>
+              @if (selected) {
+                <div class="flex align-items-center gap-2">
+                  <i [class]="selected.value === 'DEBLOCAGE' ? 'pi pi-arrow-down text-green-500' : 'pi pi-arrow-up text-red-500'"></i>
+                  <span>{{ selected.label }}</span>
+                </div>
+              }
+            </ng-template>
+            <ng-template let-opt pTemplate="item">
+              <div class="flex align-items-center gap-2">
+                <i [class]="opt.value === 'DEBLOCAGE' ? 'pi pi-arrow-down text-green-500' : 'pi pi-arrow-up text-red-500'"></i>
+                <span>{{ opt.label }}</span>
+              </div>
+            </ng-template>
+          </p-dropdown>
+          @if (f['type'].invalid && f['type'].touched) {
+            <small class="p-error">
+              Le type est requis.
+            </small>
+          }
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label for="dateEmission" class="block font-medium mb-2">Date d'émission *</label>
+          <p-calendar
+            id="dateEmission"
+            formControlName="dateEmission"
+            dateFormat="dd/mm/yy"
+            [showIcon]="true"
+            [showButtonBar]="true"
+            placeholder="jj/mm/aaaa"
+            appendTo="body"
+            [ngClass]="{ 'ng-invalid ng-dirty': f['dateEmission'].invalid && f['dateEmission'].touched }"
+          ></p-calendar>
+          @if (f['dateEmission'].invalid && f['dateEmission'].touched) {
+            <small class="p-error">
+              La date d'émission est requise.
+            </small>
+          }
+        </div>
+
+        <div class="col-12 mt-4 flex flex-row gap-2">
+          <button pButton pRipple label="Annuler" icon="pi pi-times" type="button"
+                  class="p-button-secondary p-button-outlined" (click)="onCancel()"></button>
+
+          <button pButton pRipple [label]="isEditMode ? 'Modifier' : 'Créer'"
+                  [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"
+                  type="submit" class="p-button-success"
+                  [disabled]="droitConstateForm.invalid || loading"
+                  [loading]="loading"></button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

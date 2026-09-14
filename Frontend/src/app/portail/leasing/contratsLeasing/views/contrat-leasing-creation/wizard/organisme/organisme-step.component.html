@@ -1,0 +1,26 @@
+<div class="flex flex-column justify-content-center align-items-center p-6">
+  <div [formGroup]="formGroup">
+    <div class="field flex flex-column gap-4">
+      <label for="organismeLeasingId" class="text-2xl font-semibold">Organisme de Leasing <span class="p-error">*</span></label>
+      <p-dropdown
+        id="organismeLeasingId"
+        [options]="organismes"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Sélectionnez un organisme"
+        formControlName="organismeLeasingId"
+        [filter]="true"
+        [showClear]="true"
+        [ngClass]="{'ng-invalid ng-dirty': organismeLeasingIdControl?.invalid && (organismeLeasingIdControl?.dirty || organismeLeasingIdControl?.touched)}"
+      ></p-dropdown>
+      @if (organismeLeasingIdControl?.invalid && (organismeLeasingIdControl?.dirty || organismeLeasingIdControl?.touched)) {
+        <div class="p-error">
+          @if (organismeLeasingIdControl?.errors?.['required']) {
+            <p-message severity="error" text="L'organisme de leasing est requis."></p-message>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,191 @@
+<p-toast></p-toast>
+
+<div class="dash-page w-full h-full overflow-y-scroll">
+
+  <!-- ── HEADER ──────────────────────────────────────────────────────────── -->
+  <div class="dash-header">
+    <div class="dash-header__left">
+      <h1 class="dash-header__title">Tableau de bord</h1>
+      <p-breadcrumb [model]="items" styleClass="border-none p-0"
+                    [style]="{'background':'transparent','padding':'0','font-size':'var(--text-breadcrumb)'}">
+        <ng-template pTemplate="item" let-item>
+          @if (item.route) {
+            <a [routerLink]="item.route" routerLinkActive class="p-menuitem-link">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
+              <span class="text-400 text-xs ml-1">{{ item.label }}</span>
+            </a>
+          } @else {
+            <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
+          }
+        </ng-template>
+      </p-breadcrumb>
+    </div>
+
+    <div class="dash-header__actions">
+      <p-button label="Synchroniser" icon="pi pi-sync" size="small" [outlined]="true"
+                (onClick)="synchronizePayments()" [loading]="isLoading" [disabled]="isLoading"/>
+      <p-button label="Récap global" icon="pi pi-file-pdf" size="small" [outlined]="true"
+                (onClick)="openRecapGlobalPeriodeModal()" [loading]="globalRecapLoading" [disabled]="globalRecapLoading"/>
+      <p-button label="Récap détaillé" icon="pi pi-chart-bar" size="small" [outlined]="true"
+                (onClick)="downloadRecapGeneralDetailleAll()" [loading]="recapDetailleAllLoading" [disabled]="recapDetailleAllLoading"/>
+    </div>
+  </div>
+
+  <!-- ── CHARGEMENT ─────────────────────────────────────────────────────── -->
+  @if (isLoading) {
+    <div class="dash-loading">
+      <p-progressBar mode="indeterminate" [style]="{'height':'2px','border-radius':'2px'}"></p-progressBar>
+      <p class="dash-loading__text">Synchronisation en cours…</p>
+    </div>
+
+  } @else {
+
+    <!-- ── GRILLE BANQUES ─────────────────────────────────────────────── -->
+    <div class="dash-grid">
+      @for (account of recapitulatifComptes; track account.banqueId) {
+
+        <div class="bank-card bank-card--anim">
+
+          <!-- Logo -->
+          <div class="bank-card__logo"
+               [routerLink]="['/portail/etats-des-encours', account.banqueId, 'select']">
+            <img [src]="'data:image/png;base64,' + account.logoBase64"
+                 [alt]="'Logo ' + account.nom" class="bank-card__logo-img"/>
+          </div>
+
+          <!-- Contenu cliquable -->
+          <div class="bank-card__body"
+               [routerLink]="['/portail/etats-des-encours', account.banqueId, 'select']">
+
+            <!-- Nom -->
+            <div class="bank-card__name">{{ account.nom }}</div>
+
+            <!-- KPI rows — Solde + FC même style -->
+            <div class="bank-card__kpi-row">
+              <span class="bank-card__kpi-label">
+                <i class="pi pi-chart-line mr-1"></i>Solde actuel
+              </span>
+              <span class="bank-card__kpi-amount"
+                    [class.bank-card__kpi-amount--pos]="account.soldeActuel >= 0"
+                    [class.bank-card__kpi-amount--neg]="account.soldeActuel < 0">
+                {{ account.soldeActuel | number:'1.2-2':'fr-FR' }}
+                <span class="bank-card__devise">{{ account.devise }}</span>
+              </span>
+            </div>
+
+            <div class="bank-card__kpi-row">
+              <span class="bank-card__kpi-label">
+                <i class="pi pi-shield mr-1"></i>Facilité de caisse
+              </span>
+              @if (account.plafondFC && account.plafondFC > 0) {
+                <span class="bank-card__kpi-value">{{ account.plafondFC | number:'1.0-0':'fr-FR' }} {{ account.devise }}</span>
+              } @else {
+                <span class="bank-card__kpi-none">Aucune</span>
+              }
+            </div>
+
+            <div class="bank-card__kpi-row">
+              <span class="bank-card__kpi-label">
+                <i class="pi pi-wallet mr-1"></i>Disponibilité FC
+              </span>
+              <span class="bank-card__kpi-amount"
+                    [class.bank-card__kpi-amount--pos]="account.disponibiliteFC >= 0"
+                    [class.bank-card__kpi-amount--neg]="account.disponibiliteFC < 0">
+                {{ account.disponibiliteFC | number:'1.2-2':'fr-FR' }}
+                <span class="bank-card__devise">{{ account.devise }}</span>
+              </span>
+            </div>
+
+            <!-- Échus — pills modernes -->
+            <div class="bank-card__echus">
+              <div class="echus-pill"
+                   [class.echus-pill--alert]="account.lcnsEchusCount > 0"
+                   [class.echus-pill--ok]="account.lcnsEchusCount === 0">
+                <i class="pi pi-file"></i>
+                <span class="echus-pill__count">{{ account.lcnsEchusCount }}</span>
+                <span class="echus-pill__label">LCN échus</span>
+              </div>
+              <div class="echus-pill"
+                   [class.echus-pill--alert]="account.virementsEchusCount > 0"
+                   [class.echus-pill--ok]="account.virementsEchusCount === 0">
+                <i class="pi pi-arrow-right-arrow-left"></i>
+                <span class="echus-pill__count">{{ account.virementsEchusCount }}</span>
+                <span class="echus-pill__label">Virements échus</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Action -->
+          <div class="bank-card__footer" (click)="$event.stopPropagation()">
+            <p-button
+              label="Récap détaillé"
+              icon="pi pi-download"
+              size="small"
+              styleClass="w-full"
+              [outlined]="true"
+              (onClick)="downloadRecapGeneralDetaillePourBanque(account.banqueId)"
+              [loading]="recapDetailleBanqueLoadingMap.get(account.banqueId) ?? false"
+              [disabled]="recapDetailleBanqueLoadingMap.get(account.banqueId) ?? false"/>
+          </div>
+
+        </div>
+
+      }
+    </div>
+
+  }
+
+</div>
+
+<!-- Modal choix période du Récap global (à ce jour / fin de mois) -->
+<p-dialog
+  header="Choisir la période du récapitulatif"
+  [(visible)]="showRecapGlobalPeriodeModal"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '420px' }"
+  [draggable]="false">
+
+  <div class="flex flex-column gap-3 p-3">
+
+    <p class="text-color-secondary m-0">
+      "À ce jour" ne retient que les encaissements/décaissements déjà émis ou échus. "Jusqu'à fin
+      de mois" inclut en plus ceux qui restent prévus d'ici la fin du mois en cours.
+    </p>
+
+    <p-selectButton
+      [options]="periodeOptions"
+      [formControl]="periodeControl"
+      optionLabel="label"
+      optionValue="value"
+      styleClass="w-full flex"
+      [style]="{ width: '100%' }">
+
+      <ng-template pTemplate="item" let-option>
+        <div class="flex flex-row align-items-center justify-content-center gap-2 px-3 py-2 w-full">
+          <div class="flex flex-column align-items-start">
+            <span class="font-semibold">{{ option.label }}</span>
+          </div>
+        </div>
+      </ng-template>
+
+    </p-selectButton>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Annuler"
+      icon="pi pi-times"
+      styleClass="p-button-text"
+      (click)="showRecapGlobalPeriodeModal = false">
+    </p-button>
+    <p-button
+      label="Télécharger"
+      icon="pi pi-download"
+      [disabled]="!periodeControl.value"
+      (click)="confirmDownloadGlobalRecap()">
+    </p-button>
+  </ng-template>
+
+</p-dialog>

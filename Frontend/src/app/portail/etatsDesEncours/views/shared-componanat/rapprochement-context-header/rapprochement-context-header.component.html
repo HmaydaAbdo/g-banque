@@ -1,0 +1,101 @@
+@if (!loading && actifs) {
+<div class="surface-card border-round-xl shadow-2 px-4 py-3">
+
+  <!-- Ligne 1 : Bank header + soldes -->
+  <div class="flex align-items-center justify-content-between flex-wrap gap-3">
+
+    <!-- Logo + Nom + Statut + Période -->
+    <div class="flex align-items-center gap-2 flex-shrink-0">
+      @if (bankInfo) {
+        <img [src]="'data:image/png;base64,' + bankInfo.logoBase64"
+             alt="Logo banque" class="border-round"
+             style="width:48px;height:48px;object-fit:contain;" />
+      } @else {
+        <div class="flex align-items-center justify-content-center border-round"
+             style="width:48px;height:48px;background:var(--surface-200);">
+          <i class="pi pi-building text-xl text-400"></i>
+        </div>
+      }
+      <div>
+        <div class="font-bold text-base text-900">{{ bankInfo?.nom }}</div>
+        <div class="flex align-items-center gap-2 mt-1">
+          <span class="text-xs text-500">{{ getPeriode() }}</span>
+          <p-tag
+            [value]="isProvisoire ? 'Clôture provisoire' : 'En cours'"
+            [severity]="isProvisoire ? 'warning' : 'info'"
+            styleClass="text-xs">
+          </p-tag>
+        </div>
+      </div>
+    </div>
+
+    <!-- Solde Début -->
+    <div class="kpi-item flex-shrink-0">
+      <i class="pi pi-flag kpi-icon" style="color:var(--color-primary)"></i>
+      <div>
+        <div class="text-xs text-500">Solde Début</div>
+        <div class="font-bold text-sm num white-space-nowrap"
+             [class.num-credit]="getSoldeDebut() >= 0"
+             [class.num-debit]="getSoldeDebut() < 0">
+          {{ getSoldeDebut() | number:'1.2-2' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Solde Fin / Actuel -->
+    <div class="kpi-item flex-shrink-0">
+      <i class="pi pi-wallet kpi-icon" style="color:var(--color-primary)"></i>
+      <div>
+        <div class="text-xs text-500">{{ isProvisoire ? 'Solde Fin' : 'Solde Actuel' }}</div>
+        <div class="font-bold text-sm num white-space-nowrap"
+             [class.num-credit]="getSoldeFin() >= 0"
+             [class.num-debit]="getSoldeFin() < 0">
+          {{ getSoldeFin() | number:'1.2-2' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Variation -->
+    <div class="kpi-item flex-shrink-0">
+      <i [class]="(getVariation() >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down') + ' kpi-icon'"
+         [style.color]="getVariation() >= 0 ? 'var(--color-success)' : 'var(--color-danger)'"></i>
+      <div>
+        <div class="text-xs text-500">Variation</div>
+        <div class="font-bold text-sm num white-space-nowrap"
+             [class.num-credit]="getVariation() >= 0"
+             [class.num-debit]="getVariation() < 0">
+          {{ getVariation() >= 0 ? '+' : '' }}{{ getVariation() | number:'1.2-2' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Facilité de Caisse -->
+    <div class="kpi-item flex-shrink-0">
+      <i class="pi pi-shield kpi-icon"
+         [style.color]="bankInfo?.plafondFC ? 'var(--color-primary)' : 'var(--color-text-muted)'"></i>
+      <div>
+        <div class="text-xs text-500">Facilité de Caisse</div>
+        <div class="font-bold text-sm num white-space-nowrap"
+             [class.num-neutral]="bankInfo?.plafondFC"
+             [class.text-400]="!bankInfo?.plafondFC">
+          @if (bankInfo?.plafondFC) { {{ bankInfo!.plafondFC | number:'1.2-2' }} }
+          @else { Aucune }
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+}
+
+<!-- Skeleton pendant le chargement -->
+@if (loading) {
+<div class="surface-card border-round-xl shadow-2 px-4 py-3 flex align-items-center gap-3">
+  <div style="width:48px;height:48px;border-radius:8px;background:var(--surface-200);"></div>
+  <div class="flex flex-column gap-2" style="flex:1;">
+    <div style="height:12px;width:140px;border-radius:4px;background:var(--surface-200);"></div>
+    <div style="height:10px;width:100px;border-radius:4px;background:var(--surface-200);"></div>
+  </div>
+</div>
+}

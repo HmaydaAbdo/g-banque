@@ -1,0 +1,332 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="flex flex-column gap-3 p-3 pb-6"
+     style="height:100vh;overflow-y:auto">
+
+  <!-- ═══ HEADER ═══════════════════════════════════════════════════ -->
+  <div class="flex align-items-start justify-content-between gap-2">
+
+    <div class="flex flex-column gap-1">
+      <div class="flex align-items-center gap-2 flex-wrap">
+        <h2 class="text-900 font-bold m-0" style="font-size:1.15rem;letter-spacing:-0.01em">
+          {{ typeLabel }}
+          <span class="ml-2 font-normal text-500 text-base">{{ periodeLabel }}</span>
+        </h2>
+        @if (trimestreInfo) {
+          <p-tag [value]="getStatutLabel(trimestreInfo.statut)"
+                 [severity]="getStatutSeverity(trimestreInfo.statut)"
+                 styleClass="text-xs">
+          </p-tag>
+        }
+        @if (hasDateFilter || hasMarcheFilter) {
+          <span class="text-xs px-2 py-1 border-round font-semibold"
+                style="background:var(--color-info-light);color:var(--color-info-text)">
+            Filtré
+          </span>
+        }
+      </div>
+
+      <p-breadcrumb [model]="items" styleClass="border-none p-0"
+                    [style]="{'background':'transparent','padding':'0','font-size':'0.78rem'}">
+        <ng-template pTemplate="item" let-item>
+          @if (item.route) {
+            <a [routerLink]="item.route" class="p-menuitem-link">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
+              <span class="text-400 text-xs ml-1">{{ item.label }}</span>
+            </a>
+          } @else {
+            <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
+          }
+        </ng-template>
+      </p-breadcrumb>
+    </div>
+
+    <div class="flex align-items-center gap-2 flex-shrink-0">
+      <button pButton pRipple icon="pi pi-file-pdf" label="Exporter PDF"
+              class="p-button-outlined p-button-danger" size="small"
+              [loading]="exporting"
+              (click)="exportPdf()"
+              pTooltip="Exporter les résultats en PDF" tooltipPosition="bottom">
+      </button>
+      @if (isAdmin() && trimestreInfo && trimestreInfo.statut === StatutTrimestre.OUVERT) {
+        <button pButton pRipple icon="pi pi-lock" label="Clôturer"
+                severity="danger" size="small"
+                (click)="cloturer()">
+        </button>
+      }
+      <button pButton pRipple icon="pi pi-arrow-left" label="Retour"
+              class="p-button-text p-button-secondary" size="small"
+              (click)="retour()">
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ BARRE INFOS + KPIs ════════════════════════════════════════ -->
+  @if (trimestreInfo) {
+    <div class="surface-card border-round-xl border-1 surface-border px-4 py-3"
+         style="box-shadow:0 1px 6px rgba(0,0,0,0.05)">
+      <div class="flex flex-wrap align-items-center gap-4">
+
+        <!-- Identité -->
+        <div class="flex flex-column gap-1" style="min-width:160px">
+          <span class="font-bold text-800">{{ banqueNom }}</span>
+          <span class="text-500 text-xs">
+            {{ trimestreInfo.dateDebut | date:'dd/MM/yyyy' }} —
+            {{ (dateLimiteControl.value ? dateLimiteControl.value : trimestreInfo.dateFin) | date:'dd/MM/yyyy' }}
+          </span>
+          @if (trimestreInfo.dateDernierCalcul) {
+            <span class="text-400 text-xs">
+              Calculé le {{ trimestreInfo.dateDernierCalcul | date:'dd/MM/yyyy HH:mm' }}
+            </span>
+          }
+        </div>
+
+        <!-- Séparateur -->
+        <div class="hidden md:block" style="width:1px;height:2.5rem;background:var(--color-border)"></div>
+
+        @if (aggregates) {
+          <!-- KPI: Agios HT -->
+          <div class="flex flex-column align-items-center gap-0">
+            <span class="text-400 text-xs font-medium" style="letter-spacing:0.04em">AGIOS HT</span>
+            <span class="font-bold text-800 text-base">
+              {{ aggregates.totalAgiosHT | number:'1.2-2' }}
+              <span class="text-400 text-xs font-normal ml-1">MAD</span>
+            </span>
+          </div>
+
+          <!-- KPI: TVA -->
+          <div class="flex flex-column align-items-center gap-0">
+            <span class="text-400 text-xs font-medium" style="letter-spacing:0.04em">TVA 10%</span>
+            <span class="font-bold text-800 text-base">
+              {{ aggregates.totalTVA | number:'1.2-2' }}
+              <span class="text-400 text-xs font-normal ml-1">MAD</span>
+            </span>
+          </div>
+
+          <!-- KPI: Total TTC — mis en avant -->
+          <div class="flex flex-column align-items-center gap-0 px-3 py-2 border-round-lg"
+               style="background:var(--color-info-light)">
+            <span class="text-xs font-semibold" style="letter-spacing:0.04em;color:var(--color-info-text)">TOTAL TTC</span>
+            <span class="font-bold text-base" style="color:var(--color-info)">
+              {{ aggregates.totalAgiosTTC | number:'1.2-2' }}
+              <span class="text-xs font-normal ml-1">MAD</span>
+            </span>
+          </div>
+
+          <!-- KPI: Jours actifs (découvert pour FC, encours pour PREFI) -->
+          <div class="flex flex-column align-items-center gap-0">
+            <span class="text-400 text-xs font-medium" style="letter-spacing:0.04em">{{ joursActifsLabel }}</span>
+            <span class="font-bold text-800 text-base">
+              {{ aggregates.nbJoursDecouvert }}
+              <span class="text-400 text-xs font-normal"> / {{ aggregates.nbJoursTotal }}</span>
+            </span>
+          </div>
+        }
+
+        <!-- Séparateur -->
+        <div class="hidden md:block" style="width:1px;height:2.5rem;background:var(--color-border)"></div>
+
+        <!-- Filtre date limite -->
+        <div class="flex align-items-center gap-2">
+          <span class="text-500 text-xs" style="white-space:nowrap">Jusqu'au :</span>
+          <p-calendar [formControl]="dateLimiteControl"
+                      dateFormat="dd/mm/yy"
+                      [showIcon]="false"
+                      [minDate]="minDate"
+                      [maxDate]="maxDate"
+                      placeholder="Fin trimestre"
+                      [showClear]="true"
+                      (onSelect)="onDateLimiteChange(dt)"
+                      (onClear)="clearDateLimite(dt)"
+                      [style]="{'width':'145px'}"
+                      [inputStyle]="{'width':'100%','font-size':'0.82rem'}"
+                      appendTo="body">
+          </p-calendar>
+        </div>
+
+        <!-- Filtre marché — types multi-marchés uniquement -->
+        @if (isMultiMarche) {
+          <div class="flex align-items-center gap-2">
+            <span class="text-500 text-xs" style="white-space:nowrap">Marché :</span>
+            <p-dropdown [formControl]="marcheIdControl"
+                        [options]="marcheOptions"
+                        optionLabel="numero"
+                        optionValue="id"
+                        placeholder="Tous"
+                        [showClear]="true"
+                        (onChange)="onMarcheChange(dt)"
+                        (onClear)="clearMarche(dt)"
+                        [style]="{'width':'160px'}"
+                        styleClass="text-sm"
+                        appendTo="body">
+            </p-dropdown>
+          </div>
+        }
+
+      </div>
+    </div>
+  }
+
+  <!-- ═══ TABLE JOURNALIER ══════════════════════════════════════════ -->
+  <div class="surface-card border-round-xl border-1 surface-border "
+       style="box-shadow:0 1px 10px rgba(0,0,0,0.06)">
+
+    <div class="px-3 py-2 border-bottom-1 surface-border flex align-items-center justify-content-between"
+        >
+      <span class="font-semibold text-700 text-sm">Détail journalier</span>
+      <span class="text-400 text-xs">{{ totalRecords }} jours</span>
+    </div>
+
+    <p-table #dt
+             [value]="jours"
+             [lazy]="true"
+             [paginator]="true"
+             [rows]="rows"
+             [totalRecords]="totalRecords"
+             [rowsPerPageOptions]="[15, 31, 60, 90]"
+             [loading]="loading"
+             [first]="first"
+             (onLazyLoad)="loadJours($event)"
+             responsiveLayout="scroll"
+             styleClass="p-datatable-sm"
+             [showCurrentPageReport]="true"
+             currentPageReportTemplate="{first}–{last} sur {totalRecords} jours"
+             sortField="dateValeur"
+             [sortOrder]="1"
+             rowHover>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="dateValeur" style="min-width:110px">
+            Date <p-sortIcon field="dateValeur"></p-sortIcon>
+          </th>
+          @if (isMultiMarche) {
+            <th pSortableColumn="marche.numero" style="min-width:150px">
+              Marché <p-sortIcon field="marche.numero"></p-sortIcon>
+            </th>
+          }
+          <th pSortableColumn="soldeJournalier" class="text-right" style="min-width:120px">
+            {{ soldeColLabel }} <p-sortIcon field="soldeJournalier"></p-sortIcon>
+          </th>
+          <th pSortableColumn="baseCalcul" class="text-right" style="min-width:115px">
+            Base calcul <p-sortIcon field="baseCalcul"></p-sortIcon>
+          </th>
+          <th class="text-center" style="width:80px" pSortableColumn="tauxApplique">Taux % <p-sortIcon field="tauxApplique"></p-sortIcon></th>
+          <th pSortableColumn="agiosHT" class="text-right" style="min-width:110px">
+            Agios HT <p-sortIcon field="agiosHT"></p-sortIcon>
+          </th>
+          <th class="text-right" style="min-width:90px" pSortableColumn="tva">TVA <p-sortIcon field="tva"></p-sortIcon></th>
+          <th pSortableColumn="agiosTTC" class="text-right" style="min-width:110px">
+            Agios TTC <p-sortIcon field="agiosTTC"></p-sortIcon>
+          </th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-jour>
+        <tr [ngClass]="{'row-decouvert': !isMultiMarche && jour.soldeJournalier < 0}">
+
+          <td class="font-semibold text-800">{{ jour.dateValeur | date:'dd/MM/yyyy' }}</td>
+
+          <!-- Colonne Marché — visible uniquement pour PREFI -->
+          @if (isMultiMarche) {
+            <td class="text-700 text-sm font-medium">
+              {{ jour.marcheNumero || '—' }}
+            </td>
+          }
+
+          <td class="text-right font-semibold"
+              [ngClass]="!isMultiMarche && jour.soldeJournalier < 0 ? 'solde-negatif' : 'solde-positif'">
+            {{ jour.soldeJournalier | number:'1.2-2' }}
+          </td>
+
+          <td class="text-right text-700">
+            @if (jour.baseCalcul > 0) {
+              {{ jour.baseCalcul | number:'1.2-2' }}
+            } @else {
+              <span class="text-300">—</span>
+            }
+          </td>
+
+          <td class="text-center text-500 text-xs">
+            @if (jour.baseCalcul > 0) {
+              {{ jour.tauxApplique | number:'1.2-2' }}
+            } @else {
+              <span class="text-300">—</span>
+            }
+          </td>
+
+          <td class="text-right">
+            @if (jour.agiosHT > 0) {
+              <span class="font-semibold text-700">{{ jour.agiosHT | number:'1.2-2' }}</span>
+            } @else {
+              <span class="text-300">0</span>
+            }
+          </td>
+
+          <td class="text-right text-600">
+            @if (jour.tva > 0) {
+              {{ jour.tva | number:'1.2-2' }}
+            } @else {
+              <span class="text-300">0</span>
+            }
+          </td>
+
+          <td class="text-right">
+            @if (jour.agiosTTC > 0) {
+              <span class="font-bold" style="color:var(--color-danger)">
+                {{ jour.agiosTTC | number:'1.2-2' }}
+              </span>
+            } @else {
+              <span class="text-300">0</span>
+            }
+          </td>
+
+
+        </tr>
+      </ng-template>
+
+      <!-- Footer totaux -->
+      <ng-template pTemplate="footer">
+        @if (aggregates) {
+          <tr style="background:var(--color-info-light);font-weight:700;border-top:2px solid var(--color-info)">
+            <td class="font-bold text-700 text-sm">TOTAL</td>
+            @if (isMultiMarche) {
+              <td></td>
+            }
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="text-right text-800">{{ aggregates.totalAgiosHT | number:'1.2-2' }}</td>
+            <td class="text-right text-800">{{ aggregates.totalTVA | number:'1.2-2' }}</td>
+            <td class="text-right font-bold" style="color:var(--color-info);font-size:0.95rem">
+              {{ aggregates.totalAgiosTTC | number:'1.2-2' }}
+              <span class="text-xs font-normal ml-1">MAD</span>
+            </td>
+          </tr>
+        }
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="isMultiMarche ? 8 : 7">
+            <div class="flex flex-column align-items-center gap-2 py-6">
+              <div class="text-600 font-medium">Aucun détail journalier</div>
+              <div class="text-400 text-sm">Lancez un recalcul depuis le dashboard.</div>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td [attr.colspan]="isMultiMarche ? 8 : 7" class="text-center p-4 text-500 text-sm">
+            <i class="pi pi-spin pi-spinner mr-2"></i>Chargement…
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+
+</div>

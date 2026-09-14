@@ -1,0 +1,22 @@
+// portail.component.scss
+//
+// Shell applicatif global (navbar + zone de contenu routée).
+// La navbar garde sa hauteur naturelle ; <main> occupe exactement l'espace
+// restant sous la navbar (jamais 100vh en plus, qui dépassait la fenêtre
+// visible de la hauteur de la navbar). Les pages routées peuvent alors
+// utiliser h-full en toute sécurité pour remplir exactement cet espace et
+// gérer leur propre scroll interne, sans qu'aucun contenu ne soit rogné
+// sous le bas de la fenêtre.
+.app-shell {
+  display       : flex;
+  flex-direction: column;
+  height        : 100vh;
+  overflow      : hidden;
+
+  &__main {
+    flex      : 1 1 0;
+    min-height: 0;
+    overflow  : hidden;
+    background: var(--color-page-bg);
+  }
+}

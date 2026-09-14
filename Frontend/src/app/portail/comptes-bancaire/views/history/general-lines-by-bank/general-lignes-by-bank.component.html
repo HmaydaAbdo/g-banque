@@ -1,0 +1,189 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="flex flex-column gap-3 p-3">
+
+  <!-- ═══ FILTRES ══════════════════════════════════════════════════════════ -->
+  <div class="pg-filters">
+    <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+    <form [formGroup]="functionalLineSearchForm" class="w-full">
+      <div class="flex flex-row gap-2 flex-wrap">
+
+        <div class="flex flex-column flex-grow-1">
+          <label for="filterNatureLine"
+                 style="font-size:var(--text-xs);font-weight:var(--weight-medium);color:var(--color-text-muted);margin-bottom:var(--space-field-gap)">
+            Nature Ligne
+          </label>
+          <p-dropdown
+            id="filterNatureLine"
+            formControlName="natureLigneFonctionnelleId"
+            [options]="natureLigneOptions"
+            placeholder="Toutes les natures"
+            optionLabel="label"
+            optionValue="value"
+            [showClear]="true"
+            styleClass="w-full">
+          </p-dropdown>
+        </div>
+
+        <div class="flex flex-column flex-grow-1">
+          <label for="filterYearDepart"
+                 style="font-size:var(--text-xs);font-weight:var(--weight-medium);color:var(--color-text-muted);margin-bottom:var(--space-field-gap)">
+            Année de départ
+          </label>
+          <p-inputNumber
+            id="filterYearDepart"
+            formControlName="yearDepart"
+            mode="decimal"
+            [useGrouping]="false"
+            placeholder="Ex : 2023"
+            styleClass="w-full">
+          </p-inputNumber>
+        </div>
+
+        <div class="flex flex-column flex-grow-1">
+          <label for="filterActif"
+                 style="font-size:var(--text-xs);font-weight:var(--weight-medium);color:var(--color-text-muted);margin-bottom:var(--space-field-gap)">
+            Statut
+          </label>
+          <p-dropdown
+            id="filterActif"
+            formControlName="actif"
+            [options]="actifOptions"
+            placeholder="Toutes"
+            optionLabel="label"
+            optionValue="value"
+            [showClear]="true"
+            styleClass="w-full">
+          </p-dropdown>
+        </div>
+
+      </div>
+    </form>
+  </div>
+
+  <!-- ═══ TABLE ════════════════════════════════════════════════════════════ -->
+  <div class="surface-card border-round-xl border-1 surface-border overflow-hidden"
+       style="box-shadow:var(--shadow-md)">
+
+    <p-table
+      #dtFunctionalLines
+      [value]="bankFunctionalLines"
+      [loading]="loading"
+      [paginator]="true"
+      [rows]="rows"
+      [totalRecords]="totalRecords"
+      [rowsPerPageOptions]="[5, 10, 25, 50]"
+      [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
+      (onLazyLoad)="loadBankFunctionalLines($event)"
+      [sortOrder]="sortOrder"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first}–{last} sur {totalRecords}"
+      styleClass="p-datatable-sm"
+      rowHover>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="id" style="width:70px">
+            ID <p-sortIcon field="id"></p-sortIcon>
+          </th>
+          <th pSortableColumn="natureLigneFonctionnelle.label">
+            Nature <p-sortIcon field="natureLigneFonctionnelle.label"></p-sortIcon>
+          </th>
+          <th pSortableColumn="plafond" class="text-right">
+            Plafond <p-sortIcon field="plafond"></p-sortIcon>
+          </th>
+          <th pSortableColumn="encours" class="text-right">
+            Encours <p-sortIcon field="encours"></p-sortIcon>
+          </th>
+          <th pSortableColumn="solde" class="text-right">
+            Solde <p-sortIcon field="solde"></p-sortIcon>
+          </th>
+          <th pSortableColumn="taux" class="text-right">
+            Taux <p-sortIcon field="taux"></p-sortIcon>
+          </th>
+          <th pSortableColumn="dateDepart">
+            Date départ <p-sortIcon field="dateDepart"></p-sortIcon>
+          </th>
+          <th pSortableColumn="dateFin">
+            Date fin <p-sortIcon field="dateFin"></p-sortIcon>
+          </th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-ligne>
+        <tr>
+          <td class="text-600 text-sm">{{ ligne.id }}</td>
+          <td class="font-medium" style="color:var(--color-text-primary)">{{ ligne.natureLigneFonctionnelleLabel }}</td>
+
+          <td class="text-right">
+            <span class="num">{{ ligne.plafond | number:'1.2-2' }}</span>
+          </td>
+
+          <td class="text-right">
+            @if (ligne.encours != null) {
+              <span class="num"
+                    [class.num-credit]="ligne.encours > 0"
+                    [class.num-debit]="ligne.encours < 0">
+                {{ ligne.encours | number:'1.2-2' }}
+              </span>
+            } @else {
+              <span style="color:var(--color-text-muted)">—</span>
+            }
+          </td>
+
+          <td class="text-right">
+            @if (ligne.solde != null) {
+              <span class="num"
+                    [class.num-credit]="ligne.solde > 0"
+                    [class.num-debit]="ligne.solde < 0">
+                {{ ligne.solde | number:'1.2-2' }}
+              </span>
+            } @else {
+              <span style="color:var(--color-text-muted)">—</span>
+            }
+          </td>
+
+          <td class="text-right">
+            <span class="num">{{ ligne.taux | number:'1.2-2' }} %</span>
+          </td>
+
+          <td>
+            <span style="font-family:var(--font-mono);font-size:var(--text-xs);color:var(--color-text-secondary)">
+              {{ ligne.dateDepart | date:'dd/MM/yyyy' }}
+            </span>
+          </td>
+
+          <td>
+            <span style="font-family:var(--font-mono);font-size:var(--text-xs);color:var(--color-text-secondary)">
+              {{ ligne.dateFin | date:'dd/MM/yyyy' }}
+            </span>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="8">
+            <div class="flex flex-column align-items-center gap-2 py-5">
+              <i class="pi pi-list text-300" style="font-size:var(--text-icon)"></i>
+              <span class="font-medium" style="color:var(--color-text-secondary)">Aucune ligne fonctionnelle</span>
+              <span class="text-sm" style="color:var(--color-text-muted)">Modifiez les filtres ou vérifiez les données.</span>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td [attr.colspan]="8" class="text-center p-4">
+            <i class="pi pi-spin pi-spinner mr-2" style="color:var(--color-primary)"></i>
+            <span class="text-sm" style="color:var(--color-text-muted)">Chargement…</span>
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+
+</div>

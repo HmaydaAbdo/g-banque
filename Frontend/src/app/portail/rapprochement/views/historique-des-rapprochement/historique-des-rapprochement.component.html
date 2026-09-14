@@ -1,0 +1,212 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="card flex flex-column gap-2 p-2 w-full h-full overflow-y-scroll">
+
+  <div class="portail-section flex justify-content-between">
+    <div class="flex justify-content-center align-items-center">
+      <p-breadcrumb [model]="items">
+        <ng-template pTemplate="item" let-item>
+          @if (item.route) {
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+              <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+            </a>
+          } @else {
+            <a [href]="item.url">
+              <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+            </a>
+          }
+        </ng-template>
+      </p-breadcrumb>
+    </div>
+  </div>
+
+  <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-2 p-3 bg-white border-round shadow-1">
+    <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" class="flex flex-column md:flex-row gap-2 align-items-start md:align-items-center w-full">
+
+        <div class="p-input-icon-left">
+          <i class="pi pi-building"></i>
+          <p-dropdown
+            formControlName="banqueId"
+            [options]="banques"
+            optionLabel="nom"
+            optionValue="id"
+            placeholder="Banque"
+            [filter]="true"
+            filterBy="nom"
+            [virtualScroll]="true"
+            [lazy]="true"
+            [virtualScrollItemSize]="38"
+            [loading]="loadingBanques"
+            (onLazyLoad)="loadBanques($event)"
+            [showClear]="true"
+            appendTo="body"
+            [style]="{'min-width': '200px'}"
+          >
+          </p-dropdown>
+        </div>
+
+        <div class="p-input-icon-left">
+          <i class="pi pi-calendar"></i>
+          <input pInputText type="text" formControlName="dateRapprochement"
+                 placeholder="Date (MM/YYYY)"
+                 [style]="{'min-width': '180px'}"/>
+        </div>
+        <div class="p-input-icon-left">
+          <i class="pi pi-tag"></i>
+          <p-dropdown
+            formControlName="statutRapprochement"
+            [options]="statusOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Statut"
+            [showClear]="true"
+            appendTo="body"
+            [style]="{'min-width': '180px'}"
+          >
+          </p-dropdown>
+        </div>
+      </form>
+</div>
+
+    <p-button icon="pi pi-times" severity="secondary"
+              (onClick)="clearSearch()" [style]="{'white-space': 'nowrap'}">
+    </p-button>
+  </div>
+
+  <div class="pb-8">
+    <p-table #dt
+             [value]="rapprochements"
+             [paginator]="true"
+             [rows]="10"
+             [totalRecords]="totalRecords"
+             [loading]="loading"
+             [rowsPerPageOptions]="[10, 25, 50]"
+             [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
+             responsiveLayout="scroll"
+             [scrollable]="true"
+             scrollHeight="flex"
+             (onLazyLoad)="loadRapprochements($event)"
+             styleClass="p-datatable-gridlines text-xs"
+             [showCurrentPageReport]="true"
+             currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}">
+
+      <ng-template pTemplate="header">
+        <tr class="white-space-nowrap">
+          <th pSortableColumn="dateRapprochement">Date <p-sortIcon field="dateRapprochement"></p-sortIcon></th>
+          <th pSortableColumn="banque.nom">Banque <p-sortIcon field="banque.nom"></p-sortIcon></th>
+          <th pSortableColumn="soldeDebut">Solde Début <p-sortIcon field="soldeDebut"></p-sortIcon></th>
+          <th pSortableColumn="soldeFin">Solde Fin <p-sortIcon field="soldeFin"></p-sortIcon></th>
+          <th pSortableColumn="totalDebit">Total Débit <p-sortIcon field="totalDebit"></p-sortIcon></th>
+          <th pSortableColumn="totalCredit">Total Crédit <p-sortIcon field="totalCredit"></p-sortIcon></th>
+          <th pSortableColumn="tvaDeductible">TVA Déductible <p-sortIcon field="tvaDeductible"></p-sortIcon></th>
+          <th pSortableColumn="tvaCollectee">TVA Collectée <p-sortIcon field="tvaCollectee"></p-sortIcon></th>
+          <th>TVA Due</th>
+          <th pSortableColumn="statut">Statut <p-sortIcon field="statut"></p-sortIcon></th>
+          <th style="width: 8rem;">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-rapprochement>
+        <tr>
+          <td >{{ rapprochement.dateRapprochement  | date:'MM/yyyy'}}</td>
+          <td>{{ rapprochement.banqueNom }}</td>
+          <td><span class="num" [class.num-credit]="rapprochement.soldeDebut >= 0" [class.num-debit]="rapprochement.soldeDebut < 0">{{ rapprochement.soldeDebut | number:'1.2-2' }}</span></td>
+          <td><span class="num" [class.num-credit]="rapprochement.soldeFin >= 0" [class.num-debit]="rapprochement.soldeFin < 0">{{ rapprochement.soldeFin | number:'1.2-2' }}</span></td>
+          <td><span class="num num-debit">{{ rapprochement.totalDebit | number:'1.2-2' }}</span></td>
+          <td><span class="num num-credit">{{ rapprochement.totalCredit | number:'1.2-2' }}</span></td>
+          <td><span class="num num-neutral">{{ rapprochement.tvaDeductible | number:'1.2-2' }}</span></td>
+          <td><span class="num num-neutral">{{ rapprochement.tvaCollectee | number:'1.2-2' }}</span></td>
+          <td>
+            <span class="num font-bold" [ngClass]="{
+                'num-credit': rapprochement.tvaDue > 0,
+                'num-debit': rapprochement.tvaDue < 0,
+                'text-500': rapprochement.tvaDue === 0
+              }">
+              {{ rapprochement.tvaDue | number:'1.2-2' }}
+            </span>
+          </td>
+          <td>
+            <p-tag [value]="rapprochement.statutRapprochement" [severity]="getStatutSeverity(rapprochement.statutRapprochement)"></p-tag>
+          </td>
+          <td>
+            <div class="flex flex-row align-items-center gap-2">
+              <button pButton pRipple icon="pi pi-eye"
+                      class="p-button-rounded p-button-outlined p-button-info"
+                      pTooltip="Voir détails"
+                      (click)="viewRapprochementDetails(rapprochement.id!)"></button>
+
+              <button pButton pRipple icon="pi pi-file-pdf"
+                      class="p-button-rounded p-button-outlined p-button-secondary"
+                      pTooltip="Télécharger PDF"
+                      [loading]="loadingReport[rapprochement.id!]"
+                      (click)="downloadRapprochementReport(rapprochement)"></button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptyMessage">
+        <tr>
+          <td [attr.colspan]="10">Aucun historique de rapprochement trouvé.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+
+
+<!-- Modal choix type de rapport -->
+<p-dialog
+  header="Choisir le type de rapport"
+  [(visible)]="showReportTypeModal"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '420px' }"
+  [draggable]="false">
+
+  <div class="flex flex-column gap-3 p-3">
+
+    <p class="text-color-secondary m-0">
+      Sélectionnez la version du rapport à télécharger :
+    </p>
+
+    <p-selectButton
+      [options]="reportTypeOptions"
+      [formControl]="reportTypeControl"
+      optionLabel="label"
+      optionValue="value"
+      styleClass="w-full flex"
+      [style]="{ width: '100%' }">
+
+      <ng-template pTemplate="item" let-option>
+        <div class="flex flex-row align-items-center justify-content-center gap-2 px-3 py-2 w-full">
+          <div class="flex flex-column align-items-start">
+            <span class="font-semibold">{{ option.label }}</span>
+          </div>
+        </div>
+      </ng-template>
+
+    </p-selectButton>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Annuler"
+      icon="pi pi-times"
+      styleClass="p-button-text"
+      (click)="showReportTypeModal = false">
+    </p-button>
+    <p-button
+      label="Télécharger"
+      icon="pi pi-download"
+      [disabled]="!reportTypeControl.value"
+      (click)="confirmDownload()">
+    </p-button>
+  </ng-template>
+
+</p-dialog>

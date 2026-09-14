@@ -1,0 +1,155 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="pg-wrap">
+
+  <!-- ═══ HEADER ═══════════════════════════════════════════════════════════ -->
+  <div class="pg-header">
+    <div class="pg-header__left">
+      <h2 class="pg-header__title">{{ utilisateur?.username ?? 'Utilisateur' }}</h2>
+      <p-breadcrumb [model]="items" styleClass="border-none p-0"
+                    [style]="{'background':'transparent','padding':'0','font-size':'var(--text-breadcrumb)'}">
+      </p-breadcrumb>
+    </div>
+
+    <div class="pg-header__actions">
+      <button pButton pRipple
+              label="Retour"
+              icon="pi pi-arrow-left"
+              size="small"
+              class="p-button-text p-button-secondary"
+              (click)="retour()">
+      </button>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="surface-card border-round-xl border-1 surface-border p-4 text-center text-500 text-sm"
+         style="box-shadow:var(--shadow-sm)">
+      <i class="pi pi-spin pi-spinner mr-2"></i>Chargement…
+    </div>
+  } @else if (!utilisateur) {
+    <div class="surface-card border-round-xl border-1 surface-border p-4"
+         style="box-shadow:var(--shadow-sm)">
+      <div class="flex flex-column align-items-center gap-2 py-4">
+        <i class="pi pi-user-minus text-300" style="font-size:var(--text-icon)"></i>
+        <div class="text-600 font-medium">Utilisateur introuvable</div>
+      </div>
+    </div>
+  } @else {
+
+    <!-- ═══ IDENTITÉ ═══════════════════════════════════════════════════════ -->
+    <div class="surface-card border-round-xl border-1 surface-border p-3"
+         style="box-shadow:var(--shadow-sm)">
+      <div class="flex flex-wrap align-items-center gap-4">
+        <div class="flex flex-column gap-1">
+          <span class="text-500 text-xs font-medium">Statut</span>
+          <p-tag [value]="utilisateur.enabled ? 'Actif' : 'Désactivé'"
+                 [severity]="utilisateur.enabled ? 'success' : 'danger'"></p-tag>
+        </div>
+        <div class="flex flex-column gap-1">
+          <span class="text-500 text-xs font-medium">Admin système</span>
+          <p-tag [value]="utilisateur.systemAdmin ? 'Oui' : 'Non'"
+                 [severity]="utilisateur.systemAdmin ? 'info' : 'secondary'"></p-tag>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ DÉPARTEMENTS ═══════════════════════════════════════════════════ -->
+    <div class="surface-card border-round-xl border-1 surface-border p-3"
+         style="box-shadow:var(--shadow-sm)">
+      <h3 class="text-900 font-bold m-0 mb-3" style="font-size:var(--text-section)">
+        <i class="pi pi-sitemap mr-2 text-500"></i>Départements
+      </h3>
+
+      <div class="pg-table mb-3">
+        <p-table [value]="utilisateur.departmentRoles" dataKey="id" styleClass="p-datatable-sm" rowHover>
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Département</th>
+              <th class="text-center">Rôle</th>
+              <th class="text-center" style="width:6rem">Actions</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-dr>
+            <tr>
+              <td class="font-semibold text-800">{{ dr.departmentName }}</td>
+              <td class="text-center">
+                <p-tag [value]="dr.roleInDept === 'DIRECTOR' ? 'Directeur' : 'Membre'" severity="secondary"></p-tag>
+              </td>
+              <td>
+                <div class="flex align-items-center justify-content-center">
+                  <button pButton pRipple icon="pi pi-times"
+                          class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                          pTooltip="Retirer" tooltipPosition="top"
+                          (click)="confirmRemoveDepartmentRole(dr.departmentId, dr.departmentName, $event)">
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td [attr.colspan]="3">
+                <div class="flex flex-column align-items-center gap-1 py-3">
+                  <i class="pi pi-sitemap text-300" style="font-size:var(--text-2xl)"></i>
+                  <div class="text-500 text-sm">N'appartient à aucun département</div>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      <form [formGroup]="assignForm" (ngSubmit)="assignDepartmentRole()" class="flex flex-wrap align-items-end gap-2">
+        <div class="field mb-0">
+          <label for="departmentId" class="block text-xs font-medium text-500 mb-1">Département</label>
+          <p-dropdown
+            id="departmentId"
+            formControlName="departmentId"
+            [options]="departements"
+            optionLabel="name"
+            optionValue="id"
+            placeholder="Choisir un département"
+            styleClass="w-15rem"
+          ></p-dropdown>
+        </div>
+
+        <div class="field mb-0">
+          <label for="roleInDept" class="block text-xs font-medium text-500 mb-1">Rôle</label>
+          <p-dropdown
+            id="roleInDept"
+            formControlName="roleInDept"
+            [options]="roleOptions"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="w-10rem"
+          ></p-dropdown>
+        </div>
+
+        <button pButton pRipple type="submit" label="Assigner" icon="pi pi-plus"
+                size="small" [loading]="assignSubmitting" [disabled]="assignForm.invalid"></button>
+      </form>
+    </div>
+
+    <!-- ═══ MOT DE PASSE ═══════════════════════════════════════════════════ -->
+    <div class="surface-card border-round-xl border-1 surface-border p-3"
+         style="box-shadow:var(--shadow-sm)">
+      <h3 class="text-900 font-bold m-0 mb-3" style="font-size:var(--text-section)">
+        <i class="pi pi-lock mr-2 text-500"></i>Mot de passe
+      </h3>
+      <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="flex flex-wrap align-items-end gap-2">
+        <div class="field mb-0">
+          <label for="password" class="block text-xs font-medium text-500 mb-1">Nouveau mot de passe</label>
+          <p-password id="password" formControlName="password" [toggleMask]="true" styleClass="w-full" inputStyleClass="w-full"></p-password>
+          @if (passwordForm.get('password')?.invalid && passwordForm.get('password')?.touched) {
+            <small class="p-error">Au moins 8 caractères.</small>
+          }
+        </div>
+        <button pButton pRipple type="submit" label="Mettre à jour" icon="pi pi-check"
+                size="small" [loading]="passwordSubmitting" [disabled]="passwordForm.invalid"></button>
+      </form>
+    </div>
+  }
+
+</div>

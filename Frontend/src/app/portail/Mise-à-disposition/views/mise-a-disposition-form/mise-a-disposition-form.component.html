@@ -1,0 +1,155 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="portail-section w-full h-full overflow-y-scroll pt-2 pb-8 px-5">
+
+  <div class="flex justify-content-center w-full">
+    <p-breadcrumb [model]="items">
+      <ng-template pTemplate="item" let-item>
+        <ng-container>
+          <a [routerLink]="item.routerLink" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold text-sm">{{ item.label }}</span>
+          </a>
+        </ng-container>
+      </ng-template>
+    </p-breadcrumb>
+  </div>
+
+  <p class="text-center font-bold">{{ isEditMode ? 'Modifier une Mise à Disposition' : 'Ajouter une Mise à Disposition' }}</p>
+
+  @if (loading) {
+    <div class="flex justify-content-center my-5">
+      <p-progressSpinner></p-progressSpinner>
+    </div>
+  }
+
+  @if (!loading && miseAdispoForm) {
+    <form [formGroup]="miseAdispoForm" (ngSubmit)="saveMiseADispo()">
+      <div class="p-fluid formgrid grid">
+
+        <!-- Banque -->
+        <div class="col-12 md:col-6 field">
+          <label for="banqueId">Banque <span class="p-text-danger">*</span></label>
+          <p-dropdown
+            id="banqueId"
+            formControlName="banqueId"
+            [options]="banques"
+            optionLabel="nom"
+            optionValue="id"
+            placeholder="Sélectionner une banque"
+            [filter]="true"
+            filterBy="nom"
+            [virtualScroll]="true"
+            [lazy]="true"
+            [virtualScrollItemSize]="38"
+            (onLazyLoad)="loadBanques($event)">
+          </p-dropdown>
+          @if (f['banqueId'].invalid && f['banqueId'].touched) {
+            <small class="p-error">
+              @if (f['banqueId'].errors?.['required']) {
+                <span>La banque est obligatoire.</span>
+              }
+            </small>
+          }
+        </div>
+
+        <!-- Date d'émission -->
+        <div class="col-12 md:col-6 field">
+          <label for="dateEmission">Date d'Émission <span class="p-text-danger">*</span></label>
+          <p-calendar
+            id="dateEmission"
+            formControlName="dateEmission"
+            dateFormat="dd/mm/yy"
+            [showOnFocus]="false"
+            placeholder="JJ/MM/YYYY">
+          </p-calendar>
+          @if (f['dateEmission'].invalid && f['dateEmission'].touched) {
+            <small class="p-error">
+              @if (f['dateEmission'].errors?.['required']) {
+                <span>La date d'émission est obligatoire.</span>
+              }
+            </small>
+          }
+        </div>
+
+        <!-- Montant -->
+        <div class="col-12 md:col-6 field">
+          <label for="montant">Montant <span class="p-text-danger">*</span></label>
+          <p-inputNumber
+            id="montant"
+            formControlName="montant"
+            mode="decimal"
+            [minFractionDigits]="2"
+            [maxFractionDigits]="2"
+            inputId="decimal"
+            suffix=" MAD">
+          </p-inputNumber>
+          @if (f['montant'].invalid && f['montant'].touched) {
+            <small class="p-error">
+              @if (f['montant'].errors?.['required']) {
+                <span>Le montant est obligatoire.</span>
+              }
+              @if (f['montant'].errors?.['min']) {
+                <span>Le montant doit être supérieur à zéro.</span>
+              }
+            </small>
+          }
+        </div>
+
+        <!-- Émetteur -->
+        <div class="col-12 md:col-6 field">
+          <label for="emetteur">Émetteur <span class="p-text-danger">*</span></label>
+          <input
+            type="text"
+            pInputText
+            id="emetteur"
+            formControlName="emetteur" />
+          @if (f['emetteur'].invalid && f['emetteur'].touched) {
+            <small class="p-error">
+              @if (f['emetteur'].errors?.['required']) {
+                <span>L'émetteur est obligatoire.</span>
+              }
+            </small>
+          }
+        </div>
+
+        <!-- Bénéficiaire (fixe : Staport) -->
+        <div class="col-12 md:col-6 field">
+          <label for="beneficiaire">Bénéficiaire</label>
+          <input type="text" pInputText id="beneficiaire" formControlName="beneficiaire" />
+        </div>
+
+        <!-- Type (fixe : Encaissement) -->
+        <div class="col-12 md:col-6 field">
+          <label for="type">Type</label>
+          <input type="text" pInputText id="type" formControlName="type" />
+        </div>
+
+      </div>
+
+      <!-- Boutons d'action -->
+      <div class="col-12 flex justify-content-end gap-2 mt-4">
+        <button
+          pButton
+          pRipple
+          label="Annuler"
+          size="small"
+          icon="pi pi-times"
+          (click)="cancel()"
+          type="button"
+          severity="secondary">
+        </button>
+        <button
+          pButton
+          pRipple
+          label="Enregistrer"
+          size="small"
+          icon="pi pi-check"
+          type="submit"
+          [disabled]="loading || miseAdispoForm.invalid">
+        </button>
+      </div>
+    </form>
+  }
+</div>

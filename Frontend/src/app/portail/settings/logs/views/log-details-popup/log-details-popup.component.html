@@ -1,0 +1,57 @@
+<div class="p-fluid">
+  <p-table
+    [value]="logDetails"
+    [loading]="loadingDetails"
+    [paginator]="true"
+    [rows]="rows"
+    [first]="first"
+    [totalRecords]="totalDetailRecords"
+    (onPage)="onPageChange($event)"
+    [rowsPerPageOptions]="[3,5, 10, 20]"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} détails"
+    styleClass="p-datatable-gridlines"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th >Champ</th>
+        <th>Ancienne Valeur</th>
+        <th>Nouvelle Valeur</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-detail>
+      <tr>
+        <td>{{ detail.fieldName }}</td>
+        <td>
+          @if (detail.oldValue) {
+            <span [pTooltip]="detail.oldValue" tooltipPosition="bottom">
+              {{ detail.oldValue.slice(0, 50) }}{{ detail.oldValue.length > 50 ? '…' : '' }}
+            </span>
+          } @else {
+            <span class="text-color-secondary">—</span>
+          }
+        </td>
+        <td>
+          @if (detail.newValue) {
+            <span [pTooltip]="detail.newValue" tooltipPosition="bottom">
+              {{ detail.newValue.slice(0, 50) }}{{ detail.newValue.length > 50 ? '…' : '' }}
+            </span>
+          } @else {
+            <span class="text-color-secondary">—</span>
+          }
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="3" class="text-center">
+          @if (loadFailed) {
+            Impossible de charger le détail de ce log.
+          } @else {
+            Aucun détail de log trouvé.
+          }
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

@@ -1,0 +1,98 @@
+<div class="recap">
+
+  <div class="recap__head">
+    <h3 class="recap__title">Récapitulatif du Contrat de Leasing</h3>
+    <p-tag
+      [value]="isContractValid ? 'Contrat Valide' : 'Contrat Invalide'"
+      [severity]="isContractValid ? 'success' : 'danger'"
+      [rounded]="true"
+    ></p-tag>
+  </div>
+
+  @if (contractData) {
+
+    @if (formattedGlobalMessages.length > 0) {
+      <p-messages [value]="formattedGlobalMessages" [enableService]="false"></p-messages>
+    }
+
+    <div class="recap__grid">
+      <div class="recap__row">
+        <span class="recap__label">Numéro de Contrat</span>
+        <span class="recap__value">{{ contractData.numeroContrat || '—' }}</span>
+      </div>
+      <div class="recap__row">
+        <span class="recap__label">Immobilisation</span>
+        <span class="recap__value">{{ contractData.immobilisation || '—' }}</span>
+      </div>
+      <div class="recap__row">
+        <span class="recap__label">Date de Début</span>
+        <span class="recap__value">{{ formatDate(contractData.dateDebut) }}</span>
+      </div>
+      <div class="recap__row">
+        <span class="recap__label">Période</span>
+        <span class="recap__value">{{ contractData.periodeEnMois ? contractData.periodeEnMois + ' mois' : '—' }}</span>
+      </div>
+      <div class="recap__row">
+        <span class="recap__label">Organisme de Leasing</span>
+        <span class="recap__value">{{ contractData.nomOrganismeLeasing || '—' }}</span>
+      </div>
+      <div class="recap__row">
+        <span class="recap__label">Banque de Prélèvement</span>
+        <span class="recap__value">{{ contractData.nomBanqueDePrelevement || '—' }}</span>
+      </div>
+      <div class="recap__row">
+        <span class="recap__label">Type de Contrat</span>
+        <span class="recap__value">{{ getContractTypeDisplayName(contractData.typeContrat) }}</span>
+      </div>
+      <div class="recap__row">
+        <span class="recap__label">Valeur Résiduelle</span>
+        <span class="recap__value">
+          {{ contractData.typeContrat === TypeContratLeasing.LINEAIRE ? formatCurrency(contractData.valeurResiduelle) : 'Non applicable' }}
+        </span>
+      </div>
+    </div>
+
+    <div class="recap__tiles">
+      <div class="recap__tile">
+        <span class="recap__tile-label">Montant Achat TTC</span>
+        <span class="recap__tile-value">{{ formatCurrency(contractData.montantAchatTTC) }}</span>
+      </div>
+      <div class="recap__tile">
+        <span class="recap__tile-label">Endettement</span>
+        <span class="recap__tile-value">{{ formatCurrency(contractData.expectedTotalAmountService) }}</span>
+      </div>
+    </div>
+
+    <div>
+      <span class="recap__section-label">Détail des Phases</span>
+      <p-table
+        [value]="contractData.phases"
+        dataKey="numeroPhase"
+        styleClass="p-datatable-sm p-datatable-gridlines"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Numéro Phase</th>
+            <th>Durée (Mois)</th>
+            <th class="text-right">Mensualité TTC</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-phase>
+          <tr>
+            <td>{{ phase.numeroPhase }}</td>
+            <td>{{ phase.dureeMois }}</td>
+            <td class="text-right">{{ formatCurrency(phase.mensualiteTTC) }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="3" class="recap__empty">Aucune phase ajoutée.</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+  } @else {
+    <div class="recap__loading">Chargement des données du contrat...</div>
+  }
+</div>

@@ -1,0 +1,28 @@
+<p-toast position="center"></p-toast>
+
+<div class="portail-section w-full h-full overflow-y-scroll pt-2 pb-8 px-5">
+
+  <p class="text-center font-bold md:text-2xl">
+    {{ isEditMode ? 'Modifier Organisme de Leasing' : 'Ajouter un Organisme de Leasing' }}
+  </p>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="p-fluid p-formgrid grid">
+      <div class="field col-12 md:col-6">
+        <label for="nom">Nom <span class="p-error">*</span></label>
+        <input id="nom" type="text" pInputText formControlName="nom"
+               [ngClass]="{'ng-dirty': f['nom'].invalid && f['nom'].touched}">
+        @if (f['nom'].invalid && f['nom'].touched) {
+          <small class="p-error">Le nom est requis.</small>
+        }
+      </div>
+    </div>
+
+    <div class="p-dialog-footer flex justify-content-end mt-4">
+      <button pButton pRipple label="Annuler" size="small" class="h-fit mr-2" icon="pi pi-times"
+              (click)="onCancel()" type="button"></button>
+      <button pButton pRipple [label]="isEditMode ? 'Mettre à jour' : 'Créer'" size="small" class="h-fit"
+              icon="pi pi-check" type="submit" [loading]="submitting" [disabled]="submitting"></button>
+    </div>
+  </form>
+</div>

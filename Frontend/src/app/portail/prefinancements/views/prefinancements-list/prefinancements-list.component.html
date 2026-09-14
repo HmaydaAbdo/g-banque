@@ -1,0 +1,210 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="card flex flex-column gap-2 p-2 w-full h-full overflow-y-scroll">
+
+  <div class="portail-section flex justify-content-between bg-transparent">
+    <div class="flex justify-content-center align-items-center">
+      <p-breadcrumb [model]="items">
+        <ng-template pTemplate="item" let-item>
+          <a [routerLink]="item.routerLink" class="p-menuitem-link">
+            <span [ngClass]="item.icon" class="text-color"></span>
+            <span class="text-black-alpha-90 p-2 text-sm font-bold">{{ item.label }}</span>
+          </a>
+        </ng-template>
+      </p-breadcrumb>
+    </div>
+
+    <button pButton pRipple label="Exporter PDF" class="h-fit p-button-outlined p-button-danger" size="small"
+            icon="pi pi-file-pdf" [loading]="exporting" (click)="exportPdf()"></button>
+    <button pButton pRipple label="Ajouter Préfinancement" class="h-fit" size="small" icon="pi pi-plus"
+            severity="primary" routerLink="/portail/préfinancements/new"></button>
+  </div>
+
+  <div class="flex flex-column gap-2">
+  <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-2 p-3 bg-white border-round shadow-1">
+    <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" class="flex flex-wrap gap-2">
+
+      <p-dropdown
+        formControlName="marcheId"
+        [options]="marchesOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Sélectionner un marché"
+        [filter]="true"
+        filterBy="label"
+        (onFilter)="onFilterMarches($event)"
+        [virtualScroll]="true"
+        [virtualScrollItemSize]="38"
+        [lazy]="true"
+        [virtualScrollOptions]="marchesScrollerOptions"
+        [loading]="marchesLoading"
+        [showClear]="true"
+        appendTo="body"
+        styleClass="w-full md:w-15rem">
+        <ng-template let-item pTemplate="item">
+          <div class="flex align-items-center gap-2" style="height: 38px">
+            @if (item.label) {
+              <span>{{ item.label }}</span>
+            } @else {
+              <i class="pi pi-spin pi-spinner text-gray-400"></i>
+            }
+          </div>
+        </ng-template>
+      </p-dropdown>
+
+      <p-dropdown
+        formControlName="banqueId"
+        [options]="banques"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Banque"
+        [showClear]="true"
+        appendTo="body"
+        styleClass="w-full md:w-13rem"
+      ></p-dropdown>
+
+      <p-dropdown
+        formControlName="type"
+        [options]="typeOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Type"
+        [showClear]="true"
+        appendTo="body"
+        styleClass="w-full md:w-12rem"
+      ></p-dropdown>
+
+      <p-dropdown
+        formControlName="status"
+        [options]="statusOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Statut"
+        [showClear]="true"
+        appendTo="body"
+        styleClass="w-full md:w-12rem"
+      ></p-dropdown>
+
+      <button pButton pRipple type="button"
+              [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+              icon="pi pi-calendar"
+              [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+              (click)="toggleDatePanel()">
+      </button>
+    </form>
+</div>
+
+    <p-button icon="pi pi-times" severity="secondary"
+              (onClick)="clearFilters()" [style]="{'white-space': 'nowrap'}">
+    </p-button>
+  </div>
+
+  @if (showDatePanel) {
+  <div class="p-3 bg-white border-round shadow-1">
+    <form [formGroup]="searchForm" class="grid">
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Émission — du</label>
+        <p-calendar formControlName="dateEmissionFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Émission — au</label>
+        <p-calendar formControlName="dateEmissionTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Opération — du</label>
+        <p-calendar formControlName="dateOperationFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Opération — au</label>
+        <p-calendar formControlName="dateOperationTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Valeur — du</label>
+        <p-calendar formControlName="dateValeurFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Valeur — au</label>
+        <p-calendar formControlName="dateValeurTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+    </form>
+  </div>
+  }
+  </div>
+
+  <div class="pb-8">
+    <p-table #dt [value]="prefinancements" [paginator]="true"
+             [rows]="10" [totalRecords]="totalRecords"
+             [loading]="loading" [rowsPerPageOptions]="[10, 25, 50]" [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
+             responsiveLayout="scroll" [scrollable]="true" (onLazyLoad)="loadPrefinancements($event)"
+             styleClass="p-datatable-gridlines text-xs"
+             [showCurrentPageReport]="true"
+             currentPageReportTemplate="{first}-{last} sur {totalRecords}">
+
+      <ng-template pTemplate="header">
+        <tr class="white-space-nowrap">
+          <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
+          <th pSortableColumn="marche.numero">Marché <p-sortIcon field="marche.numero"></p-sortIcon></th>
+          <th pSortableColumn="marche.banque.nom">Banque <p-sortIcon field="marche.banque.nom"></p-sortIcon></th>
+          <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
+          <th pSortableColumn="observation">Observation <p-sortIcon field="observation"></p-sortIcon></th>
+          <th pSortableColumn="dateEmission"> date d'Emission <p-sortIcon field="dateEmission"></p-sortIcon></th>
+          <th pSortableColumn="dateOperation"> date d'Operation <p-sortIcon field="dateOperation"></p-sortIcon></th>
+          <th pSortableColumn="dateValeur"> date valuer <p-sortIcon field="dateValeur"></p-sortIcon></th>
+
+          <th pSortableColumn="type">Type <p-sortIcon field="type"></p-sortIcon></th>
+          <th pSortableColumn="status">Statut <p-sortIcon field="status"></p-sortIcon></th>
+          <th style="width: 10rem;">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-pref>
+        <tr >
+          <td>{{ pref.id }}</td>
+          <td>{{ pref.marcheNumero }}</td>
+          <td>{{ pref.banqueName }}</td>
+          <td class="font-bold">{{ pref.montant | number:'1.2-2' }}</td>
+          <td>{{ pref.observation }}</td>
+          <td>{{ pref.dateEmission | date:'dd/MM/yyyy' }}</td>
+          <td>{{ pref.dateOperation | date:'dd/MM/yyyy' }}</td>
+          <td>{{ pref.dateValeur | date:'dd/MM/yyyy' }}</td>
+
+          <td>
+            <p-tag [value]="pref.type" [severity]="pref.type === 'DEBLOCAGE' ? 'success' : 'info'"></p-tag>
+          </td>
+          <td>
+            <p-tag [value]="pref.status" [severity]="pref.status === 'PAYE' ? 'success' : 'danger'"></p-tag>
+          </td>
+          <td class="flex gap-2 justify-content-center align-items-center">
+            @if (authService.isAdmin()) {
+              <p-inputSwitch [ngModel]="pref.status === Status.PAYE"
+                             (ngModelChange)="confirmToggleStatus(pref)"></p-inputSwitch>
+            }
+
+            <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary"
+                    [routerLink]="['/portail/préfinancements/edit', pref.id]"></button>
+
+            @if (authService.isAdmin()) {
+              <button pButton icon="pi pi-trash"
+                      class="p-button-rounded p-button-outlined p-button-danger"
+                      [disabled]="pref.status === Status.PAYE"
+                      (click)="deletePrefinancement(pref)"></button>
+            }
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptyMessage">
+        <tr><td colspan="10" class="text-center p-4">Aucune donnée trouvée.</td></tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

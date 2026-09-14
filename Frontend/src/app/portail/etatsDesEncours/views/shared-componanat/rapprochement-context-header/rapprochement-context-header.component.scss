@@ -1,0 +1,38 @@
+// Bandeau de contexte rapprochement — styles du composant.
+//
+// La mise en page est portée par les utilitaires PrimeFlex du template
+// (flex, gap-*, surface-card, border-round-xl…) ; ce fichier ne contient que
+// ce qui ne s'exprime pas en utilitaires : les items KPI et les couleurs de
+// montant.
+//
+// 07/09/2026 — Nettoyage : suppression de 35 classes `.ctx-*` (ctx-header,
+// ctx-bank, ctx-kpi, ctx-stats, ctx-skeleton…) et du @keyframes `pulse`,
+// vestiges d'une refonte antérieure que le template n'a jamais référencés,
+// ainsi que des styles de la ligne d'agrégats (stat-chip, stat-divider,
+// amount-badge, debit/credit-badge) retirée le 06/09/2026 — les totaux sont
+// affichés par l'écran Rapprochement (réalisé) et par l'écran Récapitulatifs
+// (prévisionnel), pas par ce bandeau.
+
+// ── Items KPI (icône + libellé + valeur, sans encadré) ───
+.kpi-item {
+  display    : flex;
+  align-items: center;
+  gap        : 8px;
+}
+
+.kpi-icon {
+  font-size  : 1rem;
+  flex-shrink: 0;
+  width      : 1.25rem;
+  text-align : center;
+  color      : var(--color-text-muted);
+}
+
+// ── Couleurs des montants selon le signe ─────────────────
+.num-credit  { color: var(--color-success)      !important; }
+.num-debit   { color: var(--color-danger)       !important; }
+.num-neutral { color: var(--color-text-primary) !important; }
+
+// La règle globale « span { color: primary } » écrase les libellés atténués :
+// on la contre ici, sur ce composant uniquement.
+.kpi-item .text-500 { color: var(--color-text-primary) !important; }

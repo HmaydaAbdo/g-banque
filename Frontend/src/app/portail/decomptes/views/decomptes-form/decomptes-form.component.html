@@ -1,0 +1,132 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="w-full h-full overflow-y-scroll pt-2 pb-6 px-5">
+  <div class="portail-section flex justify-content-center align-items-center">
+    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
+      <ng-template pTemplate="item" let-item>
+        @if (item.route) {
+          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold text-sm">{{ item.label }}</span>
+          </a>
+        } @else {
+          <a [href]="item.url">
+            <span class="text-color text-sm text-center">{{ item.label }}</span>
+          </a>
+        }
+      </ng-template>
+    </p-breadcrumb>
+  </div>
+
+  <div class="card p-4 shadow-sm w-full lg:w-9 md:w-10 mx-auto mt-4">
+    <div class="card-header text-center mb-4">
+      <h4 class="text-2xl font-bold">{{ isEditMode ? 'Modifier le Décompte' : 'Ajouter un Nouveau Décompte' }}</h4>
+    </div>
+    <form [formGroup]="decompteForm" (ngSubmit)="onSubmit()">
+      <div class="p-fluid grid formgrid">
+
+        <div class="field col-12 md:col-6">
+          <label for="marcheId" class="block font-medium mb-2">Marché *</label>
+          <p-dropdown
+            id="marcheId"
+            formControlName="marcheId"
+            [options]="marchesOptions"
+            placeholder="Sélectionner un marché"
+            optionLabel="label"
+            optionValue="value"
+            [showClear]="true"
+            [filter]="true"
+            (onFilter)="onFilterMarches($event)"
+            [virtualScroll]="true"
+            [virtualScrollItemSize]="38"
+            [lazy]="true"
+            [virtualScrollOptions]="marchesScrollerOptions"
+            [loading]="loadingMarches"
+            [ngClass]="{ 'ng-invalid ng-dirty': f['marcheId'].invalid && f['marcheId'].touched }"
+          >
+            <ng-template pTemplate="selectedItem" let-selectedOption>
+              @if (selectedOption) {
+                <div class="flex align-items-center gap-2">
+                  <i class="pi pi-file p-text-secondary"></i>
+                  <div>{{ selectedOption.label }}</div>
+                </div>
+              }
+            </ng-template>
+            <ng-template let-marche pTemplate="item">
+              <div class="flex align-items-center gap-2" style="height: 38px">
+                @if (marche && marche.label) {
+                  <i class="pi pi-file"></i>
+                  <div>{{ marche.label }}</div>
+                } @else {
+                  <i class="pi pi-spin pi-spinner text-secondary"></i>
+                  <span class="text-secondary">Chargement...</span>
+                }
+              </div>
+            </ng-template>
+          </p-dropdown>
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label for="banqueEncaissementId" class="block font-medium mb-2">
+            Banque d'encaissement *
+          </label>
+          <p-dropdown
+            id="banqueEncaissementId"
+            formControlName="banqueEncaissementId"
+            [options]="banquesOptions"
+            placeholder="Sélectionner une banque"
+            [ngClass]="{ 'ng-invalid ng-dirty': f['banqueEncaissementId'].invalid && f['banqueEncaissementId'].touched }"
+          >
+            <ng-template pTemplate="selectedItem" let-selectedOption>
+              @if (selectedOption) {
+                <div class="flex align-items-center gap-2">
+                  <div>{{ selectedOption.label }}</div>
+                </div>
+              }
+            </ng-template>
+          </p-dropdown>
+
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label for="montant" class="block font-medium mb-2">Montant (MAD) *</label>
+          <p-inputNumber
+            id="montant"
+            formControlName="montant"
+            mode="decimal"
+            [minFractionDigits]="2"
+            [ngClass]="{ 'ng-invalid ng-dirty': f['montant'].invalid && f['montant'].touched }"
+          ></p-inputNumber>
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label for="dateEmission" class="block font-medium mb-2">Date d'émission *</label>
+          <p-calendar
+            id="dateEmission"
+            formControlName="dateEmission"
+            dateFormat="dd/mm/yy"
+            [showIcon]="true"
+            appendTo="body"
+            [ngClass]="{ 'ng-invalid ng-dirty': f['dateEmission'].invalid && f['dateEmission'].touched }"
+          ></p-calendar>
+        </div>
+
+        <div class="field col-12">
+          <label for="libelle" class="block font-medium mb-2">Libellé *</label>
+          <input
+            id="libelle"
+            pInputText
+            formControlName="libelle"
+            [ngClass]="{ 'ng-invalid ng-dirty': f['libelle'].invalid && f['libelle'].touched }"
+          >
+        </div>
+
+        <div class="col-12 mt-4 flex flex-row gap-2">
+          <button pButton pRipple label="Annuler" icon="pi pi-times" type="button" class="p-button-secondary" (click)="onCancel()"></button>
+          <button pButton pRipple [label]="isEditMode ? 'Modifier' : 'Créer'" [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'" type="submit" class="p-button-success" [disabled]="decompteForm.invalid || loading"></button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

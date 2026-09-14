@@ -1,0 +1,287 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+<div class="flex flex-column w-full h-full overflow-y-scroll gap-3 p-3 pb-6"
+    >
+
+  <!-- ═══ HEADER ═══════════════════════════════════════════════════ -->
+  <div class="flex flex-column md:flex-row md:align-items-center justify-content-between gap-2">
+
+    <div class="flex flex-column gap-1">
+      <h2 class="text-900 font-bold m-0" style="font-size:1.15rem;letter-spacing:-0.01em">
+        Commissions
+      </h2>
+      <p-breadcrumb [model]="items" styleClass="border-none p-0"
+                    [style]="{'background':'transparent','padding':'0','font-size':'0.78rem'}">
+        <ng-template pTemplate="item" let-item>
+          <ng-container *ngIf="item.route; else elseBlock">
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
+              <span class="text-400 text-xs ml-1">{{ item.label }}</span>
+            </a>
+          </ng-container>
+          <ng-template #elseBlock>
+            <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
+          </ng-template>
+        </ng-template>
+      </p-breadcrumb>
+    </div>
+
+    <div class="flex align-items-center gap-2 flex-shrink-0">
+      <button pButton pRipple
+              label="Exporter PDF"
+              icon="pi pi-file-pdf"
+              [loading]="exporting"
+              class="p-button-outlined p-button-danger h-fit p-button-sm"
+              (click)="exportPdf()">
+      </button>
+      <button pButton pRipple
+              label="Ajouter commission"
+              icon="pi pi-plus"
+              severity="primary"
+              size="small"
+              class="hidden md:flex"
+              routerLink="/portail/commissions/new">
+      </button>
+      <button pButton pRipple
+              icon="pi pi-plus"
+              severity="primary"
+              size="small"
+              class="md:hidden"
+              pTooltip="Ajouter commission"
+              tooltipPosition="bottom"
+              routerLink="/portail/commissions/new">
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ═══ FILTRES ══════════════════════════════════════════════════ -->
+  <div class="pg-filters">
+    <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+    <form [formGroup]="filterForm" class="flex flex-wrap gap-3 align-items-end">
+
+        <p-dropdown
+          formControlName="banqueId"
+          [options]="banques"
+          optionLabel="nom"
+          optionValue="id"
+          placeholder="Toutes les banques"
+          [virtualScroll]="true"
+          [virtualScrollItemSize]="40"
+          [lazy]="true"
+          [loading]="banquesLoading"
+          (onLazyLoad)="loadBanquesLazy($event)"
+          (onChange)="applyFilters()"
+          [showClear]="true"
+          appendTo="body"
+          [style]="{'min-width':'200px'}">
+        </p-dropdown>
+
+        <p-dropdown
+          formControlName="operation"
+          [options]="operationOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Tous les motifs"
+          (onChange)="applyFilters()"
+          [showClear]="true"
+          appendTo="body"
+          [style]="{'min-width':'170px'}">
+        </p-dropdown>
+
+        <p-dropdown
+          formControlName="status"
+          [options]="statusOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Tous les statuts"
+          (onChange)="applyFilters()"
+          [showClear]="true"
+          appendTo="body"
+          [style]="{'min-width':'150px'}">
+        </p-dropdown>
+
+        <span class="p-input-icon-left">
+          <i class="pi pi-tag"></i>
+          <input
+            pInputText
+            type="text"
+            formControlName="libelle"
+            placeholder="Libellé"
+            (input)="applyFilters()"
+            [style]="{'width':'160px'}"/>
+        </span>
+
+        <span class="p-input-icon-left">
+          <i class="pi pi-wallet"></i>
+          <input
+            pInputText
+            type="number"
+            formControlName="montant"
+            placeholder="Montant"
+            (input)="applyFilters()"
+            [style]="{'width':'130px'}"/>
+        </span>
+
+        <div class="flex-shrink-0">
+          <button pButton pRipple type="button"
+                  [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+                  icon="pi pi-calendar"
+                  [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+                  (click)="toggleDatePanel()">
+          </button>
+        </div>
+
+        <div class="flex-shrink-0">
+          <p-button icon="pi pi-times" severity="secondary"
+                    (onClick)="clearFilters()" [style]="{'white-space': 'nowrap'}">
+          </p-button>
+        </div>
+
+    </form>
+  </div>
+
+  @if (showDatePanel) {
+  <div class="p-3 bg-white border-round shadow-1">
+    <form [formGroup]="filterForm" class="grid">
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Émission — du</label>
+        <p-calendar formControlName="dateEmissionDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"
+                    (onSelect)="applyFilters()" (onClear)="applyFilters()"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Émission — au</label>
+        <p-calendar formControlName="dateEmissionFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"
+                    (onSelect)="applyFilters()" (onClear)="applyFilters()"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Opération — du</label>
+        <p-calendar formControlName="dateOperationDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"
+                    (onSelect)="applyFilters()" (onClear)="applyFilters()"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Opération — au</label>
+        <p-calendar formControlName="dateOperationFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"
+                    (onSelect)="applyFilters()" (onClear)="applyFilters()"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Valeur — du</label>
+        <p-calendar formControlName="dateValeurDebut" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"
+                    (onSelect)="applyFilters()" (onClear)="applyFilters()"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Valeur — au</label>
+        <p-calendar formControlName="dateValeurFin" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"
+                    (onSelect)="applyFilters()" (onClear)="applyFilters()"></p-calendar>
+      </div>
+    </form>
+  </div>
+  }
+
+  <!-- Table -->
+  <div class="pb-8">
+    <p-table
+      #dt
+      [value]="commissions"
+      [paginator]="true"
+      [rows]="10"
+      [totalRecords]="totalRecords"
+      [loading]="loading"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
+      responsiveLayout="scroll"
+      [scrollable]="true"
+      scrollHeight="flex"
+      (onLazyLoad)="loadCommissions($event)"
+      [columns]="[
+        {field: 'libelle',       header: 'Libellé',          sortable: true},
+        {field: 'banque.nom',     header: 'Banque',            sortable: true},
+        {field: 'montant',       header: 'Montant',           sortable: true},
+        {field: 'operation',     header: 'Motif',             sortable: true},
+        {field: 'dateEmission',  header: 'Date d\'émission',  sortable: true},
+        {field: 'dateOperation', header: 'Date d\'opération', sortable: true},
+        {field: 'dateValeur',    header: 'Date de valeur',    sortable: true},
+        {field: 'observation',   header: 'Observation',       sortable: false},
+        {field: 'status',        header: 'Statut',            sortable: true}
+      ]"
+      styleClass="p-datatable-gridlines text-xs"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}"
+    >
+      <ng-template pTemplate="header" let-columns>
+        <tr class="white-space-nowrap">
+          <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
+            {{ col.header }}
+            @if (col.sortable) {
+              <p-sortIcon [field]="col.field"></p-sortIcon>
+            }
+          </th>
+          <th style="width: 8rem;">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-commission>
+        <tr>
+          <td>{{ commission.libelle }}</td>
+          <td>{{ commission.banqueNom }}</td>
+          <td>{{ commission.montant | number:'1.2-2' }} MAD</td>
+          <td>{{ commission.operation }}</td>
+          <td>{{ commission.dateEmission | date:'dd/MM/yyyy' }}</td>
+          <td>{{ commission.dateOperation ? (commission.dateOperation | date:'dd/MM/yyyy') : 'N/A' }}</td>
+          <td>{{ commission.dateValeur ? (commission.dateValeur | date:'dd/MM/yyyy') : 'N/A' }}</td>
+          <td>{{ commission.observation }}</td>
+          <td>
+            <p-tag
+              [value]="commission.status"
+              [severity]="getStatusSeverity(commission.status)"
+            ></p-tag>
+          </td>
+          <td class="flex flex-row align-items-center gap-2">
+            <button
+              pButton pRipple
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-outlined p-button-secondary mr-2"
+              [routerLink]="['/portail/commissions/edit', commission.id]"
+            ></button>
+
+            @if (isAdmin()) {
+              <p-inputSwitch
+                [ngModel]="commission.status === Status.PAYE"
+                [ngModelOptions]="{standalone: true}"
+                (click)="toggleCommissionStatus(commission)"
+                [pTooltip]="commission.status === 'PAYE' ? 'Marquer comme prévu' : 'Marquer comme payé'"
+              ></p-inputSwitch>
+
+              <button
+                pButton pRipple
+                icon="pi pi-trash"
+                class="p-button-rounded p-button-outlined p-button-danger"
+                [disabled]="commission.status === Status.PAYE"
+                (click)="deleteCommission(commission)"
+              ></button>
+            }
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptyMessage">
+        <tr>
+          <td [attr.colspan]="11">Aucune commission trouvée.</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td [attr.colspan]="11">Chargement en cours...</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+</div>

@@ -1,0 +1,71 @@
+// contrat-leasing-creation.component.scss
+//
+// Shell du wizard de création d'un contrat de leasing.
+//
+// <main class="app-shell__main"> est en overflow:hidden et occupe exactement
+// l'espace sous la navbar : une page qui ne gère pas son propre scroll voit
+// donc son bas rogné, sans ascenseur. C'était le cas ici — la barre d'actions
+// (dont le bouton « Soumettre ») sortait de l'écran dès que le contenu d'une
+// étape dépassait la hauteur disponible.
+//
+// Le wizard est donc une colonne flex de hauteur 100% :
+//   - .lw__head    : titre + p-steps, hauteur naturelle, jamais compressé ;
+//   - .lw__body    : seule zone scrollable, absorbe l'espace restant ;
+//   - .lw__actions : barre d'actions ancrée en bas, toujours visible.
+.lw {
+  display       : flex;
+  flex-direction: column;
+  height        : 100%;
+  min-height    : 0;
+  overflow      : hidden;
+  padding       : var(--space-4);
+  background    : var(--color-page-bg);
+  box-sizing    : border-box;
+
+  &__head {
+    flex-shrink  : 0;
+    background   : var(--color-surface);
+    border       : 1px solid var(--color-border);
+    border-bottom: none;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding      : var(--space-4) var(--space-5) var(--space-3);
+  }
+
+  &__title {
+    font-size  : var(--text-title);
+    font-weight: var(--weight-bold);
+    text-align : center;
+    margin     : 0;
+  }
+
+  &__subtitle {
+    font-size  : var(--text-sm);
+    color      : var(--color-text-secondary);
+    text-align : center;
+    margin     : var(--space-1) 0 var(--space-4);
+  }
+
+  &__body {
+    flex        : 1 1 0;
+    min-height  : 0;
+    overflow-y  : auto;
+    background  : var(--color-surface);
+    border-left : 1px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+    padding     : var(--space-4) var(--space-5);
+  }
+
+  &__actions {
+    flex-shrink    : 0;
+    display        : flex;
+    align-items    : center;
+    justify-content: space-between;
+    gap            : var(--space-3);
+    background     : var(--color-surface);
+    border         : 1px solid var(--color-border);
+    border-top     : 1px solid var(--color-border-strong);
+    border-radius  : 0 0 var(--radius-lg) var(--radius-lg);
+    padding        : var(--space-3) var(--space-5);
+    box-shadow     : var(--shadow-md);
+  }
+}

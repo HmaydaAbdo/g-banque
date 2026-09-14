@@ -1,0 +1,108 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="w-full h-full overflow-y-scroll p-4">
+  <div class="flex justify-content-center">
+    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
+      <ng-template pTemplate="item" let-item>
+        @if (item.route) {
+          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+          </a>
+        } @else {
+          <a [href]="item.url">
+            <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+          </a>
+        }
+      </ng-template>
+    </p-breadcrumb>
+  </div>
+
+  <h4 class="text-center mt-4">{{ isEditMode ? 'Modifier' : 'Ajouter' }} une Ligne Fonctionnelle Spécifique</h4>
+
+  <div class="flex justify-content-center mb-8">
+    <div class="card p-4 lg:p-6 shadow-2" style="width: 100%; max-width: 700px;">
+      <form [formGroup]="ligneFonctionnelleSpecifiqueForm" (ngSubmit)="onSubmit()" class="p-fluid">
+
+        <div class="formgrid grid">
+          <div class="field col-12 md:col-6">
+            <label >Nature *</label>
+            <p-dropdown formControlName="natureLigneFonctionnelleId" [options]="natureLigneOptions"
+                        optionLabel="label" optionValue="value" placeholder="Sélectionnez une nature">
+            </p-dropdown>
+          </div>
+
+          <div class="field col-12 md:col-6">
+            <label >Marché *</label>
+            <p-dropdown
+              formControlName="marcheId"
+              [options]="marchesOptions"
+              optionLabel="label"
+              optionValue="value"
+              [filter]="true"
+              filterBy="label"
+              placeholder="Sélectionnez un marché"
+              [showClear]="true"
+              [virtualScroll]="true"
+              [virtualScrollItemSize]="38"
+              [lazy]="true"
+              [virtualScrollOptions]="marchesScrollerOptions"
+              (onFilter)="onFilterMarches($event)"
+              [loading]="loadingMarches">
+
+              <ng-template pTemplate="selectedItem" let-selectedOption>
+                @if (selectedOption) {
+                  <div class="flex align-items-center gap-2">
+                    <i class="pi pi-file p-text-secondary"></i>
+                    <div>{{ selectedOption.label }}</div>
+                  </div>
+                }
+              </ng-template>
+
+              <ng-template let-marche pTemplate="item">
+                <div class="flex align-items-center gap-2" style="height: 38px">
+                  @if (marche) {
+                    <i class="pi pi-file"></i>
+                    <div>{{ marche.label }}</div>
+                  } @else {
+                    <i class="pi pi-spin pi-spinner text-secondary"></i>
+                    <span class="text-secondary">Chargement...</span>
+                  }
+                </div>
+              </ng-template>
+            </p-dropdown>
+          </div>
+
+          <div class="field col-12 md:col-6">
+            <label >Plafond *</label>
+            <p-inputNumber formControlName="plafond" mode="decimal" [minFractionDigits]="2"></p-inputNumber>
+          </div>
+
+          <div class="field col-12 md:col-6">
+            <label>Taux (%) *</label>
+            <p-inputNumber formControlName="taux"  [minFractionDigits]="1" mode="decimal" locale="en-US"></p-inputNumber>
+          </div>
+
+          <div class="field col-12 md:col-6">
+            <label >Date de Départ *</label>
+            <p-calendar formControlName="dateDepart" appendTo="body" [showIcon]="true" dateFormat="dd/mm/yy"></p-calendar>
+          </div>
+
+          <div class="field col-12 md:col-6">
+            <label >Date de Fin *</label>
+            <p-calendar formControlName="dateFin" appendTo="body" [showIcon]="true" dateFormat="dd/mm/yy"></p-calendar>
+            @if (f['dateFin'].hasError('minDate')) {
+              <small class="p-error">La date de fin doit être après le départ.</small>
+            }
+          </div>
+        </div>
+
+        <div class="flex justify-content-end mt-4 gap-2">
+          <button pButton label="Annuler" class="p-button-secondary" (click)="onCancel()" type="button"></button>
+          <button pButton [label]="isEditMode ? 'Modifier' : 'Créer'" type="submit"></button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
