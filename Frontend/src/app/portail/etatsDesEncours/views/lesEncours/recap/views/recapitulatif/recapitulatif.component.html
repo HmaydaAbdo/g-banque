@@ -1,4 +1,5 @@
 <p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
 
 <div class="flex flex-column gap-2 w-full">
 
@@ -145,11 +146,27 @@
     }
   </div>
 
+  <!-- ── Barre de sélection multi-lignes — n'apparaît que si au moins une ligne est cochée ── -->
+  @if (selectedCount > 0) {
+  <div class="flex justify-content-end align-items-center gap-2 mb-2">
+    <span class="text-sm text-500 mr-2">
+      <strong>{{ selectedCount }}</strong> opération(s) sélectionnée(s) —
+      {{ montantTotalSelection | number:'1.2-2' }} MAD
+    </span>
+    <button type="button" pButton pRipple icon="pi pi-times" label="Effacer la sélection"
+            class="p-button-text p-button-secondary" (click)="clearSelection()"></button>
+    <button type="button" pButton pRipple icon="pi pi-check-square" label="Valider en lot ({{ selectedCount }})"
+            class="p-button-success" (click)="openLotModal()"></button>
+  </div>
+  }
+
   <!-- ── Tableau (totaux + export dans sa caption) ─────────────────────────── -->
   <div class="pg-table">
     <p-table
       #dt
       [value]="recapItems"
+      [selection]="pageSelection"
+      (selectionChange)="onSelectionChange($event)"
       [paginator]="true"
       [rows]="10"
       [totalRecords]="totalRecords"
@@ -200,6 +217,9 @@
 
       <ng-template pTemplate="header">
         <tr>
+          <th style="width: 3rem">
+            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+          </th>
           <th pSortableColumn="sens" class="text-center white-space-nowrap">
             Sens
               <p-sortIcon field="sens"></p-sortIcon>
@@ -238,11 +258,15 @@
             ID source
               <p-sortIcon field="id.entityId"></p-sortIcon>
           </th>
+          <th style="width: 6rem;">Actions</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-item>
         <tr class="table-row">
+          <td>
+            <p-tableCheckbox [value]="item"></p-tableCheckbox>
+          </td>
           <td class="text-center white-space-nowrap">
             @if (item.sens === SensOperation.DECAISSEMENT) {
               <span class="sens-badge sens-decaissement" pTooltip="Sortie de trésorerie">
@@ -292,12 +316,24 @@
               {{ item.id }}
             </span>
           </td>
+          <td>
+            @if (isLeasing(item)) {
+              <button
+                type="button" pButton pRipple icon="pi pi-check"
+                class="p-button-rounded p-button-success"
+                pTooltip="Valider" tooltipPosition="top"
+                (click)="openLeasingValidation(item)"
+              ></button>
+            } @else {
+              <span class="text-400 text-xs" pTooltip="Cette source n'est pas encore validable depuis le récapitulatif — utilisez son écran dédié" tooltipPosition="top">—</span>
+            }
+          </td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="9" class="text-center p-4">
+          <td colspan="10" class="text-center p-4">
             <div class="flex flex-column align-items-center gap-3">
               <i class="pi pi-inbox text-4xl text-400"></i>
               <div class="text-700 font-semibold">Aucune opération trouvée</div>
@@ -315,7 +351,7 @@
 
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td colspan="9" class="text-center p-4">
+          <td colspan="10" class="text-center p-4">
             <div class="flex flex-column align-items-center gap-3">
               <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
               <div class="text-700 font-semibold">Chargement du récapitulatif...</div>
@@ -328,3 +364,150 @@
   </div>
 
 </div>
+
+<!-- ── Validation en lot (multi-sources) ─────────────────────────────────────
+     Contrairement à app-validation-lot-modal (une seule transactionSource par appel),
+     ce dialogue applique les mêmes champs communs à une sélection pouvant mélanger
+     plusieurs sources/sens : le composant découpe automatiquement la sélection en
+     groupes (source, sens) et enchaîne un appel POST /process/lot par groupe. -->
+<p-dialog header="Validation en lot" [(visible)]="displayLotModal"
+          [modal]="true" [style]="{width: '50vw'}"
+          [draggable]="false" [resizable]="false" [closable]="!isLotSubmitting">
+  @if (lotForm) {
+  <form [formGroup]="lotForm" (ngSubmit)="confirmLotValidation()">
+    <div class="flex align-items-center gap-3 mb-3 p-3 border-round surface-100">
+      <i class="pi pi-check-square text-xl"></i>
+      <span>
+        <strong>{{ selectedCount }}</strong> opération(s) sélectionnée(s), réparties en
+        <strong>{{ lotGroups.length }}</strong> lot(s) — montant total
+        <strong>{{ montantTotalSelection | number:'1.2-2' }} MAD</strong>
+      </span>
+    </div>
+
+    <ul class="text-sm text-700 mb-3">
+      @for (group of lotGroups; track group.source + '_' + group.sens) {
+        <li>{{ group.ids.length }} × {{ labelSource(group.source) }} ({{ group.sens }}) —
+          {{ group.montantTotal | number:'1.2-2' }} MAD</li>
+      }
+    </ul>
+
+    <div class="grid p-fluid mt-1">
+      <div class="col-12 md:col-6 mb-3">
+        <app-tva-input formControlName="tva" label="TVA" inputId="recapLotTva"
+                       [autoriserSaisieLibre]="false"></app-tva-input>
+        @if (isLotInvalid('tva')) {
+        <small class="p-error">{{ messageErreurTva(lotForm.get('tva')?.errors) }}</small>
+        }
+      </div>
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <p-calendar id="recapLotDateValeur" formControlName="dateValeur" [showOnFocus]="false"
+                      dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" appendTo="body"></p-calendar>
+          <label for="recapLotDateValeur">Date de valeur</label>
+        </span>
+        @if (isLotInvalid('dateValeur')) {
+        <small class="p-error">La date de valeur est obligatoire</small>
+        }
+      </div>
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <p-calendar id="recapLotDateOperation" formControlName="dateOperation" [showOnFocus]="false"
+                      dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" appendTo="body"></p-calendar>
+          <label for="recapLotDateOperation">Date de l'opération</label>
+        </span>
+        @if (isLotInvalid('dateOperation')) {
+        <small class="p-error">La date de l'opération est obligatoire</small>
+        }
+      </div>
+    </div>
+    <p class="text-500 text-sm mt-1 mb-3">
+      Le libellé, l'observation et la date d'émission d'origine de chaque opération sont conservés automatiquement.
+    </p>
+    <p-divider></p-divider>
+    <div class="flex justify-content-end gap-2">
+      <p-button label="Annuler" icon="pi pi-times" [outlined]="true" (onClick)="closeLotModal()"></p-button>
+      <p-button label="Valider le lot" icon="pi pi-check" type="submit"
+                [disabled]="lotForm.invalid || isLotSubmitting || selectedCount === 0"
+                [loading]="isLotSubmitting"></p-button>
+    </div>
+  </form>
+  }
+</p-dialog>
+
+<!-- ── Validation unitaire — pilote Leasing ──────────────────────────────────
+     Seule source câblée pour l'instant depuis le récapitulatif (voir isLeasing()) ;
+     mêmes règles que l'écran dédié Décaissements/Échéances Leasing (TVA verrouillée à 20%). -->
+<p-dialog header="Passage au rapprochement bancaire" [(visible)]="displayLeasingModal"
+          [modal]="true" [style]="{width: '50vw'}"
+          [draggable]="false" [resizable]="false"
+          [closable]="!isLeasingSubmitting"
+          (visibleChange)="!$event && closeLeasingModal()">
+  @if (isLeasingLoading) {
+    <div class="flex align-items-center justify-content-center gap-2 p-4">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Chargement des détails de l'échéance...</span>
+    </div>
+  } @else if (leasingDetail && leasingForm) {
+    <form [formGroup]="leasingForm" (ngSubmit)="confirmLeasingValidation()">
+      <div class="grid p-fluid mt-3">
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <p-calendar id="recapLeasingDateEmission" formControlName="dateEmission" [showOnFocus]="false" [disabled]="true" [iconDisplay]="'input'" [showIcon]="true" dateFormat="dd/mm/yy"></p-calendar>
+            <label for="recapLeasingDateEmission">Date d'émission</label>
+          </span>
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <app-tva-input formControlName="tva" label="TVA Déductible"
+                         inputId="recapLeasingTva"
+                         [montantMax]="montantMaxTvaLeasing"></app-tva-input>
+          @if (isLeasingInvalid('tva')) {
+          <small class="p-error">{{ messageErreurTva(leasingForm.get('tva')?.errors) }}</small>
+          }
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <p-calendar id="recapLeasingDateValeur" formControlName="dateValeur" [showOnFocus]="false" dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" appendTo="body"></p-calendar>
+            <label for="recapLeasingDateValeur">Date de valeur</label>
+          </span>
+          @if (isLeasingInvalid('dateValeur')) {
+          <small class="p-error">La date de valeur est obligatoire</small>
+          }
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <p-calendar id="recapLeasingDateOperation" formControlName="dateOperation" [showOnFocus]="false" dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" appendTo="body"></p-calendar>
+            <label for="recapLeasingDateOperation">Date de l'opération</label>
+          </span>
+          @if (isLeasingInvalid('dateOperation')) {
+          <small class="p-error">La date de l'opération est obligatoire</small>
+          }
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <textarea id="recapLeasingLibelle" pInputTextarea formControlName="libelle" rows="3"></textarea>
+            <label for="recapLeasingLibelle">Libellé</label>
+          </span>
+          @if (isLeasingInvalid('libelle')) {
+          <small class="p-error">Le libellé est obligatoire</small>
+          }
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <textarea id="recapLeasingObservation" pInputTextarea formControlName="observation" rows="3"></textarea>
+            <label for="recapLeasingObservation">Observation</label>
+          </span>
+          @if (isLeasingInvalid('observation')) {
+          <small class="p-error">Observation est obligatoire</small>
+          }
+        </div>
+      </div>
+      <p-divider></p-divider>
+      <div class="flex justify-content-end gap-2">
+        <p-button label="Annuler" icon="pi pi-times" [outlined]="true" (onClick)="closeLeasingModal()"></p-button>
+        <p-button label="Valider" icon="pi pi-check" type="submit"
+                  [disabled]="leasingForm.invalid || isLeasingSubmitting"
+                  [loading]="isLeasingSubmitting"></p-button>
+      </div>
+    </form>
+  }
+</p-dialog>

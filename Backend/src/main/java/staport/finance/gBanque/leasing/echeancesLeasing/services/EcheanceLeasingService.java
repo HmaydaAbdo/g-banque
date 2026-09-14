@@ -9,11 +9,6 @@
     import com.lowagie.text.Phrase;
     import com.lowagie.text.pdf.PdfPCell;
     import com.lowagie.text.pdf.PdfPTable;
-    import jakarta.persistence.EntityManager;
-    import jakarta.persistence.criteria.CriteriaBuilder;
-    import jakarta.persistence.criteria.CriteriaQuery;
-    import jakarta.persistence.criteria.Predicate;
-    import jakarta.persistence.criteria.Root;
     import org.slf4j.Logger;
     import org.slf4j.LoggerFactory;
     import org.springframework.data.domain.Page;
@@ -23,8 +18,6 @@
     import org.springframework.data.jpa.domain.Specification;
     import org.springframework.stereotype.Service;
     import org.springframework.transaction.annotation.Transactional;
-    import staport.finance.gBanque.Bank.dtos.response.BanqueResponse;
-    import staport.finance.gBanque.Bank.services.IBanqueService;
     import staport.finance.gBanque.audit.AuditOperation;
     import staport.finance.gBanque.audit.AuditableAction;
     import staport.finance.gBanque.commision.dtos.CommissionRequestDto;
@@ -78,8 +71,6 @@ import java.math.BigDecimal;
         private final ICommissionConfigService commissionConfigService;
         private final EcheanceLeasingRepository echeanceLeasingRepository;
         private final EcheanceLeasingMapper echeanceLeasingMapper;
-        private final IBanqueService banqueService;
-        private final EntityManager entityManager;
         private final StaportPdfReportService staportPdfReportService;
         private static final int SCALE = 2;
 
@@ -87,15 +78,11 @@ import java.math.BigDecimal;
                                       ICommissionConfigService commissionConfigService,
                                       EcheanceLeasingRepository echeanceLeasingRepository,
                                       EcheanceLeasingMapper echeanceLeasingMapper,
-                                      IBanqueService banqueService,
-                                      EntityManager entityManager,
                                       StaportPdfReportService staportPdfReportService) {
             this.commissionService       = commissionService;
             this.commissionConfigService = commissionConfigService;
             this.echeanceLeasingRepository = echeanceLeasingRepository;
             this.echeanceLeasingMapper     = echeanceLeasingMapper;
-            this.banqueService             = banqueService;
-            this.entityManager             = entityManager;
             this.staportPdfReportService   = staportPdfReportService;
         }
 
@@ -436,174 +423,23 @@ import java.math.BigDecimal;
             return echeanceLeasingMapper.toDto(saved);
         }
 
+        /**
+         * Récupère une échéance de leasing par son identifiant.
+         * Utilisé par l'écran de récapitulatif unifié (validation) pour résoudre le contrat de
+         * leasing avant l'ouverture du formulaire de validation.
+         *
+         * @param id L'identifiant de l'échéance de leasing
+         * @return Le DTO de l'échéance correspondante
+         * @throws ResourceNotFoundException si aucune échéance ne correspond à cet ID
+         */
         @Transactional(readOnly = true)
-        public EncoursLeasingResponseDTO getEncoursLeasingForBanque(EncoursLeasingRequestDTO requestDTO, Pageable pageable) {
-            LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-            log.debug("Récupération des encours de leasing pour la banque ID : {}", requestDTO.banqueId());
-
-            BanqueResponse banque = banqueService.getBanqueById(requestDTO.banqueId());
-
-            Specification<EcheanceLeasing> spec = EcheanceLeasingSpecification.byContratBanqueId(requestDTO.banqueId())
-                    .and(EcheanceLeasingSpecification.outstandingUntil(endOfMonth));
-
-            if (requestDTO.organismeLeasingId() != null) {
-                log.debug("Filtre par organisme de leasing ID : {}", requestDTO.organismeLeasingId());
-                spec = spec.and(EcheanceLeasingSpecification.byContratOrganismeLeasingId(requestDTO.organismeLeasingId()));
-            }
-
-            if (requestDTO.numeroContrat() != null && !requestDTO.numeroContrat().isEmpty()) {
-                log.debug("Filtre par numéro de contrat : {}", requestDTO.numeroContrat());
-                spec = spec.and(EcheanceLeasingSpecification.byContratNumeroContrat(requestDTO.numeroContrat()));
-            }
-
-            if (requestDTO.montant() != null) {
-                log.debug("Filtre par montant actif");
-                spec = spec.and(EcheanceLeasingSpecification.byMontant(requestDTO.montant()));
-            }
-
-            Page<EcheanceLeasing> encoursEcheancesPage = echeanceLeasingRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
-            Page<EcheanceLeasingResponseDTO> echeancesDtoPage = encoursEcheancesPage.map(echeanceLeasingMapper::toDto);
-
-            log.debug("Nombre d'échéances en encours dans la page : {}", encoursEcheancesPage.getNumberOfElements());
-
-            BigDecimal totalEncours = sumMontantTTC(spec).setScale(SCALE, RoundingMode.HALF_UP);
-
-            log.debug("Encours calculé pour la banque ID : {}", banque.id());
-
-            return new EncoursLeasingResponseDTO(
-                    banque.id(),
-                    banque.nom(),
-                    totalEncours,
-                    echeancesDtoPage
-            );
-        }
-
-        @Transactional(readOnly = true)
-        @Override
-        public byte[] exportEncoursLeasingPdf(EncoursLeasingRequestDTO requestDTO) {
-            LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-            BanqueResponse banque = banqueService.getBanqueById(requestDTO.banqueId());
-
-            Specification<EcheanceLeasing> spec = EcheanceLeasingSpecification.byContratBanqueId(requestDTO.banqueId())
-                    .and(EcheanceLeasingSpecification.outstandingUntil(endOfMonth));
-
-            if (requestDTO.organismeLeasingId() != null) {
-                spec = spec.and(EcheanceLeasingSpecification.byContratOrganismeLeasingId(requestDTO.organismeLeasingId()));
-            }
-            if (requestDTO.numeroContrat() != null && !requestDTO.numeroContrat().isEmpty()) {
-                spec = spec.and(EcheanceLeasingSpecification.byContratNumeroContrat(requestDTO.numeroContrat()));
-            }
-            if (requestDTO.montant() != null) {
-                spec = spec.and(EcheanceLeasingSpecification.byMontant(requestDTO.montant()));
-            }
-
-            List<EcheanceLeasing> echeances = echeanceLeasingRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEcheance"));
-            BigDecimal totalEncours = sumMontantTTC(spec).setScale(SCALE, RoundingMode.HALF_UP);
-
-            List<String> filterLines = new ArrayList<>();
-            filterLines.add("Banque : " + banque.nom());
-            if (requestDTO.numeroContrat() != null && !requestDTO.numeroContrat().isEmpty()) {
-                filterLines.add("N° Contrat : " + requestDTO.numeroContrat());
-            }
-            if (requestDTO.montant() != null) {
-                filterLines.add("Montant : " + formatMontantPdf(requestDTO.montant()) + " MAD");
-            }
-
-            String title = "Encours d'Échéances Leasing — " + banque.nom();
-
-            try {
-                return staportPdfReportService.generateReport(title, (doc, writer) -> {
-                    try {
-                        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
-                        Font subFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.decode("#374151"));
-                        Font hdrFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
-                        Font cellFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
-                        Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.decode("#1e3a8a"));
-
-                        doc.add(Chunk.NEWLINE);
-                        doc.add(Chunk.NEWLINE);
-
-                        Paragraph titleParagraph = new Paragraph(title, titleFont);
-                        titleParagraph.setAlignment(Element.ALIGN_CENTER);
-                        doc.add(titleParagraph);
-
-                        String exportInfo = "Exporté le " + LocalDate.now().format(DATE_FMT)
-                                + "  •  " + echeances.size() + " échéance(s)";
-                        if (!filterLines.isEmpty()) {
-                            exportInfo += "  •  Filtres : " + String.join("  |  ", filterLines);
-                        }
-                        Paragraph sub = new Paragraph(exportInfo, subFont);
-                        sub.setAlignment(Element.ALIGN_CENTER);
-                        sub.setSpacingAfter(8f);
-                        doc.add(sub);
-
-                        float[] colWidths = {22f, 12f, 15f, 15f, 12f};
-                        PdfPTable table = new PdfPTable(colWidths);
-                        table.setWidthPercentage(100f);
-                        table.setSpacingBefore(8f);
-                        table.setHeaderRows(1);
-
-                        for (String h : new String[]{"Contrat N°", "N° Échéance", "Date d'échéance", "Montant TTC (MAD)", "Statut"}) {
-                            PdfPCell c = new PdfPCell(new Phrase(h, hdrFont));
-                            c.setBackgroundColor(MED_BLUE);
-                            c.setPadding(5f);
-                            c.setHorizontalAlignment(Element.ALIGN_CENTER);
-                            c.setBorderColor(Color.WHITE);
-                            c.setBorderWidth(0.5f);
-                            table.addCell(c);
-                        }
-
-                        for (int i = 0; i < echeances.size(); i++) {
-                            EcheanceLeasing e = echeances.get(i);
-                            Color rowBg = i % 2 == 0 ? Color.WHITE : ROW_ALT;
-
-                            addPdfCell(table, e.getContratLeasing() != null ? e.getContratLeasing().getNumeroContrat() : "—", cellFont, rowBg, BORDER_GRAY, Element.ALIGN_LEFT);
-                            addPdfCell(table, String.valueOf(e.getNumeroEcheance()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_CENTER);
-                            addPdfCell(table, e.getDateEcheance() != null ? e.getDateEcheance().format(DATE_FMT) : "—", cellFont, rowBg, BORDER_GRAY, Element.ALIGN_CENTER);
-                            addPdfCell(table, formatMontantPdf(e.getMontantTTC()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_RIGHT);
-
-                            boolean paye = e.getStatutPaiement() == StatutEcheanceLeasing.PAYE;
-                            PdfPCell statusCell = new PdfPCell(new Phrase(
-                                    paye ? "PAYÉ" : "PRÉVU",
-                                    FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE)));
-                            statusCell.setBackgroundColor(paye ? GREEN : ORANGE);
-                            statusCell.setPadding(4f);
-                            statusCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                            statusCell.setBorderColor(BORDER_GRAY);
-                            statusCell.setBorderWidth(0.5f);
-                            table.addCell(statusCell);
-                        }
-
-                        PdfPCell totalLabel = new PdfPCell(new Phrase("TOTAL — " + echeances.size() + " échéance(s)", totalFont));
-                        totalLabel.setColspan(3);
-                        totalLabel.setBackgroundColor(LIGHT_BLUE);
-                        totalLabel.setPadding(5f);
-                        totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                        totalLabel.setBorderColor(MED_BLUE);
-                        table.addCell(totalLabel);
-
-                        PdfPCell totalVal = new PdfPCell(new Phrase(formatMontantPdf(totalEncours) + " MAD", totalFont));
-                        totalVal.setBackgroundColor(LIGHT_BLUE);
-                        totalVal.setPadding(5f);
-                        totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                        totalVal.setBorderColor(MED_BLUE);
-                        table.addCell(totalVal);
-
-                        PdfPCell empty = new PdfPCell(new Phrase(""));
-                        empty.setBackgroundColor(LIGHT_BLUE);
-                        empty.setBorderColor(MED_BLUE);
-                        table.addCell(empty);
-
-                        doc.add(table);
-                    } catch (DocumentException e) {
-                        throw new RuntimeException("Erreur lors de la génération du contenu du PDF de l'encours leasing.", e);
-                    }
-                });
-            } catch (DocumentException e) {
-                throw new RuntimeException("Erreur lors de la génération du PDF de l'encours leasing.", e);
-            }
+        public EcheanceLeasingResponseDTO getEcheanceLeasingById(Long id) {
+            EcheanceLeasing echeance = echeanceLeasingRepository.findById(id)
+                    .orElseThrow(() -> {
+                        log.warn("EcheanceLeasing non trouvée — ID : {}", id);
+                        return new ResourceNotFoundException("EcheanceLeasing with ID " + id + " not found.");
+                    });
+            return echeanceLeasingMapper.toDto(echeance);
         }
 
         @Transactional(readOnly = true)
@@ -617,24 +453,6 @@ import java.math.BigDecimal;
                     contratId, hasPaid ? "possède" : "ne possède pas");
 
             return hasPaid;
-        }
-
-        /**
-         * Calcule la somme de {@code montantTTC} pour les échéances vérifiant la Specification donnée,
-         * sans charger les entités en mémoire (évite tout chargement de liste pour un simple agrégat).
-         */
-        private BigDecimal sumMontantTTC(Specification<EcheanceLeasing> spec) {
-            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-            CriteriaQuery<BigDecimal> query = cb.createQuery(BigDecimal.class);
-            Root<EcheanceLeasing> root = query.from(EcheanceLeasing.class);
-            query.select(cb.coalesce(cb.sum(root.get("montantTTC")), BigDecimal.ZERO));
-
-            Predicate predicate = spec.toPredicate(root, query, cb);
-            if (predicate != null) {
-                query.where(predicate);
-            }
-
-            return entityManager.createQuery(query).getSingleResult();
         }
 
         public void deleteEcheancesAndCommissionByContrat(ContratLeasing contrat){

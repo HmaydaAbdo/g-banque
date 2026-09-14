@@ -91,28 +91,12 @@ public class EcheanceLeasingController {
         return ResponseEntity.ok(echeanceLeasingService.updateEcheance(id, dto));
     }
 
-    @Operation(summary = "Encours de leasing pour une banque",
-            description = "Filtrable par période et organisme de leasing")
-    @ApiResponse(responseCode = "400", description = "Paramètres invalides")
+    @Operation(summary = "Détail d'une échéance de leasing",
+            description = "Utilisé par l'écran de récapitulatif unifié pour résoudre le contrat de leasing (contratLeasingId, numéro de contrat, montants HT/TVA) avant l'ouverture du formulaire de validation")
+    @ApiResponse(responseCode = "404", description = "Échéance introuvable")
     @PreAuthorize(FINANCE_OR_ADMIN)
-    @GetMapping("/encours")
-    public ResponseEntity<EncoursLeasingResponseDTO> getEncoursLeasing(
-            @Valid @ModelAttribute EncoursLeasingRequestDTO requestDTO,
-            Pageable pageable) {
-        return ResponseEntity.ok(
-                echeanceLeasingService.getEncoursLeasingForBanque(requestDTO, pageable));
-    }
-
-    @Operation(summary = "Exporter en PDF l'encours d'échéances de leasing d'une banque",
-            description = "Mêmes critères que GET /echeances-leasing/encours — sans pagination")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    @GetMapping("/encours/export/pdf")
-    public ResponseEntity<byte[]> exportEncoursLeasingPdf(@Valid @ModelAttribute EncoursLeasingRequestDTO requestDTO) {
-        byte[] pdf = echeanceLeasingService.exportEncoursLeasingPdf(requestDTO);
-        String filename = "encours_leasing_" + requestDTO.banqueId() + "_" + LocalDate.now() + ".pdf";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", filename);
-        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+    @GetMapping("/{id}")
+    public ResponseEntity<EcheanceLeasingResponseDTO> getEcheanceLeasingById(@PathVariable Long id) {
+        return ResponseEntity.ok(echeanceLeasingService.getEcheanceLeasingById(id));
     }
 }

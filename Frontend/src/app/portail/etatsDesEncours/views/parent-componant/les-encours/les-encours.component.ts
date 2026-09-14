@@ -76,7 +76,6 @@ export class LesEncoursComponent implements OnInit {
     'recapitulatif': { label: 'Récapitulatifs', icon: 'pi pi-chart-bar' },
 
     // Décaissements (Sorties)
-    'echeances-leasing': { label: 'Décaissements / Échéances Leasing', icon: 'pi pi-building' },
     'echeances-cmt': { label: 'Décaissements / Échéances CMT', icon: 'pi pi-calendar-times' },
     'cheques-decaissements': { label: 'Décaissements / Chèques', icon: 'pi pi-money-bill' },
     'lcn-decaissements': { label: 'Décaissements / LCN', icon: 'pi pi-file-edit' },
@@ -201,7 +200,6 @@ export class LesEncoursComponent implements OnInit {
         label: 'Décaissements',
         icon: 'pi pi-arrow-circle-up',
         items: [
-          { label: 'Leasing', icon: 'pi pi-building', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'echeances-leasing'] },
           { label: 'CMT', icon: 'pi pi-calendar-times', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'echeances-cmt'] },
           { label: 'Chèques', icon: 'pi pi-money-bill', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'cheques-decaissements'] },
           { label: 'LCN', icon: 'pi pi-file-edit', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'lcn-decaissements'] },

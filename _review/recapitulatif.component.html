@@ -1,0 +1,513 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="flex flex-column gap-2 w-full">
+
+  <!-- ── Barre de filtres ─────────────────────────────────────────────────────
+       Une seule surface au-dessus du tableau : les totaux et l'export sont
+       passés dans la caption du tableau (ils décrivent le résultat, pas la
+       recherche), et les deux bornes de date sont repliées derrière « Période ».
+       Objectif : rendre de la hauteur au tableau, qui n'était plus visible sans
+       scroller.
+
+       La structure « form > champs en flex-column » est ce qui déclenche la
+       variante .pg-filters:has(form .flex-column) de styles.scss (retour à la
+       ligne + largeurs fluides) ; sans elle, .pg-filters passe en nowrap +
+       overflow-x et les filtres débordent horizontalement. -->
+  <div class="pg-filters">
+    <div class="recap-filters__bar flex align-items-center gap-2 flex-wrap w-full">
+      <button type="button" class="pg-filters__toggle"
+              (click)="toggleFilters()"
+              [attr.aria-expanded]="showFilters"
+              aria-controls="recap-filters-panel">
+        <i class="pi" [ngClass]="showFilters ? 'pi-chevron-down' : 'pi-chevron-right'" aria-hidden="true"></i>
+        <i class="pi pi-sliders-h" aria-hidden="true"></i>
+        <span>Filtres</span>
+        @if (activeFilterCount > 0) {
+          <span class="pg-filters__count">{{ activeFilterCount }}</span>
+        }
+      </button>
+
+      @if (!showFilters && activeFilterChips.length > 0) {
+        <div class="flex align-items-center gap-1 flex-wrap">
+          @for (chip of activeFilterChips; track $index) {
+            <span class="pg-filters__chip">{{ chip }}</span>
+          }
+        </div>
+      }
+
+      <span class="flex-auto"></span>
+
+      @if (activeFilterCount > 0) {
+        <p-button label="Effacer" icon="pi pi-times" severity="secondary" size="small"
+                  (onClick)="clearSearch()" [style]="{'white-space':'nowrap'}"></p-button>
+      }
+    </div>
+
+    @if (showFilters) {
+    <form id="recap-filters-panel" [formGroup]="searchForm" class="flex flex-wrap gap-3 align-items-end">
+
+      <div class="flex flex-column gap-1" style="min-width:150px;">
+        <label for="sens">Sens</label>
+        <p-dropdown inputId="sens" formControlName="sens" [options]="sensOptions"
+                    optionLabel="label" optionValue="value"
+                    appendTo="body" styleClass="w-full"></p-dropdown>
+      </div>
+
+      <div class="flex flex-column gap-1 flex-1" style="min-width:190px;">
+        <label for="transactionSources">Type de transaction</label>
+        <p-multiSelect inputId="transactionSources" formControlName="transactionSources"
+                       [options]="transactionSourceOptions"
+                       optionLabel="label" optionValue="value"
+                       placeholder="Tous les types"
+                       selectedItemsLabel="{0} types sélectionnés"
+                       [showClear]="true" [filter]="true"
+                       appendTo="body" styleClass="w-full"></p-multiSelect>
+      </div>
+
+      <div class="flex flex-column gap-1 flex-1" style="min-width:170px;">
+        <label for="libelle">Libellé</label>
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-search"></i>
+          <input id="libelle" pInputText type="text" formControlName="libelle"
+                 placeholder="Rechercher..." class="w-full" />
+        </span>
+      </div>
+
+      <div class="flex flex-column gap-1 flex-1" style="min-width:170px;">
+        <label for="observation">Observation</label>
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-search"></i>
+          <input id="observation" pInputText type="text" formControlName="observation"
+                 placeholder="Rechercher..." class="w-full" />
+        </span>
+      </div>
+
+      <div class="flex flex-column gap-1" style="min-width:140px;">
+        <label for="numero" class="flex align-items-center gap-1">
+          N° de pièce
+          <i class="pi pi-info-circle text-xs cursor-help"
+             [pTooltip]="numeroHelp" tooltipPosition="top" aria-hidden="true"></i>
+        </label>
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-hashtag"></i>
+          <input id="numero" pInputText type="text" formControlName="numero"
+                 placeholder="Ex. 616298" class="w-full" />
+        </span>
+      </div>
+
+      <div class="flex flex-column gap-1" style="min-width:130px;">
+        <label for="montant">Montant exact</label>
+        <input id="montant" pInputText type="number" formControlName="montant"
+               placeholder="0,00" class="w-full" />
+      </div>
+
+      <div class="flex-shrink-0">
+        <button pButton pRipple type="button"
+                [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+                icon="pi pi-calendar"
+                [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+                (click)="toggleDatePanel()"></button>
+      </div>
+
+      @if (showDatePanel) {
+        <div class="recap-dates flex flex-wrap gap-3 align-items-end">
+          <div class="flex flex-column gap-1" style="min-width:180px;">
+            <label for="dateReferenceDepuis" class="flex align-items-center gap-1">
+              Date de référence — depuis
+              <i class="pi pi-info-circle text-xs cursor-help"
+                 [pTooltip]="dateReferenceHelp" tooltipPosition="top" aria-hidden="true"></i>
+            </label>
+            <p-calendar inputId="dateReferenceDepuis" formControlName="dateReferenceDepuis"
+                        placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                        [showClear]="true" [showButtonBar]="true" appendTo="body"
+                        styleClass="w-full"></p-calendar>
+          </div>
+
+          <div class="flex flex-column gap-1" style="min-width:180px;">
+            <label for="dateReferenceJusqua" class="flex align-items-center gap-1">
+              Date de référence — jusqu'au
+              <i class="pi pi-info-circle text-xs cursor-help"
+                 [pTooltip]="dateReferenceHelp" tooltipPosition="top" aria-hidden="true"></i>
+            </label>
+            <p-calendar inputId="dateReferenceJusqua" formControlName="dateReferenceJusqua"
+                        placeholder="Fin du mois en cours" dateFormat="dd/mm/yy"
+                        [showClear]="true" [showButtonBar]="true" appendTo="body"
+                        styleClass="w-full"></p-calendar>
+          </div>
+
+          <span class="text-xs text-500 align-self-center" style="max-width:34rem;">
+            {{ dateReferenceHelp }}
+          </span>
+        </div>
+      }
+
+    </form>
+    }
+  </div>
+
+  <!-- ── Barre de sélection multi-lignes — n'apparaît que si au moins une ligne est cochée ── -->
+  @if (selectedCount > 0) {
+  <div class="flex justify-content-end align-items-center gap-2 mb-2">
+    <span class="text-sm text-500 mr-2">
+      <strong>{{ selectedCount }}</strong> opération(s) sélectionnée(s) —
+      {{ montantTotalSelection | number:'1.2-2' }} MAD
+    </span>
+    <button type="button" pButton pRipple icon="pi pi-times" label="Effacer la sélection"
+            class="p-button-text p-button-secondary" (click)="clearSelection()"></button>
+    <button type="button" pButton pRipple icon="pi pi-check-square" label="Valider en lot ({{ selectedCount }})"
+            class="p-button-success" (click)="openLotModal()"></button>
+  </div>
+  }
+
+  <!-- ── Tableau (totaux + export dans sa caption) ─────────────────────────── -->
+  <div class="pg-table">
+    <p-table
+      #dt
+      [value]="recapItems"
+      [selection]="pageSelection"
+      (selectionChange)="onSelectionChange($event)"
+      [paginator]="true"
+      [rows]="10"
+      [totalRecords]="totalRecords"
+      [loading]="loading"
+      [rowsPerPageOptions]="[5, 10, 25, 50]"
+      [lazy]="true" [sortField]="'dateReference'" [sortOrder]="-1"
+      (onLazyLoad)="loadRecapitulatif($event)"
+      [rowHover]="true"
+      currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} opérations"
+      [showCurrentPageReport]="true"
+      styleClass="p-datatable-sm text-xs"
+      [tableStyle]="{'min-width': '70rem'}">
+
+      <ng-template pTemplate="caption">
+        <div class="recap-summary flex align-items-center gap-1 flex-wrap">
+          <div class="stat-chip">
+            <span class="text-xs text-500">Total Débit prévisionnel</span>
+            <span class="amount-badge debit-badge" [class.is-zero]="!totalDebit">{{ totalDebit | number:'1.2-2' }} MAD</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-chip">
+            <span class="text-xs text-500">Total Crédit prévisionnel</span>
+            <span class="amount-badge credit-badge" [class.is-zero]="!totalCredit">{{ totalCredit | number:'1.2-2' }} MAD</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-chip">
+            <span class="text-xs text-500">Opérations</span>
+            <span class="count-badge">{{ totalRecords | number }}</span>
+          </div>
+
+          <span class="flex-auto"></span>
+
+          @if (sortParDefaut) {
+            <span class="text-xs text-500 white-space-nowrap mr-2"
+                  pTooltip="La date de référence est la date de rattachement au mois : échéance pour le leasing, le CMT et les LCN, émission pour les autres sources. Cliquez un en-tête pour trier autrement."
+                  tooltipPosition="top">
+              <i class="pi pi-sort-amount-down text-xs" aria-hidden="true"></i>
+              Trié par date de référence, la plus récente d'abord
+            </span>
+          }
+
+          <button type="button" pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf"
+                  size="small" severity="secondary"
+                  pTooltip="Exporte exactement les lignes filtrées" tooltipPosition="left"
+                  [loading]="exporting" (click)="exportPdf()"></button>
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 3rem">
+            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+          </th>
+          <th pSortableColumn="sens" class="text-center white-space-nowrap">
+            Sens
+              <p-sortIcon field="sens"></p-sortIcon>
+          </th>
+          <th pSortableColumn="dateEmission" class="white-space-nowrap">
+            Date d'émission
+              <p-sortIcon field="dateEmission"></p-sortIcon>
+          </th>
+          <th pSortableColumn="dateEcheanceAffichage" class="white-space-nowrap">
+            Date d'échéance
+              <p-sortIcon field="dateEcheanceAffichage"></p-sortIcon>
+          </th>
+          <th pSortableColumn="libelle">
+            Libellé
+              <p-sortIcon field="libelle"></p-sortIcon>
+          </th>
+          <th pSortableColumn="observation">
+            Observations
+              <p-sortIcon field="observation"></p-sortIcon>
+          </th>
+          <th pSortableColumn="id.sourceType" class="white-space-nowrap">
+            Source
+              <p-sortIcon field="id.sourceType"></p-sortIcon>
+          </th>
+          <th pSortableColumn="montant" class="text-right white-space-nowrap"
+              pTooltip="Tri par montant, tous sens confondus" tooltipPosition="top">
+            Débit
+              <p-sortIcon field="montant"></p-sortIcon>
+          </th>
+          <th pSortableColumn="montant" class="text-right white-space-nowrap"
+              pTooltip="Tri par montant, tous sens confondus" tooltipPosition="top">
+            Crédit
+              <p-sortIcon field="montant"></p-sortIcon>
+          </th>
+          <th pSortableColumn="id.entityId" class="text-right white-space-nowrap">
+            ID source
+              <p-sortIcon field="id.entityId"></p-sortIcon>
+          </th>
+          <th style="width: 6rem;">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-item>
+        <tr class="table-row">
+          <td>
+            <p-tableCheckbox [value]="item"></p-tableCheckbox>
+          </td>
+          <td class="text-center white-space-nowrap">
+            @if (item.sens === SensOperation.DECAISSEMENT) {
+              <span class="sens-badge sens-decaissement" pTooltip="Sortie de trésorerie">
+                <i class="pi pi-arrow-circle-down"></i> Décaissement
+              </span>
+            } @else {
+              <span class="sens-badge sens-encaissement" pTooltip="Entrée de trésorerie">
+                <i class="pi pi-arrow-circle-up"></i> Encaissement
+              </span>
+            }
+          </td>
+          <td class="white-space-nowrap">
+            <span class="text-700">{{ item.dateEmission | date:'dd/MM/yyyy' }}</span>
+          </td>
+          <td class="white-space-nowrap">
+            @if (item.dateEcheance) {
+              <span class="text-700">{{ item.dateEcheance | date:'dd/MM/yyyy' }}</span>
+            } @else {
+              <span class="text-400" pTooltip="Cette source n'a pas d'échéance distincte">—</span>
+            }
+          </td>
+          <td>
+            <span class="font-medium text-900">{{ item.libelle }}</span>
+          </td>
+          <td>
+            <span class="text-700">{{ item.observations }}</span>
+          </td>
+          <td class="white-space-nowrap">
+            <app-source-badge [source]="item.source"></app-source-badge>
+          </td>
+          <td class="text-right white-space-nowrap">
+            @if (item.debit) {
+              <span class="amount-badge debit-badge">{{ item.debit | number:'1.2-2' }} MAD</span>
+            } @else {
+              <span class="text-400">—</span>
+            }
+          </td>
+          <td class="text-right white-space-nowrap">
+            @if (item.credit) {
+              <span class="amount-badge credit-badge">{{ item.credit | number:'1.2-2' }} MAD</span>
+            } @else {
+              <span class="text-400">—</span>
+            }
+          </td>
+          <td class="text-right white-space-nowrap">
+            <span class="id-cell" pTooltip="Identifiant dans la table source — unique seulement combiné à la source">
+              {{ item.id }}
+            </span>
+          </td>
+          <td>
+            @if (isLeasing(item)) {
+              <button
+                type="button" pButton pRipple icon="pi pi-check"
+                class="p-button-rounded p-button-success"
+                pTooltip="Valider" tooltipPosition="top"
+                (click)="openLeasingValidation(item)"
+              ></button>
+            } @else {
+              <span class="text-400 text-xs" pTooltip="Cette source n'est pas encore validable depuis le récapitulatif — utilisez son écran dédié" tooltipPosition="top">—</span>
+            }
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="10" class="text-center p-4">
+            <div class="flex flex-column align-items-center gap-3">
+              <i class="pi pi-inbox text-4xl text-400"></i>
+              <div class="text-700 font-semibold">Aucune opération trouvée</div>
+              @if (hasActiveFilters()) {
+                <div class="text-500 text-sm">Aucune opération ne correspond aux filtres actifs.</div>
+                <p-button label="Effacer les filtres" icon="pi pi-times" severity="secondary"
+                          size="small" (onClick)="clearSearch()"></p-button>
+              } @else {
+                <div class="text-500 text-sm">Il n'y a aucun encaissement ni décaissement pour le mois en cours.</div>
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td colspan="10" class="text-center p-4">
+            <div class="flex flex-column align-items-center gap-3">
+              <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
+              <div class="text-700 font-semibold">Chargement du récapitulatif...</div>
+              <div class="text-500 text-sm">Veuillez patienter</div>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+</div>
+
+<!-- ── Validation en lot (multi-sources) ─────────────────────────────────────
+     Contrairement à app-validation-lot-modal (une seule transactionSource par appel),
+     ce dialogue applique les mêmes champs communs à une sélection pouvant mélanger
+     plusieurs sources/sens : le composant découpe automatiquement la sélection en
+     groupes (source, sens) et enchaîne un appel POST /process/lot par groupe. -->
+<p-dialog header="Validation en lot" [(visible)]="displayLotModal"
+          [modal]="true" [style]="{width: '50vw'}"
+          [draggable]="false" [resizable]="false" [closable]="!isLotSubmitting">
+  @if (lotForm) {
+  <form [formGroup]="lotForm" (ngSubmit)="confirmLotValidation()">
+    <div class="flex align-items-center gap-3 mb-3 p-3 border-round surface-100">
+      <i class="pi pi-check-square text-xl"></i>
+      <span>
+        <strong>{{ selectedCount }}</strong> opération(s) sélectionnée(s), réparties en
+        <strong>{{ lotGroups.length }}</strong> lot(s) — montant total
+        <strong>{{ montantTotalSelection | number:'1.2-2' }} MAD</strong>
+      </span>
+    </div>
+
+    <ul class="text-sm text-700 mb-3">
+      @for (group of lotGroups; track group.source + '_' + group.sens) {
+        <li>{{ group.ids.length }} × {{ labelSource(group.source) }} ({{ group.sens }}) —
+          {{ group.montantTotal | number:'1.2-2' }} MAD</li>
+      }
+    </ul>
+
+    <div class="grid p-fluid mt-1">
+      <div class="col-12 md:col-6 mb-3">
+        <app-tva-input formControlName="tva" label="TVA" inputId="recapLotTva"
+                       [autoriserSaisieLibre]="false"></app-tva-input>
+        @if (isLotInvalid('tva')) {
+        <small class="p-error">{{ messageErreurTva(lotForm.get('tva')?.errors) }}</small>
+        }
+      </div>
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <p-calendar id="recapLotDateValeur" formControlName="dateValeur" [showOnFocus]="false"
+                      dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" appendTo="body"></p-calendar>
+          <label for="recapLotDateValeur">Date de valeur</label>
+        </span>
+        @if (isLotInvalid('dateValeur')) {
+        <small class="p-error">La date de valeur est obligatoire</small>
+        }
+      </div>
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <p-calendar id="recapLotDateOperation" formControlName="dateOperation" [showOnFocus]="false"
+                      dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" appendTo="body"></p-calendar>
+          <label for="recapLotDateOperation">Date de l'opération</label>
+        </span>
+        @if (isLotInvalid('dateOperation')) {
+        <small class="p-error">La date de l'opération est obligatoire</small>
+        }
+      </div>
+    </div>
+    <p class="text-500 text-sm mt-1 mb-3">
+      Le libellé, l'observation et la date d'émission d'origine de chaque opération sont conservés automatiquement.
+    </p>
+    <p-divider></p-divider>
+    <div class="flex justify-content-end gap-2">
+      <p-button label="Annuler" icon="pi pi-times" [outlined]="true" (onClick)="closeLotModal()"></p-button>
+      <p-button label="Valider le lot" icon="pi pi-check" type="submit"
+                [disabled]="lotForm.invalid || isLotSubmitting || selectedCount === 0"
+                [loading]="isLotSubmitting"></p-button>
+    </div>
+  </form>
+  }
+</p-dialog>
+
+<!-- ── Validation unitaire — pilote Leasing ──────────────────────────────────
+     Seule source câblée pour l'instant depuis le récapitulatif (voir isLeasing()) ;
+     mêmes règles que l'écran dédié Décaissements/Échéances Leasing (TVA verrouillée à 20%). -->
+<p-dialog header="Passage au rapprochement bancaire" [(visible)]="displayLeasingModal"
+          [modal]="true" [style]="{width: '50vw'}"
+          [draggable]="false" [resizable]="false"
+          [closable]="!isLeasingSubmitting"
+          (visibleChange)="!$event && closeLeasingModal()">
+  @if (isLeasingLoading) {
+    <div class="flex align-items-center justify-content-center gap-2 p-4">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Chargement des détails de l'échéance...</span>
+    </div>
+  } @else if (leasingDetail && leasingForm) {
+    <form [formGroup]="leasingForm" (ngSubmit)="confirmLeasingValidation()">
+      <div class="grid p-fluid mt-3">
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <p-calendar id="recapLeasingDateEmission" formControlName="dateEmission" [showOnFocus]="false" [disabled]="true" [iconDisplay]="'input'" [showIcon]="true" dateFormat="dd/mm/yy"></p-calendar>
+            <label for="recapLeasingDateEmission">Date d'émission</label>
+          </span>
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <app-tva-input formControlName="tva" label="TVA Déductible"
+                         inputId="recapLeasingTva"
+                         [montantMax]="montantMaxTvaLeasing"></app-tva-input>
+          @if (isLeasingInvalid('tva')) {
+          <small class="p-error">{{ messageErreurTva(leasingForm.get('tva')?.errors) }}</small>
+          }
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <p-calendar id="recapLeasingDateValeur" formControlName="dateValeur" [showOnFocus]="false" dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" appendTo="body"></p-calendar>
+            <label for="recapLeasingDateValeur">Date de valeur</label>
+          </span>
+          @if (isLeasingInvalid('dateValeur')) {
+          <small class="p-error">La date de valeur est obligatoire</small>
+          }
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <p-calendar id="recapLeasingDateOperation" formControlName="dateOperation" [showOnFocus]="false" dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" appendTo="body"></p-calendar>
+            <label for="recapLeasingDateOperation">Date de l'opération</label>
+          </span>
+          @if (isLeasingInvalid('dateOperation')) {
+          <small class="p-error">La date de l'opération est obligatoire</small>
+          }
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <textarea id="recapLeasingLibelle" pInputTextarea formControlName="libelle" rows="3"></textarea>
+            <label for="recapLeasingLibelle">Libellé</label>
+          </span>
+          @if (isLeasingInvalid('libelle')) {
+          <small class="p-error">Le libellé est obligatoire</small>
+          }
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <textarea id="recapLeasingObservation" pInputTextarea formControlName="observation" rows="3"></textarea>
+            <label for="recapLeasingObservation">Observation</label>
+          </span>
+          @if (isLeasingInvalid('observation')) {
+          <small class="p-error">Observation est obligatoire</small>
+          }
+        </div>
+      </div>
+      <p-divider></p-divider>
+      <div class="flex justify-content-end gap-2">
+        <p-button label="Annuler" icon="pi pi-times" [outlined]="true" (onClick)="closeLeasingModal()"></p-button>
+        <p-button label="Valider" icon="pi pi-check" type="submit"
+                  [disabled]="leasingForm.invalid || isLeasingSubmitting"
+                  [loading]="isLeasingSubmitting"></p-button>
+      </div>
+    </form>
+  }
+</p-dialog>

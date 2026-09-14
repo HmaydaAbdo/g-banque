@@ -4,16 +4,20 @@ import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 import { Table } from 'primeng/table';
-import { MessageService } from 'primeng/api';
-import { Subscription } from 'rxjs';
+import { ConfirmationService, MessageService } from 'primeng/api';
+import { concatMap, from, Subscription, toArray } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputTextareaModule } from 'primeng/inputtextarea';
 import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
+import { DialogModule } from 'primeng/dialog';
+import { DividerModule } from 'primeng/divider';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { RecapService } from "../../services/recap.service";
@@ -23,11 +27,41 @@ import { SourceBadgeComponent } from "../../../../../../global/shared-components
 import { SensOperation } from "../../../../../../transactions/dtos/SensOperation";
 import { RecapitulatifSearchDto } from "../../dtos/RecapitulatifSearchDto";
 import { AgregatedRecapDto } from "../../dtos/AgregatedRecapDto";
+import { TableSelectionState } from "../../../shared/table-selection.state";
+import { BatchValidationRequestDto } from "../../../../../dtos/lot/BatchValidationRequestDto";
+import { BatchValidationResponseDto } from "../../../../../dtos/lot/BatchValidationResponseDto";
+import { ValidationService } from "../../../../../services/validation/validation.service";
+import { BankStateService } from "../../../../../../comptes-bancaire/services/bank-state.service";
+import { TvaInputComponent } from "../../../shared/tva-input/tva-input.component";
+import {
+  decrireSaisieTva,
+  messageErreurTva,
+  SaisieTva,
+  saisieTvaParDefaut
+} from "../../../shared/tva-input/saisie-tva.model";
+import { EcheanceLeasingService } from "../../../../../../leasing/contratsLeasing/services/EcheanceLeasingService";
+import { EcheanceLeasingResponse } from "../../../../../../leasing/contratsLeasing/dtos/EcheanceLeasingResponse";
+import { LeasingTransactionRequest } from "../../../../../dtos/leasing/LeasingTransactionRequest";
+import { parseLocalDate } from '../../../../../../global/types/date.utils';
 
 /** Options du dropdown de filtre de sens — `null` = « Tous », aucun filtre appliqué. */
 interface SensOption {
   label: string;
   value: SensOperation | null;
+}
+
+/**
+ * Un groupe d'opérations sélectionnées partageant (source, sens) — l'unité d'appel de
+ * POST /rapprochement/process/lot, qui n'accepte qu'un seul type et un seul sens par requête
+ * (voir BatchValidationRequestDto). La sélection multi-lignes du récapitulatif peut mélanger
+ * plusieurs sources/sens ; « Valider en lot » découpe donc automatiquement la sélection en
+ * groupes et enchaîne un appel par groupe (décision validée le 14/09/2026).
+ */
+interface LotGroup {
+  source: TransactionSource;
+  sens: SensOperation;
+  ids: number[];
+  montantTotal: number;
 }
 
 @Component({
@@ -43,15 +77,20 @@ interface SensOption {
     ReactiveFormsModule,
     MultiSelectModule,
     InputTextModule,
+    InputTextareaModule,
     CalendarModule,
     DropdownModule,
     ButtonModule,
     RippleModule,
+    DialogModule,
+    DividerModule,
+    ConfirmDialogModule,
     SourceBadgeComponent,
+    TvaInputComponent,
   ],
   templateUrl: './recapitulatif.component.html',
   styleUrl: './recapitulatif.component.scss',
-  providers: [MessageService]
+  providers: [MessageService, ConfirmationService, DecimalPipe]
 })
 export class RecapitulatifComponent implements OnInit, OnDestroy {
   // Table data state properties
@@ -71,6 +110,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     { label: 'Décaissement', value: SensOperation.DECAISSEMENT },
   ];
   readonly SensOperation = SensOperation;
+  readonly TransactionSource = TransactionSource;
 
   /** Explication du numéro de pièce — toutes les sources n'en portent pas. */
   readonly numeroHelp =
@@ -102,8 +142,349 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
 
   private readonly recapService = inject(RecapService);
   private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
+  private readonly validationService = inject(ValidationService);
+  private readonly bankStateService = inject(BankStateService);
+  private readonly echeanceLeasingService = inject(EcheanceLeasingService);
+  private readonly datePipe = inject(DatePipe);
+  private readonly decimalPipe = inject(DecimalPipe);
+
+  // ==================== Sélection multi-lignes & validation en lot ====================
+
+  /**
+   * Clé composite (source, entityId) — `entityId` seul n'est unique que combiné à sa source
+   * (deux sources différentes peuvent partager le même id), contrairement aux écrans à source
+   * unique qui utilisent l'id brut.
+   */
+  selectionState = new TableSelectionState<RecaputilatifItem, string>(item => `${item.source}:${item.id}`);
+
+  get pageSelection(): RecaputilatifItem[] {
+    return this.selectionState.getPageSelection(this.recapItems);
+  }
+
+  onSelectionChange(selection: RecaputilatifItem[]): void {
+    this.selectionState.onPageSelectionChange(this.recapItems, selection);
+  }
+
+  get selectedCount(): number {
+    return this.selectionState.count;
+  }
+
+  get montantTotalSelection(): number {
+    return this.selectionState.sumBy(item => Number(item.debit ?? item.credit ?? 0));
+  }
+
+  clearSelection(): void {
+    this.selectionState.clear();
+  }
+
+  /** Regroupe la sélection par (source, sens) — un groupe = un appel POST /process/lot. */
+  get lotGroups(): LotGroup[] {
+    const groups = new Map<string, LotGroup>();
+    for (const item of this.selectionState.selectedItems) {
+      const key = `${item.source}__${item.sens}`;
+      let group = groups.get(key);
+      if (!group) {
+        group = { source: item.source, sens: item.sens, ids: [], montantTotal: 0 };
+        groups.set(key, group);
+      }
+      group.ids.push(item.id);
+      group.montantTotal += Number(item.debit ?? item.credit ?? 0);
+    }
+    return Array.from(groups.values());
+  }
+
+  displayLotModal = false;
+  lotForm!: FormGroup;
+  isLotSubmitting = false;
+  readonly messageErreurTva = messageErreurTva;
+
+  openLotModal(): void {
+    this.lotForm = this.fb.group({
+      dateValeur: [null, Validators.required],
+      dateOperation: [null, Validators.required],
+      tva: [saisieTvaParDefaut()],
+    });
+    this.displayLotModal = true;
+  }
+
+  isLotInvalid(controlName: string): boolean {
+    const control = this.lotForm.get(controlName);
+    return !!(control && control.invalid && (control.dirty || control.touched));
+  }
+
+  closeLotModal(): void {
+    this.displayLotModal = false;
+  }
+
+  labelSource(source: TransactionSource): string {
+    return TransactionSourceLabels[source] ?? source;
+  }
+
+  confirmLotValidation(): void {
+    if (this.lotForm.invalid) {
+      this.lotForm.markAllAsTouched();
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Veuillez remplir tous les champs obligatoires et corriger les erreurs.',
+      });
+      return;
+    }
+
+    const formValue = this.lotForm.getRawValue();
+    const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
+    const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
+    const groups = this.lotGroups;
+
+    const detailGroupes = groups
+      .map(g => `<li>${g.ids.length} × ${this.labelSource(g.source)} (${g.sens}) — `
+        + `${this.decimalPipe.transform(g.montantTotal, '1.2-2', 'fr-FR')} MAD</li>`)
+      .join('');
+
+    const recapMessage = `
+          Êtes-vous sûr de vouloir valider ces ${this.selectionState.count} opérations
+          en ${groups.length} lot(s) (un appel par type/sens) ?
+          <br><br>
+          <strong>Répartition :</strong>
+          <ul>${detailGroupes}</ul>
+          <strong>Montant total :</strong> ${this.decimalPipe.transform(this.montantTotalSelection, '1.2-2', 'fr-FR')} MAD
+          <br><br>
+          <strong>Détails du rapprochement (appliqués à toutes les opérations sélectionnées) :</strong>
+          <ul>
+              <li><strong>Date de valeur :</strong> ${dateValeurFormatted || '-'}</li>
+              <li><strong>Date d'opération :</strong> ${dateOperationFormatted || '-'}</li>
+              <li><strong>TVA :</strong> ${decrireSaisieTva(formValue.tva)}</li>
+          </ul>
+          <br>
+          Le libellé et l'observation d'origine de chaque opération sont conservés.
+    `;
+
+    this.confirmationService.confirm({
+      message: recapMessage,
+      header: 'Confirmation de validation en lot',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Confirmer',
+      rejectLabel: 'Annuler',
+      accept: () => this.submitLot(groups),
+    });
+  }
+
+  /**
+   * Enchaîne un appel POST /process/lot par groupe (source, sens), séquentiellement
+   * (concatMap) plutôt qu'en parallèle, pour rester lisible en cas d'erreur partielle et ne
+   * pas multiplier les écritures concurrentes sur le même rapprochement.
+   */
+  private submitLot(groups: LotGroup[]): void {
+    const rapprochementId = this.bankStateService.getRapprochementId();
+    const formValue = this.lotForm.getRawValue();
+    const saisieTva: SaisieTva = formValue.tva!;
+    const dateValeur = this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string;
+    const dateOperation = this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string;
+
+    this.isLotSubmitting = true;
+
+    this.subscriptions.push(
+      from(groups).pipe(
+        concatMap(group => {
+          const request: BatchValidationRequestDto = {
+            transactionSource: group.source,
+            sens: group.sens,
+            banqueId: this.banqueIdFromRoute,
+            ids: group.ids,
+            dateValeur,
+            dateOperation,
+            tauxTva: saisieTva.tauxTva,
+            rapprochementId: rapprochementId!,
+          };
+          return this.validationService.validerEnLot(request);
+        }),
+        toArray()
+      ).subscribe({
+        next: (responses: BatchValidationResponseDto[]) => {
+          const totalOperations = responses.reduce((sum, r) => sum + r.nombreOperations, 0);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: `${totalOperations} opération(s) validée(s) avec succès (${groups.length} lot(s)).`,
+          });
+          this.isLotSubmitting = false;
+          this.selectionState.clear();
+          this.closeLotModal();
+          this.onFilterChange();
+          this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+          this.bankStateService.notifyValidation();
+        },
+        error: () => {
+          this.isLotSubmitting = false;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'La validation en lot a échoué — certains lots peuvent avoir été traités avant l\'erreur, vérifiez le rapprochement en cours.',
+          });
+        }
+      })
+    );
+  }
+
+  // ==================== Validation unitaire — pilote Leasing ====================
+  // Seule source câblée pour l'instant (les 23 autres écrans "Encours" restent l'unique
+  // moyen de validation ligne par ligne pour leur source, jusqu'à leur propre migration).
+
+  displayLeasingModal = false;
+  leasingForm!: FormGroup;
+  selectedLeasingItem: RecaputilatifItem | null = null;
+  leasingDetail: EcheanceLeasingResponse | null = null;
+  isLeasingLoading = false;
+  isLeasingSubmitting = false;
+
+  get montantMaxTvaLeasing(): number | null {
+    return this.leasingDetail?.montantTTC ?? null;
+  }
+
+  isLeasing(item: RecaputilatifItem): boolean {
+    return item.source === TransactionSource.LEASING;
+  }
+
+  openLeasingValidation(item: RecaputilatifItem): void {
+    this.selectedLeasingItem = item;
+    this.isLeasingLoading = true;
+    this.displayLeasingModal = true;
+    this.leasingDetail = null;
+
+    this.subscriptions.push(
+      this.echeanceLeasingService.getEcheanceLeasingById(item.id).subscribe({
+        next: (detail) => {
+          this.leasingDetail = detail;
+          this.leasingForm = this.fb.group({
+            dateEmission: [{ value: parseLocalDate(detail.dateEcheance), disabled: true }, Validators.required],
+            dateValeur: [null, Validators.required],
+            dateOperation: [null, Validators.required],
+            observation: [detail.observation, Validators.required],
+            libelle: [detail.libelle, Validators.required],
+            tva: [{ value: { tauxTva: 20, montantTva: null }, disabled: true }],
+          });
+          this.isLeasingLoading = false;
+        },
+        error: () => {
+          this.isLeasingLoading = false;
+          this.displayLeasingModal = false;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Impossible de récupérer le détail de cette échéance de leasing.',
+          });
+        }
+      })
+    );
+  }
+
+  closeLeasingModal(): void {
+    this.displayLeasingModal = false;
+    this.selectedLeasingItem = null;
+    this.leasingDetail = null;
+  }
+
+  isLeasingInvalid(controlName: string): boolean {
+    const control = this.leasingForm?.get(controlName);
+    if (control && control.disabled) {
+      return false;
+    }
+    return !!(control && control.invalid && (control.dirty || control.touched));
+  }
+
+  confirmLeasingValidation(): void {
+    if (this.leasingForm.invalid || !this.leasingDetail) {
+      this.leasingForm.markAllAsTouched();
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Veuillez remplir tous les champs obligatoires et corriger les erreurs.',
+      });
+      return;
+    }
+
+    const formValue = this.leasingForm.getRawValue();
+    const detail = this.leasingDetail;
+    const dateEmissionFormatted = this.datePipe.transform(formValue.dateEmission, 'dd/MM/yyyy');
+    const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
+    const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
+
+    const recapMessage = `
+          Êtes-vous sûr de vouloir rapprocher cette échéance ?
+          <br><br>
+          <strong>Contrat N°:</strong> ${detail.numeroContrat}
+          <br>
+          <strong>Montant TTC:</strong> ${this.decimalPipe.transform(detail.montantTTC, '1.2-2', 'fr-FR')} MAD
+          <br><br>
+          <strong>Détails du Rapprochement:</strong>
+          <ul>
+              <li><strong>Date d'émission:</strong> ${dateEmissionFormatted}</li>
+              <li><strong>Date de valeur:</strong> ${dateValeurFormatted || '-'}</li>
+              <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
+              <li><strong>Libellé:</strong> ${formValue.libelle}</li>
+              <li><strong>Observation:</strong> ${formValue.observation}</li>
+              <li><strong>TVA Déductible:</strong> ${decrireSaisieTva(formValue.tva)}</li>
+          </ul>
+    `;
+
+    this.confirmationService.confirm({
+      message: recapMessage,
+      header: 'Confirmation de Rapprochement',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Confirmer',
+      rejectLabel: 'Annuler',
+      accept: () => this.submitLeasingValidation(),
+    });
+  }
+
+  private submitLeasingValidation(): void {
+    if (!this.leasingDetail) return;
+
+    const formValue = this.leasingForm.getRawValue();
+    const rapprochementId = this.bankStateService.getRapprochementId();
+    const saisieTva: SaisieTva = formValue.tva;
+
+    const request: LeasingTransactionRequest = {
+      contratLeasingId: this.leasingDetail.contratLeasingId,
+      echeanceId: this.leasingDetail.id,
+      transactionSource: TransactionSource.LEASING,
+      dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
+      dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
+      dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
+      observation: formValue.observation,
+      tauxTva: saisieTva.tauxTva,
+      montantTva: saisieTva.montantTva,
+      libelle: formValue.libelle,
+      rapprochementId: rapprochementId!,
+    };
+
+    this.isLeasingSubmitting = true;
+
+    this.subscriptions.push(
+      this.validationService.echeanceLeasingToRapprochemnt(request).subscribe({
+        next: () => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: 'Échéance rapprochée avec succès.',
+          });
+          this.isLeasingSubmitting = false;
+          this.closeLeasingModal();
+          this.onFilterChange();
+          this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+          this.bankStateService.notifyValidation();
+        },
+        error: () => {
+          this.isLeasingSubmitting = false;
+        }
+      })
+    );
+  }
+
+  // ==================== Chargement / filtres (inchangé) ====================
 
   ngOnInit(): void {
     this.initSearchForm();
