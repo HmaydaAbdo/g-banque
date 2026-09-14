@@ -1,0 +1,125 @@
+package staport.finance.gBanque.cautions.commissions.strategy.impl;
+
+import org.springframework.stereotype.Component;
+import staport.finance.gBanque.cautions.commissions.config.dtos.response.CautionCommissionConfigResponseDTO;
+import staport.finance.gBanque.cautions.commissions.config.services.interfaces.ICautionCommissionConfigService;
+import staport.finance.gBanque.cautions.commissions.strategy.CommissionCautionStrategie;
+import staport.finance.gBanque.cautions.entities.Caution;
+import staport.finance.gBanque.commision.entities.Commission;
+import staport.finance.gBanque.prefinancement.enums.Status;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
+
+/**
+ * Stratégie de calcul des commissions sur cautions pour la banque CDM
+ * (Crédit du Maroc).
+ *
+ * <p>Règles métier CDM :
+ * <ul>
+ *   <li>Commission générée pour le mois de référence lui-même (pas de décalage M+1)</li>
+ *   <li>Date d'émission = <strong>premier jour</strong> du mois de référence</li>
+ *   <li>Libellé = {@code "caution " + nature.code + " N° " + numeroCaution}</li>
+ *   <li>Motif = {@code "CAUTION"} (stocké dans {@code observation})</li>
+ *   <li>Montant HT = {@code (montant × taux × nombreJours) / 36000}
+ *       où {@code taux} est en pourcentage (ex : 1.25 pour 1,25 %)
+ *       et {@code nombreJours} = nombre de jours calendaires du mois de référence</li>
+ *   <li>Arrondi : HALF_UP, 2 décimales</li>
+ *   <li>Minimum : 70,00 MAD</li>
+ *   <li>TVA non générée séparément (default genererTva = false)</li>
+ *   <li>Exécution en début de mois (1er jour)</li>
+ * </ul>
+ */
+@Component
+public class CdmCommissionCautionStrategie implements CommissionCautionStrategie {
+
+    private static final String NOM_BANQUE = "CDM";
+
+    private final ICautionCommissionConfigService commissionConfigService;
+
+    public CdmCommissionCautionStrategie(ICautionCommissionConfigService commissionConfigService) {
+        this.commissionConfigService = commissionConfigService;
+    }
+
+    @Override
+    public String nomBanque() {
+        return NOM_BANQUE;
+    }
+
+    /**
+     * CDM : commission émise le 1er jour du mois → exécution en début de mois.
+     */
+    @Override
+    public boolean executerEnDebutMois() {
+        return true;
+    }
+
+    /** CDM applique le prorata sur le premier mois de la caution. */
+    @Override
+    public boolean supporteProrataEntree() {
+        return true;
+    }
+
+    @Override
+    public Commission calculer(Caution caution, YearMonth moisReference) {
+        // Mois entier — le prorata d'entrée est géré à la création via calculerProrataEntree()
+        long nombreJours      = moisReference.lengthOfMonth();
+        String suffixeLibelle = " — Mois entier : " + nombreJours + " j";
+        return buildCommission(caution, nombreJours, moisReference.atDay(1), suffixeLibelle);
+    }
+
+    /**
+     * Prorata d'entrée CDM — calculé à la création de la caution.
+     * <p>Jours : de {@code dateDePrise} jusqu'à la fin du mois d'entrée (incluse).
+     * {@code dateEmission = dateDePrise} — CDM exécute le batch le 1er du mois suivant
+     * avec dateEmission = 1er du nouveau mois, pas de conflit.
+     */
+    @Override
+    public Commission calculerProrataEntree(Caution caution) {
+        LocalDate dateDePrise = caution.getDateDePrise();
+        YearMonth moisEntree  = YearMonth.from(dateDePrise);
+        long nombreJours = ChronoUnit.DAYS.between(
+                dateDePrise,
+                moisEntree.atEndOfMonth().plusDays(1) // borne exclusive
+        );
+        String suffixeLibelle = " — Prorata entrée : " + nombreJours + " j";
+        return buildCommission(caution, nombreJours, dateDePrise, suffixeLibelle);
+    }
+
+    // ── Helper ────────────────────────────────────────────────────────────────
+
+    private Commission buildCommission(Caution caution, long nombreJours,
+                                       LocalDate dateEmission, String suffixeLibelle) {
+        CautionCommissionConfigResponseDTO config =
+                commissionConfigService.resolveOuLeverException(caution.getBanque().getNom());
+
+        BigDecimal montantCommission = caution.getMontant()
+                .multiply(caution.getTaux())
+                .multiply(BigDecimal.valueOf(nombreJours))
+                .divide(config.diviseur(), 2, RoundingMode.HALF_UP);
+
+        if (montantCommission.compareTo(config.montantMinimum()) < 0) {
+            montantCommission = config.montantMinimum();
+        }
+
+        montantCommission = montantCommission.setScale(2, RoundingMode.HALF_UP);
+
+        String libelle = "caution " + caution.getNature().getCode()
+                + " N° " + caution.getNumeroCaution() + suffixeLibelle;
+
+        Commission commission = new Commission();
+        commission.setBanque(caution.getBanque());
+        commission.setMontant(montantCommission);
+        commission.setOperation(TransactionSource.CAUTION);
+        commission.setDateEmission(dateEmission);
+        commission.setLibelle(libelle);
+        commission.setObservation("CAUTION");
+        commission.setStatus(Status.PREVU);
+
+        return commission;
+    }
+}

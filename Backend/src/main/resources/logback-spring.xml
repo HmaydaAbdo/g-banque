@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         G-Banque — Logback configuration
+         Dev  (profil par défaut) : console lisible avec MDC requestId/userId
+         Prod (profil "prod")     : async + JSON structuré (logstash-logback-encoder)
+                                    → compatible ELK / Grafana Loki / Datadog
+         MDC keys injectées automatiquement par MdcRequestFilter :
+           requestId  — UUID de la requête (ou X-Request-ID header entrant)
+           userId     — username du principal authentifié (vide sur routes publiques)
+    ══════════════════════════════════════════════════════════════════ -->
+
+    <!-- ── Profil DEV (défaut) ─────────────────────────────────────────── -->
+    <springProfile name="!prod">
+
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{HH:mm:ss.SSS} %-5level [%X{requestId:---------}] [%X{userId:-anon}] %logger{36} — %msg%n</pattern>
+                <charset>UTF-8</charset>
+            </encoder>
+        </appender>
+
+        <!--
+            Racine à INFO, code applicatif à DEBUG.
+
+            Auparavant la racine était à DEBUG : au démarrage, Spring Data JPA
+            teste l'existence d'une @NamedQuery pour CHAQUE méthode de repository.
+            Hibernate lève alors une exception interne — dont le message est
+            littéralement "exception just for purpose of providing stack trace" —
+            la logue en DEBUG avec sa pile complète, puis Spring bascule sur la
+            dérivation du nom de méthode. Comportement normal, mais des centaines
+            de fausses piles d'exception au démarrage, qui masquent les vrais
+            problèmes.
+
+            Les niveaux restent modifiables à chaud via l'endpoint Actuator
+            /actuator/loggers, sans redémarrage.
+        -->
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+
+        <!-- Code applicatif : tout le détail -->
+        <logger name="staport.finance.gBanque"                  level="DEBUG"/>
+
+        <!-- Réduire le bruit Hibernate/Spring en dev -->
+        <logger name="org.hibernate.SQL"                        level="WARN"/>
+        <logger name="org.hibernate.type.descriptor.sql"        level="WARN"/>
+        <logger name="org.springframework.security"             level="WARN"/>
+        <logger name="org.springframework.web"                  level="WARN"/>
+        <logger name="org.springframework.batch"                level="WARN"/>
+
+    </springProfile>
+
+    <!-- ── Profil PROD ─────────────────────────────────────────────────── -->
+    <springProfile name="prod">
+
+        <!-- JSON structuré sur stdout (capturé par le log agent : Promtail / Filebeat) -->
+        <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <!-- Champs MDC propagés automatiquement dans chaque entrée JSON -->
+                <includeMdcKeyName>requestId</includeMdcKeyName>
+                <includeMdcKeyName>userId</includeMdcKeyName>
+                <!-- Champ fixe "service" pour filtrer par application dans le SIEM -->
+                <customFields>{"service":"gbanque"}</customFields>
+                <!-- Exclure le champ "tags" vide généré par défaut -->
+                <fieldNames>
+                    <timestamp>timestamp</timestamp>
+                    <version>[ignore]</version>
+                    <levelValue>[ignore]</levelValue>
+                    <logger>logger</logger>
+                    <thread>thread</thread>
+                </fieldNames>
+            </encoder>
+        </appender>
+
+        <!-- Async wrapper : ne bloque pas le thread HTTP pendant l'écriture I/O -->
+        <appender name="ASYNC_JSON" class="ch.qos.logback.classic.AsyncAppender">
+            <queueSize>512</queueSize>
+            <!-- discardingThreshold=0 : ne jamais jeter des logs WARN/ERROR sous charge -->
+            <discardingThreshold>0</discardingThreshold>
+            <includeCallerData>false</includeCallerData>
+            <neverBlock>false</neverBlock>
+            <appender-ref ref="JSON_CONSOLE"/>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="ASYNC_JSON"/>
+        </root>
+
+        <!-- Silence les frameworks verbeux en prod -->
+        <logger name="org.hibernate"            level="WARN"/>
+        <logger name="org.springframework"      level="WARN"/>
+        <logger name="com.zaxxer.hikari"        level="WARN"/>
+        <logger name="org.springframework.batch" level="INFO"/>
+
+    </springProfile>
+
+</configuration>

@@ -1,0 +1,74 @@
+package staport.finance.gBanque.prelevements.validation.mapper;
+
+import org.springframework.stereotype.Component;
+import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.prelevements.entitie.Prelevement;
+import staport.finance.gBanque.prelevements.validation.dto.PrelevementTransactionResponse;
+import staport.finance.gBanque.prelevements.validation.dto.PrelevementValidationRequest;
+import staport.finance.gBanque.transactions.entities.Transaction;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+import java.math.BigDecimal;
+
+
+@Component
+public class PrelevementTransactionMapper {
+
+    public PrelevementTransactionMapper() {
+    }
+
+    public Transaction toEntity(PrelevementValidationRequest requestDto, Prelevement prelevement, BigDecimal montantTva)   {
+
+
+        if (requestDto == null || prelevement == null ) {
+            return null;
+        }
+
+        Transaction transaction = new Transaction();
+
+        // Mapping simple fields
+        // observation/dateEmission/libelle : fallback sur le prélèvement d'origine si non fournis (lot).
+        transaction.setReferent(prelevement.getId());
+        transaction.setObservation(requestDto.getObservation() != null ? requestDto.getObservation() : prelevement.getObservation());
+        transaction.setDateEmission(requestDto.getDateEmission() != null ? requestDto.getDateEmission() : prelevement.getDateEmission());
+        transaction.setDateValeur(requestDto.getDateValeur());
+        transaction.setDateOperations(requestDto.getDateOperation());
+        transaction.setLibelle(requestDto.getLibelle() != null ? requestDto.getLibelle() : prelevement.getLibelle());
+        transaction.setTransactionSource(TransactionSource.PRELEVEMENT);
+        transaction.setDebit(prelevement.getMontant());
+        transaction.setCredit(BigDecimal.ZERO);
+        transaction.setBanqueDePrelevement(prelevement.getBanque());
+
+        transaction.setTvaDeductible(montantTva);
+
+        return transaction;
+    }
+
+
+    public PrelevementTransactionResponse toResponseDto(Transaction transaction)   {
+        if (transaction == null) {
+            return null;
+        }
+
+        PrelevementTransactionResponse responseDto = new PrelevementTransactionResponse();
+
+        // Mapping fields from the entity to the DTO
+        responseDto.setId(transaction.getId());
+        responseDto.setPrelevementId(transaction.getReferent());
+        // Lazy loading might require calling getBanqueDePrelevement() before getName()
+        Banque banque = transaction.getBanqueDePrelevement();
+        if (banque != null) {
+            responseDto.setBanqueName(banque.getNom());
+        }
+        responseDto.setLibelle(transaction.getLibelle());
+        responseDto.setObservation(transaction.getObservation());
+        responseDto.setDateEmission(transaction.getDateEmission());
+        responseDto.setDateValeur(transaction.getDateValeur());
+        responseDto.setDateOperations(transaction.getDateOperations());
+        responseDto.setTvaDeductible(transaction.getTvaDeductible());
+        responseDto.setTvaCollectee(transaction.getTvaCollectee());
+        responseDto.setDebit(transaction.getDebit());
+        responseDto.setCredit(transaction.getCredit());
+        return responseDto;
+    }
+
+}

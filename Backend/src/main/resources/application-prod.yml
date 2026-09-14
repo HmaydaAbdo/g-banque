@@ -1,0 +1,25 @@
+# =============================================================================
+# G-Banque — Profil PROD
+# Activé quand SPRING_PROFILES_ACTIVE=prod
+# =============================================================================
+
+management:
+  endpoints:
+    web:
+      # Exposer uniquement les endpoints nécessaires en production
+      exposure:
+        include: health,info,metrics,prometheus
+
+spring:
+  jpa:
+    hibernate:
+      # Vérifie que le schéma correspond aux entités
+      ddl-auto: validate
+    # Ne jamais afficher les requêtes SQL en production
+    show-sql: false
+
+  batch:
+    jdbc:
+      # Les tables Spring Batch sont gérées par les migrations
+      initialize-schema: never
+
