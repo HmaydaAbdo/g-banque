@@ -26,53 +26,62 @@ stable *après* tout le refactoring, pas la faire évoluer en continu pendant.
 
 ---
 
-## Chantier préalable : repo unique + migration GitLab → GitHub
+## Chantier préalable : repo unique + migration GitLab → GitHub — ✅ TERMINÉ (14/09/2026)
 
-Décidé le 14/09/2026 : ce chantier passe **avant** le début du refactoring applicatif.
+Décidé le 14/09/2026 : ce chantier passe **avant** le début du refactoring applicatif. Terminé le
+même jour.
 
-### État actuel (constaté)
+### Résultat
 
-Trois dépôts git imbriqués, indépendants :
-- `G-Banque/` (racine) — `docs/`, `conventions/`, `sql/`, `infra/`, `docker-compose.yml`,
-  `CLAUDE.md`, `TODO.md`. Initialisé le 07/09/2026 (voir `TODO.md`).
-- `G-Banque/Backend/` — historique complet depuis l'origine du projet.
-- `G-Banque/Frontend/` — historique complet depuis l'origine du projet.
+- **Dépôt unifié** : https://github.com/HmaydaAbdo/g-banque (privé), branche `main`.
+- **Historique intégralement conservé** via `git subtree` — 444 commits Backend + 291 commits
+  Frontend fusionnés sous les préfixes `Backend/` et `Frontend/`, rattachés à l'historique
+  préexistant du dépôt racine (docs/conventions/sql/infra, initialisé le 07/09/2026). Aucun
+  squash, aucune réécriture de hash — `git log` du dépôt unifié remonte jusqu'au tout premier
+  commit de chaque projet.
+- **Aucun secret** (`.env`, `env.dev`) trouvé dans l'historique des 3 dépôts avant push (vérifié
+  via `git rev-list --objects --all`).
+- **Bug corrigé** : `graphify-out/` était suivi par erreur dans Backend et Frontend (règle
+  `.gitignore` `src/graphify-out/` qui ne matchait jamais le dossier, réellement à la racine de
+  chaque projet). 848 fichiers retirés du suivi (historique existant non réécrit, juste arrêt du
+  suivi). Remplacé par une règle unique `/graphify-out/` à la racine du dépôt unifié — un seul
+  graphe pour tout le monorepo, à régénérer via `graphify update .` depuis la racine, jamais
+  commité.
+- **`.gitignore` des 3 emplacements consolidé** : suppression de la règle "dépôts imbriqués"
+  (obsolète, Backend/ et Frontend/ sont maintenant de vrais sous-dossiers suivis).
+- **Vérification post-fusion réussie** : `mvnw.cmd compile` (Backend) et `npm ci && ng build`
+  (Frontend) fonctionnent tous les deux sans erreur depuis le dépôt fusionné — seuls des warnings
+  préexistants sans rapport (budgets de taille de bundle, vulnérabilités npm déjà présentes avant
+  la fusion, dépréciations de sous-dépendances).
 
-`G-Banque/.gitignore` ignore actuellement `Backend/` et `Frontend/` pour éviter que git ne les
-traite comme des gitlinks illisibles — cette règle disparaît une fois la fusion faite.
+### Étapes (toutes cochées)
 
-### Décisions arbitrées
+- [x] Sauvegarde complète de `G-Banque/` avant toute opération (`G-Banque-BACKUP-20260914`)
+- [x] Inspection en lecture seule des 3 dépôts (remotes, branche par défaut `main` partout,
+      aucun changement non commité perdu — Backend et Frontend étaient propres et à jour)
+- [x] Confirmation du dépôt GitHub cible (`HmaydaAbdo/g-banque`, privé, créé via l'UI web)
+- [x] Fusion `Backend/` dans le dépôt racine via `git subtree` (444 commits)
+- [x] Fusion `Frontend/` dans le dépôt racine via `git subtree` (291 commits)
+- [x] Retrait de `graphify-out/` (suivi par erreur) + nouveau `.gitignore` consolidé
+- [x] Vérification qu'aucun secret n'a jamais été commité dans l'historique des 3 dépôts
+- [x] Création du dépôt GitHub et push de `main` (historique complet, 25423 objets)
+- [x] Vérification post-fusion : build Backend (`mvn`) et Frontend (`ng build`) réussis depuis
+      le dépôt unifié
+- [ ] Retrait des anciens dépôts GitLab / anciens `.git` locaux — **volontairement pas encore
+      fait**, gardés en sécurité (`Backend-old-standalone-repo/`, `Frontend-old-standalone-repo/`
+      à côté de `G-Banque/`, + backup complet `G-Banque-BACKUP-20260914`). À faire seulement
+      quand HMAYDA confirme que tout est stable après un usage réel du dépôt fusionné.
 
-- **Historique conservé intégralement** (pas de squash) — via `git subtree`, sans dépendance
-  externe (`git-filter-repo` non nécessaire). Chaque dépôt source est ajouté comme remote local
-  (chemin de fichier) au dépôt racine, puis fusionné avec `git subtree add --prefix=<Backend|
-  Frontend>`. Aucun commit des dépôts source n'est perdu ; ils restent consultables dans
-  `git log` du dépôt unifié.
-- Le dépôt racine (`G-Banque/`) sert de **base** de la fusion (déjà positionné au bon endroit sur
-  le disque, contient déjà `docs/conventions/sql/infra`).
-- Séquencement : fusion + migration GitHub **avant** de commencer le travail sur une source, pour
-  ne pas cumuler deux chantiers risqués sur la même branche.
-- Mode d'exécution pour cette session : le pont shell distant (`device_bash`) est indisponible
-  (panne connue liée à une mise à jour Windows du 08/09/2026, suivie par Anthropic). HMAYDA exécute
-  les commandes que je fournis et me communique le résultat.
+### Reste en suspens (mineur, non bloquant)
 
-### Étapes (à cocher au fur et à mesure)
-
-- [ ] Sauvegarde complète de `G-Banque/` (copie/zip hors du dossier) avant toute opération
-- [ ] Inspection en lecture seule des 3 dépôts (remotes, branche par défaut, `git status`,
-      changements non commités éventuels) — nécessaire avant d'écrire les commandes de fusion
-- [ ] Confirmation du dépôt GitHub cible (nom, compte/organisation, vide ou déjà créé)
-- [ ] Fusion `Backend/` dans le dépôt racine via `git subtree`
-- [ ] Fusion `Frontend/` dans le dépôt racine via `git subtree`
-- [ ] Nouveau `.gitignore` consolidé (suppression des règles "dépôts imbriqués", fusion des
-      règles Backend/Frontend/racine, vérification qu'aucun secret n'est désormais suivi)
-- [ ] Vérification qu'aucun secret (`.env`, `env.dev`, mots de passe) n'a jamais été commité dans
-      l'historique de l'un des 3 dépôts (sinon : purge avant push public/privé sur GitHub)
-- [ ] Création du dépôt GitHub et push de toutes les branches/tags du dépôt unifié
-- [ ] Vérification post-fusion : build Backend (`mvn`) et Frontend (`ng build`) fonctionnent
-      depuis le dépôt unifié fusionné, avant de retirer les 2 anciens dépôts locaux
-- [ ] Retrait des anciens dépôts GitLab / anciens `.git` locaux (seulement une fois le nouveau
-      dépôt validé stable)
+- Les branches `feat/recap-provisions-ui` (Backend et Frontend) et `claude/admiring-murdock`
+  (Frontend, utilisée dans un git worktree local) n'ont pas été recréées dans le dépôt unifié —
+  seule `main` a été fusionnée. Leur historique reste présent dans les objets git locaux (remotes
+  `backend-local`/`frontend-local`) et dans les backups, donc rien n'est perdu ; à recréer comme
+  vraies branches du dépôt unifié si besoin plus tard.
+- Remotes locaux `backend-local`/`frontend-local` (pointant vers les anciens dossiers) encore
+  présents dans le dépôt racine — à nettoyer (`git remote remove`) une fois les anciens dépôts
+  définitivement retirés.
 
 ---
 
@@ -121,9 +130,13 @@ descripteur générique.*
 
 ## Journal de session
 
-**14/09/2026.** Décisions : repo unique + GitHub avant refactoring applicatif ; historique
-conservé (`git subtree`) ; mode d'exécution "HMAYDA exécute les commandes fournies" tant que
-`device_bash` est indisponible. Création de ce fichier de suivi.
+**14/09/2026.** Chantier repo unique + GitHub mené de bout en bout : backup, fusion `git subtree`
+de Backend (444 commits) et Frontend (291 commits) dans le dépôt racine, vérification absence de
+secrets dans l'historique, correction du bug `graphify-out` (848 fichiers suivis par erreur,
+gitignore corrigé), push vers `github.com/HmaydaAbdo/g-banque` (privé), build Backend + Frontend
+vérifiés depuis le dépôt fusionné. `device_bash` indisponible tout du long (panne connue depuis le
+08/09) — chaque commande donnée puis exécutée manuellement par HMAYDA, résultat revérifié avant la
+suivante. Prochaine étape : choisir la source pilote pour le refactoring applicatif.
 
 **12/09/2026.** Première discussion de l'idée : écran de récap unique pour la validation, sens
 porté par la ligne plutôt que par un choix utilisateur générique. Risques identifiés : RBAC
