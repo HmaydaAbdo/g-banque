@@ -17,8 +17,6 @@ export const ETATS_DES_ENCOURS_ROUTES: Routes = [
 
       { path: 'recapitulatif', loadComponent: () => import('./views/lesEncours/recap/views/recapitulatif/recapitulatif.component').then(m => m.RecapitulatifComponent) },
 
-      { path: 'echeances-cmt', loadComponent: () => import('./views/lesEncours/decaissement/echeances-cmt/echeances-cmt.component').then(m => m.EcheancesCmtComponent) },
-
       { path: 'lcn-decaissements', loadComponent: () => import('./views/lesEncours/decaissement/lcn-encours/lcn-encours.component').then(m => m.LcnEncoursComponent) },
       { path: 'lcn-encaissements', loadComponent: () => import('./views/lesEncours/encaissements/encaissement-lcn-encours/encaissement-lcn-encours.component').then(m => m.EncaissementLcnEncoursComponent) },
 

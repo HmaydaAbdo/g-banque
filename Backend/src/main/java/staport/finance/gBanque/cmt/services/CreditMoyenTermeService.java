@@ -25,7 +25,7 @@ import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.cmt.dtos.*;
 import staport.finance.gBanque.cmt.echeances.enums.StatutEcheanceCMT;
-import staport.finance.gBanque.cmt.echeances.services.EcheanceCMTService;
+import staport.finance.gBanque.cmt.echeances.services.interfaces.IEcheanceCMTService;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.cmt.mappers.CreditMoyenTermeMapper;
 import staport.finance.gBanque.cmt.repositories.CreditMoyenTermeRepository;
@@ -64,13 +64,13 @@ public class CreditMoyenTermeService {
     private final CreditMoyenTermeRepository creditMoyenTermeRepository;
     private final IBanqueService banqueService;
     private final CreditMoyenTermeMapper creditMoyenTermeMapper;
-    private final EcheanceCMTService echeanceCmtService;
+    private final IEcheanceCMTService echeanceCmtService;
     private final StaportPdfReportService staportPdfReportService;
 
     public CreditMoyenTermeService(CreditMoyenTermeRepository creditMoyenTermeRepository,
                                    IBanqueService banqueService,
                                    CreditMoyenTermeMapper creditMoyenTermeMapper,
-                                   EcheanceCMTService echeanceCmtService,
+                                   IEcheanceCMTService echeanceCmtService,
                                    StaportPdfReportService staportPdfReportService) {
         this.creditMoyenTermeRepository = creditMoyenTermeRepository;
         this.banqueService = banqueService;

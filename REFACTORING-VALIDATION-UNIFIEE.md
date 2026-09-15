@@ -102,7 +102,44 @@ même jour.
   additif), du moment que les conventions Spring/Angular du projet sont respectées.
 - **14/09/2026 — TVA Leasing** : reste verrouillée à 20 % (non éditable) dans le formulaire de
   validation unifié, comme sur l'écran dédié actuel — décision explicite de HMAYDA contre ma
-  recommandation d'ouvrir la saisie libre.
+  recommandation d'ouvrir la saisie libre. **⚠️ Réversée le 14/09/2026 (session CMT), voir
+  ci-dessous.**
+- **14/09/2026 (session CMT) — TVA Leasing rouverte** : HMAYDA revient sur la décision ci-dessus —
+  le champ TVA du formulaire de validation unifié Leasing devient **éditable** : 20 % par défaut,
+  mais l'utilisateur peut choisir « aucun » (0 %, via le dropdown des taux) ou saisir un montant
+  libre. Décision explicite, verbatim : « le choix 1 et aussi pour leasing aulieu d etre 0 par
+  defaut, il doit etre 20% mais aussi la possibilite de choisir aucun et saisir montant ».
+- **14/09/2026 (session CMT) — TVA CMT** : saisie libre/optionnelle (taux OU montant, défaut 0 %),
+  comme sur l'écran dédié CMT actuel — confirmé par lecture de `CmtValidationService.java` et
+  `CmtTransactionRequestDto.isSaisieTvaCoherente()` avant de proposer l'option à HMAYDA (règle non
+  négociable : ne jamais supposer une règle métier).
+- **14/09/2026 (session CMT) — `IEcheanceCMTService` ajoutée** : à la demande explicite de HMAYDA
+  (répond au point d'ambiguïté laissé en suspens dans la note de session précédente), pour la
+  cohérence avec le patron Leasing (`IEcheanceLeasingService`). `CreditMoyenTermeService` bascule
+  également sur l'interface plutôt que la classe concrète — même patron que
+  `ContratLeasingServiceImpl` → `IEcheanceLeasingService`, constaté par lecture du code Leasing.
+- **14/09/2026 (session CMT, après coup) — Un seul dialogue de validation unitaire, pas un par
+  source** : question posée par HMAYDA après avoir vu deux `<p-dialog>` quasi identiques
+  (Leasing + CMT). Proposé 3 options (fusionner en un dialogue générique piloté par config ;
+  factoriser seulement le template HTML ; garder séparé, par cohérence avec le choix backend
+  d'un `*ValidationService` par source) — HMAYDA retient la fusion complète. Le récap Leasing du
+  pilote initial est donc lui-même généralisé par cette session (voir Journal, suite 4) ; le choix
+  backend (services séparés par source) reste inchangé — c'est une décision de bean Spring/cycle
+  d'injection, sans rapport avec la duplication de formulaire côté frontend.
+- **15/09/2026 — Aller plus loin côté backend : mesure du risque, puis choix d'un périmètre
+  restreint et additif.** HMAYDA demande si le backend peut être unifié de la même façon (un seul
+  dialogue + un seul service de validation pour toutes les sources). Lecture de
+  `ValidationController.java` (31 Ko, 22 endpoints) et surtout `BatchValidationService.java`
+  (switch de 500 lignes sur `TransactionSource`) avant de répondre — constats : (1) ce switch EST
+  déjà l'abstraction partagée du backend, juste sous forme procédurale plutôt qu'un registre ;
+  (2) les 22 DTOs de requête n'ont aucune forme commune (constructeurs différents, `sens` requis
+  seulement pour 4 sources, `banqueId` requis pour 4 autres, CMT/Leasing sont les seuls à résoudre
+  une entité parente) ; (3) **la TVA en saisie libre (`montantTva`) n'existe que sur les DTOs
+  Leasing et CMT** — les 20 autres n'ont qu'un `tauxTva`. Sur cette base, 3 options proposées
+  (tout laisser tel quel ; extraction incrémentale d'une interface partagée, Leasing/CMT
+  d'abord ; fusion complète immédiate en un endpoint/DTO générique) — HMAYDA choisit
+  l'extraction incrémentale, puis précise vouloir aussi le câblage réel (pas juste
+  l'interface sans l'utiliser) pour ces deux sources.
 - **14/09/2026 — Vue `v_recapitulatif_encours` non modifiée** : malgré la liberté accordée
   ci-dessus, gardée intacte pour préserver son contrat de colonnes documenté ; le détail
   nécessaire à la validation (ex. `contratLeasingId` pour Leasing) est résolu via un endpoint GET
@@ -134,7 +171,7 @@ porté par la ligne (Préfinancement/Droit constaté/Factoring).
 | Factoring | D/E | porté par la ligne | `process/factoring` | 2 | Non commencé |
 | Provision | D/E | porté par l'enregistrement | `process/provision` | 2 | Non commencé |
 | Impayé | D/E | porté par l'enregistrement | `process/impayee` | 2 | Non commencé |
-| CMT (échéance) | D | fixe | `process/echeance-cmt` | 1 | Non commencé |
+| CMT (échéance) | D | fixe | `process/echeance-cmt` + `GET /echeances-cmt/{id}` | 1 (ancien écran encore présent) | **Récap opérationnel (backend + frontend, 14/09/2026) — en attente de validation HMAYDA (build + test manuel) avant retrait de l'ancien écran** |
 | Leasing (échéance) | D | fixe | `process/echeance-leasing` | 0 (récap uniquement) | **Pilote fait + ancien écran supprimé (14/09/2026)** |
 | Agios | D | fixe | `process/agios` | 1 | Non commencé |
 | Commission | D | fixe | `process/commission` | 1 | Non commencé |
@@ -152,6 +189,172 @@ descripteur générique.*
 ---
 
 ## Journal de session
+
+**15/09/2026.** Extraction d'un `BatchValidationHandler` pour la validation en lot Leasing + CMT
+dans `BatchValidationService` — voir Décisions arbitrées pour la mesure de risque et le choix de
+périmètre :
+- **`BatchValidationHandler`** (nouvelle interface,
+  `validation/services/handlers/BatchValidationHandler.java`) : `source()` (clé
+  d'enregistrement) + `processOne(Long id, BatchValidationRequestDto requestDto)`. Chaque
+  implémentation est un `@Component` Spring, découvert automatiquement (injection de
+  `List<BatchValidationHandler>` dans `BatchValidationService`, converti en
+  `Map<TransactionSource, BatchValidationHandler>` dans le constructeur). Ajouter une source migrée
+  ne demande plus de toucher `BatchValidationService` — juste une nouvelle implémentation dans le
+  module de cette source.
+- **`CmtBatchValidationHandler`** (`cmt/echeances/services/`) et **`LeasingBatchValidationHandler`**
+  (`leasing/echeancesLeasing/services/`) : reprennent **à l'identique** (copier-coller, aucune
+  logique changée) le corps des anciens `case CMT ->` / `case LEASING ->` du switch — même
+  résolution de l'entité parente via repository, même construction du DTO, même appel à
+  `ICmtValidationService`/`ILeasingValidationService`.
+- **`BatchValidationService.processOne`** : vérifie d'abord le registre
+  (`handlerRegistry.get(requestDto.transactionSource())`) et délègue si une entrée existe, sinon
+  retombe sur le switch historique. Les `case CMT`/`case LEASING` et les champs/imports qui ne
+  servaient qu'à eux (`echeanceCMTRepository`, `cmtValidationService`, `echeanceLeasingRepository`,
+  `leasingValidationService`, DTOs et entités CMT/Leasing) sont retirés — plus aucune référence
+  résiduelle (vérifié par relecture complète du fichier après édition). Les 20 autres `case`
+  restent inchangés dans le switch, à migrer un par un plus tard.
+- **Portée volontairement limitée** : `ValidationController` (endpoints unitaires
+  `process/echeance-cmt`/`process/echeance-leasing`) et les services `CmtValidationService`/
+  `LeasingValidationService` eux-mêmes ne sont pas touchés — seul le dispatch de la validation
+  **en lot** change de mécanisme. Comportement fonctionnel strictement identique pour l'appelant
+  (même requête, même réponse) — seule la façon dont `BatchValidationService` route en interne
+  a changé.
+- **Non fait, sciemment** : le champ `tvaAutoriserSaisieLibre`-style qui permettrait au futur
+  dialogue unitaire générique de savoir qu'une source n'accepte pas la TVA en montant libre
+  (seuls Leasing/CMT le font aujourd'hui, voir Décisions arbitrées) — pas ajouté avant qu'une
+  source concernée soit réellement migrée, pour ne pas introduire de code mort.
+- **Fichiers** : 3 nouveaux (`BatchValidationHandler.java`, `CmtBatchValidationHandler.java`,
+  `LeasingBatchValidationHandler.java`) + `BatchValidationService.java` modifié — écrits via
+  `device_commit_files`, taille en octets revérifiée par `device_stage_files` après écriture
+  (`device_bash` toujours indisponible).
+- **Prochaine étape** : validation par HMAYDA en usage réel de « Valider en lot » sur des
+  opérations Leasing et CMT (même checkpoint que pour tout changement backend cette session — pas
+  de moyen de compiler depuis cette session). Une fois confirmé, migrer les 20 sources restantes
+  vers `BatchValidationHandler` une par une (chacune une simple extraction du corps de son `case`
+  existant dans une nouvelle classe, sans changement de comportement).
+
+**15/09/2026 (suite).** Nettoyage CMT post-pilote (même déroulé que le nettoyage Leasing du
+14/09, périmètre confirmé avec HMAYDA : CMT uniquement, pas de balayage large) :
+- **Ancien écran de validation CMT dédié retiré** (`echeances-cmt.component.ts/.html`, décision
+  identique à Leasing : seul le récap validera CMT désormais) :
+  - Retrait de l'entrée de route `echeances-cmt` dans `etats-des-encours.routes.ts`.
+  - Retrait du lien de menu (« CMT » sous Décaissements) et de l'entrée `breadcrumbMap`
+    correspondante dans `les-encours.component.ts`.
+  - Endpoint backend de validation (`ValidationService.echeanceCmtToRapprochement` →
+    `POST /rapprochement/process/echeance-cmt`) conservé intact : le récap l'appelle à
+    l'identique.
+- **Nettoyage complémentaire** — retrait de `getEncoursCMT()` / `exportEncoursCMTPdf()`, devenus
+  orphelins après la suppression de l'écran ci-dessus (vérifié : aucun autre écran du module CMT
+  ne les appelait — ni `cmt-list-actifs`, ni `cmt-form`, ni `cmt-list-archived`, ni
+  `cmt-list-en-attente-de-ml`, ni `tableau-amortissement-cmt`, ni `BankAccueilAggregatorService`
+  qui utilise une agrégation différente) :
+  - **Frontend** (`EcheanceCmtService.ts`) : méthodes `getEncoursCMT()` et `exportEncoursCMTPdf()`
+    retirées, imports `EncoursCMTRequestDTO`/`EncoursCMTResponseDTO` retirés.
+  - **Backend** : endpoints `GET /encours` et `GET /encours/export/pdf` retirés du
+    `EcheanceCMTController` ; `getEncoursCMTForBanque()`/`exportEncoursCMTPdf()` retirés de
+    `IEcheanceCMTService` et de `EcheanceCMTService` ; le champ `banqueService` (`IBanqueService`,
+    injecté par constructeur) devenu inutilisé une fois ces méthodes parties, retiré avec son
+    import et celui de l'entité `Banque` (vérifié par relecture complète du fichier : aucun autre
+    usage). Contrairement à Leasing, `EcheanceCMTService` n'avait pas de helper privé dédié type
+    `sumMontantTTC()` — les deux méthodes retirées utilisaient directement les builders de
+    `EcheanceCMTSpecification` (`byCreditBanqueId`/`outstandingUntil`/`byCreditDesignationLike`/
+    `byMontant`), **laissés en place** comme pour Leasing (builders de `Specification` partagés,
+    décision séparée à faire seulement si HMAYDA le demande explicitement).
+  - Les 6 fichiers modifiés (3 backend, 3 frontend) vérifiés byte-for-byte (stage + taille en
+    octets) après écriture.
+- **Contrainte d'environnement aggravée** : `device_bash` confirmé cassé par une mise à jour
+  Windows du 08/09 (message d'erreur explicite du bridge cette fois, plus une simple
+  déconnexion passagère) — donc aucun `mv`/`rm` réel possible depuis cette session, sur toute la
+  durée du projet tant que ce n'est pas résolu côté plateforme.
+- **Suppression physique restante** (8 fichiers, copie seule possible — pas de move réel) — à la
+  demande explicite de HMAYDA (« grouper les fichiers à supprimer dans un dossier "deleted" »),
+  une **copie** de chacun a été déposée dans `G-Banque/deleted/` (mêmes chemins relatifs que
+  l'original, préfixés `Frontend/`/`Backend/`) pour revue ; les fichiers originaux listés
+  ci-dessous restent en place et doivent être supprimés manuellement par HMAYDA (le dossier
+  `deleted/` peut ensuite être supprimé aussi, une fois les originaux confirmés partis) :
+    1. `Frontend/src/app/portail/etatsDesEncours/views/lesEncours/decaissement/echeances-cmt/`
+       (dossier complet : `.component.ts/.html/.scss/.spec.ts`)
+    2. `Frontend/src/app/portail/cmt/dtos/EncoursCMTRequestDTO.ts`
+    3. `Frontend/src/app/portail/cmt/dtos/EncoursCMTResponseDTO.ts`
+    4. `Backend/src/main/java/staport/finance/gBanque/cmt/echeances/dtos/EncoursCMTRequestDTO.java`
+    5. `Backend/src/main/java/staport/finance/gBanque/cmt/echeances/dtos/EncoursCMTResponseDTO.java`
+- **Prochaine étape** : HMAYDA supprime manuellement les originaux listés ci-dessus (et le dossier
+  `deleted/` une fois vérifié), confirme le build/test CMT en usage réel, puis choix de la source
+  suivante parmi les 22 restantes pour la migration `BatchValidationHandler` (voir entrée
+  15/09/2026 ci-dessus).
+
+**14/09/2026 (suite 4).** Fusion des dialogues de validation unitaire Leasing + CMT en un seul,
+suite à une question de HMAYDA (« pourquoi deux dialogues, ça ne peut pas être un seul pour
+toutes ? ») — voir Décisions arbitrées pour les options proposées et le choix retenu :
+- **`UnitValidationConfig<TDetail>`** : interface décrivant tout ce que le dialogue générique doit
+  savoir sur une source — `fetchDetail` (appel du `GET .../{id}`), `toCommonDetail` (extraction des
+  champs communs `dateEcheance`/`observation`/`libelle`/`montantTTC`/`recapLabel`/`recapValue`
+  depuis le DTO spécifique à la source), `tvaInitialValue`/`tvaLocked` (politique TVA),
+  `buildAndSubmit` (construction de la requête spécifique + appel du bon endpoint de validation),
+  et les libellés de dialogue (`confirmHeader`, `successDetail`, `fetchErrorDetail`).
+- **`unitValidationConfigs`** : `Map<TransactionSource, UnitValidationConfig>` avec une entrée
+  Leasing et une entrée CMT (reprenant exactement le comportement des deux dialogues distincts
+  qu'elles remplacent — aucun changement fonctionnel, juste une seule implémentation partagée).
+  Ajouter une source ne demande plus qu'une entrée dans cette Map, jamais un nouveau `<p-dialog>`
+  ni un nouveau jeu de méthodes `open*/close*/confirm*/submit*`.
+- Un seul jeu d'état/méthodes générique remplace les deux : `displayUnitValidationModal`,
+  `unitValidationForm`, `unitValidationDetail`, `canValidateUnitairement()`,
+  `openUnitValidation()`, `closeUnitValidationModal()`, `isUnitValidationInvalid()`,
+  `confirmUnitValidation()`, `submitUnitValidation()`. Un seul `<p-dialog>` dans le template,
+  avec des ids `recapUnit*` (au lieu de `recapLeasing*`/`recapCmt*`).
+- Décision backend non remise en cause : les `*ValidationService` par source restent séparés
+  (raison différente — éviter les cycles d'injection Spring —, sans rapport avec ce refactor
+  frontend).
+- Fichiers modifiés : `recapitulatif.component.ts` et `recapitulatif.component.html` (mêmes
+  fichiers que le pilote CMT ci-dessous) — écrits via `device_commit_files`, taille en octets
+  revérifiée par `device_stage_files` après écriture (`device_bash` toujours indisponible).
+
+**14/09/2026 (suite 3).** Pilote CMT mené backend + frontend, même patron que Leasing (voir note
+de session précédente) :
+- **Ambiguïtés tranchées avec HMAYDA avant tout code** (règle non négociable), via 3 questions à
+  choix + recommandation :
+  1. Politique TVA CMT → saisie libre/optionnelle retenue (option recommandée, confirmée par
+     lecture du code existant — voir Décisions arbitrées).
+  2. Interface `IEcheanceCMTService` → HMAYDA choisit de l'ajouter (contrairement à ma
+     recommandation de suivre le patron existant sans interface) — décision honorée intégralement.
+  3. Portée → plan complet confirmé : backend (`GET by-id`) → extension du récap pour CMT → retrait
+     de l'ancien écran CMT une fois le récap validé en usage réel.
+  - Extension non demandée mais explicitement décidée par HMAYDA au passage : rouverture de la TVA
+    Leasing (verrouillée à 20 % depuis le pilote initial) — devient éditable, 20 % par défaut,
+    « aucun » ou montant libre possibles. Documentée dans Décisions arbitrées comme réversant la
+    décision du 14/09/2026 (pilote initial).
+- **Backend** :
+  - Nouvelle interface `IEcheanceCMTService` (`cmt/echeances/services/interfaces/`), même forme que
+    `IEcheanceLeasingService` — `EcheanceCMTService` l'implémente (`@Override` ajouté aux 10
+    méthodes existantes), `EcheanceCMTController` et `CreditMoyenTermeService` basculés pour
+    injecter l'interface plutôt que la classe concrète.
+  - Nouvelle méthode `getEcheanceCMTById(Long id)` sur `EcheanceCMTService`/`IEcheanceCMTService`
+    (patron `findById(...).orElseThrow(...)` → `echeanceCmtMapper.toResponseDto(...)`, identique à
+    `getEcheanceLeasingById`) + nouvel endpoint `GET /echeances-cmt/{id}` sur
+    `EcheanceCMTController`. Zéro changement aux 22 endpoints unitaires existants ni au module
+    `recapitulatif` en lecture.
+- **Frontend** :
+  - `EcheanceCmtService.getEcheanceCMTById(id)` ajouté (patron `getEcheanceLeasingById`).
+  - Écran Récapitulatif étendu : bouton « Valider » unitaire désormais actif aussi sur les lignes
+    CMT (`isCmt()`, `openCmtValidation()`), nouveau `<p-dialog>` de validation CMT reprenant
+    exactement les champs et le comportement de l'ancien écran dédié (TVA libre via
+    `app-tva-input`, dates, libellé, observation), `submitCmtValidation()` appelle
+    `validationService.echeanceCmtToRapprochement(...)` (méthode déjà existante, non modifiée).
+  - TVA Leasing du récap : `tva: [{ value: {...}, disabled: true }]` → `tva: [{ tauxTva: 20,
+    montantTva: null }]` (éditable, 20 % par défaut) suite à la décision ci-dessus.
+- **Contrainte d'environnement inchangée** : `device_bash` toujours indisponible (panne du 08/09).
+  Chaque fichier modifié écrit via `device_commit_files` puis revérifié par un nouveau
+  `device_stage_files` (taille en octets comparée à l'original) — pas de diff cmd.exe cette
+  session, les dossiers profonds (`Backend/.../gBanque`, `Frontend/src/app`) étant maintenant
+  connectés directement, ce qui a aussi permis de lire les fichiers sans passer par `_review/`.
+- **Ancien écran CMT dédié** (`echeances-cmt.component.ts/.html`) **pas encore retiré** — même
+  checkpoint que pour Leasing : en attente que HMAYDA valide le récap CMT en usage réel (build +
+  test manuel) avant la phase de nettoyage (retrait route/menu/breadcrumb, puis recherche de code
+  mort orphelin — `getEncoursCMT`/`exportEncoursCMTPdf` notamment, à vérifier une fois l'écran
+  retiré, comme cela a été fait pour Leasing).
+- **Prochaine étape** : validation du pilote CMT par HMAYDA en usage réel, puis nettoyage de
+  l'ancien écran CMT (même déroulé que le nettoyage Leasing ci-dessous), puis choix de la source
+  suivante parmi les 22 restantes.
 
 **14/09/2026 (suite 2).** Nettoyage Leasing post-pilote + résolution de la contrainte d'environnement :
 - **Dossiers profonds connectés** : à la demande de HMAYDA (le contournement `_review\` + copy

@@ -6,20 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Agios.dtos.AgiosTransactionResponse;
 import staport.finance.gBanque.Agios.dtos.AgiosValidationRequest;
 import staport.finance.gBanque.Agios.service.interfaces.IAgiosValidationService;
-import staport.finance.gBanque.cmt.echeances.dtos.CmtTransactionRequestDto;
-import staport.finance.gBanque.cmt.echeances.dtos.CmtTransactionResponseDto;
-import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
-import staport.finance.gBanque.cmt.echeances.repositories.EcheanceCMTRepository;
-import staport.finance.gBanque.cmt.echeances.services.interfaces.ICmtValidationService;
-import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
-import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
-import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
-import staport.finance.gBanque.leasing.echeancesLeasing.dto.LeasingTransactionRequestDTO;
-import staport.finance.gBanque.leasing.echeancesLeasing.dto.LeasingTransactionResponseDTO;
-import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
-import staport.finance.gBanque.leasing.echeancesLeasing.repositories.EcheanceLeasingRepository;
-import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.ILeasingValidationService;
 import staport.finance.gBanque.moyensDePaiements.cheques.validation.dto.ChequeTransactionRequest;
 import staport.finance.gBanque.moyensDePaiements.cheques.validation.dto.ChequeTransactionResponseDto;
 import staport.finance.gBanque.moyensDePaiements.cheques.validation.services.interfaces.IChequeValidationService;
@@ -76,10 +63,13 @@ import staport.finance.gBanque.moyensDePaiements.virementInternational.validatio
 import staport.finance.gBanque.moyensDePaiements.virements.validation.dto.VirementTransactionRequestDto;
 import staport.finance.gBanque.moyensDePaiements.virements.validation.dto.VirementTransactionResponseDto;
 import staport.finance.gBanque.moyensDePaiements.virements.validation.services.interfaces.IVirementValidationService;
+import staport.finance.gBanque.validation.services.handlers.BatchValidationHandler;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Orchestrateur de validation (rapprochement) en lot.
@@ -87,9 +77,16 @@ import java.util.List;
  * Applique les mêmes champs communs (TVA, date opération, date valeur, rapprochement cible) à un
  * ensemble d'opérations de même {@link TransactionSource} (et même {@link SensOperation} pour les
  * types qui distinguent décaissement/encaissement), en réutilisant telles quelles les méthodes
- * unitaires existantes de chaque {@code XxxValidationService} de module / {@link IAgiosValidationService} /
- * {@link ICmtValidationService} / {@link ILeasingValidationService} — aucune logique métier n'est dupliquée ici, seul le dispatch
- * et l'agrégation du résultat le sont.
+ * unitaires existantes de chaque {@code XxxValidationService} de module / {@link IAgiosValidationService} —
+ * aucune logique métier n'est dupliquée ici, seul le dispatch et l'agrégation du résultat le sont.
+ * <p>
+ * Migration en cours (14-15/09/2026) vers un registre de {@link BatchValidationHandler} plutôt
+ * qu'un unique switch : Leasing et CMT sont les deux premières sources migrées
+ * ({@code LeasingBatchValidationHandler}, {@code CmtBatchValidationHandler}, découverts et injectés
+ * automatiquement par Spring) — {@link #processOne} vérifie d'abord le registre, puis retombe sur
+ * le switch historique pour les 20 sources pas encore migrées. Ajouter une source migrée ne
+ * demande plus de modifier cette classe, seulement d'ajouter une implémentation de
+ * {@link BatchValidationHandler} dans le module de cette source.
  * <p>
  * La saisie libre du montant de TVA n'est volontairement pas disponible en lot : un montant fixe
  * appliqué à N opérations de montants différents n'a pas de sens comptable. Le lot ne transporte
@@ -126,10 +123,8 @@ public class BatchValidationService {
     private final IOperationErroneValidationService operationErroneValidationService;
     private final IImpayeeValidationService impayeeValidationService;
     private final IAgiosValidationService agiosValidationService;
-    private final EcheanceCMTRepository echeanceCMTRepository;
-    private final ICmtValidationService cmtValidationService;
-    private final EcheanceLeasingRepository echeanceLeasingRepository;
-    private final ILeasingValidationService leasingValidationService;
+    /** Sources migrées vers {@link BatchValidationHandler} (Leasing, CMT à ce jour) — voir Javadoc de la classe. */
+    private final Map<TransactionSource, BatchValidationHandler> handlerRegistry;
     private final IChequeValidationService chequeValidationService;
     private final ILcnValidationService lcnValidationService;
     private final IVirementValidationService virementValidationService;
@@ -149,10 +144,7 @@ public class BatchValidationService {
                                    IOperationErroneValidationService operationErroneValidationService,
                                    IImpayeeValidationService impayeeValidationService,
                                    IAgiosValidationService agiosValidationService,
-                                   EcheanceCMTRepository echeanceCMTRepository,
-                                   ICmtValidationService cmtValidationService,
-                                   EcheanceLeasingRepository echeanceLeasingRepository,
-                                   ILeasingValidationService leasingValidationService,
+                                   List<BatchValidationHandler> batchValidationHandlers,
                                    IChequeValidationService chequeValidationService,
                                    ILcnValidationService lcnValidationService,
                                    IVirementValidationService virementValidationService,
@@ -171,10 +163,11 @@ public class BatchValidationService {
         this.operationErroneValidationService = operationErroneValidationService;
         this.impayeeValidationService = impayeeValidationService;
         this.agiosValidationService = agiosValidationService;
-        this.echeanceCMTRepository = echeanceCMTRepository;
-        this.cmtValidationService = cmtValidationService;
-        this.echeanceLeasingRepository = echeanceLeasingRepository;
-        this.leasingValidationService = leasingValidationService;
+        this.handlerRegistry = batchValidationHandlers.stream()
+                .collect(Collectors.toMap(BatchValidationHandler::source, h -> h, (a, b) -> {
+                    throw new IllegalStateException(
+                            "Deux BatchValidationHandler enregistrés pour la même source: " + a.source());
+                }));
         this.chequeValidationService = chequeValidationService;
         this.lcnValidationService = lcnValidationService;
         this.virementValidationService = virementValidationService;
@@ -209,6 +202,11 @@ public class BatchValidationService {
     }
 
     private OperationValideeDto processOne(Long id, BatchValidationRequestDto requestDto) {
+        BatchValidationHandler handler = handlerRegistry.get(requestDto.transactionSource());
+        if (handler != null) {
+            return handler.processOne(id, requestDto);
+        }
+
         switch (requestDto.transactionSource()) {
             case Virement -> {
                 VirementTransactionRequestDto dto = new VirementTransactionRequestDto();
@@ -394,44 +392,6 @@ public class BatchValidationService {
                         requestDto.dateValeur(), requestDto.dateOperation(),
                         null, null, requestDto.rapprochementId());
                 ImpayeeTransactionResponseDto r = impayeeValidationService.processImpayeeTransaction(dto);
-                return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
-            }
-            case CMT -> {
-                EcheanceCMT echeance = echeanceCMTRepository.findById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException(
-                                "Échéance CMT introuvable avec l'ID: " + id));
-                CreditMoyenTerme creditMoyenTerme = echeance.getCreditMoyenTerme();
-                CmtTransactionRequestDto dto = new CmtTransactionRequestDto(
-                        creditMoyenTerme.getId(),
-                        id,
-                        null,
-                        requestDto.dateValeur(),
-                        requestDto.dateOperation(),
-                        null,
-                        requestDto.tauxTva(),
-                        null,
-                        null,
-                        requestDto.rapprochementId());
-                CmtTransactionResponseDto r = cmtValidationService.processCmtTransaction(creditMoyenTerme, dto);
-                return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
-            }
-            case LEASING -> {
-                EcheanceLeasing echeance = echeanceLeasingRepository.findById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException(
-                                "Échéance de leasing introuvable avec l'ID: " + id));
-                ContratLeasing contratLeasing = echeance.getContratLeasing();
-                LeasingTransactionRequestDTO dto = new LeasingTransactionRequestDTO(
-                        contratLeasing.getId(),
-                        id,
-                        null,
-                        requestDto.dateValeur(),
-                        requestDto.dateOperation(),
-                        null,
-                        requestDto.tauxTva(),
-                        null,
-                        null,
-                        requestDto.rapprochementId());
-                LeasingTransactionResponseDTO r = leasingValidationService.processLeasingTransaction(contratLeasing, dto);
                 return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
             }
             default -> throw new ValidationException(

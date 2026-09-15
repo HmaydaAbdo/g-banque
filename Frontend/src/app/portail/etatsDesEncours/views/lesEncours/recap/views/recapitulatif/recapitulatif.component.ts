@@ -5,7 +5,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 import { Table } from 'primeng/table';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { concatMap, from, Subscription, toArray } from 'rxjs';
+import { concatMap, from, Observable, Subscription, toArray } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MultiSelectModule } from 'primeng/multiselect';
@@ -42,6 +42,9 @@ import {
 import { EcheanceLeasingService } from "../../../../../../leasing/contratsLeasing/services/EcheanceLeasingService";
 import { EcheanceLeasingResponse } from "../../../../../../leasing/contratsLeasing/dtos/EcheanceLeasingResponse";
 import { LeasingTransactionRequest } from "../../../../../dtos/leasing/LeasingTransactionRequest";
+import { EcheanceCmtService } from "../../../../../../cmt/services/EcheanceCmtService";
+import { EcheanceCMTResponseDto } from "../../../../../../cmt/dtos/EcheanceCMTResponseDto";
+import { CmtTransactionRequest } from "../../../../../dtos/cmt/CmtTransactionRequest";
 import { parseLocalDate } from '../../../../../../global/types/date.utils';
 
 /** Options du dropdown de filtre de sens — `null` = « Tous », aucun filtre appliqué. */
@@ -62,6 +65,46 @@ interface LotGroup {
   sens: SensOperation;
   ids: number[];
   montantTotal: number;
+}
+
+/**
+ * Champs communs qu'a besoin le dialogue générique de validation unitaire, extraits du DTO de
+ * détail spécifique à chaque source (`EcheanceLeasingResponse`, `EcheanceCMTResponseDto`, ...)
+ * par `UnitValidationConfig.toCommonDetail`.
+ */
+interface UnitValidationDetail {
+  dateEcheance: string;
+  observation: string;
+  libelle: string;
+  montantTTC: number;
+  /** Libellé de l'identifiant métier affiché dans le message de confirmation (ex. "Contrat N°"). */
+  recapLabel: string;
+  recapValue: string | number;
+}
+
+/**
+ * Décrit tout ce que le dialogue générique de validation unitaire a besoin de savoir sur une
+ * source pour fonctionner : comment récupérer le détail, en extraire les champs communs, la
+ * politique TVA, et comment construire + envoyer la requête de validation spécifique à cette
+ * source. Ajouter une source ne demande qu'une entrée dans `unitValidationConfigs`, plus le
+ * détail spécifique à cette source (`TDetail`) — jamais un nouveau dialogue.
+ *
+ * `any` par défaut sur `TDetail` : la Map `unitValidationConfigs` est volontairement hétérogène
+ * (une config par source, chacune avec son propre DTO de détail) : chaque config reste fortement
+ * typée en son sein (voir les entrées Leasing/CMT ci-dessous), seule la signature de la Map les
+ * réunit sous un type commun.
+ */
+interface UnitValidationConfig<TDetail = any> {
+  fetchDetail: (id: number) => Observable<TDetail>;
+  toCommonDetail: (detail: TDetail) => UnitValidationDetail;
+  /** Valeur initiale du champ TVA — éditable pour toutes les sources câblées à ce jour. */
+  tvaInitialValue: SaisieTva;
+  /** Prévu pour une source dont la TVA devrait rester verrouillée — aucune à ce jour. */
+  tvaLocked: boolean;
+  confirmHeader: string;
+  successDetail: string;
+  fetchErrorDetail: string;
+  buildAndSubmit: (detail: TDetail, formValue: any, rapprochementId: number) => Observable<unknown>;
 }
 
 @Component({
@@ -148,6 +191,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
   private readonly validationService = inject(ValidationService);
   private readonly bankStateService = inject(BankStateService);
   private readonly echeanceLeasingService = inject(EcheanceLeasingService);
+  private readonly echeanceCmtService = inject(EcheanceCmtService);
   private readonly datePipe = inject(DatePipe);
   private readonly decimalPipe = inject(DecimalPipe);
 
@@ -329,75 +373,171 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     );
   }
 
-  // ==================== Validation unitaire — pilote Leasing ====================
-  // Seule source câblée pour l'instant (les 23 autres écrans "Encours" restent l'unique
+  // ==================== Validation unitaire ====================
+  // Un seul dialogue générique (voir UnitValidationConfig plus haut), piloté par la Map
+  // ci-dessous : Leasing et CMT sont câblés (les 22 autres écrans "Encours" restent l'unique
   // moyen de validation ligne par ligne pour leur source, jusqu'à leur propre migration).
+  // Décision du 14/09/2026 (remplace les deux dialogues Leasing/CMT distincts du pilote initial) :
+  // la quasi-totalité du formulaire (dates, libellé, observation, TVA) est identique d'une
+  // source à l'autre ; seules la forme du DTO de détail, celle de la requête de validation et
+  // la politique TVA varient — capturées ici plutôt que dupliquées dans un dialogue par source.
 
-  displayLeasingModal = false;
-  leasingForm!: FormGroup;
-  selectedLeasingItem: RecaputilatifItem | null = null;
-  leasingDetail: EcheanceLeasingResponse | null = null;
-  isLeasingLoading = false;
-  isLeasingSubmitting = false;
+  /**
+   * Une config par source câblée. `any` assumé au niveau de la Map (voir UnitValidationConfig) —
+   * chaque entrée reste fortement typée sur son propre DTO de détail.
+   */
+  private readonly unitValidationConfigs: Map<TransactionSource, UnitValidationConfig<any>> = new Map([
+    [TransactionSource.LEASING, {
+      fetchDetail: (id: number) => this.echeanceLeasingService.getEcheanceLeasingById(id),
+      toCommonDetail: (d: EcheanceLeasingResponse): UnitValidationDetail => ({
+        dateEcheance: d.dateEcheance,
+        observation: d.observation,
+        libelle: d.libelle,
+        montantTTC: d.montantTTC,
+        recapLabel: 'Contrat N°',
+        recapValue: d.numeroContrat,
+      }),
+      // TVA éditable : 20% par défaut, mais l'utilisateur peut choisir « aucun » (0%) ou saisir
+      // un montant libre via le dropdown TAUX_TVA (décision HMAYDA du 14/09/2026, qui remplace
+      // le verrouillage à 20% du pilote initial).
+      tvaInitialValue: { tauxTva: 20, montantTva: null },
+      tvaLocked: false,
+      confirmHeader: 'Confirmation de Rapprochement',
+      successDetail: 'Échéance rapprochée avec succès.',
+      fetchErrorDetail: 'Impossible de récupérer le détail de cette échéance de leasing.',
+      buildAndSubmit: (d: EcheanceLeasingResponse, formValue: any, rapprochementId: number) => {
+        const saisieTva: SaisieTva = formValue.tva;
+        const request: LeasingTransactionRequest = {
+          contratLeasingId: d.contratLeasingId,
+          echeanceId: d.id,
+          transactionSource: TransactionSource.LEASING,
+          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
+          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
+          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
+          observation: formValue.observation,
+          tauxTva: saisieTva.tauxTva,
+          montantTva: saisieTva.montantTva,
+          libelle: formValue.libelle,
+          rapprochementId,
+        };
+        return this.validationService.echeanceLeasingToRapprochemnt(request);
+      },
+    }],
+    [TransactionSource.CMT, {
+      fetchDetail: (id: number) => this.echeanceCmtService.getEcheanceCMTById(id),
+      toCommonDetail: (d: EcheanceCMTResponseDto): UnitValidationDetail => ({
+        dateEcheance: d.dateEcheance,
+        observation: d.observation,
+        libelle: d.libelle,
+        montantTTC: d.montantTtc,
+        recapLabel: 'Désignation du crédit',
+        recapValue: d.credit.designation,
+      }),
+      // TVA libre/optionnelle, comme sur l'ancien écran dédié CMT (défaut 0%, taux OU montant).
+      tvaInitialValue: saisieTvaParDefaut(),
+      tvaLocked: false,
+      confirmHeader: 'Confirmation de Rapprochement CMT',
+      successDetail: 'Échéance CMT rapprochée avec succès.',
+      fetchErrorDetail: 'Impossible de récupérer le détail de cette échéance CMT.',
+      buildAndSubmit: (d: EcheanceCMTResponseDto, formValue: any, rapprochementId: number) => {
+        const saisieTva: SaisieTva = formValue.tva;
+        const request: CmtTransactionRequest = {
+          creditMoyenTermeId: d.credit.id,
+          echeanceId: d.id,
+          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
+          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
+          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
+          observation: formValue.observation,
+          tauxTva: saisieTva.tauxTva,
+          montantTva: saisieTva.montantTva,
+          libelle: formValue.libelle,
+          rapprochementId,
+        };
+        return this.validationService.echeanceCmtToRapprochement(request);
+      },
+    }],
+  ]);
 
-  get montantMaxTvaLeasing(): number | null {
-    return this.leasingDetail?.montantTTC ?? null;
+  displayUnitValidationModal = false;
+  unitValidationForm!: FormGroup;
+  unitValidationDetail: UnitValidationDetail | null = null;
+  isUnitValidationLoading = false;
+  isUnitValidationSubmitting = false;
+
+  /** DTO brut spécifique à la source active — passé tel quel à `buildAndSubmit`. */
+  private unitValidationRawDetail: any = null;
+  private activeUnitValidationConfig: UnitValidationConfig<any> | null = null;
+
+  get montantMaxTvaUnitValidation(): number | null {
+    return this.unitValidationDetail?.montantTTC ?? null;
   }
 
-  isLeasing(item: RecaputilatifItem): boolean {
-    return item.source === TransactionSource.LEASING;
+  /** Vrai si la source de cette ligne a une config enregistrée — pilote le bouton « Valider ». */
+  canValidateUnitairement(item: RecaputilatifItem): boolean {
+    return this.unitValidationConfigs.has(item.source);
   }
 
-  openLeasingValidation(item: RecaputilatifItem): void {
-    this.selectedLeasingItem = item;
-    this.isLeasingLoading = true;
-    this.displayLeasingModal = true;
-    this.leasingDetail = null;
+  openUnitValidation(item: RecaputilatifItem): void {
+    const config = this.unitValidationConfigs.get(item.source);
+    if (!config) {
+      return;
+    }
+
+    this.activeUnitValidationConfig = config;
+    this.isUnitValidationLoading = true;
+    this.displayUnitValidationModal = true;
+    this.unitValidationDetail = null;
+    this.unitValidationRawDetail = null;
 
     this.subscriptions.push(
-      this.echeanceLeasingService.getEcheanceLeasingById(item.id).subscribe({
-        next: (detail) => {
-          this.leasingDetail = detail;
-          this.leasingForm = this.fb.group({
+      config.fetchDetail(item.id).subscribe({
+        next: (rawDetail) => {
+          this.unitValidationRawDetail = rawDetail;
+          const detail = config.toCommonDetail(rawDetail);
+          this.unitValidationDetail = detail;
+          this.unitValidationForm = this.fb.group({
             dateEmission: [{ value: parseLocalDate(detail.dateEcheance), disabled: true }, Validators.required],
             dateValeur: [null, Validators.required],
             dateOperation: [null, Validators.required],
             observation: [detail.observation, Validators.required],
             libelle: [detail.libelle, Validators.required],
-            tva: [{ value: { tauxTva: 20, montantTva: null }, disabled: true }],
+            tva: [config.tvaLocked
+              ? { value: config.tvaInitialValue, disabled: true }
+              : config.tvaInitialValue],
           });
-          this.isLeasingLoading = false;
+          this.isUnitValidationLoading = false;
         },
         error: () => {
-          this.isLeasingLoading = false;
-          this.displayLeasingModal = false;
+          this.isUnitValidationLoading = false;
+          this.displayUnitValidationModal = false;
           this.messageService.add({
             severity: 'error',
             summary: 'Erreur',
-            detail: 'Impossible de récupérer le détail de cette échéance de leasing.',
+            detail: config.fetchErrorDetail,
           });
         }
       })
     );
   }
 
-  closeLeasingModal(): void {
-    this.displayLeasingModal = false;
-    this.selectedLeasingItem = null;
-    this.leasingDetail = null;
+  closeUnitValidationModal(): void {
+    this.displayUnitValidationModal = false;
+    this.unitValidationDetail = null;
+    this.unitValidationRawDetail = null;
+    this.activeUnitValidationConfig = null;
   }
 
-  isLeasingInvalid(controlName: string): boolean {
-    const control = this.leasingForm?.get(controlName);
+  isUnitValidationInvalid(controlName: string): boolean {
+    const control = this.unitValidationForm?.get(controlName);
     if (control && control.disabled) {
       return false;
     }
     return !!(control && control.invalid && (control.dirty || control.touched));
   }
 
-  confirmLeasingValidation(): void {
-    if (this.leasingForm.invalid || !this.leasingDetail) {
-      this.leasingForm.markAllAsTouched();
+  confirmUnitValidation(): void {
+    if (this.unitValidationForm.invalid || !this.unitValidationDetail || !this.activeUnitValidationConfig) {
+      this.unitValidationForm.markAllAsTouched();
       this.messageService.add({
         severity: 'error',
         summary: 'Erreur',
@@ -406,8 +546,9 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const formValue = this.leasingForm.getRawValue();
-    const detail = this.leasingDetail;
+    const formValue = this.unitValidationForm.getRawValue();
+    const detail = this.unitValidationDetail;
+    const config = this.activeUnitValidationConfig;
     const dateEmissionFormatted = this.datePipe.transform(formValue.dateEmission, 'dd/MM/yyyy');
     const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
     const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
@@ -415,7 +556,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     const recapMessage = `
           Êtes-vous sûr de vouloir rapprocher cette échéance ?
           <br><br>
-          <strong>Contrat N°:</strong> ${detail.numeroContrat}
+          <strong>${detail.recapLabel}:</strong> ${detail.recapValue}
           <br>
           <strong>Montant TTC:</strong> ${this.decimalPipe.transform(detail.montantTTC, '1.2-2', 'fr-FR')} MAD
           <br><br>
@@ -432,53 +573,39 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
 
     this.confirmationService.confirm({
       message: recapMessage,
-      header: 'Confirmation de Rapprochement',
+      header: config.confirmHeader,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Confirmer',
       rejectLabel: 'Annuler',
-      accept: () => this.submitLeasingValidation(),
+      accept: () => this.submitUnitValidation(),
     });
   }
 
-  private submitLeasingValidation(): void {
-    if (!this.leasingDetail) return;
+  private submitUnitValidation(): void {
+    if (!this.unitValidationRawDetail || !this.activeUnitValidationConfig) return;
 
-    const formValue = this.leasingForm.getRawValue();
+    const formValue = this.unitValidationForm.getRawValue();
     const rapprochementId = this.bankStateService.getRapprochementId();
-    const saisieTva: SaisieTva = formValue.tva;
+    const config = this.activeUnitValidationConfig;
 
-    const request: LeasingTransactionRequest = {
-      contratLeasingId: this.leasingDetail.contratLeasingId,
-      echeanceId: this.leasingDetail.id,
-      transactionSource: TransactionSource.LEASING,
-      dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-      dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-      dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-      observation: formValue.observation,
-      tauxTva: saisieTva.tauxTva,
-      montantTva: saisieTva.montantTva,
-      libelle: formValue.libelle,
-      rapprochementId: rapprochementId!,
-    };
-
-    this.isLeasingSubmitting = true;
+    this.isUnitValidationSubmitting = true;
 
     this.subscriptions.push(
-      this.validationService.echeanceLeasingToRapprochemnt(request).subscribe({
+      config.buildAndSubmit(this.unitValidationRawDetail, formValue, rapprochementId!).subscribe({
         next: () => {
           this.messageService.add({
             severity: 'success',
             summary: 'Succès',
-            detail: 'Échéance rapprochée avec succès.',
+            detail: config.successDetail,
           });
-          this.isLeasingSubmitting = false;
-          this.closeLeasingModal();
+          this.isUnitValidationSubmitting = false;
+          this.closeUnitValidationModal();
           this.onFilterChange();
           this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
           this.bankStateService.notifyValidation();
         },
         error: () => {
-          this.isLeasingSubmitting = false;
+          this.isUnitValidationSubmitting = false;
         }
       })
     );
