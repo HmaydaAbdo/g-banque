@@ -7,9 +7,6 @@ import staport.finance.gBanque.Agios.dtos.AgiosTransactionResponse;
 import staport.finance.gBanque.Agios.dtos.AgiosValidationRequest;
 import staport.finance.gBanque.Agios.service.interfaces.IAgiosValidationService;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
-import staport.finance.gBanque.moyensDePaiements.cheques.validation.dto.ChequeTransactionRequest;
-import staport.finance.gBanque.moyensDePaiements.cheques.validation.dto.ChequeTransactionResponseDto;
-import staport.finance.gBanque.moyensDePaiements.cheques.validation.services.interfaces.IChequeValidationService;
 import staport.finance.gBanque.transactions.enums.SensOperation;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.commision.validation.dto.CommissionTransactionRequestDto;
@@ -80,13 +77,14 @@ import java.util.stream.Collectors;
  * unitaires existantes de chaque {@code XxxValidationService} de module / {@link IAgiosValidationService} —
  * aucune logique métier n'est dupliquée ici, seul le dispatch et l'agrégation du résultat le sont.
  * <p>
- * Migration en cours (14-15/09/2026) vers un registre de {@link BatchValidationHandler} plutôt
- * qu'un unique switch : Leasing et CMT sont les deux premières sources migrées
- * ({@code LeasingBatchValidationHandler}, {@code CmtBatchValidationHandler}, découverts et injectés
- * automatiquement par Spring) — {@link #processOne} vérifie d'abord le registre, puis retombe sur
- * le switch historique pour les 20 sources pas encore migrées. Ajouter une source migrée ne
- * demande plus de modifier cette classe, seulement d'ajouter une implémentation de
- * {@link BatchValidationHandler} dans le module de cette source.
+ * Migration en cours (14-19/09/2026) vers un registre de {@link BatchValidationHandler} plutôt
+ * qu'un unique switch : Leasing, CMT et Chèque sont les trois premières sources migrées
+ * ({@code LeasingBatchValidationHandler}, {@code CmtBatchValidationHandler},
+ * {@code ChequeBatchValidationHandler}, découverts et injectés automatiquement par Spring) —
+ * {@link #processOne} vérifie d'abord le registre, puis retombe sur le switch historique pour les
+ * 19 sources pas encore migrées. Ajouter une source migrée ne demande plus de modifier cette
+ * classe, seulement d'ajouter une implémentation de {@link BatchValidationHandler} dans le module
+ * de cette source.
  * <p>
  * La saisie libre du montant de TVA n'est volontairement pas disponible en lot : un montant fixe
  * appliqué à N opérations de montants différents n'a pas de sens comptable. Le lot ne transporte
@@ -125,7 +123,6 @@ public class BatchValidationService {
     private final IAgiosValidationService agiosValidationService;
     /** Sources migrées vers {@link BatchValidationHandler} (Leasing, CMT à ce jour) — voir Javadoc de la classe. */
     private final Map<TransactionSource, BatchValidationHandler> handlerRegistry;
-    private final IChequeValidationService chequeValidationService;
     private final ILcnValidationService lcnValidationService;
     private final IVirementValidationService virementValidationService;
     private final IVirementInternationalValidationService virementInternationalValidationService;
@@ -145,7 +142,6 @@ public class BatchValidationService {
                                    IImpayeeValidationService impayeeValidationService,
                                    IAgiosValidationService agiosValidationService,
                                    List<BatchValidationHandler> batchValidationHandlers,
-                                   IChequeValidationService chequeValidationService,
                                    ILcnValidationService lcnValidationService,
                                    IVirementValidationService virementValidationService,
                                    IVirementInternationalValidationService virementInternationalValidationService,
@@ -168,7 +164,6 @@ public class BatchValidationService {
                     throw new IllegalStateException(
                             "Deux BatchValidationHandler enregistrés pour la même source: " + a.source());
                 }));
-        this.chequeValidationService = chequeValidationService;
         this.lcnValidationService = lcnValidationService;
         this.virementValidationService = virementValidationService;
         this.virementInternationalValidationService = virementInternationalValidationService;
@@ -216,16 +211,6 @@ public class BatchValidationService {
                 VirementTransactionResponseDto r = requestDto.sens() == SensOperation.DECAISSEMENT
                         ? virementValidationService.processVirementDecaissementTransaction(dto)
                         : virementValidationService.processVirementEncaissementTransaction(dto);
-                return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
-            }
-            case CHEQUE -> {
-                ChequeTransactionRequest dto = new ChequeTransactionRequest();
-                dto.setIdCheque(id);
-                copyChampsCommuns(requestDto, dto::setDateValeur, dto::setDateOperation,
-                        dto::setTauxTva, dto::setRapprochementId);
-                ChequeTransactionResponseDto r = requestDto.sens() == SensOperation.DECAISSEMENT
-                        ? chequeValidationService.processChequeDecaissementTransaction(dto)
-                        : chequeValidationService.processChequeEncaissementTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case LCN_DECAISSEMENT -> {

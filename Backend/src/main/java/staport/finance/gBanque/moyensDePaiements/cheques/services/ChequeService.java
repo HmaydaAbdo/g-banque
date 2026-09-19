@@ -33,7 +33,6 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -224,42 +223,6 @@ public class ChequeService {
         return toDto(cheque);
     }
 
-    @Transactional(readOnly = true)
-    public EncoursChequeResponseDto getEncoursDecaissementForCheques(EncoursChequeSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.debug("Encours décaissement chèques — banqueId: {}, critères: {}", banqueId, searchDto);
-
-        Specification<Cheque> spec = ChequeSpec.encoursDecaissements(banqueId, finDuMoisCourant())
-                .and(ChequeSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(ChequeSpec.hasNumero(searchDto.getNumero()))
-                .and(ChequeSpec.hasMontant(searchDto.getMontant()));
-
-        Page<Cheque> page = chequeRepository.findAll(spec, stablePageable(pageable));
-        Page<ChequeResponseDto> chequePage = page.map(this::toDto);
-        BigDecimal total = chequeRepository.findAll(spec).stream().map(Cheque::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        log.debug("Total encours décaissement — banqueId: {}, total: {}", banqueId, total);
-        return new EncoursChequeResponseDto(total, chequePage);
-    }
-
-    @Transactional(readOnly = true)
-    public EncoursChequeResponseDto getEncoursEncaissementForCheques(EncoursChequeSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.debug("Encours encaissement chèques — banqueId: {}, critères: {}", banqueId, searchDto);
-
-        Specification<Cheque> spec = ChequeSpec.encoursEncaissements(banqueId, finDuMoisCourant())
-                .and(ChequeSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(ChequeSpec.hasEmetteur(searchDto.getEmetteur()))
-                .and(ChequeSpec.hasMontant(searchDto.getMontant()))
-                .and(ChequeSpec.hasNumero(searchDto.getNumero()))
-                .and(ChequeSpec.hasDateEmission(searchDto.getDateEmission()));
-
-        Page<Cheque> page = chequeRepository.findAll(spec, stablePageable(pageable));
-        Page<ChequeResponseDto> chequePage = page.map(this::toDto);
-        BigDecimal total = chequeRepository.findAll(spec).stream().map(Cheque::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        log.debug("Total encours encaissement — banqueId: {}, total: {}", banqueId, total);
-        return new EncoursChequeResponseDto(total, chequePage);
-    }
-
     // ── Export PDF ────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
@@ -299,35 +262,6 @@ public class ChequeService {
         List<String> filterLines = buildFilterSummary(searchDto);
 
         return generateChequePdf("État des Chèques de Décaissement", cheques, total, filterLines);
-    }
-
-    @Transactional(readOnly = true)
-    public byte[] exportEncoursEncaissementPdf(EncoursChequeSearchDto searchDto, Long banqueId) {
-        Specification<Cheque> spec = ChequeSpec.encoursEncaissements(banqueId, finDuMoisCourant())
-                .and(ChequeSpec.hasEmetteur(searchDto.getEmetteur()))
-                .and(ChequeSpec.hasMontant(searchDto.getMontant()))
-                .and(ChequeSpec.hasNumero(searchDto.getNumero()))
-                .and(ChequeSpec.hasDateEmission(searchDto.getDateEmission()));
-
-        List<Cheque> cheques = chequeRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-        BigDecimal total = sumMontant(spec);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
-
-        return generateChequePdf("Encours d'Encaissement — Chèques", cheques, total, filterLines);
-    }
-
-    @Transactional(readOnly = true)
-    public byte[] exportEncoursDecaissementPdf(EncoursChequeSearchDto searchDto, Long banqueId) {
-        Specification<Cheque> spec = ChequeSpec.encoursDecaissements(banqueId, finDuMoisCourant())
-                .and(ChequeSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(ChequeSpec.hasNumero(searchDto.getNumero()))
-                .and(ChequeSpec.hasMontant(searchDto.getMontant()));
-
-        List<Cheque> cheques = chequeRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-        BigDecimal total = sumMontant(spec);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
-
-        return generateChequePdf("Encours de Décaissement — Chèques", cheques, total, filterLines);
     }
 
     private BigDecimal sumMontant(Specification<Cheque> spec) {
@@ -507,40 +441,11 @@ public class ChequeService {
         return lines;
     }
 
-    private List<String> buildEncoursFilterSummary(EncoursChequeSearchDto dto, Long banqueId) {
-        List<String> lines = new ArrayList<>();
-        try {
-            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
-        } catch (ResourceNotFoundException ignored) {
-            // Filtre obsolète (banque supprimée depuis) — ignoré silencieusement dans le résumé PDF.
-        }
-        if (dto == null) return lines;
-        if (dto.getNumero() != null && !dto.getNumero().isBlank())
-            lines.add("N° Chèque : " + dto.getNumero());
-        if (dto.getBeneficiaire() != null && !dto.getBeneficiaire().isBlank())
-            lines.add("Bénéficiaire : " + dto.getBeneficiaire());
-        if (dto.getEmetteur() != null && !dto.getEmetteur().isBlank())
-            lines.add("Émetteur : " + dto.getEmetteur());
-        if (dto.getMontant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.getMontant()) + " MAD");
-        if (dto.getDateEmission() != null)
-            lines.add("Date émission : " + dto.getDateEmission().format(DATE_FMT));
-        return lines;
-    }
-
     // ── Helpers internes ──────────────────────────────────────────────────────
 
     private Cheque trouverOuLeverException(Long id) {
         return chequeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cheque with id " + id + " not found."));
-    }
-
-    /**
-     * Fin du mois courant — recalculée à chaque appel (et non mise en cache) pour que
-     * les calculs d'encours restent corrects après le premier jour suivant le déploiement.
-     */
-    private LocalDate finDuMoisCourant() {
-        return LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
     }
 
     private Pageable stablePageable(Pageable pageable) {

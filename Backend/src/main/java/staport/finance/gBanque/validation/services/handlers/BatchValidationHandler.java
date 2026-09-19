@@ -15,10 +15,11 @@ import staport.finance.gBanque.validation.dtos.lot.OperationValideeDto;
  * {@code BatchValidationService.processOne}, seulement d'ajouter une implémentation dans le module
  * de cette source.
  * <p>
- * Migration en cours (14/09/2026) : Leasing et CMT sont les deux premières sources migrées vers ce
- * patron ({@code LeasingBatchValidationHandler}, {@code CmtBatchValidationHandler}), en remplacement
- * à l'identique des {@code case LEASING}/{@code case CMT} qu'ils portaient auparavant — aucun
- * changement de comportement. Les 20 autres sources restent gérées par le switch historique de
+ * Migration en cours (14-19/09/2026) : Leasing, CMT et Chèque sont les trois premières sources
+ * migrées vers ce patron ({@code LeasingBatchValidationHandler}, {@code CmtBatchValidationHandler},
+ * {@code ChequeBatchValidationHandler}), en remplacement à l'identique des
+ * {@code case LEASING}/{@code case CMT}/{@code case CHEQUE} qu'ils portaient auparavant — aucun
+ * changement de comportement. Les 19 autres sources restent gérées par le switch historique de
  * {@code BatchValidationService.processOne}, à migrer une par une.
  */
 public interface BatchValidationHandler {
