@@ -14,5 +14,19 @@ export interface RecaputilatifItem {
   debit: Decimal;
   credit: Decimal;
   observations: string;
-  source:TransactionSource
+  source:TransactionSource;
+  /**
+   * Clé d'identité stable `${source}:${id}` — `id` seul n'est pas unique tous sources confondues
+   * (chaque source a sa propre séquence en base, deux sources différentes peuvent donc partager
+   * le même id). Calculée côté client juste après réception de la réponse (voir
+   * `loadRecapitulatif()`), jamais renvoyée par le backend.
+   *
+   * Sert de `dataKey` à `<p-table>` : sans un `dataKey` explicite, PrimeNG retombe sur une
+   * comparaison par égalité profonde des objets pour déterminer si une ligne est sélectionnée —
+   * fragile dès qu'une page est rechargée (tri, pagination, filtre) et que les objets sont
+   * recréés. Avec ce `dataKey`, PrimeNG (et `TableSelectionState`, qui utilise la même clé) se
+   * basent tous les deux sur la même chaîne stable, éliminant toute ambiguïté de correspondance
+   * entre l'état de sélection interne et l'affichage des cases à cocher.
+   */
+  compositeKey: string;
 }

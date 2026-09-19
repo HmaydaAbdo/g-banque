@@ -5,7 +5,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 import { Table } from 'primeng/table';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { concatMap, from, Observable, Subscription, toArray } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MultiSelectModule } from 'primeng/multiselect';
@@ -56,9 +56,12 @@ interface SensOption {
 /**
  * Un groupe d'opérations sélectionnées partageant (source, sens) — l'unité d'appel de
  * POST /rapprochement/process/lot, qui n'accepte qu'un seul type et un seul sens par requête
- * (voir BatchValidationRequestDto). La sélection multi-lignes du récapitulatif peut mélanger
- * plusieurs sources/sens ; « Valider en lot » découpe donc automatiquement la sélection en
- * groupes et enchaîne un appel par groupe (décision validée le 14/09/2026).
+ * (voir BatchValidationRequestDto). Sert aussi à détecter une sélection hétérogène :
+ * {@code lotGroups.length > 1} signifie que la sélection mélange plusieurs sources/sens, auquel
+ * cas « Valider en lot » refuse d'ouvrir le dialogue (voir {@code selectionEstHomogene}).
+ * Revirement du 19/09/2026 : la version précédente découpait silencieusement la sélection en
+ * plusieurs appels séquentiels (un par groupe) — jugé confus/risqué (décision explicite de
+ * HMAYDA), remplacé par un refus explicite tant que la sélection n'est pas homogène.
  */
 interface LotGroup {
   source: TransactionSource;
@@ -202,7 +205,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
    * (deux sources différentes peuvent partager le même id), contrairement aux écrans à source
    * unique qui utilisent l'id brut.
    */
-  selectionState = new TableSelectionState<RecaputilatifItem, string>(item => `${item.source}:${item.id}`);
+  selectionState = new TableSelectionState<RecaputilatifItem, string>(item => item.compositeKey);
 
   get pageSelection(): RecaputilatifItem[] {
     return this.selectionState.getPageSelection(this.recapItems);
@@ -245,7 +248,29 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
   isLotSubmitting = false;
   readonly messageErreurTva = messageErreurTva;
 
+  /**
+   * Faux dès que la sélection mélange plusieurs sources ou plusieurs sens. La validation en lot
+   * n'applique qu'un seul jeu de champs communs (TVA, dates) à tout le lot : l'appliquer à des
+   * opérations de nature différente n'a pas de sens métier. Décision du 19/09/2026 : remplace le
+   * découpage automatique en plusieurs appels /process/lot par un refus explicite — l'utilisateur
+   * doit sélectionner une seule combinaison (source, sens) à la fois.
+   */
+  get selectionEstHomogene(): boolean {
+    return this.lotGroups.length <= 1;
+  }
+
   openLotModal(): void {
+    if (!this.selectionEstHomogene) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Sélection hétérogène',
+        detail: 'La validation en lot ne peut porter que sur des opérations d\'un même type et '
+          + 'd\'un même sens. Videz la sélection et recommencez avec une seule combinaison '
+          + 'type/sens à la fois.',
+        life: 8000,
+      });
+      return;
+    }
     this.lotForm = this.fb.group({
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
@@ -278,23 +303,22 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Garantie par selectionEstHomogene (vérifiée à l'ouverture du dialogue) : au plus un groupe.
+    const group = this.lotGroups[0];
+    if (!group) {
+      this.closeLotModal();
+      return;
+    }
+
     const formValue = this.lotForm.getRawValue();
     const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
     const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
-    const groups = this.lotGroups;
-
-    const detailGroupes = groups
-      .map(g => `<li>${g.ids.length} × ${this.labelSource(g.source)} (${g.sens}) — `
-        + `${this.decimalPipe.transform(g.montantTotal, '1.2-2', 'fr-FR')} MAD</li>`)
-      .join('');
 
     const recapMessage = `
-          Êtes-vous sûr de vouloir valider ces ${this.selectionState.count} opérations
-          en ${groups.length} lot(s) (un appel par type/sens) ?
+          Êtes-vous sûr de vouloir valider ces ${group.ids.length} opération(s) de type
+          <strong>${this.labelSource(group.source)} (${group.sens})</strong> ?
           <br><br>
-          <strong>Répartition :</strong>
-          <ul>${detailGroupes}</ul>
-          <strong>Montant total :</strong> ${this.decimalPipe.transform(this.montantTotalSelection, '1.2-2', 'fr-FR')} MAD
+          <strong>Montant total :</strong> ${this.decimalPipe.transform(group.montantTotal, '1.2-2', 'fr-FR')} MAD
           <br><br>
           <strong>Détails du rapprochement (appliqués à toutes les opérations sélectionnées) :</strong>
           <ul>
@@ -312,47 +336,38 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Confirmer',
       rejectLabel: 'Annuler',
-      accept: () => this.submitLot(groups),
+      accept: () => this.submitLot(group),
     });
   }
 
-  /**
-   * Enchaîne un appel POST /process/lot par groupe (source, sens), séquentiellement
-   * (concatMap) plutôt qu'en parallèle, pour rester lisible en cas d'erreur partielle et ne
-   * pas multiplier les écritures concurrentes sur le même rapprochement.
-   */
-  private submitLot(groups: LotGroup[]): void {
+  /** Un seul appel POST /process/lot — la sélection est garantie homogène (voir openLotModal). */
+  private submitLot(group: LotGroup): void {
     const rapprochementId = this.bankStateService.getRapprochementId();
     const formValue = this.lotForm.getRawValue();
     const saisieTva: SaisieTva = formValue.tva!;
     const dateValeur = this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string;
     const dateOperation = this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string;
 
+    const request: BatchValidationRequestDto = {
+      transactionSource: group.source,
+      sens: group.sens,
+      banqueId: this.banqueIdFromRoute,
+      ids: group.ids,
+      dateValeur,
+      dateOperation,
+      tauxTva: saisieTva.tauxTva,
+      rapprochementId: rapprochementId!,
+    };
+
     this.isLotSubmitting = true;
 
     this.subscriptions.push(
-      from(groups).pipe(
-        concatMap(group => {
-          const request: BatchValidationRequestDto = {
-            transactionSource: group.source,
-            sens: group.sens,
-            banqueId: this.banqueIdFromRoute,
-            ids: group.ids,
-            dateValeur,
-            dateOperation,
-            tauxTva: saisieTva.tauxTva,
-            rapprochementId: rapprochementId!,
-          };
-          return this.validationService.validerEnLot(request);
-        }),
-        toArray()
-      ).subscribe({
-        next: (responses: BatchValidationResponseDto[]) => {
-          const totalOperations = responses.reduce((sum, r) => sum + r.nombreOperations, 0);
+      this.validationService.validerEnLot(request).subscribe({
+        next: (response: BatchValidationResponseDto) => {
           this.messageService.add({
             severity: 'success',
             summary: 'Succès',
-            detail: `${totalOperations} opération(s) validée(s) avec succès (${groups.length} lot(s)).`,
+            detail: `${response.nombreOperations} opération(s) validée(s) avec succès.`,
           });
           this.isLotSubmitting = false;
           this.selectionState.clear();
@@ -361,12 +376,12 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
           this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
           this.bankStateService.notifyValidation();
         },
-        error: () => {
+        error: (err) => {
           this.isLotSubmitting = false;
           this.messageService.add({
             severity: 'error',
             summary: 'Erreur',
-            detail: 'La validation en lot a échoué — certains lots peuvent avoir été traités avant l\'erreur, vérifiez le rapprochement en cours.',
+            detail: err?.error?.message || 'La validation en lot a échoué.',
           });
         }
       })
@@ -686,7 +701,12 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       this.recapService.getRecapitulatif(this.banqueIdFromRoute, searchDto, page, size, sort)
         .subscribe({
           next: (response: AgregatedRecapDto) => {
-            this.recapItems = response.page.content;
+            // `compositeKey` (source:id) calculée ici, jamais renvoyée par le backend — voir
+            // Javadoc du champ dans RecaputilatifItem.ts pour la raison (dataKey PrimeNG stable).
+            this.recapItems = response.page.content.map(item => ({
+              ...item,
+              compositeKey: `${item.source}:${item.id}`,
+            }));
             this.totalRecords = response.page.page.totalElements;
             this.loading = false;
             this.totalCredit = response.totalCredit;

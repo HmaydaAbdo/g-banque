@@ -165,6 +165,7 @@
     <p-table
       #dt
       [value]="recapItems"
+      dataKey="compositeKey"
       [selection]="pageSelection"
       (selectionChange)="onSelectionChange($event)"
       [paginator]="true"
@@ -377,19 +378,14 @@
   <form [formGroup]="lotForm" (ngSubmit)="confirmLotValidation()">
     <div class="flex align-items-center gap-3 mb-3 p-3 border-round surface-100">
       <i class="pi pi-check-square text-xl"></i>
+      @if (lotGroups[0]; as group) {
       <span>
-        <strong>{{ selectedCount }}</strong> opération(s) sélectionnée(s), réparties en
-        <strong>{{ lotGroups.length }}</strong> lot(s) — montant total
+        <strong>{{ group.ids.length }}</strong> opération(s) de type
+        <strong>{{ labelSource(group.source) }} ({{ group.sens }})</strong> — montant total
         <strong>{{ montantTotalSelection | number:'1.2-2' }} MAD</strong>
       </span>
-    </div>
-
-    <ul class="text-sm text-700 mb-3">
-      @for (group of lotGroups; track group.source + '_' + group.sens) {
-        <li>{{ group.ids.length }} × {{ labelSource(group.source) }} ({{ group.sens }}) —
-          {{ group.montantTotal | number:'1.2-2' }} MAD</li>
       }
-    </ul>
+    </div>
 
     <div class="grid p-fluid mt-1">
       <div class="col-12 md:col-6 mb-3">
