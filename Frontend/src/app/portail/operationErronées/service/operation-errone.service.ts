@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { OperationErroneResponseDto } from "../dtos/OperationErroneResponseDto";
-import { EncoursOperationsErroneDto } from "../dtos/EncoursOperationsErroneDto";
 import { OperationErroneSearchDto } from "../dtos/OperationErroneSearchDto";
 import { OperationErroneRequestDto } from "../dtos/OperationErroneRequestDto";
 import { environment } from "../../../../environments/environment";
@@ -85,42 +84,6 @@ export class OperationErroneService {
   }
 
   /**
-   * Récupérer les encours des opérations erronées pour une banque
-   * GET /operation-errone/encours/{banqueId}
-   */
-  getOutstandingOperationErrone(
-    banqueId: number,
-    searchDto: OperationErroneSearchDto = {},
-    page: number = 0,
-    size: number = 10,
-    sort: string = 'dateEmission,desc'
-  ): Observable<EncoursOperationsErroneDto> {
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', sort);
-
-    // Ajouter les paramètres de recherche optionnels
-    if (searchDto.libelle) {
-      params = params.set('libelle', searchDto.libelle);
-    }
-    if (searchDto.montant !== undefined && searchDto.montant !== null) {
-      params = params.set('montant', searchDto.montant.toString());
-    }
-    if (searchDto.status) {
-      params = params.set('status', searchDto.status);
-    }
-    if (searchDto.motif) {
-      params = params.set('motif', searchDto.motif);
-    }
-
-    return this.http.get<EncoursOperationsErroneDto>(
-      `${this.apiUrl}/encours/${banqueId}`,
-      { params }
-    );
-  }
-
-  /**
    * Basculer le statut d'une opération erronée (PREVU <-> PAYE)
    * PATCH /operation-errone/{id}/toggle-status
    */
@@ -171,22 +134,5 @@ export class OperationErroneService {
       params = params.set('dateValeurFin', toLocalDateString(searchDto.dateValeurFin)!);
     }
     return params;
-  }
-
-  /**
-   * Exporte en PDF l'intégralité de l'encours d'opérations erronées d'une banque correspondant
-   * aux filtres fournis (mêmes critères que {@link getOutstandingOperationErrone}, sans
-   * pagination — le PDF contient tous les résultats filtrés, pas seulement la page actuellement
-   * affichée).
-   * GET /operation-errone/encours/{banqueId}/export/pdf
-   */
-  exportEncoursPdf(banqueId: number, searchDto: OperationErroneSearchDto): Observable<Blob> {
-    let params = new HttpParams();
-
-    if (searchDto.libelle)         params = params.set('libelle', searchDto.libelle);
-    if (searchDto.montant != null) params = params.set('montant', searchDto.montant.toString());
-    if (searchDto.motif)           params = params.set('motif', searchDto.motif);
-
-    return this.http.get(`${this.apiUrl}/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
   }
 }

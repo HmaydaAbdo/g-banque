@@ -3,7 +3,6 @@ package staport.finance.gBanque.prelevements.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -15,7 +14,6 @@ import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.prefinancement.enums.Status;
-import staport.finance.gBanque.prelevements.dtos.EncoursPrelevement;
 import staport.finance.gBanque.prelevements.dtos.PrelevementRequestDto;
 import staport.finance.gBanque.prelevements.dtos.PrelevementResponseDto;
 import staport.finance.gBanque.prelevements.dtos.PrelevementSearchDto;
@@ -35,7 +33,6 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -65,11 +62,6 @@ public class PrelevementService implements IPrelevementService {
     @Transactional(readOnly = true)
     public boolean existsChargeFixeGeneree(Long banqueId, String libelle, LocalDate debut, LocalDate fin) {
         return prelevementRepository.existsByBanqueIdAndLibelleAndDateEmissionBetween(banqueId, libelle, debut, fin);
-    }
-
-    /** Fin du mois courant, recalculée à chaque appel (jamais figée sur une valeur de démarrage du bean). */
-    private static LocalDate finDuMoisCourant() {
-        return LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
     }
 
     /**
@@ -205,50 +197,6 @@ public class PrelevementService implements IPrelevementService {
         log.info("Prélèvement ID: {} supprimé avec succès", id);
     }
 
-    /**
-     * Récupère les prélèvements en cours avec leur montant total
-     * Les prélèvements en cours sont ceux avec un statut 'PREVU' et une date d'émission dans le passé
-     *
-     * @param searchDto Critères de recherche optionnels
-     * @param pageable Informations de pagination et de tri
-     * @return Un EncoursPrelevement contenant la page de prélèvements et le montant total en cours
-     */
-    @Transactional(readOnly = true)
-    public EncoursPrelevement getOutstandingPrelevements(PrelevementSearchDto searchDto, Pageable pageable) {
-        log.info("Récupération des prélèvements en cours - Critères: {}", searchDto);
-
-        // Construction de la spécification pour filtrer les enregistrements
-        Specification<Prelevement> spec = Specification.where(PrelevementSpec.outstandingUntil(finDuMoisCourant()))
-                .and(PrelevementSpec.hasBanque(searchDto.getBanqueId()))
-                .and(PrelevementSpec.hasLibelle(searchDto.getLibelle()))
-                .and(PrelevementSpec.hasMontant(searchDto.getMontant()));
-
-        // Récupération de la liste paginée de prélèvements
-        Page<Prelevement> prelevementPage = prelevementRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
-        log.debug("Page de prélèvements récupérée: {} éléments sur {}",
-                prelevementPage.getNumberOfElements(), prelevementPage.getTotalElements());
-
-        // Calcul du montant total des encours
-        BigDecimal totalDesEncours = prelevementRepository.findAll(spec).stream()
-                .map(Prelevement::getMontant)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        log.info("Montant total des encours calculé: {}", totalDesEncours);
-
-        // Mapping de la page d'entités vers une page de DTOs
-        Page<PrelevementResponseDto> pageDto = prelevementPage.map(prelevementMapper::toResponseDto);
-
-        // Création et retour du DTO final
-        EncoursPrelevement result = new EncoursPrelevement();
-        result.setPage(pageDto);
-        result.setTotalDesEncours(totalDesEncours);
-
-        log.info("Encours de prélèvements récupérés avec succès - Total: {}, Nombre de prélèvements: {}",
-                totalDesEncours, prelevementPage.getTotalElements());
-        return result;
-    }
-
-
     @Transactional
     @AuditableAction(operation = AuditOperation.UPDATE, entity = Prelevement.class, idAccessor = "getId")
     public PrelevementResponseDto toggleStatus(Long id) {
@@ -286,20 +234,6 @@ public class PrelevementService implements IPrelevementService {
         List<String> filterLines = buildFilterSummary(searchDto);
 
         return generatePrelevementPdf("État des Prélèvements", prelevements, total, filterLines);
-    }
-
-    @Transactional(readOnly = true)
-    public byte[] exportEncoursPdf(PrelevementSearchDto searchDto) {
-        Specification<Prelevement> spec = Specification.where(PrelevementSpec.outstandingUntil(finDuMoisCourant()))
-                .and(PrelevementSpec.hasBanque(searchDto.getBanqueId()))
-                .and(PrelevementSpec.hasLibelle(searchDto.getLibelle()))
-                .and(PrelevementSpec.hasMontant(searchDto.getMontant()));
-
-        List<Prelevement> prelevements = prelevementRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-        BigDecimal total = sumMontant(spec);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto);
-
-        return generatePrelevementPdf("Encours de Prélèvements", prelevements, total, filterLines);
     }
 
     private BigDecimal sumMontant(Specification<Prelevement> spec) {
@@ -449,23 +383,6 @@ public class PrelevementService implements IPrelevementService {
             lines.add("Libellé : " + dto.getLibelle());
         if (dto.getStatus() != null)
             lines.add("Statut : " + dto.getStatus());
-        if (dto.getMontant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.getMontant()) + " MAD");
-        return lines;
-    }
-
-    private List<String> buildEncoursFilterSummary(PrelevementSearchDto dto) {
-        List<String> lines = new ArrayList<>();
-        if (dto == null) return lines;
-        if (dto.getBanqueId() != null) {
-            try {
-                lines.add("Banque : " + banqueService.findOrThrow(dto.getBanqueId()).getNom());
-            } catch (ResourceNotFoundException ignored) {
-                // Filtre obsolète (banque supprimée depuis) — ignoré silencieusement dans le résumé PDF.
-            }
-        }
-        if (dto.getLibelle() != null && !dto.getLibelle().isBlank())
-            lines.add("Libellé : " + dto.getLibelle());
         if (dto.getMontant() != null)
             lines.add("Montant : " + formatMontantPdf(dto.getMontant()) + " MAD");
         return lines;

@@ -135,40 +135,6 @@ public class VirementInternationalController {
         return ResponseEntity.ok(response);
     }
 
-    /* ===================== ENCOURS ===================== */
-
-    @Operation(summary = "Encours de décaissement virement international pour une banque")
-    @GetMapping("/decaissement/encours/{banqueId}")
-    public ResponseEntity<EncoursVirementInternationalResponseDto> getEncoursDecaissement(
-            @PathVariable Long banqueId,
-            EncoursVirementsInternationalSearchDto searchDto,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-
-        log.info("Récupération des encours de décaissement internationaux - banqueId={}, searchDto={}",
-                banqueId, searchDto);
-
-        EncoursVirementInternationalResponseDto result =
-                virementInternationalService.getEncoursDecaissement(searchDto, banqueId, pageable);
-
-        return ResponseEntity.ok(result);
-    }
-
-    @Operation(summary = "Encours d'encaissement virement international pour une banque")
-    @GetMapping("/encaissement/encours/{banqueId}")
-    public ResponseEntity<EncoursVirementInternationalResponseDto> getEncoursEncaissement(
-            @PathVariable Long banqueId,
-            EncoursVirementsInternationalSearchDto searchDto,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-
-        log.info("Récupération des encours d'encaissement internationaux - banqueId={}, searchDto={}",
-                banqueId, searchDto);
-
-        EncoursVirementInternationalResponseDto result =
-                virementInternationalService.getEncoursEncaissement(searchDto, banqueId, pageable);
-
-        return ResponseEntity.ok(result);
-    }
-
     /* ===================== DELETE ===================== */
 
     @Operation(summary = "Supprimer un virement international")
@@ -190,20 +156,6 @@ public class VirementInternationalController {
     @GetMapping("/export/pdf")
     public ResponseEntity<byte[]> exportPdf(VirementInternationalSearchDto searchDto) {
         return pdfResponse(virementInternationalService.exportPdf(searchDto), "virements_internationaux");
-    }
-
-    @Operation(summary = "Exporter en PDF l'encours d'encaissement de virements internationaux d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/encaissement/encours/{banqueId}/export/pdf")
-    public ResponseEntity<byte[]> exportEncoursEncaissementPdf(@PathVariable Long banqueId, EncoursVirementsInternationalSearchDto searchDto) {
-        return pdfResponse(virementInternationalService.exportEncoursEncaissementPdf(searchDto, banqueId), "virements_internationaux_encours_encaissement");
-    }
-
-    @Operation(summary = "Exporter en PDF l'encours de décaissement de virements internationaux d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/decaissement/encours/{banqueId}/export/pdf")
-    public ResponseEntity<byte[]> exportEncoursDecaissementPdf(@PathVariable Long banqueId, EncoursVirementsInternationalSearchDto searchDto) {
-        return pdfResponse(virementInternationalService.exportEncoursDecaissementPdf(searchDto, banqueId), "virements_internationaux_encours_decaissement");
     }
 
     private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {

@@ -85,24 +85,6 @@ public class LcnController {
         return ResponseEntity.ok(updatedLcn);
     }
 
-    @Operation(summary = "Encours de décaissement LCN pour une banque")
-    @GetMapping("/decaissements/encours/{banqueId}")
-    public ResponseEntity<EncoursLcnResponse> getEncoursDecaissementsForLcn(@PathVariable Long banqueId, EncoursLcnSearchDto searchDto,
-                                                                            @PageableDefault(size = 10, sort = "dateEcheance") Pageable pageable) {
-        EncoursLcnResponse result = lcnService.getEncoursDecaissementsForLcn(searchDto, banqueId, pageable);
-        return ResponseEntity.ok(result);
-    }
-
-    @Operation(summary = "Encours d'encaissement LCN pour une banque")
-    @GetMapping("/encaissements/encours/{banqueId}")
-    public ResponseEntity<EncoursLcnResponse> getEncoursEncaissementsForLcn(
-            @PathVariable Long banqueId,
-            EncoursLcnSearchDto searchDto,
-            @PageableDefault(size = 10, sort = "dateEcheance") Pageable pageable) {
-        EncoursLcnResponse result = lcnService.getEncoursEncaissementsForLcn(searchDto, banqueId, pageable);
-        return ResponseEntity.ok(result);
-    }
-
     @Operation(summary = "Exporter les LCN d'encaissement en PDF",
             description = "Ignore la pagination — exporte tous les résultats filtrés.")
     @GetMapping("/encaissements/export/pdf")
@@ -115,20 +97,6 @@ public class LcnController {
     @GetMapping("/decaissements/export/pdf")
     public ResponseEntity<byte[]> exportDecaissementsPdf(LcnSearchDTO searchDto) {
         return pdfResponse(lcnService.exportDecaissementsPdf(searchDto), "lcn_decaissements");
-    }
-
-    @Operation(summary = "Exporter en PDF l'encours d'encaissement de LCN d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/encaissements/encours/{banqueId}/export/pdf")
-    public ResponseEntity<byte[]> exportEncoursEncaissementPdf(@PathVariable Long banqueId, EncoursLcnSearchDto searchDto) {
-        return pdfResponse(lcnService.exportEncoursEncaissementPdf(searchDto, banqueId), "lcn_encours_encaissement");
-    }
-
-    @Operation(summary = "Exporter en PDF l'encours de décaissement de LCN d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/decaissements/encours/{banqueId}/export/pdf")
-    public ResponseEntity<byte[]> exportEncoursDecaissementPdf(@PathVariable Long banqueId, EncoursLcnSearchDto searchDto) {
-        return pdfResponse(lcnService.exportEncoursDecaissementPdf(searchDto, banqueId), "lcn_encours_decaissement");
     }
 
     private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {

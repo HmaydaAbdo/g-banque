@@ -60,27 +60,20 @@ public class VirementValidationService implements IVirementValidationService {
         this.soldeCascadeService = soldeCascadeService;
     }
 
-    @Override
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = Virement.class, idAccessor = "getVirementId")
-    public VirementTransactionResponseDto processVirementDecaissementTransaction(VirementTransactionRequestDto requestDto) {
-        log.info("Validation virement décaissement — id: {}", requestDto.getId());
-        return processTransaction(requestDto);
-    }
-
-    @Override
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = Virement.class, idAccessor = "getVirementId")
-    public VirementTransactionResponseDto processVirementEncaissementTransaction(VirementTransactionRequestDto requestDto) {
-        log.info("Validation virement encaissement — id: {}", requestDto.getId());
-        return processTransaction(requestDto);
-    }
-
     /**
-     * Logique commune décaissement/encaissement — le sens du virement ({@code Virement.type})
-     * détermine la banque de prélèvement retenue par le mapper (émettrice ou bénéficiaire).
+     * Valide un virement, décaissement ou encaissement indifféremment — le sens
+     * ({@code Virement.type}) est lu directement sur l'entité (il détermine la banque de
+     * prélèvement retenue ci-dessous : émettrice ou bénéficiaire), jamais transmis par l'appelant :
+     * une seule méthode suffit, sans branchement côté appelant (fusion du 19/09/2026 des deux
+     * anciennes méthodes {@code processVirementDecaissementTransaction}/
+     * {@code processVirementEncaissementTransaction}, dont les corps étaient déjà identiques).
      */
-    private VirementTransactionResponseDto processTransaction(VirementTransactionRequestDto requestDto) {
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Virement.class, idAccessor = "getVirementId")
+    public VirementTransactionResponseDto processVirementTransaction(VirementTransactionRequestDto requestDto) {
+        log.info("Validation virement — id: {}", requestDto.getId());
+
         Virement virement = virementRepository.findById(requestDto.getId())
                 .orElseThrow(() -> {
                     log.warn("Virement introuvable — id: {}", requestDto.getId());

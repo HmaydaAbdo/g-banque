@@ -34,7 +34,6 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -309,43 +308,6 @@ public class LcnService {
         return toDto(lcn);
     }
 
-    @Transactional(readOnly = true)
-    public EncoursLcnResponse getEncoursDecaissementsForLcn(EncoursLcnSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.debug("Récupération des encours de décaissement pour les LCN de la banque ID={} avec les filtres={}", banqueId, searchDto);
-
-        Specification<Lcn> spec = LcnSpecification.encoursDecaissement(banqueId, finDuMoisCourant())
-                .and(LcnSpecification.hasNumero(searchDto.getNumero()))
-                .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(LcnSpecification.hasMontant(searchDto.getMontant()));
-
-        Page<Lcn> lcnPage = lcnRepository.findAll(spec, stablePageable(pageable));
-        BigDecimal totalDesEncours = lcnRepository.findAll(spec).stream().map(Lcn::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
-        Page<LcnResponseDTO> result = lcnPage.map(this::toDto);
-
-        log.debug("Total des encours de décaissement pour la banque ID={}: {}", banqueId, totalDesEncours);
-        return new EncoursLcnResponse(totalDesEncours, result);
-    }
-
-    @Transactional(readOnly = true)
-    public EncoursLcnResponse getEncoursEncaissementsForLcn(EncoursLcnSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.debug("Récupération des encours d'encaissement pour les LCN de la banque ID={} avec les filtres={}", banqueId, searchDto);
-
-        Specification<Lcn> spec = LcnSpecification.encoursEncaissement(banqueId, finDuMoisCourant())
-                .and(LcnSpecification.hasEmetteur(searchDto.getEmetteur()))
-                .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(LcnSpecification.hasMontant(searchDto.getMontant()))
-                .and(LcnSpecification.hasDateEcheance(searchDto.getDateEcheance()))
-                .and(LcnSpecification.hasDateEmission(searchDto.getDateEmission()))
-                .and(LcnSpecification.hasNumero(searchDto.getNumero()));
-
-        Page<Lcn> lcnPage = lcnRepository.findAll(spec, stablePageable(pageable));
-        BigDecimal totalDesEncours = lcnRepository.findAll(spec).stream().map(Lcn::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
-        Page<LcnResponseDTO> result = lcnPage.map(this::toDto);
-
-        log.debug("Total des encours d'encaissement pour la banque ID={}: {}", banqueId, totalDesEncours);
-        return new EncoursLcnResponse(totalDesEncours, result);
-    }
-
     /**
      * Nombre de LCN échus à la date donnée, groupés par banque — façade publique sur
      * {@link LcnRepository#countEchusGroupedByBanque}. Permet à d'autres domaines (ex.
@@ -407,37 +369,6 @@ public class LcnService {
         List<String> filterLines = buildFilterSummary(searchDto);
 
         return generateLcnPdf("État des LCN de Décaissement", lcns, total, filterLines);
-    }
-
-    @Transactional(readOnly = true)
-    public byte[] exportEncoursEncaissementPdf(EncoursLcnSearchDto searchDto, Long banqueId) {
-        Specification<Lcn> spec = LcnSpecification.encoursEncaissement(banqueId, finDuMoisCourant())
-                .and(LcnSpecification.hasEmetteur(searchDto.getEmetteur()))
-                .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(LcnSpecification.hasMontant(searchDto.getMontant()))
-                .and(LcnSpecification.hasDateEcheance(searchDto.getDateEcheance()))
-                .and(LcnSpecification.hasDateEmission(searchDto.getDateEmission()))
-                .and(LcnSpecification.hasNumero(searchDto.getNumero()));
-
-        List<Lcn> lcns = lcnRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEcheance"));
-        BigDecimal total = sumMontant(spec);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
-
-        return generateLcnPdf("Encours d'Encaissement — LCN", lcns, total, filterLines);
-    }
-
-    @Transactional(readOnly = true)
-    public byte[] exportEncoursDecaissementPdf(EncoursLcnSearchDto searchDto, Long banqueId) {
-        Specification<Lcn> spec = LcnSpecification.encoursDecaissement(banqueId, finDuMoisCourant())
-                .and(LcnSpecification.hasNumero(searchDto.getNumero()))
-                .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(LcnSpecification.hasMontant(searchDto.getMontant()));
-
-        List<Lcn> lcns = lcnRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEcheance"));
-        BigDecimal total = sumMontant(spec);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
-
-        return generateLcnPdf("Encours de Décaissement — LCN", lcns, total, filterLines);
     }
 
     private BigDecimal sumMontant(Specification<Lcn> spec) {
@@ -618,29 +549,6 @@ public class LcnService {
         return lines;
     }
 
-    private List<String> buildEncoursFilterSummary(EncoursLcnSearchDto dto, Long banqueId) {
-        List<String> lines = new ArrayList<>();
-        try {
-            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
-        } catch (ResourceNotFoundException ignored) {
-            // Filtre obsolète (banque supprimée depuis) — ignoré silencieusement dans le résumé PDF.
-        }
-        if (dto == null) return lines;
-        if (dto.getNumero() != null && !dto.getNumero().isBlank())
-            lines.add("N° LCN : " + dto.getNumero());
-        if (dto.getBeneficiaire() != null && !dto.getBeneficiaire().isBlank())
-            lines.add("Bénéficiaire : " + dto.getBeneficiaire());
-        if (dto.getEmetteur() != null && !dto.getEmetteur().isBlank())
-            lines.add("Émetteur : " + dto.getEmetteur());
-        if (dto.getMontant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.getMontant()) + " MAD");
-        if (dto.getDateEmission() != null)
-            lines.add("Date émission : " + dto.getDateEmission().format(DATE_FMT));
-        if (dto.getDateEcheance() != null)
-            lines.add("Date échéance : " + dto.getDateEcheance().format(DATE_FMT));
-        return lines;
-    }
-
     // ── Helpers internes ──────────────────────────────────────────────────────
 
     private void validateEscompteBusinessRule(Type type, NatureLcn nature) {
@@ -655,14 +563,6 @@ public class LcnService {
     private Lcn trouverOuLeverException(Long id) {
         return lcnRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lcn with id " + id + " not found."));
-    }
-
-    /**
-     * Fin du mois courant — recalculée à chaque appel (et non mise en cache) pour que
-     * les calculs d'encours restent corrects après le premier jour suivant le déploiement.
-     */
-    private LocalDate finDuMoisCourant() {
-        return LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
     }
 
     private Pageable stablePageable(Pageable pageable) {

@@ -3,7 +3,6 @@ package staport.finance.gBanque.provision.services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -32,7 +31,6 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -46,9 +44,6 @@ import java.util.Locale;
  *
  * <p>Suppression bloquée si déjà PAYE (règle transversale, {@code conventions/architecture.md},
  * "Règle 5") — {@code deleteProvision} lève {@link ValidationException} dans ce cas.
- *
- * <p>Calquée sur {@code OperationErroneServiceImpl} — {@code endOfMonth} recalculé localement à
- * chaque appel de {@link #getOutstandingProvision} (pas de champ figé sur le bean singleton).
  */
 @Service
 public class ProvisionServiceImpl implements IProvisionService {
@@ -161,30 +156,6 @@ public class ProvisionServiceImpl implements IProvisionService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public EncoursProvisionDto getOutstandingProvision(EncoursProvisionSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.info("Récupération des provisions en cours - banqueId={}, Critères: {}", banqueId, searchDto);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<Provision> spec = Specification.where(ProvisionSpecification.outstandingUntil(endOfMonth))
-                .and(ProvisionSpecification.hasBanque(banqueId))
-                .and(ProvisionSpecification.hasLibelle(searchDto.libelle()))
-                .and(ProvisionSpecification.hasMontant(searchDto.montant()))
-                .and(ProvisionSpecification.hasMotif(searchDto.motif()))
-                .and(ProvisionSpecification.hasSens(searchDto.sens()));
-
-        Page<Provision> page = provisionRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
-        BigDecimal total = provisionRepository.findAll(spec).stream()
-                .map(Provision::getMontant)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        log.info("Encours calculé: {}, Nombre de provisions: {}", total, page.getTotalElements());
-
-        return new EncoursProvisionDto(total, page.map(provisionMapper::toResponseDto));
-    }
-
-    @Override
     @Transactional
     @AuditableAction(operation = AuditOperation.UPDATE, entity = Provision.class)
     public ProvisionResponseDto toggleStatus(Long id) {
@@ -217,28 +188,6 @@ public class ProvisionServiceImpl implements IProvisionService {
         List<String> filterLines = buildFilterSummary(searchDto);
 
         return genererPdf("État des Provisions", provisions, totalMontant, filterLines);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public byte[] exporterEncoursPdf(EncoursProvisionSearchDto searchDto, Long banqueId) {
-        log.info("Export PDF encours provisions — banqueId={}", banqueId);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<Provision> spec = Specification.where(ProvisionSpecification.outstandingUntil(endOfMonth))
-                .and(ProvisionSpecification.hasBanque(banqueId))
-                .and(ProvisionSpecification.hasLibelle(searchDto.libelle()))
-                .and(ProvisionSpecification.hasMontant(searchDto.montant()))
-                .and(ProvisionSpecification.hasMotif(searchDto.motif()))
-                .and(ProvisionSpecification.hasSens(searchDto.sens()));
-
-        List<Provision> provisions = provisionRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-
-        BigDecimal totalMontant = totalSigne(provisions);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
-
-        return genererPdf("Encours des Provisions", provisions, totalMontant, filterLines);
     }
 
     /** Somme des montants — un décaissement compte négativement dans le total affiché. */
@@ -430,26 +379,4 @@ public class ProvisionServiceImpl implements IProvisionService {
         return lines;
     }
 
-    private List<String> buildEncoursFilterSummary(EncoursProvisionSearchDto dto, Long banqueId) {
-        List<String> lines = new ArrayList<>();
-
-        try {
-            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
-        } catch (ResourceNotFoundException e) {
-            log.debug("Banque id={} introuvable pour le résumé de filtre export encours — ignorée", banqueId);
-        }
-
-        if (dto == null) return lines;
-
-        if (dto.libelle() != null && !dto.libelle().isBlank())
-            lines.add("Libellé : " + dto.libelle());
-        if (dto.montant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
-        if (dto.motif() != null)
-            lines.add("Motif : " + libelleEnum(dto.motif()));
-        if (dto.sens() != null)
-            lines.add("Sens : " + libelleEnum(dto.sens()));
-
-        return lines;
-    }
 }

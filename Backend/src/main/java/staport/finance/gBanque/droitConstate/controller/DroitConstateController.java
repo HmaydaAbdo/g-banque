@@ -15,9 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.droitConstate.dtos.request.DroitConstateRequestDto;
 import staport.finance.gBanque.droitConstate.dtos.request.DroitConstateSearchDto;
-import staport.finance.gBanque.droitConstate.dtos.request.EncoursDroitConstateSearchDto;
 import staport.finance.gBanque.droitConstate.dtos.response.DroitConstateResponseDto;
-import staport.finance.gBanque.droitConstate.dtos.response.EncoursDroitConstateDto;
 import staport.finance.gBanque.droitConstate.service.IDroitConstateService;
 
 import java.time.LocalDate;
@@ -105,50 +103,6 @@ public class DroitConstateController {
     public ResponseEntity<DroitConstateResponseDto> toggleStatus(@PathVariable Long id) {
         DroitConstateResponseDto responseDTO = droitConstateService.toggleStatus(id);
         return ResponseEntity.ok(responseDTO);
-    }
-
-    @Operation(summary = "Consulter les encours de remboursement de droit constaté d'une banque")
-    @GetMapping("/remboursement/encours/{banqueId}")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<EncoursDroitConstateDto> getEncoursForRemboursement(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursDroitConstateSearchDto searchDTO,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        EncoursDroitConstateDto result = droitConstateService.getRemboursementEncoursForBanque(searchDTO, banqueId, pageable);
-        return ResponseEntity.ok(result);
-    }
-
-    @Operation(summary = "Consulter les encours de déblocage de droit constaté d'une banque")
-    @GetMapping("/deblocage/encours/{banqueId}")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<EncoursDroitConstateDto> getEncoursForDeblocage(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursDroitConstateSearchDto searchDTO,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        EncoursDroitConstateDto result = droitConstateService.getDeblocageEncoursForBanque(searchDTO, banqueId, pageable);
-        return ResponseEntity.ok(result);
-    }
-
-    @Operation(summary = "Exporter en PDF l'encours de remboursement de droit constaté d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/remboursement/encours/{banqueId}/export/pdf")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<byte[]> exportRemboursementEncoursPdf(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursDroitConstateSearchDto searchDTO) {
-        byte[] pdf = droitConstateService.exportRemboursementEncoursPdf(searchDTO, banqueId);
-        return pdfResponse(pdf, "droit_constate_encours_remboursement");
-    }
-
-    @Operation(summary = "Exporter en PDF l'encours de déblocage de droit constaté d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/deblocage/encours/{banqueId}/export/pdf")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<byte[]> exportDeblocageEncoursPdf(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursDroitConstateSearchDto searchDTO) {
-        byte[] pdf = droitConstateService.exportDeblocageEncoursPdf(searchDTO, banqueId);
-        return pdfResponse(pdf, "droit_constate_encours_deblocage");
     }
 
     private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {

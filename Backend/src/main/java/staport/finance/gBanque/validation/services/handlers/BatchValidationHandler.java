@@ -15,12 +15,22 @@ import staport.finance.gBanque.validation.dtos.lot.OperationValideeDto;
  * {@code BatchValidationService.processOne}, seulement d'ajouter une implémentation dans le module
  * de cette source.
  * <p>
- * Migration en cours (14-19/09/2026) : Leasing, CMT et Chèque sont les trois premières sources
- * migrées vers ce patron ({@code LeasingBatchValidationHandler}, {@code CmtBatchValidationHandler},
- * {@code ChequeBatchValidationHandler}), en remplacement à l'identique des
- * {@code case LEASING}/{@code case CMT}/{@code case CHEQUE} qu'ils portaient auparavant — aucun
- * changement de comportement. Les 19 autres sources restent gérées par le switch historique de
- * {@code BatchValidationService.processOne}, à migrer une par une.
+ * Migration menée du 14 au 19/09/2026 : les 20 sources de la validation en lot sont désormais
+ * toutes portées par ce patron ({@code LeasingBatchValidationHandler},
+ * {@code CmtBatchValidationHandler}, {@code ChequeBatchValidationHandler},
+ * {@code LcnDecaissementBatchValidationHandler}, {@code LcnEncaissementBatchValidationHandler},
+ * {@code VirementBatchValidationHandler}, {@code PrefinancementBatchValidationHandler},
+ * {@code FactoringBatchValidationHandler}, {@code DroitConstateBatchValidationHandler},
+ * {@code DecompteBatchValidationHandler}, {@code RestitutionBatchValidationHandler},
+ * {@code ProvisionBatchValidationHandler}, {@code ImpayeeBatchValidationHandler},
+ * {@code VirementInternationalBatchValidationHandler}, {@code MiseADispositionBatchValidationHandler},
+ * {@code AgiosBatchValidationHandler}, {@code CommissionBatchValidationHandler},
+ * {@code FraisBancaireBatchValidationHandler}, {@code PrelevementBatchValidationHandler},
+ * {@code ImpotEtTaxeBatchValidationHandler}, {@code OperationErroneBatchValidationHandler}), chacun
+ * en remplacement à l'identique du {@code case} qu'il portait auparavant dans le switch historique
+ * de {@code BatchValidationService.processOne} (désormais supprimé) — aucun changement de
+ * comportement. {@code TransactionSource.LCN_ESCOMPTE} n'a jamais eu de handler ni de case — non
+ * pris en charge en lot, avant comme après cette migration.
  */
 public interface BatchValidationHandler {
 

@@ -13,10 +13,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.factoring.dtos.request.EncoursFactoringSearchDto;
 import staport.finance.gBanque.factoring.dtos.request.FactoringRequestDto;
 import staport.finance.gBanque.factoring.dtos.request.FactoringSearchDto;
-import staport.finance.gBanque.factoring.dtos.response.EncoursFactoringDto;
 import staport.finance.gBanque.factoring.dtos.response.FactoringResponseDto;
 import staport.finance.gBanque.factoring.service.IFactoringService;
 
@@ -105,50 +103,6 @@ public class FactoringController {
     public ResponseEntity<FactoringResponseDto> toggleStatus(@PathVariable Long id) {
         FactoringResponseDto responseDTO = factoringService.toggleStatus(id);
         return ResponseEntity.ok(responseDTO);
-    }
-
-    @Operation(summary = "Consulter les encours de remboursement de factoring d'une banque")
-    @GetMapping("/remboursement/encours/{banqueId}")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<EncoursFactoringDto> getEncoursForRemboursement(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursFactoringSearchDto searchDto,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        EncoursFactoringDto result = factoringService.getRemboursementEncoursForBanque(searchDto, banqueId, pageable);
-        return ResponseEntity.ok(result);
-    }
-
-    @Operation(summary = "Consulter les encours de déblocage de factoring d'une banque")
-    @GetMapping("/deblocage/encours/{banqueId}")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<EncoursFactoringDto> getEncoursForDeblocage(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursFactoringSearchDto searchDto,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        EncoursFactoringDto result = factoringService.getDeblocageEncoursForBanque(searchDto, banqueId, pageable);
-        return ResponseEntity.ok(result);
-    }
-
-    @Operation(summary = "Exporter en PDF l'encours de remboursement de factoring d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/remboursement/encours/{banqueId}/export/pdf")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<byte[]> exportRemboursementEncoursPdf(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursFactoringSearchDto searchDto) {
-        byte[] pdf = factoringService.exportRemboursementEncoursPdf(searchDto, banqueId);
-        return pdfResponse(pdf, "factoring_encours_remboursement");
-    }
-
-    @Operation(summary = "Exporter en PDF l'encours de déblocage de factoring d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/deblocage/encours/{banqueId}/export/pdf")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<byte[]> exportDeblocageEncoursPdf(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursFactoringSearchDto searchDto) {
-        byte[] pdf = factoringService.exportDeblocageEncoursPdf(searchDto, banqueId);
-        return pdfResponse(pdf, "factoring_encours_deblocage");
     }
 
     private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {

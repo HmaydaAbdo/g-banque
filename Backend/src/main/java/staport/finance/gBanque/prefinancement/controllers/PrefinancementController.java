@@ -13,10 +13,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.prefinancement.dtos.request.EncoursPrefinancementSearchDto;
 import staport.finance.gBanque.prefinancement.dtos.request.PrefinancementRequestDTO;
 import staport.finance.gBanque.prefinancement.dtos.request.PrefinancementSearchDTO;
-import staport.finance.gBanque.prefinancement.dtos.response.EncoursPrefinancementDto;
 import staport.finance.gBanque.prefinancement.dtos.response.PrefinancementResponseDTO;
 import staport.finance.gBanque.prefinancement.services.IPrefinancementService;
 
@@ -105,50 +103,6 @@ public class PrefinancementController {
     public ResponseEntity<PrefinancementResponseDTO> toggleStatus(@PathVariable Long id) {
         PrefinancementResponseDTO responseDTO = prefinancementService.toggleStatus(id);
         return ResponseEntity.ok(responseDTO);
-    }
-
-    @Operation(summary = "Consulter les encours de remboursement de préfinancement d'une banque")
-    @GetMapping("/remboursement/encours/{banqueId}")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<EncoursPrefinancementDto> getEncoursForRemboursement(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursPrefinancementSearchDto searchDto,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        EncoursPrefinancementDto result = prefinancementService.getRemboursementEncoursForBanque(searchDto, banqueId, pageable);
-        return ResponseEntity.ok(result);
-    }
-
-    @Operation(summary = "Consulter les encours de déblocage de préfinancement d'une banque")
-    @GetMapping("/deblocage/encours/{banqueId}")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<EncoursPrefinancementDto> getEncoursForDeblocage(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursPrefinancementSearchDto searchDto,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        EncoursPrefinancementDto result = prefinancementService.getDeblocageEncoursForBanque(searchDto, banqueId, pageable);
-        return ResponseEntity.ok(result);
-    }
-
-    @Operation(summary = "Exporter en PDF l'encours de remboursement de préfinancement d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/remboursement/encours/{banqueId}/export/pdf")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<byte[]> exportRemboursementEncoursPdf(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursPrefinancementSearchDto searchDto) {
-        byte[] pdf = prefinancementService.exportRemboursementEncoursPdf(searchDto, banqueId);
-        return pdfResponse(pdf, "prefinancement_encours_remboursement");
-    }
-
-    @Operation(summary = "Exporter en PDF l'encours de déblocage de préfinancement d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/deblocage/encours/{banqueId}/export/pdf")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<byte[]> exportDeblocageEncoursPdf(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursPrefinancementSearchDto searchDto) {
-        byte[] pdf = prefinancementService.exportDeblocageEncoursPdf(searchDto, banqueId);
-        return pdfResponse(pdf, "prefinancement_encours_deblocage");
     }
 
     private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {

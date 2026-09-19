@@ -6,7 +6,6 @@ import { Observable } from "rxjs";
 import { PrelevementResponseDto } from "../dtos/PrelevementResponseDto";
 import { PageResponse } from "../../global/types/PageResponse";
 import { PrelevementSearchDto } from "../dtos/PrelevementSearchDto";
-import { EncoursPrelevement } from "../dtos/EncoursPrelevement";
 
 @Injectable({
   providedIn: 'root'
@@ -84,41 +83,6 @@ export class PrelevementService {
   }
 
   /**
-   * Retrieves a paginated list of outstanding Prelevements for a specific bank,
-   * including the total outstanding amount.
-   *
-   * @param banqueId ID of the bank for which to retrieve Prelevements.
-   * @param searchDto Optional filter criteria.
-   * @param page Current page number (0-indexed).
-   * @param size Number of records per page.
-   * @param sort Sorting criteria, e.g., 'dateEmission,desc'.
-   * @returns Observable emitting the EncoursPrelevement.
-   */
-  getOutstandingPrelevement(
-    banqueId: number,
-    searchDto?: PrelevementSearchDto,
-    page: number = 0,
-    size: number = 10,
-    sort: string = 'dateEmission,desc'
-  ): Observable<EncoursPrelevement> {
-
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', sort);
-
-    if (searchDto) {
-      Object.entries(searchDto).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
-          params = params.set(key, String(value));
-        }
-      });
-    }
-
-    return this.http.get<EncoursPrelevement>(`${this.apiUrl}/encours/${banqueId}`, { params });
-  }
-
-  /**
    * Toggles the status of a Prelevement
    * @param id Identifier of the Prelevement to toggle.
    * @returns Observable emitting the updated PrelevementResponseDto.
@@ -135,15 +99,5 @@ export class PrelevementService {
       }
     });
     return this.http.get(`${this.apiUrl}/export/pdf`, {params, responseType: 'blob'});
-  }
-
-  exportEncoursPdf(banqueId: number, searchDto: PrelevementSearchDto): Observable<Blob> {
-    let params = new HttpParams();
-    Object.entries(searchDto || {}).forEach(([key, value]) => {
-      if (value !== null && value !== undefined && value !== '') {
-        params = params.set(key, String(value));
-      }
-    });
-    return this.http.get(`${this.apiUrl}/encours/${banqueId}/export/pdf`, {params, responseType: 'blob'});
   }
 }

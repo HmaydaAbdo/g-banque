@@ -2,8 +2,6 @@ package staport.finance.gBanque.operationErrone.services;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import staport.finance.gBanque.operationErrone.dtos.EncoursOperationErroneDto;
-import staport.finance.gBanque.operationErrone.dtos.EncoursOperationErroneSearchDto;
 import staport.finance.gBanque.operationErrone.dtos.OperationErroneRequestDto;
 import staport.finance.gBanque.operationErrone.dtos.OperationErroneResponseDto;
 import staport.finance.gBanque.operationErrone.dtos.OperationErroneSearchDto;
@@ -27,11 +25,7 @@ public interface IOperationErroneService {
 
     void deleteOperationErrone(Long id);
 
-    EncoursOperationErroneDto getOutstandingOperationErrone(EncoursOperationErroneSearchDto searchDto, Long banqueId, Pageable pageable);
-
     OperationErroneResponseDto toggleStatus(Long id);
 
     byte[] exporterPdf(OperationErroneSearchDto searchDto);
-
-    byte[] exporterEncoursPdf(EncoursOperationErroneSearchDto searchDto, Long banqueId);
 }

@@ -204,95 +204,61 @@ public class ValidationController {
 
 
     /**
-     * Valide une mise à disposition de décaissement : crée la transaction bancaire et marque la
-     * mise à disposition REGLE. Délègue au {@code MiseADispositionValidationService} du module
-     * miseADisposition (architecture.md, Règle 1).
+     * Valide une mise à disposition, décaissement ou encaissement indifféremment : crée la
+     * transaction bancaire et marque la mise à disposition REGLE. Délègue au
+     * {@code MiseADispositionValidationService} du module miseADisposition (architecture.md,
+     * Règle 1). Endpoint unique depuis la fusion du 19/09/2026 (le sens est lu sur l'entité, plus
+     * transmis par l'appelant — remplace les anciens {@code /process/decaissement/mise-a-disposition}
+     * et {@code /process/encaissement/mise-a-disposition}).
      */
-    @Operation(summary = "Valider une mise à disposition (décaissement)")
-    @PostMapping("/process/decaissement/mise-a-disposition")
-    public ResponseEntity<MiseAdispositionTransactionResponseDto> processMiseAdispositionDecaissementTransaction(@Valid @RequestBody MiseAdispositionTransactionRequestDto requestDto) {
-        MiseAdispositionTransactionResponseDto responseDto = miseADispositionValidationService.processMiseAdispositionDecaissementTransaction(requestDto);
-        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
-    }
-
-    /**
-     * Valide une mise à disposition d'encaissement : crée la transaction bancaire et marque la
-     * mise à disposition REGLE. Délègue au {@code MiseADispositionValidationService} du module
-     * miseADisposition (architecture.md, Règle 1).
-     */
-    @Operation(summary = "Valider une mise à disposition (encaissement)")
-    @PostMapping("/process/encaissement/mise-a-disposition")
-    public ResponseEntity<MiseAdispositionTransactionResponseDto> processMiseAdispositionEncaissementTransaction(@Valid @RequestBody MiseAdispositionTransactionRequestDto requestDto) {
-        MiseAdispositionTransactionResponseDto responseDto = miseADispositionValidationService.processMiseAdispositionEncaissementTransaction(requestDto);
-        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
-    }
-
-
-
-    /**
-     * Valide un virement de décaissement : crée la transaction bancaire et marque le virement REGLE.
-     * Délègue au {@code VirementValidationService} du module virements (architecture.md, Règle 1).
-     */
-    @Operation(summary = "Valider un virement (décaissement)")
-    @PostMapping("/process/decaissement/virement")
-    public ResponseEntity<VirementTransactionResponseDto> processVirementDecaissementTransaction(@Valid @RequestBody VirementTransactionRequestDto requestDto) {
-        VirementTransactionResponseDto responseDto = virementValidationService.processVirementDecaissementTransaction(requestDto);
-        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
-    }
-
-    /**
-     * Valide un virement d'encaissement : crée la transaction bancaire et marque le virement REGLE.
-     * Délègue au {@code VirementValidationService} du module virements (architecture.md, Règle 1).
-     */
-    @Operation(summary = "Valider un virement (encaissement)")
-    @PostMapping("/process/encaissement/virement")
-    public ResponseEntity<VirementTransactionResponseDto> processVirementEncaissementTransaction(@Valid @RequestBody VirementTransactionRequestDto requestDto) {
-        VirementTransactionResponseDto responseDto = virementValidationService.processVirementEncaissementTransaction(requestDto);
+    @Operation(summary = "Valider une mise à disposition")
+    @PostMapping("/process/mise-a-disposition")
+    public ResponseEntity<MiseAdispositionTransactionResponseDto> processMiseAdispositionTransaction(@Valid @RequestBody MiseAdispositionTransactionRequestDto requestDto) {
+        MiseAdispositionTransactionResponseDto responseDto = miseADispositionValidationService.processMiseAdispositionTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
 
     /**
-     * Valide un chèque de décaissement : crée la transaction bancaire et marque le chèque REGLE.
-     * Délègue au {@code ChequeValidationService} du module cheques (architecture.md, Règle 1).
+     * Valide un virement, décaissement ou encaissement indifféremment : crée la transaction
+     * bancaire et marque le virement REGLE. Délègue au {@code VirementValidationService} du module
+     * virements (architecture.md, Règle 1). Endpoint unique depuis la fusion du 19/09/2026 (le sens
+     * est lu sur l'entité, plus transmis par l'appelant — remplace les anciens
+     * {@code /process/decaissement/virement} et {@code /process/encaissement/virement}).
      */
-    @Operation(summary = "Valider un chèque (décaissement)")
-    @PostMapping("/process/decaissement/cheque")
-    public ResponseEntity<ChequeTransactionResponseDto> processDecaissementChequeTransaction(@Valid @RequestBody ChequeTransactionRequest requestDto) {
-        ChequeTransactionResponseDto responseDto = chequeValidationService.processChequeDecaissementTransaction(requestDto);
+    @Operation(summary = "Valider un virement")
+    @PostMapping("/process/virement")
+    public ResponseEntity<VirementTransactionResponseDto> processVirementTransaction(@Valid @RequestBody VirementTransactionRequestDto requestDto) {
+        VirementTransactionResponseDto responseDto = virementValidationService.processVirementTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
+
+    /**
+     * Valide un chèque, décaissement ou encaissement indifféremment : crée la transaction bancaire
+     * et marque le chèque REGLE. Délègue au {@code ChequeValidationService} du module cheques
+     * (architecture.md, Règle 1). Endpoint unique depuis la fusion du 19/09/2026 (le sens est lu
+     * sur l'entité, plus transmis par l'appelant — remplace les anciens
+     * {@code /process/decaissement/cheque} et {@code /process/encaissement/cheque}).
+     */
+    @Operation(summary = "Valider un chèque")
+    @PostMapping("/process/cheque")
+    public ResponseEntity<ChequeTransactionResponseDto> processChequeTransaction(@Valid @RequestBody ChequeTransactionRequest requestDto) {
+        ChequeTransactionResponseDto responseDto = chequeValidationService.processChequeTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
     /**
-     * Valide un chèque d'encaissement : crée la transaction bancaire et marque le chèque REGLE.
-     * Délègue au {@code ChequeValidationService} du module cheques (architecture.md, Règle 1).
+     * Valide un LCN, décaissement ou encaissement indifféremment : crée la transaction bancaire et
+     * marque le LCN REGLE. Délègue au {@code LcnValidationService} du module lcn (architecture.md,
+     * Règle 1). Endpoint unique depuis la fusion du 19/09/2026 (le sens est lu sur l'entité, plus
+     * transmis par l'appelant — remplace les anciens {@code /process/decaissement/lcn} et
+     * {@code /process/encaissement/lcn}).
      */
-    @Operation(summary = "Valider un chèque (encaissement)")
-    @PostMapping("/process/encaissement/cheque")
-    public ResponseEntity<ChequeTransactionResponseDto> processEncaissementChequeTransaction(@Valid @RequestBody ChequeTransactionRequest requestDto) {
-        ChequeTransactionResponseDto responseDto = chequeValidationService.processChequeEncaissementTransaction(requestDto);
-        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
-    }
-
-    /**
-     * Valide un LCN de décaissement : crée la transaction bancaire et marque le LCN REGLE.
-     * Délègue au {@code LcnValidationService} du module lcn (architecture.md, Règle 1).
-     */
-    @Operation(summary = "Valider un LCN (décaissement)")
-    @PostMapping("/process/decaissement/lcn")
-    public ResponseEntity<LcnTransactionResponseDto> processDecaissementLcnTransaction(@Valid @RequestBody LcnTransactionRequest requestDto) {
-        LcnTransactionResponseDto responseDto = lcnValidationService.processLcnDecaissementTransaction(requestDto);
-        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
-    }
-
-    /**
-     * Valide un LCN d'encaissement : crée la transaction bancaire et marque le LCN REGLE.
-     * Délègue au {@code LcnValidationService} du module lcn (architecture.md, Règle 1).
-     */
-    @Operation(summary = "Valider un LCN (encaissement)")
-    @PostMapping("/process/encaissement/lcn")
-    public ResponseEntity<LcnTransactionResponseDto> processEncaissementLcnTransaction(@Valid @RequestBody LcnTransactionRequest requestDto) {
-        LcnTransactionResponseDto responseDto = lcnValidationService.processLcnEncaissementTransaction(requestDto);
+    @Operation(summary = "Valider un LCN")
+    @PostMapping("/process/lcn")
+    public ResponseEntity<LcnTransactionResponseDto> processLcnTransaction(@Valid @RequestBody LcnTransactionRequest requestDto) {
+        LcnTransactionResponseDto responseDto = lcnValidationService.processLcnTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
@@ -412,30 +378,20 @@ public class ValidationController {
     }
 
     /**
-     * Valide un virement international de décaissement : crée la transaction bancaire et marque le
-     * virement international REGLE. Délègue au {@code VirementInternationalValidationService} du
-     * module virementInternational (architecture.md, Règle 1).
+     * Valide un virement international, décaissement ou encaissement indifféremment : crée la
+     * transaction bancaire et marque le virement international REGLE. Délègue au
+     * {@code VirementInternationalValidationService} du module virementInternational
+     * (architecture.md, Règle 1). Endpoint unique depuis la fusion du 19/09/2026 (le sens est lu
+     * sur l'entité, plus transmis par l'appelant — remplace les anciens
+     * {@code /process/decaissement/virement-international} et
+     * {@code /process/encaissement/virement-international}).
      */
-    @Operation(summary = "Valider un virement international (décaissement)")
-    @PostMapping("/process/decaissement/virement-international")
-    public ResponseEntity<VirementInternationalTransactionResponseDto> processVirementInternationalDecaissementTransaction(
+    @Operation(summary = "Valider un virement international")
+    @PostMapping("/process/virement-international")
+    public ResponseEntity<VirementInternationalTransactionResponseDto> processVirementInternationalTransaction(
             @Valid @RequestBody VirementInternationalTransactionRequestDto requestDto) {
         VirementInternationalTransactionResponseDto responseDto =
-                virementInternationalValidationService.processVirementInternationalDecaissementTransaction(requestDto);
-        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
-    }
-
-    /**
-     * Valide un virement international d'encaissement : crée la transaction bancaire et marque le
-     * virement international REGLE. Délègue au {@code VirementInternationalValidationService} du
-     * module virementInternational (architecture.md, Règle 1).
-     */
-    @Operation(summary = "Valider un virement international (encaissement)")
-    @PostMapping("/process/encaissement/virement-international")
-    public ResponseEntity<VirementInternationalTransactionResponseDto> processVirementInternationalEncaissementTransaction(
-            @Valid @RequestBody VirementInternationalTransactionRequestDto requestDto) {
-        VirementInternationalTransactionResponseDto responseDto =
-                virementInternationalValidationService.processVirementInternationalEncaissementTransaction(requestDto);
+                virementInternationalValidationService.processVirementInternationalTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 

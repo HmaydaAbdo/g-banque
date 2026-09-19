@@ -2580,7 +2580,7 @@ static final String FINANCE_OR_ADMIN =
 
 ### Endpoints — `ValidationController` (base `/rapprochement`)
 
-`@PreAuthorize(FINANCE_OR_ADMIN)` posé au niveau classe — couvre les 27 endpoints d'un coup, y
+`@PreAuthorize(FINANCE_OR_ADMIN)` posé au niveau classe — couvre les 22 endpoints d'un coup, y
 compris l'annulation de transaction (voir justification dans `docs/rbac/transactions.md`, section
 "Endpoint hors module").
 
@@ -2588,14 +2588,10 @@ compris l'annulation de transaction (voir justification dans `docs/rbac/transact
 |---|---|---|
 | POST | `/rapprochement/process/echeance-leasing` | Leasing |
 | POST | `/rapprochement/process/echeance-cmt` | CMT |
-| POST | `/rapprochement/process/decaissement/mise-a-disposition` | Mise à disposition |
-| POST | `/rapprochement/process/encaissement/mise-a-disposition` | Mise à disposition |
-| POST | `/rapprochement/process/decaissement/virement` | Virements |
-| POST | `/rapprochement/process/encaissement/virement` | Virements |
-| POST | `/rapprochement/process/decaissement/cheque` | Chèques |
-| POST | `/rapprochement/process/encaissement/cheque` | Chèques |
-| POST | `/rapprochement/process/decaissement/lcn` | LCN |
-| POST | `/rapprochement/process/encaissement/lcn` | LCN |
+| POST | `/rapprochement/process/mise-a-disposition` | Mise à disposition |
+| POST | `/rapprochement/process/virement` | Virements |
+| POST | `/rapprochement/process/cheque` | Chèques |
+| POST | `/rapprochement/process/lcn` | LCN |
 | POST | `/rapprochement/process/prefinancement` | Préfinancement |
 | POST | `/rapprochement/process/droit-constate` | Droits constatés |
 | POST | `/rapprochement/process/factoring` | Factoring |
@@ -2607,14 +2603,21 @@ compris l'annulation de transaction (voir justification dans `docs/rbac/transact
 | POST | `/rapprochement/process/impot-taxe` | Impôts et taxes |
 | POST | `/rapprochement/process/restitution` | Restitution |
 | POST | `/rapprochement/process/operation-errone` | Opérations erronées |
-| POST | `/rapprochement/process/decaissement/virement-international` | Virement international |
-| POST | `/rapprochement/process/encaissement/virement-international` | Virement international |
+| POST | `/rapprochement/process/virement-international` | Virement international |
 | POST | `/rapprochement/process/impayee` | Impayées |
 | POST | `/rapprochement/process/provision` | Provision |
 | POST | `/rapprochement/process/lot` | Validation par lot (dispatch vers plusieurs des services ci-dessus, tout-ou-rien) |
 | DELETE | `/rapprochement/annuler/{transactionId}` | Annulation de transaction (`ReverseTransactionService`) — documenté en détail dans `docs/rbac/transactions.md` |
 
-**Corrigé pendant ce sweep** : les 25 endpoints `POST /process/*` n'avaient aucun `@Operation`
+**19/09/2026 — Fusion des endpoints à deux sens.** Mise à disposition, Virement, Chèque, LCN et
+Virement international n'ont désormais plus qu'un seul endpoint chacun (au lieu de deux,
+`/process/decaissement/{source}` et `/process/encaissement/{source}`) : leurs deux méthodes de
+service métier étaient déjà rigoureusement identiques (le sens réel est lu directement sur l'entité
+par le mapper, jamais transmis par l'appelant), fusionnées en une seule `processXxxTransaction`
+sans changement de comportement. `FINANCE_OR_ADMIN` reste la même restriction qu'avant sur les
+nouveaux endpoints uniques.
+
+**Corrigé pendant un sweep précédent** : les endpoints `POST /process/*` n'avaient aucun `@Operation`
 Swagger (le `@Tag`/`@SecurityRequirement` de classe existaient déjà, la restriction
 `FINANCE_OR_ADMIN` était donc déjà en place avant ce sweep — seule la documentation Swagger
 manquait).

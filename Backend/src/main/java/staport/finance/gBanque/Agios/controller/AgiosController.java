@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.Agios.dtos.AgiosRequestDto;
 import staport.finance.gBanque.Agios.dtos.AgiosResponseDto;
 import staport.finance.gBanque.Agios.dtos.AgiosSearchDto;
-import staport.finance.gBanque.Agios.dtos.EncoursAgiosDto;
 import staport.finance.gBanque.Agios.service.AgiosService;
 
 import java.time.LocalDate;
@@ -131,39 +129,6 @@ public class AgiosController {
     public ResponseEntity<Void> deleteAgios(@PathVariable Long id) {
         agiosService.deleteAgios(id);
         return ResponseEntity.noContent().build();
-    }
-
-    // ── Encours ───────────────────────────────────────────────────────────────
-
-    @Operation(summary = "Récupérer les agios en cours d'une banque")
-    @GetMapping("/encours/{banqueId}")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<EncoursAgiosDto> getOutstandingAgios(
-            @PathVariable Long banqueId,
-            @RequestParam(required = false) String libelle,
-            @RequestParam(required = false) java.math.BigDecimal montant,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-
-        AgiosSearchDto criteria = new AgiosSearchDto(banqueId, libelle, montant, null, null, null, null, null, null, null);
-        return ResponseEntity.ok(agiosService.getOutstandingAgios(criteria, pageable));
-    }
-
-    @Operation(summary = "Exporter en PDF les agios en cours d'une banque",
-            description = "Mêmes critères que GET /agios/encours/{banqueId} — sans pagination")
-    @GetMapping("/encours/{banqueId}/export/pdf")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<byte[]> exportOutstandingAgiosPdf(
-            @PathVariable Long banqueId,
-            @RequestParam(required = false) String libelle,
-            @RequestParam(required = false) java.math.BigDecimal montant) {
-
-        AgiosSearchDto criteria = new AgiosSearchDto(banqueId, libelle, montant, null, null, null, null, null, null, null);
-        byte[] pdf = agiosService.exportOutstandingAgiosPdf(criteria, banqueId);
-        String filename = "encours_agios_" + LocalDate.now() + ".pdf";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", filename);
-        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
     // ── Toggle statut ─────────────────────────────────────────────────────────

@@ -18,16 +18,12 @@ import java.time.LocalDate;
 public interface IMiseADispositionValidationService {
 
     /**
-     * Valide une mise à disposition de décaissement : crée la transaction bancaire associée,
-     * attache au rapprochement cible et marque la mise à disposition comme REGLE.
+     * Valide une mise à disposition, décaissement ou encaissement indifféremment : crée la
+     * transaction bancaire associée, attache au rapprochement cible et marque la mise à
+     * disposition comme REGLE. Le sens ({@code MiseADisposition.type}) est lu directement sur
+     * l'entité — jamais transmis par l'appelant, une seule méthode suffit pour les deux sens.
      */
-    MiseAdispositionTransactionResponseDto processMiseAdispositionDecaissementTransaction(MiseAdispositionTransactionRequestDto requestDto);
-
-    /**
-     * Valide une mise à disposition d'encaissement : crée la transaction bancaire associée,
-     * attache au rapprochement cible et marque la mise à disposition comme REGLE.
-     */
-    MiseAdispositionTransactionResponseDto processMiseAdispositionEncaissementTransaction(MiseAdispositionTransactionRequestDto requestDto);
+    MiseAdispositionTransactionResponseDto processMiseAdispositionTransaction(MiseAdispositionTransactionRequestDto requestDto);
 
     /**
      * Synchronise une mise à disposition liée à une transaction mise à jour.

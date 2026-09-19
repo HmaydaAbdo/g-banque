@@ -7,14 +7,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.prelevements.dtos.EncoursPrelevement;
 import staport.finance.gBanque.prelevements.dtos.PrelevementRequestDto;
 import staport.finance.gBanque.prelevements.dtos.PrelevementResponseDto;
 import staport.finance.gBanque.prelevements.dtos.PrelevementSearchDto;
@@ -140,39 +138,6 @@ public class PrelevementController {
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Récupère les prélèvements en cours avec leur montant total pour une banque spécifique
-     * Les prélèvements en cours sont ceux avec un statut 'PREVU' et une date d'émission dans le passé
-     *
-     * @param banqueId ID de la banque pour filtrer les prélèvements
-     * @param searchDto Critères de recherche optionnels
-     * @param pageable Informations de pagination et de tri
-     * @return Un EncoursPrelevement contenant la page de prélèvements et le montant total en cours
-     */
-    @Operation(summary = "Encours de prélèvements pour une banque")
-    @GetMapping("/encours/{banqueId}")
-    public ResponseEntity<EncoursPrelevement> getOutstandingPrelevements(
-            @PathVariable Long banqueId,
-            @ModelAttribute PrelevementSearchDto searchDto,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        log.info("Requête REST pour récupérer les prélèvements en cours - Banque ID: {}, Page: {}, Taille: {}",
-                banqueId, pageable.getPageNumber(), pageable.getPageSize());
-
-        if (searchDto != null && searchDto.toString() != null) {
-            log.debug("Critères de recherche additionnels: {}", searchDto);
-        }
-
-        searchDto.setBanqueId(banqueId);
-        EncoursPrelevement result = prelevementService.getOutstandingPrelevements(searchDto, pageable);
-
-        log.info("Prélèvements en cours récupérés - Banque ID: {}, Total encours: {}, Nombre de prélèvements: {}",
-                banqueId, result.getTotalDesEncours(),
-                result.getPage() != null ? result.getPage().getTotalElements() : 0);
-
-        return ResponseEntity.ok(result);
-    }
-
-
     @Operation(summary = "Basculer le statut d'un prélèvement")
     @PreAuthorize(SYSTEM_ADMIN)
     @PatchMapping("/{id}/toggle-status")
@@ -191,14 +156,6 @@ public class PrelevementController {
     @GetMapping("/export/pdf")
     public ResponseEntity<byte[]> exportPdf(PrelevementSearchDto searchDto) {
         return pdfResponse(prelevementService.exportPdf(searchDto), "prelevements");
-    }
-
-    @Operation(summary = "Exporter en PDF l'encours de prélèvements d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/encours/{banqueId}/export/pdf")
-    public ResponseEntity<byte[]> exportEncoursPdf(@PathVariable Long banqueId, PrelevementSearchDto searchDto) {
-        searchDto.setBanqueId(banqueId);
-        return pdfResponse(prelevementService.exportEncoursPdf(searchDto), "prelevements_encours");
     }
 
     private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {

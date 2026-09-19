@@ -6,7 +6,6 @@ import {environment} from '../../../../environments/environment';
 import {MiseADispositionSearchDto} from "../dtos/MiseADispositionSearchDto";
 import {PageResponse} from "../../global/types/PageResponse";
 import {MiseADispositionResponseDto} from "../dtos/MiseADispositionResponseDto";
-import {EncoursMiseAdisposition} from "../dtos/EncoursMiseAdisposition";
 import {MiseAdispositionRequestDto} from "../dtos/MiseAdispositionRequestDto";
 
 
@@ -123,66 +122,6 @@ export class MiseADispositionService {
   }
 
 
-
-  getEncoursDecaissementsForMiseADispositionByBank(
-    banqueId: number,
-    searchDto: MiseADispositionSearchDto,
-    page: number = 0,
-    size: number = 10,
-    sort: string = 'dateEmission,desc'
-  ): Observable<EncoursMiseAdisposition> {
-
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', sort);
-
-    if (searchDto.numero) {
-      params = params.set('numero', searchDto.numero);
-    }
-    if (searchDto.beneficiaire) {
-        params = params.set('beneficiaire', searchDto.beneficiaire);
-    }
-    if (searchDto.montant) {
-      params = params.set('montant', searchDto.montant.toString());
-    }
-
-    const url = `${this.apiUrl}/encours/decaissements/${banqueId}`;
-    return this.http.get<EncoursMiseAdisposition>(url, {params});
-  }
-
-  getEncoursEncaissementsForMiseADispositionByBank(
-    banqueId: number,
-    searchDto: MiseADispositionSearchDto,
-    page: number = 0,
-    size: number = 10,
-    sort: string = 'dateEmission,desc'
-  ): Observable<EncoursMiseAdisposition> {
-
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', sort);
-
-    if (searchDto.emetteur) {
-      params = params.set('emetteur', searchDto.emetteur);
-    }
-
-    if(searchDto.dateEmission){
-      params = params.set('dateEmission', toLocalDateString(searchDto.dateEmission)!);
-    }
-
-    if (searchDto.beneficiaire) {
-      params = params.set('beneficiaire', searchDto.beneficiaire);
-    }
-    if (searchDto.montant) {
-      params = params.set('montant', searchDto.montant.toString());
-    }
-
-    const url = `${this.apiUrl}/encours/encaissements/${banqueId}`;
-    return this.http.get<EncoursMiseAdisposition>(url, {params});
-  }
-
   exportDecaissementsPdf(searchDto: MiseADispositionSearchDto): Observable<Blob> {
     let params = new HttpParams();
     if (searchDto.numero) {
@@ -202,34 +141,6 @@ export class MiseADispositionService {
     }
     params = this.appendDateRangeParams(params, searchDto);
     return this.http.get(`${this.apiUrl}/decaissements/export/pdf`, {params, responseType: 'blob'});
-  }
-
-  exportEncoursDecaissementPdf(banqueId: number, searchDto: MiseADispositionSearchDto): Observable<Blob> {
-    let params = new HttpParams();
-    if (searchDto.numero) {
-      params = params.set('numero', searchDto.numero);
-    }
-    if (searchDto.beneficiaire) {
-      params = params.set('beneficiaire', searchDto.beneficiaire);
-    }
-    if ((searchDto as any).montant) {
-      params = params.set('montant', (searchDto as any).montant.toString());
-    }
-    return this.http.get(`${this.apiUrl}/encours/decaissements/${banqueId}/export/pdf`, {params, responseType: 'blob'});
-  }
-
-  exportEncoursEncaissementPdf(banqueId: number, searchDto: MiseADispositionSearchDto): Observable<Blob> {
-    let params = new HttpParams();
-    if (searchDto.numero) {
-      params = params.set('numero', searchDto.numero);
-    }
-    if (searchDto.beneficiaire) {
-      params = params.set('beneficiaire', searchDto.beneficiaire);
-    }
-    if ((searchDto as any).montant) {
-      params = params.set('montant', (searchDto as any).montant.toString());
-    }
-    return this.http.get(`${this.apiUrl}/encours/encaissements/${banqueId}/export/pdf`, {params, responseType: 'blob'});
   }
 
 }

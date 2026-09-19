@@ -83,54 +83,30 @@
 
 
 
-    lcnDecaissementToRapprochement( lcn: LcnTransactionRequest): Observable<LcnTransactionResponse> {
-      return this.http.post<LcnTransactionResponse>(`${this.baseUrl}/process/decaissement/lcn`,
+    /** Un seul endpoint depuis la fusion du 19/09/2026 — le sens est lu sur l'entité côté backend. */
+    lcnToRapprochement( lcn: LcnTransactionRequest): Observable<LcnTransactionResponse> {
+      return this.http.post<LcnTransactionResponse>(`${this.baseUrl}/process/lcn`,
         lcn
       );
     }
 
-    lcnEncaissementToRapprochement( lcn: LcnTransactionRequest): Observable<LcnTransactionResponse> {
-      return this.http.post<LcnTransactionResponse>(`${this.baseUrl}/process/encaissement/lcn`,
-        lcn
-      );
-    }
-
-
-
-    virementDecaissementToRapprochement( virement: VirementTransactionRequestDto): Observable<VirementTransactionResponseDto> {
-      return this.http.post<VirementTransactionResponseDto>(`${this.baseUrl}/process/decaissement/virement`,
+    /** Un seul endpoint depuis la fusion du 19/09/2026 — le sens est lu sur l'entité côté backend. */
+    virementToRapprochement( virement: VirementTransactionRequestDto): Observable<VirementTransactionResponseDto> {
+      return this.http.post<VirementTransactionResponseDto>(`${this.baseUrl}/process/virement`,
         virement
       );
     }
 
-    virementEncaissementToRapprochement( virement: VirementTransactionRequestDto): Observable<VirementTransactionResponseDto> {
-      return this.http.post<VirementTransactionResponseDto>(`${this.baseUrl}/process/encaissement/virement`,
-        virement
-      );
-    }
-
-    chequeDecaissementToRapprochement( cheque: ChequeTransactionRequest): Observable<ChequeTransactionResponseDto> {
-      return this.http.post<ChequeTransactionResponseDto>(`${this.baseUrl}/process/decaissement/cheque`,
+    /** Un seul endpoint depuis la fusion du 19/09/2026 — le sens est lu sur l'entité côté backend. */
+    chequeToRapprochement( cheque: ChequeTransactionRequest): Observable<ChequeTransactionResponseDto> {
+      return this.http.post<ChequeTransactionResponseDto>(`${this.baseUrl}/process/cheque`,
         cheque
       );
     }
 
-    chequeEncaissementToRapprochement( cheque: ChequeTransactionRequest): Observable<ChequeTransactionResponseDto> {
-      return this.http.post<ChequeTransactionResponseDto>(`${this.baseUrl}/process/encaissement/cheque`,
-        cheque
-      );
-    }
-
-
-    miseAdispoDecaissementToRapprochement( miseAdispo: MiseAdispositionTransactionRequestDto): Observable<MiseAdispositionTransactionResponseDto> {
-      return this.http.post<MiseAdispositionTransactionResponseDto>(`${this.baseUrl}/process/decaissement/mise-a-disposition`,
-        miseAdispo
-      );
-    }
-
-
-    miseAdispoEncaissementToRapprochement( miseAdispo: MiseAdispositionTransactionRequestDto): Observable<MiseAdispositionTransactionResponseDto> {
-      return this.http.post<MiseAdispositionTransactionResponseDto>(`${this.baseUrl}/process/encaissement/mise-a-disposition`,
+    /** Un seul endpoint depuis la fusion du 19/09/2026 — le sens est lu sur l'entité côté backend. */
+    miseAdispoToRapprochement( miseAdispo: MiseAdispositionTransactionRequestDto): Observable<MiseAdispositionTransactionResponseDto> {
+      return this.http.post<MiseAdispositionTransactionResponseDto>(`${this.baseUrl}/process/mise-a-disposition`,
         miseAdispo
       );
     }
@@ -232,29 +208,16 @@
     }
 
     /**
-     * Envoie une transaction de virement international (DÉCAISSEMENT) au backend pour validation
+     * Envoie une transaction de virement international au backend pour validation. Un seul
+     * endpoint depuis la fusion du 19/09/2026 — le sens est lu sur l'entité côté backend.
      * @param virementInternational Les données de la transaction à rapprocher
      * @returns Observable<VirementInternationalTransactionResponseDto>
      */
-    virementInternationalDecaissementToRapprochement(
+    virementInternationalToRapprochement(
       virementInternational: VirementInternationalTransactionRequestDto
     ): Observable<VirementInternationalTransactionResponseDto> {
       return this.http.post<VirementInternationalTransactionResponseDto>(
-        `${this.baseUrl}/process/decaissement/virement-international`,
-        virementInternational
-      );
-    }
-
-    /**
-     * Envoie une transaction de virement international (ENCAISSEMENT) au backend pour validation
-     * @param virementInternational Les données de la transaction à rapprocher
-     * @returns Observable<VirementInternationalTransactionResponseDto>
-     */
-    virementInternationalEncaissementToRapprochement(
-      virementInternational: VirementInternationalTransactionRequestDto
-    ): Observable<VirementInternationalTransactionResponseDto> {
-      return this.http.post<VirementInternationalTransactionResponseDto>(
-        `${this.baseUrl}/process/encaissement/virement-international`,
+        `${this.baseUrl}/process/virement-international`,
         virementInternational
       );
     }

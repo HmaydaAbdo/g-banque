@@ -5,9 +5,7 @@ import { environment } from "../../../../environments/environment";
 import { DroitConstateRequestDto } from "../dtos/DroitConstateRequestDto";
 import { DroitConstateResponseDto } from "../dtos/DroitConstateResponseDto";
 import { DroitConstateSearchDto } from "../dtos/DroitConstateSearchDto";
-import { EncoursDroitConstateDto } from "../dtos/EncoursDroitConstateDto";
 import { PageResponse } from "../../global/types/PageResponse";
-import {EncoursDroitConstateSearchDto} from "../dtos/EncoursDroitConstateSearchDto";
 
 @Injectable({
   providedIn: 'root',
@@ -127,83 +125,6 @@ export class DroitConstateService {
   }
 
   /**
-   * Retrieves the encours (in progress) remboursement records for a specific banque.
-   *
-   * @param banqueId The ID of the banque.
-   * @param searchDto
-   * @param page The page number (0-indexed).
-   * @param size The number of elements per page.
-   * @param sort The sorting string (e.g., 'dateEmission,asc').
-   * @returns An Observable of a paginated list of DroitConstate response DTOs.
-   */
-  getEncoursRemboursement(
-    banqueId: number,
-    searchDto:EncoursDroitConstateSearchDto,
-    page: number = 0,
-    size: number = 10,
-    sort: string = 'dateEmission,asc'
-  ): Observable<EncoursDroitConstateDto> {
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', sort);
-
-    if(searchDto.marcheName){
-      params = params.set('marcheName', searchDto.marcheName);
-    }
-
-    if (searchDto.marcheNumero){
-      params = params.set('marcheNumero', searchDto.marcheNumero);
-    }
-
-    if (searchDto.montant){
-      params = params.set('montant', searchDto.montant.toString());
-    }
-
-    return this.http.get<EncoursDroitConstateDto>(
-      `${this.apiUrl}/remboursement/encours/${banqueId}`,
-      { params }
-    );
-  }
-
-  /**
-   * Retrieves the encours (in progress) déblocage records for a specific banque.
-   *
-   * @param banqueId The ID of the banque.
-   * @param searchDto
-   * @param page The page number (0-indexed).
-   * @param size The number of elements per page.
-   * @param sort The sorting string (e.g., 'dateEmission,asc').
-   * @returns An Observable of a paginated list of DroitConstate response DTOs.
-   */
-  getEncoursDeblocage(
-    banqueId: number,
-    searchDto:EncoursDroitConstateSearchDto,
-    page: number = 0,
-    size: number = 10,
-    sort: string = 'dateEmission,asc'
-  ): Observable<EncoursDroitConstateDto> {
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', sort);
-
-    if(searchDto.marcheName){
-      params = params.set('marcheName', searchDto.marcheName);
-    }
-    if (searchDto.marcheNumero){
-      params = params.set('marcheNumero', searchDto.marcheNumero);
-    }
-    if (searchDto.montant){
-      params = params.set('montant', searchDto.montant.toString());
-    }
-    return this.http.get<EncoursDroitConstateDto>(
-      `${this.apiUrl}/deblocage/encours/${banqueId}`,
-      { params }
-    );
-  }
-
-  /**
    * Exporte en PDF l'intégralité des droits constatés correspondant aux critères fournis (mêmes
    * filtres que {@link getAllDroitConstates}, sans pagination).
    */
@@ -217,33 +138,5 @@ export class DroitConstateService {
     params = this.appendDateRangeParams(params, searchCriteria);
 
     return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
-  }
-
-  /**
-   * Exporte en PDF l'encours de remboursement d'une banque (mêmes filtres que
-   * {@link getEncoursRemboursement}, sans pagination).
-   */
-  exportRemboursementEncoursPdf(banqueId: number, searchDto: EncoursDroitConstateSearchDto): Observable<Blob> {
-    let params = new HttpParams();
-
-    if (searchDto.marcheName) params = params.set('marcheName', searchDto.marcheName);
-    if (searchDto.marcheNumero) params = params.set('marcheNumero', searchDto.marcheNumero);
-    if (searchDto.montant) params = params.set('montant', searchDto.montant.toString());
-
-    return this.http.get(`${this.apiUrl}/remboursement/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
-  }
-
-  /**
-   * Exporte en PDF l'encours de déblocage d'une banque (mêmes filtres que
-   * {@link getEncoursDeblocage}, sans pagination).
-   */
-  exportDeblocageEncoursPdf(banqueId: number, searchDto: EncoursDroitConstateSearchDto): Observable<Blob> {
-    let params = new HttpParams();
-
-    if (searchDto.marcheName) params = params.set('marcheName', searchDto.marcheName);
-    if (searchDto.marcheNumero) params = params.set('marcheNumero', searchDto.marcheNumero);
-    if (searchDto.montant) params = params.set('montant', searchDto.montant.toString());
-
-    return this.http.get(`${this.apiUrl}/deblocage/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
   }
 }

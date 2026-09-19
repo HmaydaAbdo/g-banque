@@ -51,9 +51,6 @@ export class LesEncoursComponent implements OnInit {
   displayClotureDialog: boolean = false;
   clotureLoading: boolean = false;
 
-  /** * Mapping complet basé sur vos routes enfants
-   * Les icônes sont choisies pour être sémantiquement proches du contexte bancaire
-   **/
   /**
    * Nature de l'écran courant, affichée en pastille à côté du fil d'Ariane.
    * « Prévisionnel » = opérations attendues, pas encore passées en banque ;
@@ -61,12 +58,7 @@ export class LesEncoursComponent implements OnInit {
    */
   natureEcran: 'previsionnel' | 'realise' = 'previsionnel';
 
-  /**
-   * Seuls segments adossés aux transactions déjà passées en banque. Tout le reste
-   * du workspace est de l'encours : la règle est énoncée ici en négatif plutôt que
-   * répétée sur les 34 entrées de breadcrumbMap, pour qu'un nouvel écran d'encours
-   * soit correctement étiqueté sans rien avoir à déclarer.
-   */
+  /** Seul segment adossé aux transactions déjà passées en banque — tout le reste (récapitulatif) est de l'encours. */
   private static readonly SEGMENTS_REALISES = new Set<string>(['rapprochement']);
 
   private breadcrumbMap: { [key: string]: { label: string, icon: string } } = {
@@ -74,39 +66,6 @@ export class LesEncoursComponent implements OnInit {
 
     // Récapitulatifs
     'recapitulatif': { label: 'Récapitulatifs', icon: 'pi pi-chart-bar' },
-
-    // Décaissements (Sorties)
-    'lcn-decaissements': { label: 'Décaissements / LCN', icon: 'pi pi-file-edit' },
-    'virements-decaissements': { label: 'Décaissements / Virements', icon: 'pi pi-send' },
-    'virements-internationaux-decaissements': { label: 'Décaissements / Virements Internationaux', icon: 'pi pi-globe' },
-    'mise-a-disposition-decaissements': { label: 'Décaissements / Mise à disposition', icon: 'pi pi-wallet' },
-    'prefinancement-remboursement': { label: 'Décaissements / Préfinancement / Remboursement', icon: 'pi pi-replay' },
-    'dc-remboursement': { label: 'Décaissements / Droits Constatés / Remboursement', icon: 'pi pi-info-circle' },
-    'factoring-remboursement': { label: 'Décaissements / Factoring / Remboursement', icon: 'pi pi-percentage' },
-    'commissions': { label: 'Décaissements / Commissions', icon: 'pi pi-ticket' },
-    'agios': { label: 'Décaissements / Agios', icon: 'pi pi-percentage' },
-    'prelevements': { label: 'Décaissements / Prélèvements', icon: 'pi pi-sign-out' },
-    'fraisBancaire': { label: 'Décaissements / Frais Bancaires', icon: 'pi pi-credit-card' },
-    'impots-taxes': { label: 'Décaissements / Impôts et Taxes', icon: 'pi pi-file' },
-    'operations-errones': { label: 'Décaissements / Opérations Erronées', icon: 'pi pi-exclamation-triangle' },
-    'provisions-decaissements': { label: 'Décaissements / Provisions', icon: 'pi pi-wallet' },
-    'impayees-decaissement': { label: 'Décaissements / Impayés', icon: 'pi pi-exclamation-circle' },
-
-
-
-    // Encaissements (Entrées)
-    'lcn-encaissements': { label: 'Encaissements / LCN', icon: 'pi pi-file-edit' },
-    'virements-encaissements': { label: 'Encaissements / Virements', icon: 'pi pi-download' },
-    'virements-internationaux-encaissements': { label: 'Encaissements / Virements Internationaux', icon: 'pi pi-globe' },
-    'mise-a-disposition-encaissements': { label: 'Encaissements / Mise à disposition', icon: 'pi pi-wallet' },
-    'factoring-deblocage': { label: 'Encaissements / Factoring / Déblocage', icon: 'pi pi-unlock' },
-    'prefinancement-deblocage': { label: 'Encaissements / Préfinancement / Déblocage', icon: 'pi pi-unlock' },
-    'dc-deblocage': { label: 'Encaissements / Droits Constatés / Déblocage', icon: 'pi pi-unlock' },
-    'decomptes': { label: 'Encaissements / Décomptes', icon: 'pi pi-calculator' },
-    'restitutions': { label: 'Encaissements / Restitutions', icon: 'pi pi-refresh' },
-    'impayees-encaissement': { label: 'Encaissements / Impayés', icon: 'pi pi-exclamation-circle' },
-    'provisions-encaissements': { label: 'Encaissements / Provisions', icon: 'pi pi-wallet' },
-
   };
 
   private readonly route = inject(ActivatedRoute);
@@ -174,45 +133,6 @@ export class LesEncoursComponent implements OnInit {
         label: 'Récapitulatifs',
         icon: 'pi pi-briefcase',
         routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'recapitulatif']
-      },
-      {
-        label: 'Encaissements',
-        icon: 'pi pi-arrow-circle-down',
-        items: [
-          { label: "Virements", icon: "pi pi-download", routerLink: ["/portail/etats-des-encours", this.banqueId, this.rapprochementId, "virements-encaissements"] },
-          { label: "Virements Internationaux", icon: "pi pi-globe", routerLink: ["/portail/etats-des-encours", this.banqueId, this.rapprochementId, "virements-internationaux-encaissements"] },
-          { label: 'LCN', icon: 'pi pi-file-edit', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'lcn-encaissements'] },
-          { label: 'Préfinancement', icon: 'pi pi-unlock', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'prefinancement-deblocage'] },
-          { label: 'Droits Constatés', icon: 'pi pi-unlock', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'dc-deblocage'] },
-          { label: 'Factoring', icon: 'pi pi-unlock', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'factoring-deblocage'] },
-          { label: 'Décomptes', icon: 'pi pi-calculator', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'decomptes'] },
-          { label: 'Restitutions', icon: 'pi pi-refresh', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'restitutions'] },
-          { label: 'Impayées', icon: 'pi pi-ban', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'impayees-encaissement'] },
-          { label: 'Provisions', icon: 'pi pi-wallet', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'provisions-encaissements'] },
-
-        ]
-      },
-      {
-        label: 'Décaissements',
-        icon: 'pi pi-arrow-circle-up',
-        items: [
-          { label: 'LCN', icon: 'pi pi-file-edit', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'lcn-decaissements'] },
-          { label: 'Virements', icon: 'pi pi-send', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'virements-decaissements'] },
-          { label: 'Virements Internationaux', icon: 'pi pi-globe', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'virements-internationaux-decaissements'] },
-          { label: 'Mise à disposition', icon: 'pi pi-wallet', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'mise-a-disposition-decaissements'] },
-          { label: 'Préfinancement', icon: 'pi pi-replay', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'prefinancement-remboursement'] },
-          { label: 'Droits Constatés', icon: 'pi pi-info-circle', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'dc-remboursement'] },
-          { label: 'Factoring', icon: 'pi pi-percentage', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'factoring-remboursement'] },
-          { label: 'Commissions', icon: 'pi pi-ticket', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'commissions'] },
-          { label: 'Agios', icon: 'pi pi-percentage', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'agios'] },
-          { label: 'Prélèvements', icon: 'pi pi-sign-out', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'prelevements'] },
-          { label: 'Frais Bancaires', icon: 'pi pi-credit-card', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'fraisBancaire'] },
-          { label: 'Impôts et Taxes', icon: 'pi pi-file', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'impots-taxes'] },
-          { label: 'Opérations Erronées', icon: 'pi pi-exclamation-triangle', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'operations-errones'] },
-          {label: 'Impayés', icon: 'pi pi-ban', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'impayees-decaissement']},
-          { label: 'Provisions', icon: 'pi pi-wallet', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'provisions-decaissements'] },
-
-        ]
       }
     ];
   }

@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -97,26 +96,6 @@ public class CommissionController {
     }
 
     /**
-     * Retrieves a paginated list of outstanding commissions and their total amount for a specific bank.
-     *
-     * @param banqueId  The ID of the bank to filter by.
-     * @param searchDto Optional search criteria (e.g., for filtering by libelle, etc.).
-     * @param pageable  Pagination and sorting information.
-     * @return An EncoursCommissionDto containing the page of commissions and the total outstanding amount.
-     */
-    @Operation(summary = "Consulter les encours de commissions d'une banque")
-    @GetMapping("/encours/{banqueId}")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<EncoursCommissionDto> getOutstandingCommissions(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursCommissionSearchDto searchDto,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        log.info("REST request to get outstanding commissions for banqueId={}", banqueId);
-        EncoursCommissionDto result = commissionService.getOutstandingCommissions(searchDto, banqueId, pageable);
-        return ResponseEntity.ok(result);
-    }
-
-    /**
      * Exporte en PDF l'intégralité des commissions correspondant aux critères fournis
      * (mêmes filtres que {@code POST /commissions/search}, {@code natureId} inclus) — sans
      * pagination : le fichier contient tous les résultats filtrés, pas seulement la page
@@ -130,30 +109,6 @@ public class CommissionController {
 
         byte[] pdf = commissionService.exporterPdf(searchDto);
         String filename = "commissions_" + LocalDate.now() + ".pdf";
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdf);
-    }
-
-    /**
-     * Exporte en PDF l'intégralité de l'encours de commissions d'une banque correspondant aux
-     * critères fournis (mêmes filtres que {@code GET /commissions/encours/{banqueId}}) — sans
-     * pagination : le fichier contient tous les résultats filtrés, pas seulement la page
-     * actuellement affichée à l'écran.
-     */
-    @Operation(summary = "Exporter en PDF l'encours de commissions d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/encours/{banqueId}/export/pdf")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<byte[]> exporterEncoursPdf(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursCommissionSearchDto searchDto) {
-        log.info("GET /commissions/encours/{}/export/pdf", banqueId);
-
-        byte[] pdf = commissionService.exporterEncoursPdf(searchDto, banqueId);
-        String filename = "commissions_encours_" + LocalDate.now() + ".pdf";
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")

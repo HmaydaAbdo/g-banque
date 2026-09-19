@@ -434,9 +434,13 @@
      Un seul dialogue générique, piloté par unitValidationConfigs (Map source → config, voir
      le .ts) : chaque source enregistrée y décrit comment récupérer son détail, construire sa
      requête backend et sa politique TVA. Ajouter une source ne demande plus qu'une entrée dans
-     cette Map, jamais un nouveau dialogue. Leasing, CMT et Chèque sont câblés (voir
-     canValidateUnitairement()) ; TVA éditable pour les trois — 20% par défaut pour Leasing,
-     0% par défaut (libre) pour CMT et Chèque, comme leurs écrans dédiés respectifs. -->
+     cette Map, jamais un nouveau dialogue. Toutes les sources sont désormais câblées (voir
+     canValidateUnitairement()) : Leasing, CMT, Chèque, LCN (décaissement, encaissement et
+     escompte), Virement, Préfinancement, Factoring, Droit constaté, Décomptes, Restitution,
+     Provision, Impayée, Virement international, Mise à disposition, Agios, Commission, Frais
+     bancaire, Prélèvement, Impôt/Taxe et Opération erronée. TVA éditable pour toutes — 20% par
+     défaut pour Leasing, 0% par défaut (libre) pour les autres, comme leurs écrans dédiés
+     respectifs. -->
 <p-dialog header="Passage au rapprochement bancaire" [(visible)]="displayUnitValidationModal"
           [modal]="true" [style]="{width: '50vw'}"
           [draggable]="false" [resizable]="false"

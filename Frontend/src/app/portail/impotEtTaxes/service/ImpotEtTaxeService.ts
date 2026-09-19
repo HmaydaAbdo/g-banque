@@ -69,34 +69,6 @@ export class ImpotEtTaxeService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-  // --- Get outstanding impots et taxes ---
-  getOutstandingImpotEtTaxes(
-    banqueId: number,
-    searchDto: ImpotEtTaxeSearchDto,
-    page: number = 0,
-    size: number = 10,
-    sort: string = 'dateEmission'
-  ): Observable<EncoursImpotEtTaxeDto> {
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', sort);
-
-    if (searchDto.libelle) {
-      params = params.set('libelle', searchDto.libelle);
-    }
-
-    if (searchDto.motif) {
-      params = params.set('motif', searchDto.motif);
-    }
-
-    if (searchDto.montant) {
-      params = params.set('montant', searchDto.montant.toString());
-    }
-
-    return this.http.get<EncoursImpotEtTaxeDto>(`${this.apiUrl}/encours/${banqueId}`, { params });
-  }
-
   toggleStatus(id: number): Observable<ImpotEtTaxeResponseDto> {
     return this.http.patch<ImpotEtTaxeResponseDto>(`${this.apiUrl}/${id}/toggle-status`, {});
   }
@@ -145,20 +117,5 @@ export class ImpotEtTaxeService {
       params = params.set('dateValeurFin', toLocalDateString(searchDto.dateValeurFin)!);
     }
     return params;
-  }
-
-  /**
-   * Exporte en PDF l'intégralité de l'encours d'impôts/taxes d'une banque correspondant aux
-   * filtres fournis (mêmes critères que {@link getOutstandingImpotEtTaxes}, sans pagination — le
-   * PDF contient tous les résultats filtrés, pas seulement la page actuellement affichée).
-   */
-  exportEncoursPdf(banqueId: number, searchDto: ImpotEtTaxeSearchDto): Observable<Blob> {
-    let params = new HttpParams();
-
-    if (searchDto.libelle)         params = params.set('libelle', searchDto.libelle);
-    if (searchDto.motif)           params = params.set('motif', searchDto.motif);
-    if (searchDto.montant != null) params = params.set('montant', searchDto.montant.toString());
-
-    return this.http.get(`${this.apiUrl}/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
   }
 }

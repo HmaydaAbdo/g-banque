@@ -7,7 +7,6 @@ import staport.finance.gBanque.commision.dtos.CommissionRequestDto;
 import staport.finance.gBanque.commision.dtos.CommissionResponseDto;
 import staport.finance.gBanque.commision.dtos.CommissionSearchDto;
 import staport.finance.gBanque.commision.dtos.EncoursCommissionDto;
-import staport.finance.gBanque.commision.dtos.EncoursCommissionSearchDto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -40,18 +39,8 @@ public interface ICommissionService {
     /** Met à jour une commission existante. */
     CommissionResponseDto updateCommission(Long id, CommissionRequestDto requestDto);
 
-    /** Récupère les commissions en encours d'une banque (statut PREVU), paginées, avec le total. */
-    EncoursCommissionDto getOutstandingCommissions(EncoursCommissionSearchDto searchDto, Long banqueId, Pageable pageable);
-
     /** Exporte en PDF l'intégralité des commissions correspondant aux critères fournis. */
     byte[] exporterPdf(CommissionSearchDto searchDto);
-
-    /**
-     * Exporte en PDF l'intégralité de l'encours de commissions d'une banque (mêmes filtres que
-     * {@link #getOutstandingCommissions}) — sans pagination : le fichier contient tous les
-     * résultats filtrés, pas seulement la page actuellement affichée à l'écran.
-     */
-    byte[] exporterEncoursPdf(EncoursCommissionSearchDto searchDto, Long banqueId);
 
     /** Bascule le statut d'une commission entre PREVU et PAYE. */
     void toggleCommisionStatus(Long commissionId);

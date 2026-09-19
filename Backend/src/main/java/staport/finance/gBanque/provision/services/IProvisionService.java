@@ -2,8 +2,6 @@ package staport.finance.gBanque.provision.services;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import staport.finance.gBanque.provision.dtos.EncoursProvisionDto;
-import staport.finance.gBanque.provision.dtos.EncoursProvisionSearchDto;
 import staport.finance.gBanque.provision.dtos.ProvisionRequestDto;
 import staport.finance.gBanque.provision.dtos.ProvisionResponseDto;
 import staport.finance.gBanque.provision.dtos.ProvisionSearchDto;
@@ -29,9 +27,5 @@ public interface IProvisionService {
 
     ProvisionResponseDto toggleStatus(Long id);
 
-    EncoursProvisionDto getOutstandingProvision(EncoursProvisionSearchDto searchDto, Long banqueId, Pageable pageable);
-
     byte[] exporterPdf(ProvisionSearchDto searchDto);
-
-    byte[] exporterEncoursPdf(EncoursProvisionSearchDto searchDto, Long banqueId);
 }

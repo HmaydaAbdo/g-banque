@@ -106,51 +106,11 @@ public class MiseADispositionController {
 
     }
 
-    @Operation(summary = "Encours de décaissement mise à disposition pour une banque")
-    @GetMapping("/encours/decaissements/{banqueId}")
-    public ResponseEntity<EncoursMiseAdisposition> getEncoursDecaissementsForMiseADispositionByBank(
-            @PathVariable Long banqueId,
-            EncoursMiseAdispositionSearchDto searchDto,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        log.info("Récupération des encours de décaissement pour les mises à disposition de la banque ID: {}", banqueId);
-        EncoursMiseAdisposition result = miseADispositionService.getEncoursDecaissementsForMiseADispositionByBank(searchDto, banqueId, pageable);
-        log.info("Encours de décaissement récupérés pour la banque ID: {} - Montant total: {}, Nombre: {}",
-                banqueId, result.getTotalDesEncours(), result.getPage().getTotalElements());
-        return ResponseEntity.ok(result);
-    }
-
-    @Operation(summary = "Encours d'encaissement mise à disposition pour une banque")
-    @GetMapping("/encours/encaissements/{banqueId}")
-    public ResponseEntity<EncoursMiseAdisposition> getEncoursEncaissementsForMiseADispositionByBank(
-            @PathVariable Long banqueId,
-            EncoursMiseAdispositionSearchDto searchDto,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        log.info("Récupération des encours d'encaissement pour les mises à disposition de la banque ID: {}", banqueId);
-        EncoursMiseAdisposition result = miseADispositionService.getEncoursEncaissementsForMiseADispositionByBank(searchDto, banqueId, pageable);
-        log.info("Encours d'encaissement récupérés pour la banque ID: {} - Montant total: {}, Nombre: {}",
-                banqueId, result.getTotalDesEncours(), result.getPage().getTotalElements());
-        return ResponseEntity.ok(result);
-    }
-
     @Operation(summary = "Exporter les mises à disposition de décaissement en PDF",
             description = "Ignore la pagination — exporte tous les résultats filtrés.")
     @GetMapping("/decaissements/export/pdf")
     public ResponseEntity<byte[]> exportDecaissementsPdf(MiseADispositionSearchDto searchDto) {
         return pdfResponse(miseADispositionService.exportDecaissementsPdf(searchDto), "mises_a_disposition_decaissements");
-    }
-
-    @Operation(summary = "Exporter en PDF l'encours de décaissement de mises à disposition d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/encours/decaissements/{banqueId}/export/pdf")
-    public ResponseEntity<byte[]> exportEncoursDecaissementPdf(@PathVariable Long banqueId, EncoursMiseAdispositionSearchDto searchDto) {
-        return pdfResponse(miseADispositionService.exportEncoursDecaissementPdf(searchDto, banqueId), "mises_a_disposition_encours_decaissement");
-    }
-
-    @Operation(summary = "Exporter en PDF l'encours d'encaissement de mises à disposition d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/encours/encaissements/{banqueId}/export/pdf")
-    public ResponseEntity<byte[]> exportEncoursEncaissementPdf(@PathVariable Long banqueId, EncoursMiseAdispositionSearchDto searchDto) {
-        return pdfResponse(miseADispositionService.exportEncoursEncaissementPdf(searchDto, banqueId), "mises_a_disposition_encours_encaissement");
     }
 
     private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {

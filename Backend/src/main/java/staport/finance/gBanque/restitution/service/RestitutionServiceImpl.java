@@ -3,7 +3,6 @@ package staport.finance.gBanque.restitution.service;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -16,8 +15,6 @@ import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.prefinancement.enums.Status;
-import staport.finance.gBanque.restitution.dtos.EncoursRestitution;
-import staport.finance.gBanque.restitution.dtos.EncoursRestitutionSearchDto;
 import staport.finance.gBanque.restitution.dtos.RestitutionRequestDto;
 import staport.finance.gBanque.restitution.dtos.RestitutionResponseDto;
 import staport.finance.gBanque.restitution.dtos.RestitutionSearchDto;
@@ -35,7 +32,6 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -50,12 +46,6 @@ import java.util.Locale;
  * <p>Suppression bloquée si déjà PAYE (précisé par HMAYDA le 14/07/2026 : une restitution réglée ne
  * peut plus être supprimée, même règle qu'Impayées/Impôts et Taxes) — {@code deleteRestitution} lève
  * {@link ValidationException} dans ce cas.
- *
- * <p>Bug latent corrigé (14/07/2026) : {@code endOfMonth} était auparavant un champ calculé une
- * seule fois à la construction du bean singleton — figé à la date de démarrage du serveur au lieu
- * d'être recalculé à chaque appel. Recalculé maintenant localement dans
- * {@link #getOutstandingRestitutions}, même correctif que celui appliqué à {@code ImpayeeServiceImpl}
- * lors du sweep Impayées.
  */
 @Service
 public class RestitutionServiceImpl implements IRestitutionService {
@@ -162,33 +152,6 @@ public class RestitutionServiceImpl implements IRestitutionService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public EncoursRestitution getOutstandingRestitutions(EncoursRestitutionSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.info("Récupération des encours de restitutions — banqueId={}, critères: {}", banqueId, searchDto);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<Restitution> spec = Specification.where(RestitutionSpec.outstandingUntil(endOfMonth))
-                .and(RestitutionSpec.hasBanque(banqueId))
-                .and(RestitutionSpec.hasLibelle(searchDto.libelle()))
-                .and(RestitutionSpec.hasMontant(searchDto.montant()))
-                .and(RestitutionSpec.hasStatus(searchDto.status()));
-
-        Page<Restitution> restitutionPage = restitutionRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
-
-        BigDecimal totalDesEncours = restitutionRepository.findAll(spec).stream()
-                .map(Restitution::getMontant)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        Page<RestitutionResponseDto> pageDto = restitutionPage.map(restitutionMapper::toResponseDto);
-
-        log.info("Encours de restitutions récupérés: {} restitutions trouvées, total des encours={}",
-                pageDto.getTotalElements(), totalDesEncours);
-
-        return new EncoursRestitution(totalDesEncours, pageDto);
-    }
-
-    @Override
     @Transactional
     @AuditableAction(operation = AuditOperation.UPDATE, entity = Restitution.class)
     public RestitutionResponseDto toggleStatus(Long id) {
@@ -230,38 +193,6 @@ public class RestitutionServiceImpl implements IRestitutionService {
         return genererPdf("État des Restitutions", restitutions, totalMontant, filterLines);
     }
 
-    /**
-     * Génère un export PDF de l'encours de restitutions d'une banque (mêmes critères que
-     * {@link #getOutstandingRestitutions}) — sans pagination : le fichier imprime la totalité des
-     * résultats filtrés, pas seulement la page affichée à l'écran.
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public byte[] exporterEncoursPdf(EncoursRestitutionSearchDto searchDto, Long banqueId) {
-        log.info("Export PDF encours restitutions — banqueId={}", banqueId);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<Restitution> spec = Specification.where(RestitutionSpec.outstandingUntil(endOfMonth))
-                .and(RestitutionSpec.hasBanque(banqueId))
-                .and(RestitutionSpec.hasLibelle(searchDto.libelle()))
-                .and(RestitutionSpec.hasMontant(searchDto.montant()))
-                .and(RestitutionSpec.hasStatus(searchDto.status()));
-
-        List<Restitution> restitutions = restitutionRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-
-        BigDecimal totalMontant = restitutions.stream()
-                .map(Restitution::getMontant)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
-
-        return genererPdf("Encours des Restitutions", restitutions, totalMontant, filterLines);
-    }
-
-    /**
-     * Construit le document PDF partagé par {@link #exporterPdf} et {@link #exporterEncoursPdf} —
-     * même mise en page, seuls le titre, les lignes et le résumé de filtres varient.
-     */
     private byte[] genererPdf(String title, List<Restitution> restitutions, BigDecimal totalMontant, List<String> filterLines) {
         try {
             return staportPdfReportService.generateReport(
@@ -426,28 +357,4 @@ public class RestitutionServiceImpl implements IRestitutionService {
         return lines;
     }
 
-    /**
-     * Résumé des filtres pour l'export PDF de l'écran encours — {@code banqueId} vient du path
-     * variable (pas du DTO, contrairement à {@link #buildFilterSummary}).
-     */
-    private List<String> buildEncoursFilterSummary(EncoursRestitutionSearchDto dto, Long banqueId) {
-        List<String> lines = new ArrayList<>();
-
-        try {
-            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
-        } catch (ResourceNotFoundException e) {
-            log.debug("Banque id={} introuvable pour le résumé de filtre export encours — ignorée", banqueId);
-        }
-
-        if (dto == null) return lines;
-
-        if (dto.libelle() != null && !dto.libelle().isBlank())
-            lines.add("Libellé : " + dto.libelle());
-        if (dto.montant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
-        if (dto.status() != null)
-            lines.add("Statut : " + (dto.status() == Status.PAYE ? "Payée" : "Prévue"));
-
-        return lines;
-    }
 }

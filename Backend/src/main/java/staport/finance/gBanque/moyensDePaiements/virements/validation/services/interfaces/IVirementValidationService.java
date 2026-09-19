@@ -18,22 +18,15 @@ import java.time.LocalDate;
 public interface IVirementValidationService {
 
     /**
-     * Valide un virement de décaissement : crée la transaction bancaire associée,
-     * attache au rapprochement cible et marque le virement comme REGLE.
+     * Valide un virement, décaissement ou encaissement indifféremment : crée la transaction
+     * bancaire associée, attache au rapprochement cible et marque le virement comme REGLE. Le sens
+     * ({@code Virement.type}) est lu directement sur l'entité — jamais transmis par l'appelant,
+     * une seule méthode suffit pour les deux sens.
      *
      * @param requestDto DTO de la requête de validation
      * @return DTO de la transaction créée
      */
-    VirementTransactionResponseDto processVirementDecaissementTransaction(VirementTransactionRequestDto requestDto);
-
-    /**
-     * Valide un virement d'encaissement : crée la transaction bancaire associée,
-     * attache au rapprochement cible et marque le virement comme REGLE.
-     *
-     * @param requestDto DTO de la requête de validation
-     * @return DTO de la transaction créée
-     */
-    VirementTransactionResponseDto processVirementEncaissementTransaction(VirementTransactionRequestDto requestDto);
+    VirementTransactionResponseDto processVirementTransaction(VirementTransactionRequestDto requestDto);
 
     /**
      * Synchronise un virement lié à une transaction mise à jour.

@@ -1,10 +1,5 @@
 package staport.finance.gBanque.decomptes.service;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -20,9 +15,7 @@ import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.decomptes.dtos.request.DecompteRequestDto;
 import staport.finance.gBanque.decomptes.dtos.request.DecompteSearchDto;
-import staport.finance.gBanque.decomptes.dtos.request.EncoursDecompteSearchDto;
 import staport.finance.gBanque.decomptes.dtos.response.DecompteResponseDto;
-import staport.finance.gBanque.decomptes.dtos.response.EncoursDecompteDto;
 import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.decomptes.mapper.DecompteMapper;
 import staport.finance.gBanque.decomptes.repositories.DecompteRepository;
@@ -42,7 +35,6 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -58,9 +50,10 @@ import java.util.Locale;
  * <p>Anti-N+1 : {@code DecompteRepository.findAll} porte l'{@code @EntityGraph}
  * {@code "Decompte.avecAssociations"} (marché + banque du marché + banque d'encaissement).
  *
- * <p>Le total d'encours est calculé via une requête {@code SUM} construite avec le même
- * {@link Specification} que la recherche paginée (pas de chargement de la liste complète en
- * mémoire pour sommer côté Java — conventions/performance.md).
+ * <p>19/09/2026 : l'encours de décomptes par banque (écran dédié {@code decomptes}) a été retiré —
+ * le récapitulatif unifié couvre désormais la validation de cette source.
+ * {@code getDecomptesEncoursForBanque}, son export PDF et le calcul de somme par
+ * {@code EntityManager} qu'ils utilisaient seuls ont été retirés avec lui.
  */
 @Service
 public class DecompteServiceImpl implements IDecompteService {
@@ -78,9 +71,6 @@ public class DecompteServiceImpl implements IDecompteService {
     private final IMarcheService marcheService;
     private final IBanqueService banqueService;
     private final StaportPdfReportService staportPdfReportService;
-
-    @PersistenceContext
-    private EntityManager entityManager;
 
     public DecompteServiceImpl(DecompteRepository decompteRepository, DecompteMapper decompteMapper,
                                 IMarcheService marcheService, IBanqueService banqueService,
@@ -251,27 +241,8 @@ public class DecompteServiceImpl implements IDecompteService {
         return generateDecomptePdf("État des Décomptes", decomptes, totalMontant, filterLines);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public byte[] exportEncoursPdf(EncoursDecompteSearchDto searchDto, Long banqueId) {
-        log.info("Export PDF encours décomptes — banque ID: {}", banqueId);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-        Specification<Decompte> spec = DecompteSpec.byBanqueId(banqueId)
-                .and(DecompteSpec.outstandingUntil(endOfMonth))
-                .and(DecompteSpec.byMarcheName(searchDto.marcheName()))
-                .and(DecompteSpec.byMarcheNumero(searchDto.marcheNumero()))
-                .and(DecompteSpec.hasMontant(searchDto.montant()));
-
-        List<Decompte> decomptes = decompteRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-        BigDecimal totalMontant = sumMontant(spec);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
-
-        return generateDecomptePdf("Encours de Décomptes", decomptes, totalMontant, filterLines);
-    }
-
     /**
-     * Génère le contenu PDF partagé par {@link #exportToPdf} et {@link #exportEncoursPdf}.
+     * Génère le contenu PDF utilisé par {@link #exportToPdf}.
      */
     private byte[] generateDecomptePdf(String title, List<Decompte> decomptes,
                                         BigDecimal totalMontant, List<String> filterLines) {
@@ -450,69 +421,4 @@ public class DecompteServiceImpl implements IDecompteService {
         return lines;
     }
 
-    private List<String> buildEncoursFilterSummary(EncoursDecompteSearchDto searchDto, Long banqueId) {
-        List<String> lines = new ArrayList<>();
-
-        try {
-            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
-        } catch (ResourceNotFoundException ignored) {
-            // Filtre obsolète (banque supprimée depuis) — ignoré silencieusement dans le résumé PDF.
-        }
-
-        if (searchDto == null) return lines;
-        if (searchDto.marcheName() != null && !searchDto.marcheName().isBlank())
-            lines.add("Nom Marché : " + searchDto.marcheName());
-        if (searchDto.marcheNumero() != null && !searchDto.marcheNumero().isBlank())
-            lines.add("N° Marché : " + searchDto.marcheNumero());
-        if (searchDto.montant() != null)
-            lines.add("Montant : " + formatMontantPdf(searchDto.montant()) + " MAD");
-
-        return lines;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public EncoursDecompteDto getDecomptesEncoursForBanque(EncoursDecompteSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.info("Récupération des encours de décomptes pour la banque ID: {}", banqueId);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<Decompte> spec = DecompteSpec.byBanqueId(banqueId)
-                .and(DecompteSpec.outstandingUntil(endOfMonth))
-                .and(DecompteSpec.byMarcheName(searchDto.marcheName()))
-                .and(DecompteSpec.byMarcheNumero(searchDto.marcheNumero()))
-                .and(DecompteSpec.hasMontant(searchDto.montant()));
-
-        Sort sort = resolveSort(pageable.getSort());
-        Page<Decompte> decomptePage = decompteRepository.findAll(spec,
-                PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));
-
-        log.debug("Nombre de résultats paginés: {}", decomptePage.getNumberOfElements());
-
-        BigDecimal totalDesEncours = sumMontant(spec);
-
-        log.info("Total des encours de décomptes calculé pour la banque ID: {}, {} enregistrement(s)",
-                banqueId, decomptePage.getTotalElements());
-
-        Page<DecompteResponseDto> pageDto = decomptePage.map(decompteMapper::toDto);
-
-        return new EncoursDecompteDto(totalDesEncours, pageDto);
-    }
-
-    /**
-     * Somme des montants correspondant à la {@link Specification} donnée, calculée en base
-     * (agrégat SQL) — jamais en chargeant les entités en mémoire pour sommer côté Java
-     * (conventions/performance.md).
-     */
-    private BigDecimal sumMontant(Specification<Decompte> spec) {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<BigDecimal> query = cb.createQuery(BigDecimal.class);
-        Root<Decompte> root = query.from(Decompte.class);
-        query.select(cb.coalesce(cb.sum(root.get("montant")), BigDecimal.ZERO));
-        var predicate = spec.toPredicate(root, query, cb);
-        if (predicate != null) {
-            query.where(predicate);
-        }
-        return entityManager.createQuery(query).getSingleResult();
-    }
 }

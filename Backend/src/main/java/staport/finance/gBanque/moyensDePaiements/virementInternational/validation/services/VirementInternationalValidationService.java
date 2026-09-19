@@ -59,23 +59,21 @@ public class VirementInternationalValidationService implements IVirementInternat
         this.soldeCascadeService = soldeCascadeService;
     }
 
+    /**
+     * Valide un virement international, décaissement ou encaissement indifféremment — le sens
+     * ({@code VirementInternational.type}) est lu directement sur l'entité par le mapper, jamais
+     * transmis par l'appelant : une seule méthode suffit, sans branchement (fusion du 19/09/2026
+     * des deux anciennes méthodes
+     * {@code processVirementInternationalDecaissementTransaction}/
+     * {@code processVirementInternationalEncaissementTransaction}, dont les corps étaient déjà
+     * identiques).
+     */
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
     @AuditableAction(operation = AuditOperation.UPDATE, entity = VirementInternational.class, idAccessor = "getVirementInternationalId")
-    public VirementInternationalTransactionResponseDto processVirementInternationalDecaissementTransaction(VirementInternationalTransactionRequestDto requestDto) {
-        log.info("Validation virement international décaissement — id: {}", requestDto.getId());
-        return processTransaction(requestDto);
-    }
+    public VirementInternationalTransactionResponseDto processVirementInternationalTransaction(VirementInternationalTransactionRequestDto requestDto) {
+        log.info("Validation virement international — id: {}", requestDto.getId());
 
-    @Override
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = VirementInternational.class, idAccessor = "getVirementInternationalId")
-    public VirementInternationalTransactionResponseDto processVirementInternationalEncaissementTransaction(VirementInternationalTransactionRequestDto requestDto) {
-        log.info("Validation virement international encaissement — id: {}", requestDto.getId());
-        return processTransaction(requestDto);
-    }
-
-    private VirementInternationalTransactionResponseDto processTransaction(VirementInternationalTransactionRequestDto requestDto) {
         VirementInternational virementInternational = virementInternationalRepository.findById(requestDto.getId())
                 .orElseThrow(() -> {
                     log.warn("Virement international introuvable — id: {}", requestDto.getId());

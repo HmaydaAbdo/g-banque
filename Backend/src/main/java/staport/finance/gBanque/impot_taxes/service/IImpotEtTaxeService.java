@@ -1,7 +1,6 @@
 package staport.finance.gBanque.impot_taxes.service;
 
 import org.springframework.data.domain.Pageable;
-import staport.finance.gBanque.impot_taxes.dtos.request.EncoursImpotEtTaxeSearchDto;
 import staport.finance.gBanque.impot_taxes.dtos.request.ImpotEtTaxeFusionRequest;
 import staport.finance.gBanque.impot_taxes.dtos.request.ImpotEtTaxeRequestDto;
 import staport.finance.gBanque.impot_taxes.dtos.request.ImpotEtTaxeSearchDto;
@@ -36,13 +35,6 @@ public interface IImpotEtTaxeService {
      */
     byte[] exporterPdf(ImpotEtTaxeSearchDto searchDto);
 
-    /**
-     * Exporte en PDF l'intégralité de l'encours d'impôts/taxes d'une banque (mêmes filtres que
-     * {@link #getOutstandingImpotEtTaxes}) — sans pagination : le fichier contient tous les
-     * résultats filtrés, pas seulement la page actuellement affichée à l'écran.
-     */
-    byte[] exporterEncoursPdf(EncoursImpotEtTaxeSearchDto searchDto, Long banqueId);
-
     ImpotEtTaxeResponseDto updateImpotEtTaxe(Long id, ImpotEtTaxeRequestDto requestDto);
 
     void deleteImpotEtTaxe(Long id);
@@ -50,8 +42,6 @@ public interface IImpotEtTaxeService {
     ImpotEtTaxeResponseDto toggleStatus(Long id);
 
     ImpotEtTaxeResponseDto fusionner(ImpotEtTaxeFusionRequest request);
-
-    EncoursImpotEtTaxeDto getOutstandingImpotEtTaxes(EncoursImpotEtTaxeSearchDto searchDto, Long banqueId, Pageable pageable);
 
     /**
      * Crée et persiste une TVA rattachée à une commission — façade pour les modules qui génèrent
