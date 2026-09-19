@@ -23,9 +23,6 @@ export const ETATS_DES_ENCOURS_ROUTES: Routes = [
       { path: 'virements-decaissements', loadComponent: () => import('./views/lesEncours/decaissement/virement-encours/virement-encours.component').then(m => m.VirementEncoursComponent) },
       { path: 'virements-encaissements', loadComponent: () => import('./views/lesEncours/encaissements/virement-encours/virement-encours.component').then(m => m.VirementEncaissementEncoursComponent) },
 
-      { path: 'cheques-decaissements', loadComponent: () => import('./views/lesEncours/decaissement/cheques-encours/cheques-encours.component').then(m => m.ChequesEncoursComponent) },
-      { path: 'cheques-encaissements', loadComponent: () => import('./views/lesEncours/encaissements/cheque-encaissements-encours/cheque-encaissements-encours.component').then(m => m.ChequeEncaissementsEncoursComponent) },
-
       { path: 'mise-a-disposition-decaissements', loadComponent: () => import('./views/lesEncours/decaissement/mise-a-disposition-encours/mise-a-disposition-encours.component').then(m => m.MiseADispositionEncoursComponent) },
       { path: 'mise-a-disposition-encaissements', loadComponent: () => import('./views/lesEncours/encaissements/mise-a-dispo-encaissement-encours/mise-a-dispo-encaissement-encours.component').then(m => m.MiseADispoEncaissementEncoursComponent) },
 

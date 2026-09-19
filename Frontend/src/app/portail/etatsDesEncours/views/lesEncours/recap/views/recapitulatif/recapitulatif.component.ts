@@ -45,6 +45,10 @@ import { LeasingTransactionRequest } from "../../../../../dtos/leasing/LeasingTr
 import { EcheanceCmtService } from "../../../../../../cmt/services/EcheanceCmtService";
 import { EcheanceCMTResponseDto } from "../../../../../../cmt/dtos/EcheanceCMTResponseDto";
 import { CmtTransactionRequest } from "../../../../../dtos/cmt/CmtTransactionRequest";
+import { ChequeService } from "../../../../../../cheques/services/ChequeService";
+import { ChequeResponseDto } from "../../../../../../cheques/dtos/ChequeResponseDto";
+import { ChequeTransactionRequest } from "../../../../../dtos/cheques/ChequeTransactionRequest";
+import { Type as ChequeType } from "../../../../../../Virements/Type";
 import { parseLocalDate } from '../../../../../../global/types/date.utils';
 
 /** Options du dropdown de filtre de sens — `null` = « Tous », aucun filtre appliqué. */
@@ -195,6 +199,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
   private readonly bankStateService = inject(BankStateService);
   private readonly echeanceLeasingService = inject(EcheanceLeasingService);
   private readonly echeanceCmtService = inject(EcheanceCmtService);
+  private readonly chequeService = inject(ChequeService);
   private readonly datePipe = inject(DatePipe);
   private readonly decimalPipe = inject(DecimalPipe);
 
@@ -469,6 +474,45 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
           rapprochementId,
         };
         return this.validationService.echeanceCmtToRapprochement(request);
+      },
+    }],
+    [TransactionSource.CHEQUE, {
+      fetchDetail: (id: number) => this.chequeService.getChequeById(id),
+      toCommonDetail: (d: ChequeResponseDto): UnitValidationDetail => ({
+        dateEcheance: d.dateEmission,
+        observation: d.observation,
+        libelle: d.libelle,
+        montantTTC: d.montant,
+        recapLabel: 'N° Chèque',
+        recapValue: d.numero,
+      }),
+      // TVA libre/optionnelle, comme sur les 2 écrans dédiés Chèque actuels (défaut 0%, taux OU montant).
+      tvaInitialValue: saisieTvaParDefaut(),
+      tvaLocked: false,
+      confirmHeader: 'Confirmation de Rapprochement Chèque',
+      successDetail: 'Chèque rapproché avec succès.',
+      fetchErrorDetail: 'Impossible de récupérer le détail de ce chèque.',
+      // Le chèque a un sens propre (contrairement à Leasing/CMT) : `d.type` (fixé à la création du
+      // chèque, jamais un choix fait à la validation) détermine quel endpoint appeler — même
+      // logique que les 2 écrans dédiés actuels (dateEmission reste verrouillée ici, comme
+      // Leasing/CMT : décision HMAYDA du 19/09/2026, voir REFACTORING-VALIDATION-UNIFIEE.md).
+      buildAndSubmit: (d: ChequeResponseDto, formValue: any, rapprochementId: number) => {
+        const saisieTva: SaisieTva = formValue.tva;
+        const request: ChequeTransactionRequest = {
+          idCheque: d.id,
+          transactionSource: TransactionSource.CHEQUE,
+          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
+          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
+          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
+          observation: formValue.observation,
+          tauxTva: saisieTva.tauxTva,
+          montantTva: saisieTva.montantTva,
+          libelle: formValue.libelle,
+          rapprochementId,
+        };
+        return d.type === ChequeType.DECAISSEMENT
+          ? this.validationService.chequeDecaissementToRapprochement(request)
+          : this.validationService.chequeEncaissementToRapprochement(request);
       },
     }],
   ]);

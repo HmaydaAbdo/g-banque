@@ -434,9 +434,9 @@
      Un seul dialogue générique, piloté par unitValidationConfigs (Map source → config, voir
      le .ts) : chaque source enregistrée y décrit comment récupérer son détail, construire sa
      requête backend et sa politique TVA. Ajouter une source ne demande plus qu'une entrée dans
-     cette Map, jamais un nouveau dialogue. Leasing et CMT sont câblés (voir
-     canValidateUnitairement()) ; TVA éditable pour les deux — 20% par défaut pour Leasing,
-     0% par défaut (libre) pour CMT, comme leurs écrans dédiés respectifs. -->
+     cette Map, jamais un nouveau dialogue. Leasing, CMT et Chèque sont câblés (voir
+     canValidateUnitairement()) ; TVA éditable pour les trois — 20% par défaut pour Leasing,
+     0% par défaut (libre) pour CMT et Chèque, comme leurs écrans dédiés respectifs. -->
 <p-dialog header="Passage au rapprochement bancaire" [(visible)]="displayUnitValidationModal"
           [modal]="true" [style]="{width: '50vw'}"
           [draggable]="false" [resizable]="false"

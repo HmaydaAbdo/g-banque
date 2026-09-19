@@ -76,7 +76,6 @@ export class LesEncoursComponent implements OnInit {
     'recapitulatif': { label: 'Récapitulatifs', icon: 'pi pi-chart-bar' },
 
     // Décaissements (Sorties)
-    'cheques-decaissements': { label: 'Décaissements / Chèques', icon: 'pi pi-money-bill' },
     'lcn-decaissements': { label: 'Décaissements / LCN', icon: 'pi pi-file-edit' },
     'virements-decaissements': { label: 'Décaissements / Virements', icon: 'pi pi-send' },
     'virements-internationaux-decaissements': { label: 'Décaissements / Virements Internationaux', icon: 'pi pi-globe' },
@@ -97,7 +96,6 @@ export class LesEncoursComponent implements OnInit {
 
     // Encaissements (Entrées)
     'lcn-encaissements': { label: 'Encaissements / LCN', icon: 'pi pi-file-edit' },
-    'cheques-encaissements': { label: 'Encaissements / Chèques', icon: 'pi pi-money-bill' },
     'virements-encaissements': { label: 'Encaissements / Virements', icon: 'pi pi-download' },
     'virements-internationaux-encaissements': { label: 'Encaissements / Virements Internationaux', icon: 'pi pi-globe' },
     'mise-a-disposition-encaissements': { label: 'Encaissements / Mise à disposition', icon: 'pi pi-wallet' },
@@ -183,7 +181,6 @@ export class LesEncoursComponent implements OnInit {
         items: [
           { label: "Virements", icon: "pi pi-download", routerLink: ["/portail/etats-des-encours", this.banqueId, this.rapprochementId, "virements-encaissements"] },
           { label: "Virements Internationaux", icon: "pi pi-globe", routerLink: ["/portail/etats-des-encours", this.banqueId, this.rapprochementId, "virements-internationaux-encaissements"] },
-          { label: 'Chèques', icon: 'pi pi-money-bill', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'cheques-encaissements'] },
           { label: 'LCN', icon: 'pi pi-file-edit', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'lcn-encaissements'] },
           { label: 'Préfinancement', icon: 'pi pi-unlock', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'prefinancement-deblocage'] },
           { label: 'Droits Constatés', icon: 'pi pi-unlock', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'dc-deblocage'] },
@@ -199,7 +196,6 @@ export class LesEncoursComponent implements OnInit {
         label: 'Décaissements',
         icon: 'pi pi-arrow-circle-up',
         items: [
-          { label: 'Chèques', icon: 'pi pi-money-bill', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'cheques-decaissements'] },
           { label: 'LCN', icon: 'pi pi-file-edit', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'lcn-decaissements'] },
           { label: 'Virements', icon: 'pi pi-send', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'virements-decaissements'] },
           { label: 'Virements Internationaux', icon: 'pi pi-globe', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'virements-internationaux-decaissements'] },
