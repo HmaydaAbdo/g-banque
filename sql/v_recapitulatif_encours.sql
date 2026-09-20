@@ -20,7 +20,7 @@
 --     .sumByBanqueAndSourceBetween / .sumByBanqueAndSensUntil
 --
 -- Contrat de colonnes attendu par RecapitulatifEncoursView (chaque branche du
--- UNION ALL ci-dessous doit produire exactement ces 11 colonnes — seuls les
+-- UNION ALL ci-dessous doit produire exactement ces 14 colonnes — seuls les
 -- NOMS comptent pour Hibernate, pas la position) :
 --   source_type             -> RecapitulatifEncoursId.sourceType (TransactionSource)
 --   entity_id               -> RecapitulatifEncoursId.entityId
@@ -35,33 +35,63 @@
 --   observation             -> observation
 --   numero                  -> numero (nullable — numéro de pièce quand la
 --                              source en a un ; NULL sinon)
+--   recherche_complementaire -> rechercheComplementaire (nullable, invisible à
+--                              l'écran — colonne de recherche uniquement, ajoutée
+--                              le 21/09/2026. Porte l'émetteur (Virement, Chèque,
+--                              LCN, VirementInternational, MiseADisposition) ou
+--                              l'organisme (Leasing) : des valeurs que la vue
+--                              perdait ou n'exposait jamais dans libelle/
+--                              observation selon le sens, alors que les anciens
+--                              écrans par source permettaient de les rechercher.
+--                              Combinée par OR avec libelle/observation dans
+--                              RecapitulatifEncoursSpecification
+--                              .byLibelleOuObservation. NULL pour les sources qui
+--                              n'ont ni émetteur ni organisme distinct.
+--   commission_operation    -> commissionOperation (nullable, invisible à
+--                              l'écran — le motif/type d'une Commission,
+--                              ajouté le 21/09/2026 ; NULL hors branche
+--                              COMMISSION)
+--   impot_taxe_motif        -> impotTaxeMotif (nullable, invisible à l'écran —
+--                              le motif d'un Impôt/Taxe, ajouté le 21/09/2026 ;
+--                              NULL hors branche IMPOT_TAXE)
 --
 -- -----------------------------------------------------------------------------
 -- IMPORTANT — COLLATE utf8mb4_unicode_ci : NE PAS SUPPRIMER
 -- -----------------------------------------------------------------------------
 -- Chaque expression de type chaîne (source_type, sens, libelle, observation,
--- numero) porte un COLLATE utf8mb4_unicode_ci EXPLICITE. Ce n'est pas
--- décoratif : sans lui, les littéraux SQL ('DECAISSEMENT', 'CHEQUE', ...)
--- prennent la collation de la CONNEXION qui exécute ce script (phpMyAdmin
--- ouvre en utf8mb4_general_ci), alors que les colonnes des tables sources sont
--- en utf8mb4_unicode_ci (--collation-server du conteneur MySQL). La colonne de
--- la vue se retrouve alors dans une collation différente de celle du paramètre
--- lié par le driver JDBC, et tout filtre sur une colonne texte échoue à
--- l'exécution avec :
+-- numero, recherche_complementaire, commission_operation, impot_taxe_motif)
+-- porte un COLLATE utf8mb4_unicode_ci EXPLICITE. Ce n'est pas décoratif : sans
+-- lui, les littéraux SQL ('DECAISSEMENT', 'CHEQUE', ...) prennent la collation
+-- de la CONNEXION qui exécute ce script (phpMyAdmin ouvre en
+-- utf8mb4_general_ci), alors que les colonnes des tables sources sont en
+-- utf8mb4_unicode_ci (--collation-server du conteneur MySQL). La colonne de la
+-- vue se retrouve alors dans une collation différente de celle du paramètre lié
+-- par le driver JDBC, et tout filtre sur une colonne texte échoue à l'exécution
+-- avec :
 --
 --   SQL Error 1267 — Illegal mix of collations
 --   (utf8mb4_unicode_ci,COERCIBLE) and (utf8mb4_general_ci,COERCIBLE)
 --   for operation '='
 --
 -- concrètement : le filtre par sens (bySens), par source (bySources) et les
--- LIKE sur libellé/observation (byLibelle / byObservation). Un COLLATE
--- explicite a la coercibilité 0 : il l'emporte sur le paramètre JDBC quelle que
--- soit la collation de connexion, et rend la vue indépendante du client qui la
--- crée. C'est exactement ce que faisait la version d'origine du 17/07/2026.
+-- LIKE sur libellé/observation/recherche complémentaire
+-- (byLibelleOuObservation) ou l'égalité sur motif (byCommissionOperation /
+-- byImpotTaxeMotif). Un COLLATE explicite a la coercibilité 0 : il l'emporte
+-- sur le paramètre JDBC quelle que soit la collation de connexion, et rend la
+-- vue indépendante du client qui la crée. C'est exactement ce que faisait la
+-- version d'origine du 17/07/2026.
 --
 -- -----------------------------------------------------------------------------
 -- Historique
 -- -----------------------------------------------------------------------------
+-- 21/09/2026 (HMAYDA + Claude) — AJOUT de 3 colonnes de recherche invisibles
+--                        (`recherche_complementaire`, `commission_operation`,
+--                        `impot_taxe_motif`) pour restaurer, dans le récap
+--                        unifié, des critères de recherche qui existaient dans
+--                        les anciens écrans séparés par source et avaient été
+--                        perdus lors de la fusion (émetteur, organisme Leasing,
+--                        motif Commission/ImpôtTaxe) — voir le contrat de
+--                        colonnes ci-dessus pour le détail par colonne.
 -- 17/07/2026 (HMAYDA) — Création manuelle initiale, jamais versionnée (fichier
 --                        absent du dépôt malgré la javadoc de l'entité qui le
 --                        référençait déjà à l'époque).
@@ -148,7 +178,10 @@ SELECT
     CAST(el.montant_ttc AS DECIMAL(19,2)) AS montant,
     el.libelle COLLATE utf8mb4_unicode_ci AS libelle,
     el.observation COLLATE utf8mb4_unicode_ci AS observation,
-    cl.numero_contrat COLLATE utf8mb4_unicode_ci AS numero
+    cl.numero_contrat COLLATE utf8mb4_unicode_ci AS numero,
+    ol.nom COLLATE utf8mb4_unicode_ci AS recherche_complementaire,
+    NULL AS commission_operation,
+    NULL AS impot_taxe_motif
 FROM echeance_leasing el
 JOIN contrat_leasing cl ON cl.id = el.contrat_leasing_id
 JOIN contrat_cadre cc ON cc.id = cl.contrat_cadre_id
@@ -169,7 +202,10 @@ SELECT
     CAST(ec.montant AS DECIMAL(19,2)) AS montant,
     ec.libelle COLLATE utf8mb4_unicode_ci AS libelle,
     ec.observation COLLATE utf8mb4_unicode_ci AS observation,
-    NULL AS numero
+    NULL AS numero,
+    NULL AS recherche_complementaire,
+    NULL AS commission_operation,
+    NULL AS impot_taxe_motif
 FROM echeance_cmt ec
 JOIN credit_moyen_terme cmt ON cmt.id = ec.credit_moyen_terme_id
 WHERE ec.statut_paiement = 'PREVU'
@@ -188,7 +224,10 @@ SELECT
     CAST(c.montant AS DECIMAL(19,2)) AS montant,
     CASE WHEN c.type = 'ENCAISSEMENT' THEN CONCAT('Bénéficiaire ', c.beneficiaire) ELSE c.beneficiaire END COLLATE utf8mb4_unicode_ci AS libelle,
     CASE WHEN c.type = 'ENCAISSEMENT' THEN CONCAT('emetteur  ', c.emetteur) ELSE CONCAT('Chèque N° ', c.numero) END COLLATE utf8mb4_unicode_ci AS observation,
-    c.numero COLLATE utf8mb4_unicode_ci AS numero
+    c.numero COLLATE utf8mb4_unicode_ci AS numero,
+    c.emetteur COLLATE utf8mb4_unicode_ci AS recherche_complementaire,
+    NULL AS commission_operation,
+    NULL AS impot_taxe_motif
 FROM cheques c
 WHERE c.statut = 'ENCOURS'
 
@@ -211,7 +250,10 @@ SELECT
     CAST(l.montant AS DECIMAL(19,2)) AS montant,
     l.beneficiaire COLLATE utf8mb4_unicode_ci AS libelle,
     CASE WHEN l.type = 'DECAISSEMENT' THEN CONCAT('LCN N° ', l.numero) ELSE l.emetteur END COLLATE utf8mb4_unicode_ci AS observation,
-    l.numero COLLATE utf8mb4_unicode_ci AS numero
+    l.numero COLLATE utf8mb4_unicode_ci AS numero,
+    l.emetteur COLLATE utf8mb4_unicode_ci AS recherche_complementaire,
+    NULL AS commission_operation,
+    NULL AS impot_taxe_motif
 FROM lcns l
 WHERE l.statut = 'ENCOURS'
   AND (l.type = 'DECAISSEMENT' OR (l.type = 'ENCAISSEMENT' AND l.nature_lcn IN ('ENCAISSEMENT', 'ESCOMPTE')))
@@ -231,7 +273,10 @@ SELECT
     CAST(v.montant AS DECIMAL(19,2)) AS montant,
     v.beneficiaire COLLATE utf8mb4_unicode_ci AS libelle,
     CONCAT('Virement N° ', v.numero) COLLATE utf8mb4_unicode_ci AS observation,
-    v.numero COLLATE utf8mb4_unicode_ci AS numero
+    v.numero COLLATE utf8mb4_unicode_ci AS numero,
+    v.emetteur COLLATE utf8mb4_unicode_ci AS recherche_complementaire,
+    NULL AS commission_operation,
+    NULL AS impot_taxe_motif
 FROM virements v
 WHERE v.statut = 'ENCOURS' AND v.type = 'DECAISSEMENT'
 
@@ -249,13 +294,16 @@ SELECT
     CAST(v.montant AS DECIMAL(19,2)) AS montant,
     v.beneficiaire COLLATE utf8mb4_unicode_ci AS libelle,
     v.emetteur COLLATE utf8mb4_unicode_ci AS observation,
-    v.numero COLLATE utf8mb4_unicode_ci AS numero
+    v.numero COLLATE utf8mb4_unicode_ci AS numero,
+    v.emetteur COLLATE utf8mb4_unicode_ci AS recherche_complementaire,
+    NULL AS commission_operation,
+    NULL AS impot_taxe_motif
 FROM virements v
 WHERE v.statut = 'ENCOURS' AND v.type = 'ENCAISSEMENT'
 
 UNION ALL
 
--- 6. VIREMENT_INTERNATIONAL (inchangée + numero)
+-- 6. VIREMENT_INTERNATIONAL (inchangée + numero, + recherche_complementaire = bénéficiaire/émetteur)
 SELECT
     'VIREMENT_INTERNATIONAL' COLLATE utf8mb4_unicode_ci AS source_type,
     vi.id AS entity_id,
@@ -267,13 +315,16 @@ SELECT
     CAST(vi.montant AS DECIMAL(19,2)) AS montant,
     vi.libelle COLLATE utf8mb4_unicode_ci AS libelle,
     vi.observation COLLATE utf8mb4_unicode_ci AS observation,
-    NULL AS numero
+    NULL AS numero,
+    CONCAT_WS(' ', vi.beneficiaire, vi.emetteur) COLLATE utf8mb4_unicode_ci AS recherche_complementaire,
+    NULL AS commission_operation,
+    NULL AS impot_taxe_motif
 FROM virements_internationaux vi
 WHERE vi.statut = 'ENCOURS'
 
 UNION ALL
 
--- 7. MiseADisposition (inchangée + numero)
+-- 7. MiseADisposition (inchangée + numero, + recherche_complementaire = émetteur)
 SELECT
     'MiseADisposition' COLLATE utf8mb4_unicode_ci AS source_type,
     m.id AS entity_id,
@@ -285,7 +336,10 @@ SELECT
     CAST(m.montant AS DECIMAL(19,2)) AS montant,
     CASE WHEN m.type = 'ENCAISSEMENT' THEN CONCAT('Bénéficiaire ', m.beneficiaire) ELSE m.beneficiaire END COLLATE utf8mb4_unicode_ci AS libelle,
     CONCAT('Mise à disposition N° ', m.numero) COLLATE utf8mb4_unicode_ci AS observation,
-    m.numero COLLATE utf8mb4_unicode_ci AS numero
+    m.numero COLLATE utf8mb4_unicode_ci AS numero,
+    m.emetteur COLLATE utf8mb4_unicode_ci AS recherche_complementaire,
+    NULL AS commission_operation,
+    NULL AS impot_taxe_motif
 FROM mises_a_disposition m
 WHERE m.statut = 'ENCOURS'
 
@@ -303,7 +357,10 @@ SELECT
     CAST(p.montant AS DECIMAL(19,2)) AS montant,
     CONCAT('Marché N° : ', mc.numero) COLLATE utf8mb4_unicode_ci AS libelle,
     CASE WHEN p.type = 'REMBOURSEMENT' THEN 'Remboursement du préfinancement' ELSE 'Déblocage du préfinancement' END COLLATE utf8mb4_unicode_ci AS observation,
-    mc.numero COLLATE utf8mb4_unicode_ci AS numero
+    mc.numero COLLATE utf8mb4_unicode_ci AS numero,
+    NULL AS recherche_complementaire,
+    NULL AS commission_operation,
+    NULL AS impot_taxe_motif
 FROM prefinancement p
 JOIN marches mc ON mc.id = p.marche_id
 WHERE p.status = 'PREVU'
@@ -322,7 +379,10 @@ SELECT
     CAST(f.montant AS DECIMAL(19,2)) AS montant,
     CONCAT('Marché N° : ', mc.numero) COLLATE utf8mb4_unicode_ci AS libelle,
     CASE WHEN f.type = 'REMBOURSEMENT' THEN 'Remboursement du factoring' ELSE 'Déblocage du factoring' END COLLATE utf8mb4_unicode_ci AS observation,
-    mc.numero COLLATE utf8mb4_unicode_ci AS numero
+    mc.numero COLLATE utf8mb4_unicode_ci AS numero,
+    NULL AS recherche_complementaire,
+    NULL AS commission_operation,
+    NULL AS impot_taxe_motif
 FROM factoring f
 JOIN marches mc ON mc.id = f.marche_id
 WHERE f.status = 'PREVU'
@@ -341,7 +401,10 @@ SELECT
     CAST(dc.montant AS DECIMAL(19,2)) AS montant,
     CONCAT('Marché N° : ', mc.numero) COLLATE utf8mb4_unicode_ci AS libelle,
     CASE WHEN dc.type = 'REMBOURSEMENT' THEN 'Remboursement du droit constaté' ELSE 'Déblocage du droit constaté' END COLLATE utf8mb4_unicode_ci AS observation,
-    mc.numero COLLATE utf8mb4_unicode_ci AS numero
+    mc.numero COLLATE utf8mb4_unicode_ci AS numero,
+    NULL AS recherche_complementaire,
+    NULL AS commission_operation,
+    NULL AS impot_taxe_motif
 FROM droit_constate dc
 JOIN marches mc ON mc.id = dc.marche_id
 WHERE dc.status = 'PREVU'
@@ -360,7 +423,10 @@ SELECT
     CAST(d.montant AS DECIMAL(19,2)) AS montant,
     CONCAT('Marché N° : ', mc.numero) COLLATE utf8mb4_unicode_ci AS libelle,
     d.observation COLLATE utf8mb4_unicode_ci AS observation,
-    mc.numero COLLATE utf8mb4_unicode_ci AS numero
+    mc.numero COLLATE utf8mb4_unicode_ci AS numero,
+    NULL AS recherche_complementaire,
+    NULL AS commission_operation,
+    NULL AS impot_taxe_motif
 FROM decompte d
 JOIN marches mc ON mc.id = d.marche_id
 WHERE d.status = 'PREVU'
@@ -379,13 +445,16 @@ SELECT
     CAST(r.montant AS DECIMAL(19,2)) AS montant,
     r.libelle COLLATE utf8mb4_unicode_ci AS libelle,
     r.observation COLLATE utf8mb4_unicode_ci AS observation,
-    NULL AS numero
+    NULL AS numero,
+    NULL AS recherche_complementaire,
+    NULL AS commission_operation,
+    NULL AS impot_taxe_motif
 FROM restitution r
 WHERE r.status = 'PREVU'
 
 UNION ALL
 
--- 13. COMMISSION (inchangée, pas de numéro de pièce)
+-- 13. COMMISSION (inchangée, pas de numéro de pièce ; + commission_operation = motif)
 SELECT
     'COMMISSION' COLLATE utf8mb4_unicode_ci AS source_type,
     co.id AS entity_id,
@@ -397,7 +466,10 @@ SELECT
     CAST(co.montant AS DECIMAL(19,2)) AS montant,
     co.libelle COLLATE utf8mb4_unicode_ci AS libelle,
     co.observation COLLATE utf8mb4_unicode_ci AS observation,
-    NULL AS numero
+    NULL AS numero,
+    NULL AS recherche_complementaire,
+    co.operation COLLATE utf8mb4_unicode_ci AS commission_operation,
+    NULL AS impot_taxe_motif
 FROM commission co
 WHERE co.status = 'PREVU'
 
@@ -415,7 +487,10 @@ SELECT
     CAST(a.montant AS DECIMAL(19,2)) AS montant,
     a.libelle COLLATE utf8mb4_unicode_ci AS libelle,
     a.observation COLLATE utf8mb4_unicode_ci AS observation,
-    NULL AS numero
+    NULL AS numero,
+    NULL AS recherche_complementaire,
+    NULL AS commission_operation,
+    NULL AS impot_taxe_motif
 FROM agios a
 WHERE a.status = 'PREVU'
 
@@ -433,7 +508,10 @@ SELECT
     CAST(pr.montant AS DECIMAL(19,2)) AS montant,
     pr.libelle COLLATE utf8mb4_unicode_ci AS libelle,
     pr.observation COLLATE utf8mb4_unicode_ci AS observation,
-    NULL AS numero
+    NULL AS numero,
+    NULL AS recherche_complementaire,
+    NULL AS commission_operation,
+    NULL AS impot_taxe_motif
 FROM prelevement pr
 WHERE pr.status = 'PREVU'
 
@@ -451,13 +529,16 @@ SELECT
     CAST(fb.montant AS DECIMAL(19,2)) AS montant,
     fb.libelle COLLATE utf8mb4_unicode_ci AS libelle,
     fb.observation COLLATE utf8mb4_unicode_ci AS observation,
-    NULL AS numero
+    NULL AS numero,
+    NULL AS recherche_complementaire,
+    NULL AS commission_operation,
+    NULL AS impot_taxe_motif
 FROM frais_bancaire fb
 WHERE fb.status = 'PREVU'
 
 UNION ALL
 
--- 17. IMPOT_TAXE (inchangée, pas de numéro de pièce)
+-- 17. IMPOT_TAXE (inchangée, pas de numéro de pièce ; + impot_taxe_motif = motif)
 SELECT
     'IMPOT_TAXE' COLLATE utf8mb4_unicode_ci AS source_type,
     it.id AS entity_id,
@@ -469,7 +550,10 @@ SELECT
     CAST(it.montant AS DECIMAL(19,2)) AS montant,
     it.libelle COLLATE utf8mb4_unicode_ci AS libelle,
     it.observation COLLATE utf8mb4_unicode_ci AS observation,
-    NULL AS numero
+    NULL AS numero,
+    NULL AS recherche_complementaire,
+    NULL AS commission_operation,
+    it.motif COLLATE utf8mb4_unicode_ci AS impot_taxe_motif
 FROM impot_et_taxe it
 WHERE it.status = 'PREVU'
 
@@ -487,7 +571,10 @@ SELECT
     CAST(im.montant AS DECIMAL(19,2)) AS montant,
     im.libelle COLLATE utf8mb4_unicode_ci AS libelle,
     im.observation COLLATE utf8mb4_unicode_ci AS observation,
-    im.numero COLLATE utf8mb4_unicode_ci AS numero
+    im.numero COLLATE utf8mb4_unicode_ci AS numero,
+    NULL AS recherche_complementaire,
+    NULL AS commission_operation,
+    NULL AS impot_taxe_motif
 FROM impayee im
 WHERE im.status = 'PREVU'
 
@@ -505,7 +592,10 @@ SELECT
     CAST(oe.montant AS DECIMAL(19,2)) AS montant,
     oe.libelle COLLATE utf8mb4_unicode_ci AS libelle,
     oe.observation COLLATE utf8mb4_unicode_ci AS observation,
-    NULL AS numero
+    NULL AS numero,
+    NULL AS recherche_complementaire,
+    NULL AS commission_operation,
+    NULL AS impot_taxe_motif
 FROM operation_errone oe
 WHERE oe.status = 'PREVU'
 
@@ -525,6 +615,9 @@ SELECT
     CAST(pv.montant AS DECIMAL(19,2)) AS montant,
     pv.libelle COLLATE utf8mb4_unicode_ci AS libelle,
     pv.observation COLLATE utf8mb4_unicode_ci AS observation,
-    NULL AS numero
+    NULL AS numero,
+    NULL AS recherche_complementaire,
+    NULL AS commission_operation,
+    NULL AS impot_taxe_motif
 FROM provision pv
 WHERE pv.status = 'PREVU';

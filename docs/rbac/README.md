@@ -198,6 +198,7 @@ Cet endpoint appartient au controller `ValidationController` du module `validati
 | Route | Guard | Rôle vérifié |
 |---|---|---|
 | `/portail/cmt` (parent — `encours`, `en-attente-de-ML`, `archives`, `new`, `edit/:id`, `:id/tableau-amortissement`) | `departmentGuard('Finance')` | `DEPT_Finance:MEMBER` ou `DEPT_Finance:DIRECTOR`. `SYSTEM_ADMIN` passe toujours. |
+| `/portail/cmt/echeances/edit/:id` — nouveau (21/09/2026) | `departmentGuard('Finance')` (hérité du parent) + `systemAdminGuard` (posé sur la route elle-même) | `SYSTEM_ADMIN` uniquement — remplace le dialogue d'édition d'échéance de `TableauAmortissementComponent`, même restriction que le `PUT /echeances-cmt/{id}` (`ADMIN_ONLY`) qu'elle appelle. Atteignable aussi depuis `RecapitulatifComponent` (`CREATE_EDIT_ELIGIBILITY[CMT]`), qui vérifie `authService.isSystemAdmin()` avant d'afficher le bouton « Éditer ». |
 | `/portail/admin/cmt-config` (parent `admin.routes.ts`) — nouveau | `systemAdminGuard` (posé au niveau de `/portail/admin` dans `portail.routes.ts`) | `SYSTEM_ADMIN` uniquement. |
 
 > **Corrigé pendant ce sweep** : la route racine `cmt-routing.ts` n'avait initialement **aucun guard** — accessible à tout utilisateur authentifié quel que soit son département. Ajout de `departmentGuard('Finance')` sur toutes les routes du module, cohérent avec le backend et avec le pattern déjà en place sur `leasing-routing.module.ts`.
@@ -578,6 +579,7 @@ Créé pendant le sweep Leasing (2026-07-04) pour remplacer `leasing.contract.va
 | `/portail/leasing/organismesLeasing` (parent — liste, `new`, `edit/:id`) | `departmentGuard('Finance')` | `DEPT_Finance:MEMBER` ou `DEPT_Finance:DIRECTOR`. `SYSTEM_ADMIN` passe toujours. |
 | `/portail/leasing/contratsCadres` | `departmentGuard('Finance')` | Idem. |
 | `/portail/leasing/contratsLeasing` (parent — `encours`, `en-attente-de-ML`, `archives`, `creation/*`, `:id/tableau-amortissement`) | `departmentGuard('Finance')` | Idem. |
+| `/portail/leasing/echeances/edit/:id` — nouveau (21/09/2026) | `departmentGuard('Finance')` + `systemAdminGuard` (les deux posés directement sur la route) | `SYSTEM_ADMIN` uniquement — remplace le dialogue d'édition d'échéance de `TableauAmortissementComponent`, même restriction que le `PUT /echeances-leasing/{id}` (`ADMIN_ONLY`) qu'elle appelle. Atteignable aussi depuis `RecapitulatifComponent` (`CREATE_EDIT_ELIGIBILITY[LEASING]`), qui vérifie `authService.isSystemAdmin()` avant d'afficher le bouton « Éditer ». |
 | `/portail/admin/leasing-config` (parent `admin.routes.ts`) | `systemAdminGuard` (posé au niveau de `/portail/admin` dans `portail.routes.ts`) | `SYSTEM_ADMIN` uniquement. |
 
 ---
@@ -748,7 +750,8 @@ private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
 | GET | `/cautions/{id}` | `FINANCE_OR_ADMIN` | Lecture. |
 | GET | `/cautions` (recherche) | `FINANCE_OR_ADMIN` | Liste paginée avec filtres. |
 | GET | `/cautions/export/pdf` | `FINANCE_OR_ADMIN` | Export PDF — mêmes filtres que la recherche, sans pagination. Paramètre optionnel `colonnes` (nouveau, 23/07/2026) : restreint les colonnes incluses dans le document ; absent, vide, ou sans valeur reconnue ⇒ toutes les colonnes. N'affecte pas le niveau d'autorisation. |
-| PUT | `/cautions/{id}` | `FINANCE_OR_ADMIN` | Modification — bloquée en service si la caution est clôturée. |
+| GET | `/cautions/export/excel` | `FINANCE_OR_ADMIN` | Export Excel (.xlsx) (nouveau, 20/09/2026) — mêmes filtres, mêmes règles pour `colonnes` et même niveau d'autorisation que `/cautions/export/pdf` ; seul le format de sortie diffère. Généré via `StaportExcelReportService` (Apache POI), pendant transversal de `StaportPdfReportService` dans `staport.finance.gBanque.reports.service`. |
+| PUT | `/cautions/{id}` | `FINANCE_OR_ADMIN` | Modification — autorisée même si la caution est clôturée (nouveau, 20/09/2026) : recalcule alors automatiquement la commission de clôture si un champ qui l'influence change, bloquée en service (exception métier, pas RBAC) si cette commission est déjà `PAYE` ou introuvable. N'affecte pas le niveau d'autorisation. |
 | DELETE | `/cautions/{id}` | `SYSTEM_ADMIN` | Règle transverse (`conventions/security.md`) : suppression toujours `SYSTEM_ADMIN`. Bloquée en service si la caution est clôturée. |
 | POST | `/cautions/{id}/cloturer` | `FINANCE_OR_ADMIN` | Clôture (main levée) — génère la commission de clôture (+ TVA si requise par la banque). |
 | POST | `/cautions/generer-commissions` | `FINANCE_OR_ADMIN` | Déclenchement manuel de la génération mensuelle des commissions. |
@@ -2694,9 +2697,55 @@ sélection du rapprochement actif).
 
 ### Actions conditionnées dans l'UI
 
-Aucune — toutes les actions de ce module (consultation, validation individuelle ou en lot, clôture,
-téléchargement PDF) sont disponibles à tout utilisateur ayant passé le `departmentGuard('Finance')`,
-sans condition de rôle supplémentaire dans les composants.
+Consultation, validation individuelle ou en lot, clôture, téléchargement PDF : disponibles à tout
+utilisateur ayant passé le `departmentGuard('Finance')`, sans condition de rôle supplémentaire.
+
+**Ajouter / Éditer (20/09/2026) — conditionnées par (source, sens), pas par un rôle.**
+`RecapitulatifComponent` route désormais vers l'écran dédié de création/édition de chaque source
+(mêmes pages, mêmes gardes `departmentGuard('Finance')` et mêmes endpoints `@PreAuthorize` que
+documentés dans le chapitre RBAC de chaque source — aucun nouvel endpoint, aucune autorisation
+modifiée) plutôt que de reconstruire un formulaire dans le récap. Le bouton « Éditer » par ligne et
+les entrées du menu « Ajouter » ne s'affichent que pour les combinaisons `(source, sens)` listées
+ci-dessous (`RecapitulatifComponent.CREATE_EDIT_ELIGIBILITY`/`CREATE_ROUTE`/`EDIT_ROUTE`) — matrice
+figée le 20/09/2026, reprise à l'identique du comportement des anciens écrans séparés par source :
+
+| Source | Sens éligible | Route Ajouter | Route Éditer |
+|---|---|---|---|
+| Virement | Encaissement uniquement | `/portail/Virements/new` | `/portail/Virements/edit/:id` |
+| Chèque | Encaissement uniquement | `/portail/Cheques/new` | `/portail/Cheques/edit/:id` |
+| LCN Encaissement | Les deux sens (nature imposée par le formulaire, pas par le récap) | `/portail/LCN/new` | `/portail/LCN/edit/:id` |
+| LCN Escompte (21/09/2026) | Les deux sens — même formulaire/id-space que LCN Encaissement (`LcnFormComponent`, contrôle `natureLcn`) | — (une seule carte « LCN » dans la modale Ajouter, `CREATE_ROUTE` n'a pas d'entrée dédiée puisque la route serait identique) | `/portail/LCN/edit/:id` |
+| Virement international | Les deux sens | `/portail/virements-internationaux/new` | `/portail/virements-internationaux/edit/:id` |
+| Préfinancement | Les deux sens | `/portail/préfinancements/new` | `/portail/préfinancements/edit/:id` |
+| Droit constaté | Les deux sens | `/portail/droits-constate/new` | `/portail/droits-constate/edit/:id` |
+| Factoring | Les deux sens | `/portail/factoring/new` | `/portail/factoring/edit/:id` |
+| Décomptes | Les deux sens (encaissement seul atteignable en pratique) | `/portail/decomptes/new` | `/portail/decomptes/edit/:id` |
+| Restitution | Les deux sens (encaissement seul atteignable en pratique) | `/portail/restitutions/new` | `/portail/restitutions/edit/:id` |
+| Impayée | Les deux sens | `/portail/impayees/new` | `/portail/impayees/edit/:id` |
+| Provision | Les deux sens | `/portail/provisions/new` | `/portail/provisions/edit/:id` |
+| Commission | Les deux sens (décaissement seul atteignable en pratique) | `/portail/commissions/new` | `/portail/commissions/edit/:id` |
+| Prélèvement | Les deux sens (décaissement seul atteignable en pratique) | `/portail/prelevements/new` | `/portail/prelevements/edit/:id` |
+| Frais bancaire | Les deux sens (décaissement seul atteignable en pratique) | `/portail/frais-bancaire/new` | `/portail/frais-bancaire/edit/:id` |
+| Opération erronée | Les deux sens (décaissement seul atteignable en pratique) | `/portail/operations/errones/new` | `/portail/operations/errones/edit/:id` |
+| Impôts et taxes | Les deux sens (décaissement seul atteignable en pratique) | `/portail/impots-taxes/new` | `/portail/impots-taxes/edit/:id` |
+| Leasing (21/09/2026) | Éditer uniquement (échéance `PREVU`), réservé `SYSTEM_ADMIN` | — (aucun endpoint de création d'une échéance seule n'existe) | `/portail/leasing/echeances/edit/:id` |
+| CMT (21/09/2026) | Éditer uniquement (échéance `PREVU`), réservé `SYSTEM_ADMIN` | — (aucun endpoint de création d'une échéance seule n'existe) | `/portail/cmt/echeances/edit/:id` |
+
+**Leasing/CMT — Éditer ajouté le 21/09/2026, dialogue remplacé par une page routée.** Le bouton
+« Éditer » par ligne réutilise `authService.isSystemAdmin()` en plus de `CREATE_EDIT_ELIGIBILITY`
+(voir `EDIT_REQUIRES_SYSTEM_ADMIN` dans `recapitulatif.component.ts`) pour ne s'afficher qu'aux
+administrateurs système, comme l'ancien dialogue sur l'écran de tableau d'amortissement. La
+restriction « échéance déjà payée » (statut `PAYE`) n'est pas vérifiable par le récap lui-même
+(`RecaputilatifItem` ne porte pas ce champ) : elle est vérifiée à l'ouverture de la page d'édition
+(après un `GET /echeances-leasing|cmt/{id}`) et, de toute façon, déjà bloquée par le backend
+(`PUT .../{id}` renvoie 400 si le statut n'est pas `PREVU`). Aucun bouton « Ajouter » pour ces deux
+sources : aucun endpoint de création d'une échéance seule n'existe (l'échéancier est généré à la
+création du contrat entier), donc `CREATE_ROUTE` n'a volontairement pas d'entrée pour elles.
+
+**Aucun bouton Ajouter/Éditer** pour Mise à disposition, Agios, `LCN_DECAISSEMENT`, Virement/Chèque
+en décaissement — comme dans les anciens écrans dédiés à ces combinaisons. Le retour au récap après
+un Ajouter/Éditer réussi repose sur `Location.back()`, déjà appelé par chaque formulaire en cas de
+succès — aucun mécanisme de retour n'a été ajouté spécifiquement pour le récap.
 
 ---
 

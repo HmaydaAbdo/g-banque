@@ -3,27 +3,70 @@
 
 
 <!-- Layout Principal -->
-<div class="flex flex-column h-full w-full">
+<div class="flex h-full w-full">
 
-  <!-- Onglets de navigation encours -->
-  <nav class="view-tabs" aria-label="Navigation États des encours">
-    <div class="view-tabs__track">
-      <div class="view-tabs__indicator"
-           [style.width.%]="100 / items.length"
-           [style.transform]="'translateX(' + (activeTabIndex * 100) + '%)'"></div>
-      @for (item of items; track item.routerLink) {
-        <a pRipple
-           [routerLink]="item.routerLink"
-           routerLinkActive="view-tab--active"
-           class="view-tab">
-          @if (item.icon) {
-          <i [class]="item.icon" class="view-tab__icon"></i>
-          }
-          <span class="view-tab__label">{{ item.label }}</span>
-        </a>
+  <!-- Sidebar navigation encours -->
+  <div class="sidebar-nav flex flex-column h-full">
+    <ul class="sidebar-nav__scroll list-none p-2 m-0">
+      @for (item of items; track item.url) {
+        <!-- Items sans sous-menu -->
+        @if (item.routerLink && !item.items) {
+        <li class="mb-1">
+          <a pRipple
+             [routerLink]="item.routerLink"
+             routerLinkActive="active-sidebar-link"
+             [pTooltip]="item.label"
+             tooltipPosition="right"
+             class="flex align-items-center cursor-pointer p-2 border-round-lg transition-all transition-duration-150 p-ripple sidebar-link hover:surface-hover">
+            @if (item.icon) {
+            <i [class]="item.icon" class="nav-icon"></i>
+            }
+            <span class="nav-label">{{ item.label }}</span>
+          </a>
+        </li>
+        }
+
+        <!-- Items avec sous-menu -->
+        @if (item.items) {
+        <li class="mb-1">
+          <div pRipple (click)="toggleMenuItem(item)"
+               class="flex align-items-center justify-content-between p-2 cursor-pointer border-round-lg hover:surface-hover transition-all transition-duration-150 p-ripple"
+               [pTooltip]="item.label"
+               tooltipPosition="right">
+            <div class="flex align-items-center min-w-0">
+              @if (item.icon) {
+              <i [class]="item.icon" class="nav-icon"></i>
+              }
+              <span class="nav-label">{{ item.label }}</span>
+            </div>
+            <i [class]="item.expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" class="nav-chevron text-xs flex-shrink-0"></i>
+          </div>
+
+          <!-- Sous-menu -->
+          <ul class="nav-submenu list-none pl-0 mt-1" [ngClass]="{'hidden': !item.expanded}">
+            @for (subItem of item.items; track subItem.url) {
+              @if (subItem.routerLink && !subItem.items) {
+              <li class="mb-1">
+                <a pRipple
+                   [routerLink]="subItem.routerLink"
+                   routerLinkActive="active-sidebar-link"
+                   [pTooltip]="subItem.label"
+                   tooltipPosition="right"
+                   class="flex align-items-center cursor-pointer m-0 px-2 py-2 border-round-lg transition-all transition-duration-150 p-ripple sidebar-link hover:surface-hover">
+                  @if (subItem.icon) {
+                  <i [class]="subItem.icon" class="nav-icon nav-icon--sub"></i>
+                  }
+                  <span class="nav-label font-medium">{{ subItem.label }}</span>
+                </a>
+              </li>
+              }
+            }
+          </ul>
+        </li>
+        }
       }
-    </div>
-  </nav>
+    </ul>
+  </div>
 
   <!-- Zone de Contenu Principale -->
   <div class="flex flex-column px-2 gap-2 overflow-y-auto flex-1" style="background:var(--color-surface)">

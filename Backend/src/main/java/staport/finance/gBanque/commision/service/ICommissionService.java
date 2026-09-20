@@ -7,9 +7,11 @@ import staport.finance.gBanque.commision.dtos.CommissionRequestDto;
 import staport.finance.gBanque.commision.dtos.CommissionResponseDto;
 import staport.finance.gBanque.commision.dtos.CommissionSearchDto;
 import staport.finance.gBanque.commision.dtos.EncoursCommissionDto;
+import staport.finance.gBanque.commision.enums.TypeCommission;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -63,9 +65,14 @@ public interface ICommissionService {
      * Crée et persiste une commission rattachée à une caution (prorata d'entrée, mensuelle,
      * ou de clôture) — façade pour le module {@code cautions}, qui ne doit jamais injecter
      * {@code CommisionRepository} directement.
+     *
+     * @param type catégorie de la commission ({@link TypeCommission}) — permet de la retrouver
+     *             ensuite de façon fiable (notamment {@code CLOTURE}, recalculée si la caution
+     *             est corrigée après sa clôture), indépendamment du libellé ou de la date
+     *             d'émission qui peuvent coïncider avec une autre commission du même mois.
      */
     CommissionResponseDto creerCommissionCaution(Long cautionId, Long banqueId, BigDecimal montant,
-            LocalDate dateEmission, String libelle, String observation);
+            LocalDate dateEmission, String libelle, String observation, TypeCommission type);
 
     /** Garde d'idempotence : une commission existe déjà pour cette caution à cette date exacte. */
     boolean existsByCautionAndDateEmission(Long cautionId, LocalDate dateEmission);
@@ -78,6 +85,15 @@ public interface ICommissionService {
      * utilisé à la clôture pour retrouver le prorata d'entrée non encore validé.
      */
     Optional<CommissionResponseDto> findPrevuByCautionAndDateEmission(Long cautionId, LocalDate dateEmission);
+
+    /**
+     * Récupère la ou les commissions d'une caution d'une catégorie donnée — utilisé pour
+     * retrouver la commission de clôture à recalculer lorsqu'une caution déjà clôturée est
+     * corrigée ({@code CautionServiceImpl.modifier}). Normalement au plus un élément pour
+     * {@link TypeCommission#CLOTURE} ; l'appelant doit signaler toute anomalie (0 ou plusieurs
+     * résultats) plutôt que d'en choisir un arbitrairement.
+     */
+    List<CommissionResponseDto> findByCautionAndType(Long cautionId, TypeCommission type);
 
     /**
      * Supprime une commission par ID. Si la commission est liée à une caution

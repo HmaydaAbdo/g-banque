@@ -26,6 +26,7 @@ import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.commision.dtos.*;
 import staport.finance.gBanque.commision.entities.Commission;
+import staport.finance.gBanque.commision.enums.TypeCommission;
 import staport.finance.gBanque.commision.mapper.CommissionMapper;
 import staport.finance.gBanque.commision.repository.CommisionRepository;
 import staport.finance.gBanque.commision.specs.CommissionSpecifications;
@@ -809,7 +810,7 @@ public class CommissionService implements ICommissionService {
     @Override
     @Transactional
     public CommissionResponseDto creerCommissionCaution(Long cautionId, Long banqueId, BigDecimal montant,
-            LocalDate dateEmission, String libelle, String observation) {
+            LocalDate dateEmission, String libelle, String observation, TypeCommission type) {
 
         Banque banque = banqueService.findOrThrow(banqueId);
 
@@ -821,14 +822,23 @@ public class CommissionService implements ICommissionService {
         commission.setLibelle(libelle);
         commission.setObservation(observation);
         commission.setStatus(Status.PREVU);
+        commission.setTypeCommission(type);
         // Référence par proxy — évite de charger l'entité Caution complète pour ce seul FK.
         commission.setCaution(entityManager.getReference(Caution.class, cautionId));
 
         Commission sauvegardee = commissionRepository.save(commission);
-        log.info("Commission caution créée — id={}, cautionId={}, montant={}",
-                sauvegardee.getId(), cautionId, montant);
+        log.info("Commission caution créée — id={}, cautionId={}, type={}, montant={}",
+                sauvegardee.getId(), cautionId, type, montant);
 
         return commissionMapper.toResponseDto(sauvegardee);
+    }
+
+    @Override
+    public List<CommissionResponseDto> findByCautionAndType(Long cautionId, TypeCommission type) {
+        return commissionRepository.findByCaution_IdAndTypeCommission(cautionId, type)
+                .stream()
+                .map(commissionMapper::toResponseDto)
+                .toList();
     }
 
     // ── Façade dédiée aux commissions générées automatiquement sur impôt/taxe ──

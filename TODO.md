@@ -101,6 +101,34 @@ Périmètre du rattrapage :
 Voir `REFACTORING-VALIDATION-UNIFIEE.md` (journal complet, suites 8 à 11) et mémoire
 `project-validation-unifiee-recap` pour le détail technique.
 
+**Ajouts au périmètre du rattrapage (21/09/2026)**, à intégrer dans le même passage documentaire :
+- `docs/modules/README.md` — chapitre Leasing et chapitre CMT : décrire la nouvelle possibilité
+  d'éditer une échéance `PREVU` via une page dédiée (`/portail/leasing/echeances/edit/:id` et
+  `/portail/cmt/echeances/edit/:id`, réservée aux administrateurs système), à la place du dialogue
+  historique sur le tableau d'amortissement ; mentionner qu'elle est aussi atteignable depuis le
+  récapitulatif unifié.
+- `docs/guide-utilisateur/admin.md` — même écran : capture/description du nouveau parcours
+  d'édition (avant : dialogue sur place : après : navigation vers une page dédiée, retour en arrière
+  au clic sur Annuler/Enregistrer).
+- `docs/modules/README.md` — chapitre Mise à disposition : le bug (`type` toujours ENCAISSEMENT
+  quel que soit l'écran) est corrigé côté frontend le 21/09/2026, mais **les enregistrements créés
+  avant cette date restent en base avec `type=ENCAISSEMENT`** alors qu'ils sont tous en réalité des
+  décaissements — décision à prendre avec HMAYDA sur une éventuelle correction de données
+  existantes (hors périmètre frontend, nécessite un script/migration côté backend).
+- `docs/modules/README.md` et `docs/guide-utilisateur/*.md` — chapitre Récapitulatif : les filtres
+  « Libellé » et « Observation » du récapitulatif unifié ont été fusionnés en un seul champ
+  « Libellé / Observation » le 21/09/2026 (un seul terme, cherché sur les deux colonnes à la fois,
+  OR insensible à la casse) — à refléter dans la description des filtres de cet écran.
+- `docs/modules/README.md` et `docs/guide-utilisateur/*.md` — chapitre Récapitulatif : critères de
+  recherche restaurés le 21/09/2026 pour retrouver la couverture des anciens écrans séparés :
+  émetteur (Virement, Virement international, Chèque, LCN, Mise à disposition) et organisme
+  (Leasing) sont désormais aussi cherchés par le champ « Libellé / Observation » (sans nouveau
+  champ visible) ; deux nouveaux filtres déroulants « Motif Commission » et « Motif Impôt/Taxe »
+  apparaissent quand la source correspondante est sélectionnée. Voir
+  `REFACTORING-VALIDATION-UNIFIEE.md` (journal) pour le détail technique. **Rappel déploiement** :
+  `sql/v_recapitulatif_encours.sql` doit être ré-exécuté sur la base pour que les 3 nouvelles
+  colonnes existent — sans ça le backend échoue au premier appel de l'écran Récapitulatif.
+
 ### Refonte visuelle — écrans États des encours (reporté le 20/09/2026)
 
 HMAYDA juge la mise en page actuelle de « Rapprochement en cours » (et probablement

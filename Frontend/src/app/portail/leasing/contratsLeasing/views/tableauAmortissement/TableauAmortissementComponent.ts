@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
@@ -9,7 +9,6 @@ import { debounceTime, distinctUntilChanged, finalize } from 'rxjs/operators';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
-import { InputTextModule } from 'primeng/inputtext';
 import { DropdownModule } from 'primeng/dropdown';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
@@ -19,14 +18,11 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DividerModule } from 'primeng/divider';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputSwitchModule } from 'primeng/inputswitch';
-import { DialogModule } from 'primeng/dialog';
-import { InputTextareaModule } from 'primeng/inputtextarea';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { RippleModule } from 'primeng/ripple';
 
 import { TableauAmortissement } from '../../dtos/table-amortissement';
 import { EcheanceLeasingResponse } from '../../dtos/EcheanceLeasingResponse';
-import { EcheanceLeasingUpdateRequest } from '../../dtos/EcheanceLeasingUpdateRequest';
 import { StatutEcheanceLeasing } from '../../dtos/StatutEcheanceLeasing';
 import { EcheanceLeasingService } from '../../services/EcheanceLeasingService';
 import { EcheanceLeasingSearchDTO } from '../../dtos/echeance-leasing-search';
@@ -45,7 +41,6 @@ import { CalendarModule } from 'primeng/calendar';
     CardModule,
     ButtonModule,
     ToastModule,
-    InputTextModule,
     DropdownModule,
     TableModule,
     TagModule,
@@ -55,8 +50,6 @@ import { CalendarModule } from 'primeng/calendar';
     InputNumberModule,
     InputSwitchModule,
     FormsModule,
-    DialogModule,
-    InputTextareaModule,
     BreadcrumbModule,
     CalendarModule,
     RippleModule
@@ -66,6 +59,7 @@ import { CalendarModule } from 'primeng/calendar';
 export class TableauAmortissementComponent implements OnInit, OnDestroy {
 
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly echeanceLeasingService = inject(EcheanceLeasingService);
   private readonly messageService = inject(MessageService);
   private readonly fb = inject(FormBuilder);
@@ -81,10 +75,6 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
 
   searchForm!: FormGroup;
   statutLeasingOptions = Object.values(StatutEcheanceLeasing).map(status => ({ label: status, value: status }));
-
-  showEditDialog = false;
-  editingEcheanceId: number | null = null;
-  editForm!: FormGroup;
 
   private subscriptions: Subscription[] = [];
 
@@ -130,15 +120,6 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
       dateValeurDebut: [null as Date | null],
       dateValeurFin: [null as Date | null],
       statutPaiement: [null]
-    });
-
-    this.editForm = this.fb.group({
-      dateEcheance: [null],
-      montantTTC: [null],
-      dateOperation: [null],
-      dateValeur: [null],
-      observation: [null],
-      libelle: [null]
     });
 
     const searchSub = this.searchForm.valueChanges.pipe(
@@ -301,54 +282,8 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
     return this.authService.isSystemAdmin();
   }
 
-  openEditDialog(echeance: EcheanceLeasingResponse): void {
-    this.editingEcheanceId = echeance.id;
-    this.editForm.reset({
-      dateEcheance: echeance.dateEcheance ? new Date(echeance.dateEcheance) : null,
-      montantTTC: echeance.montantTTC,
-      dateOperation: echeance.dateOperation ? new Date(echeance.dateOperation) : null,
-      dateValeur: echeance.dateValeur ? new Date(echeance.dateValeur) : null,
-      observation: echeance.observation ?? null,
-      libelle: echeance.libelle ?? null
-    });
-    this.showEditDialog = true;
-  }
-
-  closeEditDialog(): void {
-    this.showEditDialog = false;
-    this.editingEcheanceId = null;
-    this.editForm.reset();
-  }
-
-  saveEdit(): void {
-    if (!this.editingEcheanceId || this.editForm.invalid) return;
-
-    const toIso = (d: Date | null | undefined): string | null =>
-      d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : null;
-
-    const raw = this.editForm.value;
-    const dto: EcheanceLeasingUpdateRequest = {
-      dateEcheance: toIso(raw.dateEcheance)!,
-      montantTTC: raw.montantTTC,
-      dateOperation: toIso(raw.dateOperation),
-      dateValeur: toIso(raw.dateValeur),
-      observation: raw.observation ?? null,
-      libelle: raw.libelle ?? null
-    };
-
-    this.loading = true;
-    this.echeanceLeasingService.updateEcheance(this.editingEcheanceId, dto).pipe(
-      finalize(() => { this.loading = false; })
-    ).subscribe({
-      next: () => {
-        this.closeEditDialog();
-        this.loadTableauAmortissement(this.lastLazyLoadEvent);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Succès',
-          detail: 'Échéance mise à jour avec succès.'
-        });
-      }
-    });
+  /** Navigue vers la page d'édition dédiée de cette échéance (remplace l'ancien dialogue). */
+  editEcheance(echeance: EcheanceLeasingResponse): void {
+    this.router.navigate(['/portail/leasing/echeances/edit', echeance.id]);
   }
 }

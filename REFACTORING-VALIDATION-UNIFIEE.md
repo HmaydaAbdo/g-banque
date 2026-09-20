@@ -237,6 +237,226 @@ réécrite ligne par ligne pour éviter la répétition — cette note fait foi.
 
 ## Journal de session
 
+**21/09/2026 — Migration vers le récapitulatif unifié déclarée TERMINÉE par HMAYDA.** Clôture de ce
+chantier après les suites 1 à 12 (validation, Ajouter/Éditer, LCN Escompte, Leasing/CMT, fusion des
+filtres de recherche, restauration des critères des anciens écrans). État à la clôture :
+- **Fait** : les 22 sources gérées par le récap ont Valider (+ Ajouter/Éditer pour les 18 éligibles,
+  Leasing/CMT en édition seule réservée admin), une recherche unifiée (Libellé/Observation, motifs
+  Commission/Impôt-Taxe, n°, montant, période, sens, sources) qui couvre au moins tout ce que les
+  anciens écrans séparés permettaient.
+- **Reste en attente, PAS abandonné** : le rattrapage documentaire (`docs/modules`,
+  `docs/direction`, `docs/guide-utilisateur`) volontairement différé à une passe unique plutôt que
+  fragmenté au fil des sources (décision HMAYDA du 19/09/2026) — périmètre exact dans `TODO.md` ;
+  la correction éventuelle des données Mise à disposition déjà en base avec `type=ENCAISSEMENT` ;
+  la ré-exécution de `sql/v_recapitulatif_encours.sql` sur la base réelle (3 nouvelles colonnes,
+  sans quoi le backend échoue) ; la vérification manuelle par HMAYDA de tout ce qui n'a pu être
+  testé que par compilation dans cet environnement (aucune session connectée disponible ici).
+- Ce fichier reste la référence historique du chantier ; le prochain travail sur États des encours
+  (refonte visuelle de la page, déjà différée — voir `TODO.md`) repartira d'une nouvelle section
+  plutôt que de rouvrir celle-ci.
+
+**21/09/2026 (suite 3) — Recherche du récapitulatif : restauration des critères des anciens écrans
+séparés (émetteur, organisme, motif).** HMAYDA a listé 6 groupes de critères que les anciens écrans
+par source permettaient de rechercher et qui pouvaient avoir été perdus lors de l'unification,
+demandant d'identifier lesquels étaient déjà couverts par `libelleOuObservation`/`numero` et
+lesquels nécessitaient autre chose. Investigation (agent Explore, lecture de
+`sql/v_recapitulatif_encours.sql`, des entités sources et des anciennes Specifications) :
+
+| Groupe | Verdict |
+|---|---|
+| Virement/VI — bénéficiaire | déjà couvert (toujours dans `libelle`) |
+| Virement/VI — émetteur | **NON** couvert en décaissement (`observation` ne contient que "Virement N° X" côté décaissement) |
+| Chèque/LCN/MàD — n° | déjà couvert (`numero`) |
+| Chèque/LCN/MàD — bénéficiaire | déjà couvert |
+| Chèque/LCN/MàD — émetteur | **NON** couvert (jamais exposé pour MàD ; perdu en décaissement pour Chèque/LCN) |
+| Préfi/DC/Factoring/Décompte — n° marché | déjà couvert (`numero` = `marche.numero`, déjà dans `libelle`) |
+| Leasing — n° contrat | déjà couvert (`numero`) |
+| Leasing — organisme | **NON** couvert (jointure faite pour le scope de la requête, jamais sélectionnée) |
+| Commission — motif (`operation`) | **NON** couvert (champ structurel, jamais concaténé) |
+| Impôt/Taxe — motif | **NON** couvert (idem) |
+
+Deux décisions d'architecture soumises à HMAYDA avant tout code (CLAUDE.md) :
+1. Émetteur/organisme (texte libre) → **élargir la recherche existante** (choix HMAYDA) plutôt que
+   d'ajouter des champs visibles.
+2. Motif Commission/Impôt-Taxe (deux enums différents, choix dans une liste dans les anciens
+   écrans) → **deux listes déroulantes dédiées**, visibles seulement quand la source correspondante
+   est sélectionnée (choix HMAYDA).
+
+**Implémentation :**
+- `sql/v_recapitulatif_encours.sql` : 3 nouvelles colonnes invisibles à l'écran, ajoutées aux 20
+  branches du `UNION ALL` (NULL sauf où applicable) :
+  - `recherche_complementaire` : `ol.nom` (organisme, LEASING), `emetteur` (CHEQUE, LCN, Virement
+    les 2 branches, MiseADisposition), `CONCAT_WS(' ', beneficiaire, emetteur)` (VIREMENT_INTERNATIONAL).
+  - `commission_operation` : `co.operation` (branche COMMISSION uniquement).
+  - `impot_taxe_motif` : `it.motif` (branche IMPOT_TAXE uniquement).
+  - Toutes trois avec le `COLLATE utf8mb4_unicode_ci` explicite déjà obligatoire sur ce fichier
+    (voir avertissement en tête de fichier — sans lui, erreur SQL 1267 au premier filtre).
+  - **⚠️ Déploiement : ce script doit être ré-exécuté sur la base par HMAYDA** — sans ça, Hibernate
+    échoue dès le premier appel de l'écran Récapitulatif (colonnes attendues par l'entité absentes
+    de la vue réelle).
+- `RecapitulatifEncoursView.java` : 3 nouveaux champs + getters (mapping automatique camelCase →
+  snake_case par la stratégie de nommage Hibernate déjà en place, aucune annotation `@Column`
+  nécessaire, comme pour tous les autres champs de cette entité).
+- `RecapitulatifEncoursSpecification.java` : `byLibelleOuObservation` étendue avec un 3ᵉ `OR` sur
+  `rechercheComplementaire` ; deux nouvelles specs `byCommissionOperation`/`byImpotEtTaxeMotif`, en
+  égalité stricte, **scopées à leur propre source** (`cb.or(sourceType != X, colonne = valeur)`) —
+  point important : sans ce scoping, activer un filtre Motif aurait exclu à tort toutes les lignes
+  des AUTRES sources sélectionnées en même temps (leur colonne motif est NULL, jamais égale au
+  filtre) au lieu de ne restreindre que les lignes Commission/ImpôtTaxe.
+- `RecapitulatifSearchDto` (frontend + backend) : 2 nouveaux champs `commissionOperation`
+  (`TransactionSource`) et `impotEtTaxeMotif` (`Motif`, réutilise l'enum frontend/backend déjà
+  existant du module Impôts et Taxes).
+- `RecapitulatifServiceImpl` : les 2 nouveaux critères ajoutés au résumé de filtres du PDF exporté.
+- Frontend (`recapitulatif.component.ts`/`.html`) : deux nouveaux `p-dropdown` (« Motif Commission »,
+  « Motif Impôt/Taxe »), affichés uniquement via `showCommissionMotifFilter`/
+  `showImpotTaxeMotifFilter` (`transactionSources` contient la source correspondante) ; réutilisent
+  les enums/labels déjà existants (`TransactionSourceLabels`, `Motif`/`MotifLabels` du module Impôts
+  et Taxes) plutôt que d'en dupliquer. Émetteur/organisme n'ont demandé AUCUN changement frontend
+  visible — ils passent par le même champ « Libellé / Observation » déjà en place.
+- Vérifié par `mvn -o compile` (backend, succès) et `tsc --noEmit` + console du serveur de dev
+  (frontend, aucune nouvelle erreur). Ajouté au rattrapage documentaire déjà différé (`TODO.md`).
+
+**21/09/2026 (suite 2) — Filtres « Libellé » et « Observation » du récapitulatif fusionnés en un
+seul champ.** HMAYDA : « je veux combiner recherche libellé/observation en un seul champ, et la
+recherche portera sur les deux champs ». Changement backend (colonnes SQL distinctes, OR
+nécessaire) + frontend :
+- `RecapitulatifSearchDto` (frontend et backend) : `libelle`/`observation` (deux champs, combinés
+  en AND par `RecapitulatifEncoursSpecification`) remplacés par un seul `libelleOuObservation`.
+- `RecapitulatifEncoursSpecification.byLibelle`/`byObservation` remplacées par une seule
+  `byLibelleOuObservation` — un seul terme, `cb.or(...)` sur les deux colonnes (`LIKE` insensible à
+  la casse sur chacune), au lieu de deux `LIKE` combinés en AND (qui exigeait de facto que le terme
+  apparaisse dans les DEUX colonnes à la fois pour matcher une ligne, jamais utile ici).
+- `RecapitulatifServiceImpl` : les deux lignes de résumé de filtre du PDF exporté (« Libellé : X » +
+  « Observation : X ») fusionnées en une seule (« Libellé / Observation : X »).
+- Frontend : `recap.service.ts` (un seul paramètre HTTP au lieu de deux), `recapitulatif.component
+  .ts` (formulaire, `hasActiveFilters`, pastille de filtre actif, `buildSearchDto`), template (un
+  seul champ de saisie au lieu de deux côte à côte).
+- Aucune migration BDD (le filtre reste appliqué aux deux colonnes existantes, seule la façade API
+  change) ; pas de changement du contrat d'affichage des lignes du tableau (`libelle`/
+  `observations` restent deux colonnes distinctes dans `RecaputilatifItem`, seule la RECHERCHE est
+  fusionnée).
+- Vérifié par `mvn -o compile` (backend, succès) et `tsc --noEmit` + console du serveur de dev
+  (frontend, aucune nouvelle erreur). Ajouté au rattrapage documentaire déjà différé (`TODO.md`).
+
+**21/09/2026 (suite) — Leasing/CMT : dialogue d'édition d'échéance remplacé par une page routée,
+Éditer activé depuis le récap.** Confirmé par HMAYDA après présentation des options (règle
+CLAUDE.md « ne jamais décider seul une évolution d'architecture »).
+- **Investigation préalable** : le dialogue de `TableauAmortissementComponent` (une implémentation
+  indépendante par source, aucun code partagé Leasing/CMT) appelle déjà `GET`/`PUT
+  /echeances-leasing|cmt/{id}` — indexés par l'id de l'échéance elle-même, pas par le contrat/crédit
+  (le commentaire historique qui disait « keyed by contract id » décrivait en réalité la route de la
+  *page* du tableau d'amortissement, pas l'API). Donc une page d'édition autonome est faisable sans
+  aucun changement backend. En revanche, **aucun endpoint de création d'une échéance seule
+  n'existe** (l'échéancier n'est généré qu'à la création/modification du contrat entier via le
+  wizard Leasing ou le formulaire CMT) — confirmé en lisant `EcheanceLeasingService.ts` et
+  `EcheanceCmtService.ts` (uniquement `http.get`/`http.put`, aucun `http.post`). « Ajouter » reste
+  donc définitivement hors de portée pour ces deux sources ; HMAYDA n'a d'ailleurs demandé qu'
+  « Éditer ».
+- **Découverte a posteriori sur les deux contrôleurs backend** (`EcheanceLeasingController`,
+  `EcheanceCMTController`) : `PUT /echeances-leasing|cmt/{id}` est déjà `ADMIN_ONLY` et déjà bloqué
+  côté backend si le statut n'est pas `PREVU` (confirmé par la Javadoc du service et les
+  `@ApiResponse 400`) — l'ancien dialogue ne montrait d'ailleurs le crayon d'édition que
+  `@if (isAdmin() && statutPaiement === 'PREVU')`. Ces deux restrictions métier sont reprises à
+  l'identique dans la nouvelle page (statut vérifié après le `GET` initial, page elle-même protégée
+  par un nouveau guard `systemAdminGuard` en plus du `departmentGuard('Finance')` hérité) et dans le
+  récap (`canEditFromRecap` vérifie désormais `authService.isSystemAdmin()` pour ces deux sources
+  via une nouvelle table `EDIT_REQUIRES_SYSTEM_ADMIN`) — sans quoi un utilisateur Finance non-admin
+  aurait vu un bouton Éditer actif qui échoue systématiquement en 403.
+- **Implémentation** : deux nouveaux composants standalone, un par source (pas de code partagé,
+  cohérent avec l'absence de code partagé déjà constatée entre Leasing et CMT) —
+  `EcheanceLeasingEditComponent` (`leasing/contratsLeasing/views/echeance-leasing-edit/`) et
+  `EcheanceCmtEditComponent` (`cmt/views/echeance-cmt-edit/`) — reprenant exactement les mêmes
+  champs/validateurs/conversion de dates que l'ancien dialogue, `Location.back()` sur succès (même
+  convention que ~20 autres formulaires). Nouvelles routes `echeances/edit/:id` dans
+  `leasing-routing.module.ts` et `cmt-routing.ts`. Le dialogue et son état (`showEditDialog`,
+  `editingEcheanceId`, `editForm`, `openEditDialog`/`closeEditDialog`/`saveEdit`) sont **supprimés**
+  de `TableauAmortissementComponent` (les deux, Leasing et CMT) — remplacés par une simple
+  navigation (`editEcheance()`) — ainsi que les imports PrimeNG devenus inutiles (`DialogModule`,
+  `InputTextModule`, `InputTextareaModule`). Récap : `LEASING`/`CMT` ajoutés à
+  `CREATE_EDIT_ELIGIBILITY` (`'always'`) et à `EDIT_ROUTE`, volontairement absents de `CREATE_ROUTE`.
+- **Documentation** : `docs/rbac/README.md` mis à jour dans le même changement (Chapitre 4 Leasing,
+  chapitre CMT, Chapitre 29 États des encours) — nouvelles routes, nouveau guard,
+  `EDIT_REQUIRES_SYSTEM_ADMIN`. `docs/modules`/`docs/guide-utilisateur` ajoutés au rattrapage
+  documentaire déjà différé (voir `TODO.md`).
+- **Non vérifié visuellement** : toujours pas de session connectée disponible ici pour cliquer
+  réellement sur Éditer une échéance Leasing/CMT depuis le tableau d'amortissement ou depuis le
+  récap — vérifié uniquement par `tsc --noEmit` (aucune nouvelle erreur) et console du serveur de
+  dev (propre). HMAYDA doit confirmer manuellement, avec un compte `SYSTEM_ADMIN` ET un compte
+  Finance non-admin (pour vérifier que ce dernier ne voit pas le bouton Éditer sur ces deux sources).
+
+**21/09/2026 — Ajout/Éditer : polish visuel + extension de la matrice + bug Mise à disposition
+corrigé.** Suite directe de la suite 12 ci-dessous, après retour visuel de HMAYDA sur la modale
+Ajouter (captures d'écran) et audit de couverture complet des 22 sources gérées par le récap :
+- **Modale Ajouter** : dropdown `p-menu` → modale centrée avec recherche → grille de mini-cartes
+  (icône + libellé), la modale élargie à `64vw`. Corrigé au passage un doublon d'affichage du
+  libellé de source (le composant partagé `app-source-badge` rendait déjà le libellé, doublé par un
+  `<span>` ajouté par-dessus) — remplacé par une puce icône propre à cette modale
+  (`AJOUTER_ICON`/`AJOUTER_LABEL_OVERRIDE`), sans toucher `SourceBadgeComponent` (utilisé ailleurs en
+  format compact). Bouton « Éditer » par ligne restylé en plein (`p-button-info`) pour matcher le
+  poids visuel du bouton « Valider », au lieu du style texte/fantôme initial.
+- **LCN Escompte ajouté à la matrice** (demande HMAYDA) : investigation (agent Explore) a confirmé
+  que `LCN_ESCOMPTE` réutilise exactement le même formulaire (`LcnFormComponent`, contrôle
+  `natureLcn` Encaissement/Escompte) et le même id-space (`GET/PUT/POST /lcns/{id}`) que
+  `LCN_ENCAISSEMENT` — aucune nouvelle route, aucun nouveau composant : ajouté tel quel à
+  `CREATE_EDIT_ELIGIBILITY`/`CREATE_ROUTE`/`EDIT_ROUTE`/`AJOUTER_ICON` avec la même route
+  `/portail/LCN/new`+`/edit/:id`. `docs/rbac/README.md` Chapitre 29 mis à jour.
+- **Bug Mise à disposition corrigé** (repéré en suite 12, jamais corrigé depuis) :
+  `MiseADispositionFormComponent.miseAdispoType` était figé à `Type.ENCAISSEMENT` alors que le
+  module entier (seule route existante : `/portail/Mise-a-disposition/decaissement`, aucun écran
+  encaissement) ne devrait produire que des `Type.DECAISSEMENT` — corrigé, ainsi que le libellé de
+  breadcrumb qui affichait à tort « Encaissements ». **⚠️ Ne corrige que le comportement futur** :
+  les enregistrements déjà créés via ce formulaire ont été persistés avec `type=ENCAISSEMENT` en
+  base — une correction des données existantes (côté backend) reste à décider avec HMAYDA, hors
+  périmètre de ce changement frontend.
+- **Audit de couverture complet demandé par HMAYDA** : confirmé que les 22 sources gérées par ce
+  récap (celles présentes dans `unitValidationConfigs`) se répartissent exactement en 16 éligibles
+  Ajouter/Éditer + 6 exclues (Leasing, CMT, MiseADisposition, Agios, LCN_DECAISSEMENT — LCN_ESCOMPTE
+  vient d'en sortir), conforme à la matrice d'origine. CAUTION/Importation/LCN(legacy) n'apparaissent
+  nulle part dans le module `etatsDesEncours` — hors périmètre du récap, pas un oubli.
+- **Leasing/CMT — décision d'architecture en attente de validation HMAYDA, pas encore implémentée**
+  (voir section dédiée juste après ce journal ou demander à la session courante) : HMAYDA veut
+  remplacer le dialogue d'édition d'échéance (sur l'écran tableau d'amortissement) par une vraie
+  page routée, et rendre Éditer disponible depuis le récap. Investigation : l'API (`GET`/`PUT
+  /echeances-leasing|cmt/{id}`) est déjà indexée par l'id de l'échéance (pas du contrat) — donc
+  faisable sans changement backend — mais **aucun endpoint de création d'une échéance seule
+  n'existe** (l'échéancier n'est généré qu'à la création/modification du contrat entier), donc
+  « Ajouter » reste hors de portée pour ces deux sources quoi qu'il arrive ; HMAYDA n'a d'ailleurs
+  demandé que « Éditer », pas « Ajouter », pour ces deux-là.
+
+**20/09/2026 (suite 12) — Ajouter/Éditer restaurés dans le récap, matrice (source, sens) exacte.**
+Après la migration de la validation, le récap unifié n'avait conservé que « Valider » — HMAYDA
+fournit une matrice exacte de ce qui doit réapparaître : Ajouter/Éditer/Exporter/Valider pour
+certaines combinaisons (source, sens), Exporter/Valider seulement pour d'autres. Contraintes
+explicites : respecter strictement la matrice, ne pas changer les règles métier de validation,
+réutiliser l'existant, rediriger vers l'écran dédié de la source (pas de nouveau formulaire dans le
+récap), retour au récap basé sur l'historique de navigation après un Ajouter/Éditer réussi.
+- **Investigation avant tout code** (agent Explore, les 20 sources) : les écrans de création/
+  édition par source existent tous encore, routés et joignables (`departmentGuard('Finance')`,
+  identique au récap) — rien d'orphelin. Le mécanisme de retour demandé existe déjà partout :
+  `Location.back()` est déjà appelé par ~20 des 21 formulaires en cas de succès — `router.navigate`
+  depuis le récap suffit, aucun formulaire à modifier.
+- **Bug préexistant repéré, pas corrigé** : l'écran décaissement de Mise à disposition affiche des
+  boutons Ajouter/Éditer qui ouvrent en réalité toujours un formulaire d'ENCAISSEMENT (type
+  verrouillé) — la matrice HMAYDA exclut justement Ajouter/Éditer pour cette source, ce qui évite
+  d'exposer ce bug depuis le récap sans avoir à le corriger.
+- **Export déjà dynamique** : vérifié que `exportPdf()` (frontend) et `exportRecapitulatifPdf`
+  (backend) partagent déjà exactement le même filtre que la liste paginée
+  (`buildSearchDto()`/`buildSearchSpecification()`) — rien à changer.
+- **Backend inchangé** : les 16 sources éligibles ont toutes un `@PostMapping`/`@PutMapping` déjà
+  fonctionnel et protégé par `FINANCE_OR_ADMIN`, jamais touché par le refactoring de validation —
+  vérifié, aucune modification nécessaire.
+- **Frontend** (`recapitulatif.component.ts`/`.html`) : table `CREATE_EDIT_ELIGIBILITY` (matrice),
+  `CREATE_ROUTE`/`EDIT_ROUTE` (chemins vérifiés contre les vrais fichiers `*.routes.ts`, y compris
+  `/portail/préfinancements` avec son accent). Bouton « Éditer » par ligne (à côté du bouton
+  Valider existant) ; bouton « Ajouter » unique dans la barre d'outils ouvrant un `p-menu` listant
+  les sources éligibles (une entrée par source, pas par sens — le sens reste un choix dans le
+  formulaire quand c'en est un).
+- **Documentation mise à jour dans le même changement** : `docs/rbac/README.md`, Chapitre 29,
+  nouvelle table complète des combinaisons (source, sens) éligibles.
+- **Non vérifié visuellement** : pas de session connectée disponible dans cet environnement pour
+  cliquer réellement sur Ajouter/Éditer — vérifié par `tsc --noEmit` et recoupement des chemins de
+  route avec les fichiers de routing réels uniquement. HMAYDA doit confirmer manuellement.
+
 **20/09/2026 (suite 11) — Édition d'une transaction déjà validée : mêmes champs que la validation,
 synchronisation garantie avec l'entité source.** HMAYDA demande d'gérer proprement l'édition d'une
 transaction déjà validée (existait déjà via `PATCH /transactions/{id}`, mais limitée à

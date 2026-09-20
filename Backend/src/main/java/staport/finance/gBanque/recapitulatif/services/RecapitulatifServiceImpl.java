@@ -196,11 +196,8 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
             if (searchDto.sens() != null) {
                 filterLines.add("Sens : " + libelleSens(searchDto.sens()));
             }
-            if (searchDto.libelle() != null && !searchDto.libelle().isBlank()) {
-                filterLines.add("Libellé : " + searchDto.libelle());
-            }
-            if (searchDto.observation() != null && !searchDto.observation().isBlank()) {
-                filterLines.add("Observation : " + searchDto.observation());
+            if (searchDto.libelleOuObservation() != null && !searchDto.libelleOuObservation().isBlank()) {
+                filterLines.add("Libellé / Observation : " + searchDto.libelleOuObservation());
             }
             if (searchDto.numero() != null && !searchDto.numero().isBlank()) {
                 filterLines.add("N° de pièce : " + searchDto.numero());
@@ -216,6 +213,12 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
             }
             if (searchDto.montant() != null) {
                 filterLines.add("Montant : " + formatMontantRecap(searchDto.montant()) + " MAD");
+            }
+            if (searchDto.commissionOperation() != null) {
+                filterLines.add("Motif Commission : " + searchDto.commissionOperation());
+            }
+            if (searchDto.impotEtTaxeMotif() != null) {
+                filterLines.add("Motif Impôt/Taxe : " + searchDto.impotEtTaxeMotif());
             }
         }
 

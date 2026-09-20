@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { departmentGuard } from '../../../auth/guards/department.guard';
+import { systemAdminGuard } from '../../../auth/guards/system-admin.guard';
 
 export const cmtRoutes: Routes = [
   {
@@ -10,6 +11,14 @@ export const cmtRoutes: Routes = [
         path: '',
         redirectTo: 'encours',
         pathMatch: 'full'
+      },
+      {
+        // Édition d'une échéance seule (statut PREVU uniquement, réservé aux administrateurs
+        // système — remplace le dialogue historique de TableauAmortissementComponent, 21/09/2026).
+        path: 'echeances/edit/:id',
+        canActivate: [systemAdminGuard],
+        loadComponent: () =>
+          import('../views/echeance-cmt-edit/echeance-cmt-edit.component').then(m => m.EcheanceCmtEditComponent)
       },
       {
         path: 'encours',

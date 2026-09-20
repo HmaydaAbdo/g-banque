@@ -459,11 +459,18 @@ pour la date de prise (du/au) et la date de main levée (du/au).
 
 ### Modifier une caution
 
-1. Cliquer sur l'icône **Modifier** sur la ligne de la caution.
+1. Cliquer sur l'icône **Modifier** sur la ligne de la caution — active ou déjà clôturée.
 2. Tous les champs sont modifiables, y compris le numéro, la banque, la nature et le marché.
+   - Pour une caution **déjà clôturée**, un champ supplémentaire **Date de main levée**
+     apparaît, pour corriger une erreur de saisie — il reste obligatoire.
 3. Valider.
 
-> La modification est bloquée si la caution est déjà clôturée.
+> Pour une caution déjà clôturée, modifier un champ qui influence le calcul de la commission de
+> clôture (banque, montant, taux, date de prise, date de main levée) **recalcule
+> automatiquement** cette commission. La modification est refusée si cette commission est déjà
+> réglée (payée), ou si aucune commission de clôture n'est identifiable sur cette caution (cas
+> d'une clôture antérieure à cette fonctionnalité) — contacter un administrateur système dans ces
+> deux cas.
 
 ### Supprimer une caution
 
@@ -489,20 +496,23 @@ pour la date de prise (du/au) et la date de main levée (du/au).
 > La clôture est bloquée si la caution est déjà clôturée, ou si aucune règle de calcul de
 > commission n'est enregistrée pour sa banque — contacter un administrateur système dans ce cas.
 
-### Exporter les cautions en PDF
+### Exporter les cautions en PDF ou en Excel
 
 1. Appliquer les filtres souhaités sur la liste (numéro, banque, nature, marché, organisme, plages
    de dates, montant, statut).
-2. Cliquer sur **Exporter en PDF** — un panneau s'ouvre juste sous le bouton (nouveau, 23/07/2026),
-   listant les onze colonnes disponibles (N° Caution, Banque, Nature, N° Marché, Organisme,
-   Désignation, Date de prise, Main levée, Montant, Taux, Statut), toutes cochées par défaut.
-3. Décocher les colonnes à exclure du document, ou utiliser **Tout** / **Aucune**. Au moins une
+2. Cliquer sur **Exporter** — un panneau s'ouvre juste sous le bouton, proposant d'abord le format
+   (**PDF** ou **Excel** — nouveau, 20/09/2026 ; PDF est présélectionné), puis les onze colonnes
+   disponibles (N° Caution, Banque, Nature, N° Marché, Organisme, Désignation, Date de prise, Main
+   levée, Montant, Taux, Statut), toutes cochées par défaut.
+3. Choisir le format souhaité.
+4. Décocher les colonnes à exclure du document, ou utiliser **Tout** / **Aucune**. Au moins une
    colonne doit rester cochée.
-4. Cliquer sur **Exporter** dans le panneau pour lancer le téléchargement. Cliquer en dehors du
-   panneau le referme sans exporter.
+5. Cliquer sur **Exporter PDF** ou **Exporter Excel** (le libellé du bouton suit le format choisi)
+   pour lancer le téléchargement. Cliquer en dehors du panneau le referme sans exporter.
 
 > L'export contient l'intégralité des cautions correspondant aux filtres — pas seulement la page
-> actuellement affichée à l'écran — avec uniquement les colonnes sélectionnées.
+> actuellement affichée à l'écran — avec uniquement les colonnes sélectionnées, dans le format
+> choisi.
 
 ### Consulter les commissions sur cautions
 

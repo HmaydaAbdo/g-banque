@@ -1,5 +1,6 @@
 import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 import {SensOperation} from "../../../../../transactions/dtos/SensOperation";
+import {Motif} from "../../../../../impotEtTaxes/dtos/Motif";
 
 /**
  * Critères de recherche de l'écran Récapitulatif — encaissements et décaissements prévisionnels
@@ -8,8 +9,11 @@ import {SensOperation} from "../../../../../transactions/dtos/SensOperation";
  */
 export interface RecapitulatifSearchDto {
   transactionSources?: TransactionSource[];
-  observation: string;
-  libelle: string;
+  /**
+   * Un seul champ de recherche textuelle, testé côté serveur sur libellé ET observation (OR,
+   * insensible à la casse, sous-chaîne) — fusionné le 21/09/2026 depuis deux champs séparés.
+   */
+  libelleOuObservation: string;
   /**
    * Filtre optionnel sur le numéro de pièce (recherche partielle, insensible à la casse).
    * Sans effet sur les sources qui n'en portent pas — elles sont alors exclues du résultat.
@@ -35,4 +39,14 @@ export interface RecapitulatifSearchDto {
    * Filtre optionnel sur le montant exact de l'opération (égalité stricte, pas une plage).
    */
   montant?: number | null;
+  /**
+   * Filtre optionnel exact sur le motif (type) d'une Commission — sans effet sur les lignes des
+   * autres sources (21/09/2026, restaure le filtre « Motif » de l'ancien écran dédié).
+   */
+  commissionOperation?: TransactionSource | null;
+  /**
+   * Filtre optionnel exact sur le motif d'un Impôt/Taxe — sans effet sur les lignes des autres
+   * sources (21/09/2026, restaure le filtre « Motif » de l'ancien écran dédié).
+   */
+  impotEtTaxeMotif?: Motif | null;
 }

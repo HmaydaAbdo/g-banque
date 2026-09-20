@@ -1,7 +1,18 @@
 import { Routes } from '@angular/router';
 import {departmentGuard} from "../../../auth/guards/department.guard";
+import {systemAdminGuard} from "../../../auth/guards/system-admin.guard";
 
 export const LEASING_FEATURE_ROUTES: Routes = [
+  {
+    // Édition d'une échéance seule (statut PREVU uniquement, réservé aux administrateurs système —
+    // remplace le dialogue historique de TableauAmortissementComponent, 21/09/2026). Route
+    // indépendante d'un contrat précis : l'API est indexée par l'id de l'échéance elle-même.
+    path: 'echeances/edit/:id',
+    canActivate: [departmentGuard('Finance'), systemAdminGuard],
+    loadComponent: () =>
+      import('../contratsLeasing/views/echeance-leasing-edit/echeance-leasing-edit.component')
+        .then(m => m.EcheanceLeasingEditComponent)
+  },
   {
     path: 'organismesLeasing',
     canActivate: [departmentGuard('Finance')],

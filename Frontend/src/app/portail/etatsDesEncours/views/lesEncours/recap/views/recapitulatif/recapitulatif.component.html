@@ -65,21 +65,12 @@
                        appendTo="body" styleClass="w-full"></p-multiSelect>
       </div>
 
-      <div class="flex flex-column gap-1 flex-1" style="min-width:170px;">
-        <label for="libelle">Libellé</label>
+      <div class="flex flex-column gap-1 flex-1" style="min-width:220px;">
+        <label for="libelleOuObservation">Libellé / Observation</label>
         <span class="p-input-icon-left w-full">
           <i class="pi pi-search"></i>
-          <input id="libelle" pInputText type="text" formControlName="libelle"
-                 placeholder="Rechercher..." class="w-full" />
-        </span>
-      </div>
-
-      <div class="flex flex-column gap-1 flex-1" style="min-width:170px;">
-        <label for="observation">Observation</label>
-        <span class="p-input-icon-left w-full">
-          <i class="pi pi-search"></i>
-          <input id="observation" pInputText type="text" formControlName="observation"
-                 placeholder="Rechercher..." class="w-full" />
+          <input id="libelleOuObservation" pInputText type="text" formControlName="libelleOuObservation"
+                 placeholder="Rechercher dans le libellé ou l'observation..." class="w-full" />
         </span>
       </div>
 
@@ -101,6 +92,28 @@
         <input id="montant" pInputText type="number" formControlName="montant"
                placeholder="0,00" class="w-full" />
       </div>
+
+      @if (showCommissionMotifFilter) {
+        <div class="flex flex-column gap-1" style="min-width:200px;">
+          <label for="commissionOperation">Motif Commission</label>
+          <p-dropdown inputId="commissionOperation" formControlName="commissionOperation"
+                      [options]="commissionOperationOptions"
+                      optionLabel="label" optionValue="value"
+                      placeholder="Tous les motifs" [showClear]="true" [filter]="true"
+                      appendTo="body" styleClass="w-full"></p-dropdown>
+        </div>
+      }
+
+      @if (showImpotTaxeMotifFilter) {
+        <div class="flex flex-column gap-1" style="min-width:200px;">
+          <label for="impotEtTaxeMotif">Motif Impôt/Taxe</label>
+          <p-dropdown inputId="impotEtTaxeMotif" formControlName="impotEtTaxeMotif"
+                      [options]="motifOptions"
+                      optionLabel="label" optionValue="value"
+                      placeholder="Tous les motifs" [showClear]="true" [filter]="true"
+                      appendTo="body" styleClass="w-full"></p-dropdown>
+        </div>
+      }
 
       <div class="flex-shrink-0">
         <button pButton pRipple type="button"
@@ -209,6 +222,12 @@
             </span>
           }
 
+          <button type="button" pButton pRipple label="Ajouter" icon="pi pi-plus"
+                  size="small" severity="secondary"
+                  pTooltip="Créer une nouvelle opération — ouvre le formulaire dédié à la source"
+                  tooltipPosition="left"
+                  (click)="openAjouterModal()"></button>
+
           <button type="button" pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf"
                   size="small" severity="secondary"
                   pTooltip="Exporte exactement les lignes filtrées" tooltipPosition="left"
@@ -259,7 +278,7 @@
             ID source
               <p-sortIcon field="id.entityId"></p-sortIcon>
           </th>
-          <th style="width: 6rem;">Actions</th>
+          <th style="width: 8rem;">Actions</th>
         </tr>
       </ng-template>
 
@@ -318,16 +337,26 @@
             </span>
           </td>
           <td>
-            @if (canValidateUnitairement(item)) {
+            <div class="flex align-items-center gap-1">
               <button
-                type="button" pButton pRipple icon="pi pi-check"
-                class="p-button-rounded p-button-success"
-                pTooltip="Valider" tooltipPosition="top"
-                (click)="openUnitValidation(item)"
+                type="button" pButton pRipple icon="pi pi-pencil"
+                class="p-button-rounded p-button-info"
+                [disabled]="!canEditFromRecap(item)"
+                [pTooltip]="canEditFromRecap(item) ? 'Éditer' : 'Édition non disponible pour cette source depuis le récapitulatif'"
+                tooltipPosition="top"
+                (click)="editerItem(item)"
               ></button>
-            } @else {
-              <span class="text-400 text-xs" pTooltip="Cette source n'est pas encore validable depuis le récapitulatif — utilisez son écran dédié" tooltipPosition="top">—</span>
-            }
+              @if (canValidateUnitairement(item)) {
+                <button
+                  type="button" pButton pRipple icon="pi pi-check"
+                  class="p-button-rounded p-button-success"
+                  pTooltip="Valider" tooltipPosition="top"
+                  (click)="openUnitValidation(item)"
+                ></button>
+              } @else {
+                <span class="text-400 text-xs" pTooltip="Cette source n'est pas encore validable depuis le récapitulatif — utilisez son écran dédié" tooltipPosition="top">—</span>
+              }
+            </div>
           </td>
         </tr>
       </ng-template>
@@ -514,4 +543,33 @@
       </div>
     </form>
   }
+</p-dialog>
+
+<!-- ============ Ajouter — modale centrée avec recherche ============ -->
+<p-dialog header="Ajouter une opération" [(visible)]="displayAjouterModal"
+          [modal]="true" [style]="{width: '64vw'}"
+          [draggable]="false" [resizable]="false"
+          (onShow)="onAjouterModalShow()"
+          (visibleChange)="!$event && closeAjouterModal()">
+  <div class="flex flex-column gap-3">
+    <span class="p-input-icon-left w-full">
+      <i class="pi pi-search"></i>
+      <input #ajouterSearchInput type="text" pInputText class="w-full"
+             placeholder="Rechercher une source (virement, chèque, factoring…)"
+             [(ngModel)]="ajouterSearchTerm" autocomplete="off">
+    </span>
+
+    <div class="ajouter-grid">
+      @for (item of filteredAjouterItems; track item.source) {
+        <button type="button" pButton pRipple
+                class="p-button-text ajouter-card"
+                (click)="choisirAjouter(item)">
+          <span class="ajouter-card__icon"><i [class]="item.icon"></i></span>
+          <span class="ajouter-card__label">{{ item.label }}</span>
+        </button>
+      } @empty {
+        <p class="text-500 text-center py-4 m-0 col-12">Aucune source ne correspond à « {{ ajouterSearchTerm }} ».</p>
+      }
+    </div>
+  </div>
 </p-dialog>

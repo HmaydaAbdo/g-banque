@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 import staport.finance.gBanque.commision.entities.Commission;
+import staport.finance.gBanque.commision.enums.TypeCommission;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
@@ -78,4 +79,13 @@ public interface CommisionRepository extends JpaRepository<Commission, Long>, Jp
      * {@code libelle}/{@code observation}) — mirroring {@code existsByCaution_IdAndStatus}.
      */
     boolean existsByVirement_Id(Long virementId);
+
+    /**
+     * Récupère la ou les commissions d'une caution d'une catégorie donnée — utilisé pour
+     * retrouver la commission de clôture à recalculer lorsqu'une caution déjà clôturée est
+     * corrigée. Normalement au plus un résultat pour {@code TypeCommission.CLOTURE} ; le
+     * service appelant signale toute anomalie (0 ou plusieurs résultats) plutôt que d'en
+     * choisir un arbitrairement.
+     */
+    List<Commission> findByCaution_IdAndTypeCommission(Long cautionId, TypeCommission typeCommission);
 }

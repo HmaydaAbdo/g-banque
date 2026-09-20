@@ -79,11 +79,14 @@ export class CautionListComponent implements OnInit {
   readonly isSystemAdmin = this.authService.isSystemAdmin();
   readonly today   = new Date();
 
-  /** Indicateur de chargement du bouton "Exporter PDF". */
+  /** Indicateur de chargement du bouton "Exporter". */
   exporting = false;
 
+  /** Format sélectionné dans le panneau d'export — PDF par défaut. */
+  exportFormat: 'pdf' | 'excel' = 'pdf';
+
   /**
-   * Colonnes exportables dans le PDF de la liste des cautions — clés et ordre alignés sur
+   * Colonnes exportables (PDF et Excel) de la liste des cautions — clés et ordre alignés sur
    * `CAUTION_EXPORT_COLUMNS` côté backend (`CautionServiceImpl`). Toutes cochées par défaut.
    */
   exportColumns: { key: string; label: string; checked: boolean }[] = [
@@ -319,7 +322,7 @@ export class CautionListComponent implements OnInit {
     };
   }
 
-  /** Ouvre/ferme le panneau de sélection des colonnes, ancré au bouton "Exporter PDF". */
+  /** Ouvre/ferme le panneau de sélection du format et des colonnes, ancré au bouton "Exporter". */
   toggleExportPanel(event: Event): void {
     this.exportColumnsPanel.toggle(event);
   }
@@ -329,9 +332,9 @@ export class CautionListComponent implements OnInit {
   }
 
   /**
-   * Exporte en PDF l'intégralité des cautions correspondant aux filtres actuellement
-   * appliqués — pas seulement la page affichée à l'écran — en ne retenant que les colonnes
-   * cochées dans la boîte de dialogue.
+   * Exporte (PDF ou Excel selon {@link exportFormat}) l'intégralité des cautions correspondant
+   * aux filtres actuellement appliqués — pas seulement la page affichée à l'écran — en ne
+   * retenant que les colonnes cochées dans la boîte de dialogue.
    */
   confirmExport(): void {
     if (!this.hasSelectedColumns) return;
@@ -340,15 +343,21 @@ export class CautionListComponent implements OnInit {
     this.exporting = true;
 
     const colonnes = this.exportColumns.filter(c => c.checked).map(c => c.key);
+    const criteres = this.buildFilterCriteres();
+    const isPdf = this.exportFormat === 'pdf';
+    const export$ = isPdf
+      ? this.cautionService.exportPdf(criteres, colonnes)
+      : this.cautionService.exportExcel(criteres, colonnes);
+    const extension = isPdf ? 'pdf' : 'xlsx';
 
-    this.cautionService.exportPdf(this.buildFilterCriteres(), colonnes)
+    export$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: blob => {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `cautions_${new Date().toISOString().slice(0, 10)}.pdf`;
+          a.download = `cautions_${new Date().toISOString().slice(0, 10)}.${extension}`;
           a.click();
           URL.revokeObjectURL(url);
           this.exporting = false;

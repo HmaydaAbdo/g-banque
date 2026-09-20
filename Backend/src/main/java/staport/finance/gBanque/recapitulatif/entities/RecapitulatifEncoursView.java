@@ -71,6 +71,24 @@ public class RecapitulatifEncoursView {
      */
     private String numero;
 
+    /**
+     * Colonne de recherche invisible à l'écran (21/09/2026) — porte l'émetteur (Virement,
+     * Chèque, LCN, VirementInternational, MiseADisposition) ou l'organisme (Leasing) : des
+     * valeurs que {@link #libelle}/{@link #observation} perdent ou n'exposent jamais selon le
+     * sens, alors que les anciens écrans par source permettaient de les rechercher. {@code null}
+     * pour les sources sans émetteur ni organisme distinct. Combinée par OR avec libelle/
+     * observation dans {@code RecapitulatifEncoursSpecification.byLibelleOuObservation}.
+     */
+    private String rechercheComplementaire;
+
+    /** Motif (type) d'une Commission — {@code null} hors branche COMMISSION. Invisible à l'écran,
+     * filtrable uniquement (21/09/2026). */
+    private String commissionOperation;
+
+    /** Motif d'un Impôt/Taxe — {@code null} hors branche IMPOT_TAXE. Invisible à l'écran,
+     * filtrable uniquement (21/09/2026). */
+    private String impotTaxeMotif;
+
     protected RecapitulatifEncoursView() {
         // Requis par JPA
     }
@@ -121,5 +139,17 @@ public class RecapitulatifEncoursView {
 
     public String getNumero() {
         return numero;
+    }
+
+    public String getRechercheComplementaire() {
+        return rechercheComplementaire;
+    }
+
+    public String getCommissionOperation() {
+        return commissionOperation;
+    }
+
+    public String getImpotTaxeMotif() {
+        return impotTaxeMotif;
     }
 }

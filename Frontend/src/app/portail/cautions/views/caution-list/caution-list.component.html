@@ -103,14 +103,29 @@
 
     <div class="flex align-items-center gap-2 flex-shrink-0" >
       <button pButton pRipple
-              label="Exporter PDF"
-              icon="pi pi-file-pdf"
+              label="Exporter"
+              icon="pi pi-download"
               [loading]="exporting"
               class="p-button-outlined p-button-danger h-fit p-button-sm"
               (click)="toggleExportPanel($event)">
       </button>
       <p-overlayPanel #exportColumnsPanel [style]="{ width: '300px' }" [showCloseIcon]="true">
         <div class="flex flex-column gap-3">
+          <div class="flex justify-content-between align-items-center">
+            <span class="text-sm font-semibold">Format d'export</span>
+          </div>
+
+          <div class="flex gap-2">
+            <button pButton pRipple type="button" label="PDF" icon="pi pi-file-pdf"
+                    class="flex-1 p-button-sm"
+                    [class.p-button-outlined]="exportFormat !== 'pdf'"
+                    (click)="exportFormat = 'pdf'"></button>
+            <button pButton pRipple type="button" label="Excel" icon="pi pi-file-excel"
+                    class="flex-1 p-button-sm"
+                    [class.p-button-outlined]="exportFormat !== 'excel'"
+                    (click)="exportFormat = 'excel'"></button>
+          </div>
+
           <div class="flex justify-content-between align-items-center">
             <span class="text-sm font-semibold">Colonnes à exporter</span>
           </div>
@@ -135,8 +150,9 @@
             <small class="text-red-500">Sélectionnez au moins une colonne.</small>
           }
 
-          <button pButton pRipple type="button" label="Exporter"
-                  icon="pi pi-file-pdf"
+          <button pButton pRipple type="button"
+                  [label]="exportFormat === 'pdf' ? 'Exporter PDF' : 'Exporter Excel'"
+                  [icon]="exportFormat === 'pdf' ? 'pi pi-file-pdf' : 'pi pi-file-excel'"
                   [loading]="exporting"
                   [disabled]="!hasSelectedColumns"
                   class="w-full p-button-sm"
@@ -367,12 +383,12 @@
           </td>
           <td>
             <div class="flex align-items-center justify-content-center gap-1">
+              <button pButton pRipple icon="pi pi-pencil"
+                      class="p-button-rounded p-button-text p-button-info p-button-sm"
+                      [routerLink]="['/portail/cautions/edit', caution.id]"
+                      pTooltip="Modifier" tooltipPosition="top">
+              </button>
               @if (caution.actif) {
-                <button pButton pRipple icon="pi pi-pencil"
-                        class="p-button-rounded p-button-text p-button-info p-button-sm"
-                        [routerLink]="['/portail/cautions/edit', caution.id]"
-                        pTooltip="Modifier" tooltipPosition="top">
-                </button>
                 <button pButton pRipple icon="pi pi-lock"
                         class="p-button-rounded p-button-text p-button-warning p-button-sm"
                         (click)="ouvrirCloturerDialog(caution)"

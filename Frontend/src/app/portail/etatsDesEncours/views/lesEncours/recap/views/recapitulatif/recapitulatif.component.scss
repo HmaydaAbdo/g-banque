@@ -147,6 +147,61 @@
 // lignes, qui n'étaient plus visibles sans scroller.
 .recap-summary { width: 100%; }
 
+// ── Modale « Ajouter » — grille de mini-cartes filtrable par recherche ───
+.ajouter-grid {
+  max-height              : 26rem;
+  overflow-y              : auto;
+  display                 : grid;
+  grid-template-columns   : repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap                     : 0.75rem;
+  padding                 : 0.15rem;
+}
+
+.ajouter-card {
+  display        : flex !important;
+  flex-direction : column !important;
+  align-items    : center;
+  justify-content: center !important;
+  gap            : 0.6rem;
+  width          : 100%;
+  padding        : 1.1rem 0.75rem !important;
+  border-radius  : var(--radius-lg);
+  border         : 1px solid var(--color-border);
+  background     : var(--color-surface) !important;
+  transition     : background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    background   : var(--color-surface-3) !important;
+    border-color : var(--color-primary);
+    transform    : translateY(-2px);
+    box-shadow   : var(--shadow-sm);
+
+    .ajouter-card__icon { background: var(--color-primary); color: var(--color-text-inverse); }
+  }
+
+  &__icon {
+    flex-shrink    : 0;
+    width          : 2.75rem;
+    height         : 2.75rem;
+    border-radius  : var(--radius-full);
+    display        : flex;
+    align-items    : center;
+    justify-content: center;
+    background     : var(--color-surface-3);
+    color          : var(--color-primary);
+    font-size      : 1.2rem;
+    transition     : background-color 0.15s ease, color 0.15s ease;
+  }
+
+  &__label {
+    text-align : center;
+    color      : var(--color-text-primary);
+    font-weight: var(--weight-semibold);
+    font-size  : var(--text-sm);
+    line-height: 1.25;
+  }
+}
+
 // Bornes de date repliables : ligne complète sous les filtres quand ouvertes
 .recap-dates {
   flex          : 1 0 100%;

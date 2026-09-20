@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
@@ -6,8 +6,8 @@ import { ToastModule } from 'primeng/toast';
 import { Table } from 'primeng/table';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Observable, Subscription } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
@@ -43,6 +43,8 @@ import { EcheanceLeasingService } from "../../../../../../leasing/contratsLeasin
 import { EcheanceLeasingResponse } from "../../../../../../leasing/contratsLeasing/dtos/EcheanceLeasingResponse";
 import { EcheanceCmtService } from "../../../../../../cmt/services/EcheanceCmtService";
 import { EcheanceCMTResponseDto } from "../../../../../../cmt/dtos/EcheanceCMTResponseDto";
+import { AuthService } from "../../../../../../../auth/services/auth.service";
+import { Motif, MotifLabels } from "../../../../../../impotEtTaxes/dtos/Motif";
 import { ChequeService } from "../../../../../../cheques/services/ChequeService";
 import { ChequeResponseDto } from "../../../../../../cheques/dtos/ChequeResponseDto";
 import { LcnService } from "../../../../../../LCN/service/LcnService";
@@ -174,6 +176,7 @@ interface UnitValidationConfig<TDetail = any> {
     ConfirmDialogModule,
     SourceBadgeComponent,
     TvaInputComponent,
+    FormsModule,
   ],
   templateUrl: './recapitulatif.component.html',
   styleUrl: './recapitulatif.component.scss',
@@ -198,6 +201,18 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
   ];
   readonly SensOperation = SensOperation;
   readonly TransactionSource = TransactionSource;
+
+  /** Options du filtre « Motif » de Commission — restaure le filtre de l'ancien écran dédié
+   * (21/09/2026), affiché seulement quand COMMISSION fait partie des sources sélectionnées. */
+  readonly commissionOperationOptions = Object.values(TransactionSource)
+    .map(source => ({ label: TransactionSourceLabels[source] ?? source, value: source }))
+    .sort((a, b) => a.label.localeCompare(b.label, 'fr'));
+
+  /** Options du filtre « Motif » d'Impôt/Taxe — restaure le filtre de l'ancien écran dédié
+   * (21/09/2026), affiché seulement quand IMPOT_TAXE fait partie des sources sélectionnées. */
+  readonly motifOptions = Object.values(Motif)
+    .map(motif => ({ label: MotifLabels[motif] ?? motif, value: motif }))
+    .sort((a, b) => a.label.localeCompare(b.label, 'fr'));
 
   /** Explication du numéro de pièce — toutes les sources n'en portent pas. */
   readonly numeroHelp =
@@ -231,6 +246,8 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
   private readonly messageService = inject(MessageService);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
   private readonly fb = inject(FormBuilder);
   private readonly validationService = inject(ValidationService);
   private readonly bankStateService = inject(BankStateService);
@@ -921,6 +938,195 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     return this.unitValidationConfigs.has(item.source);
   }
 
+  // ==================== Ajouter / Éditer (matrice HMAYDA du 20/09/2026) ====================
+  // Avant la migration vers ce récap unifié, Ajouter/Éditer vivaient dans les anciens écrans
+  // dédiés par (source, sens) et redirigeaient déjà vers une page de formulaire séparée (jamais
+  // une modale, sauf Leasing/CMT dont l'édition d'échéance est un dialogue sur l'écran de tableau
+  // d'amortissement — hors périmètre ici, ces deux sources ne sont pas éligibles). On réutilise
+  // ces mêmes pages telles quelles : ce récap ne fait que router vers elles, jamais reconstruire
+  // un formulaire. Le retour au récap après un Ajouter/Éditer réussi n'est pas géré ici non plus —
+  // chaque formulaire appelle déjà `Location.back()` en cas de succès (pattern préexistant sur
+  // ~20 des 21 formulaires), donc pousser une entrée d'historique via `router.navigate` suffit.
+  //
+  // Seules les sources listées ci-dessous sont éligibles à Ajouter/Éditer depuis le récap ('always'
+  // = les deux sens, 'encaissement-only' = seul l'encaissement l'est) ; toute source absente de
+  // cette table (MiseADisposition, Agios, LCN_DECAISSEMENT, etc.) n'affiche ni Ajouter ni Éditer,
+  // exactement comme dans les anciens écrans — Exporter et Valider restent disponibles pour toutes
+  // les sources, la matrice ne les restreint jamais.
+  // LCN_ESCOMPTE réutilise exactement le même formulaire/id-space que LCN_ENCAISSEMENT
+  // (LcnFormComponent, un seul contrôle `natureLcn` Encaissement/Escompte) : aucune restriction
+  // de sens n'a de sens ici, donc 'always'.
+  // Leasing/CMT (21/09/2026, demande HMAYDA) : Éditer seulement, pas Ajouter (aucun endpoint de
+  // création d'une échéance seule n'existe — l'échéancier n'est généré qu'à la création du contrat
+  // entier) — ces deux sources ne sont donc volontairement PAS ajoutées à `CREATE_ROUTE` plus bas.
+  // L'édition elle-même reste réservée aux administrateurs système (voir `canEditFromRecap`), comme
+  // l'était l'ancien dialogue sur l'écran de tableau d'amortissement.
+  private static readonly CREATE_EDIT_ELIGIBILITY: Partial<Record<TransactionSource, 'always' | 'encaissement-only'>> = {
+    [TransactionSource.Virement]: 'encaissement-only',
+    [TransactionSource.CHEQUE]: 'encaissement-only',
+    [TransactionSource.LCN_ENCAISSEMENT]: 'always',
+    [TransactionSource.LCN_ESCOMPTE]: 'always',
+    [TransactionSource.VIREMENT_INTERNATIONAL]: 'always',
+    [TransactionSource.PREFINANCEMENT]: 'always',
+    [TransactionSource.DROIT_CONSTATE]: 'always',
+    [TransactionSource.FACTORING]: 'always',
+    [TransactionSource.DECOMPTES]: 'always',
+    [TransactionSource.RESTITUTION]: 'always',
+    [TransactionSource.IMPAYEE]: 'always',
+    [TransactionSource.PROVISION]: 'always',
+    [TransactionSource.COMMISSION]: 'always',
+    [TransactionSource.PRELEVEMENT]: 'always',
+    [TransactionSource.FRAIS_BANCAIRE]: 'always',
+    [TransactionSource.OPERATION_ERRONE]: 'always',
+    [TransactionSource.IMPOT_TAXE]: 'always',
+    [TransactionSource.LEASING]: 'always',
+    [TransactionSource.CMT]: 'always',
+  };
+
+  /** Sources dont l'édition est réservée aux administrateurs système, en plus de la matrice
+   * ci-dessus — reprend exactement la restriction déjà posée par le backend (`PUT
+   * /echeances-leasing|cmt/{id}` est `ADMIN_ONLY`) et par l'ancien dialogue d'édition. */
+  private static readonly EDIT_REQUIRES_SYSTEM_ADMIN: Partial<Record<TransactionSource, true>> = {
+    [TransactionSource.LEASING]: true,
+    [TransactionSource.CMT]: true,
+  };
+
+  /** Route d'édition (avec id) par source — mêmes pages que les anciens écrans dédiés. */
+  private static readonly EDIT_ROUTE: Partial<Record<TransactionSource, (id: number) => any[]>> = {
+    [TransactionSource.Virement]: id => ['/portail/Virements/edit', id],
+    [TransactionSource.CHEQUE]: id => ['/portail/Cheques/edit', id],
+    [TransactionSource.LCN_ENCAISSEMENT]: id => ['/portail/LCN/edit', id],
+    [TransactionSource.LCN_ESCOMPTE]: id => ['/portail/LCN/edit', id],
+    [TransactionSource.VIREMENT_INTERNATIONAL]: id => ['/portail/virements-internationaux/edit', id],
+    [TransactionSource.LEASING]: id => ['/portail/leasing/echeances/edit', id],
+    [TransactionSource.CMT]: id => ['/portail/cmt/echeances/edit', id],
+    [TransactionSource.PREFINANCEMENT]: id => ['/portail/préfinancements/edit', id],
+    [TransactionSource.DROIT_CONSTATE]: id => ['/portail/droits-constate/edit', id],
+    [TransactionSource.FACTORING]: id => ['/portail/factoring/edit', id],
+    [TransactionSource.DECOMPTES]: id => ['/portail/decomptes/edit', id],
+    [TransactionSource.RESTITUTION]: id => ['/portail/restitutions/edit', id],
+    [TransactionSource.IMPAYEE]: id => ['/portail/impayees/edit', id],
+    [TransactionSource.PROVISION]: id => ['/portail/provisions/edit', id],
+    [TransactionSource.COMMISSION]: id => ['/portail/commissions/edit', id],
+    [TransactionSource.PRELEVEMENT]: id => ['/portail/prelevements/edit', id],
+    [TransactionSource.FRAIS_BANCAIRE]: id => ['/portail/frais-bancaire/edit', id],
+    [TransactionSource.OPERATION_ERRONE]: id => ['/portail/operations/errones/edit', id],
+    [TransactionSource.IMPOT_TAXE]: id => ['/portail/impots-taxes/edit', id],
+  };
+
+  /** Route de création (sans id) par source — le sens, quand il est un choix, se fait dans le formulaire.
+   * LCN_ESCOMPTE n'a volontairement pas sa propre entrée : elle pointerait vers exactement la même
+   * route que LCN_ENCAISSEMENT (`LcnFormComponent`, contrôle `natureLcn`) — une seule carte « LCN »
+   * dans la modale Ajouter suffit, la nature se choisissant dans le formulaire (demande HMAYDA,
+   * 21/09/2026 : « both lcn point to same route so let's just have one card »). */
+  private static readonly CREATE_ROUTE: Partial<Record<TransactionSource, any[]>> = {
+    [TransactionSource.Virement]: ['/portail/Virements/new'],
+    [TransactionSource.CHEQUE]: ['/portail/Cheques/new'],
+    [TransactionSource.LCN_ENCAISSEMENT]: ['/portail/LCN/new'],
+    [TransactionSource.VIREMENT_INTERNATIONAL]: ['/portail/virements-internationaux/new'],
+    [TransactionSource.PREFINANCEMENT]: ['/portail/préfinancements/new'],
+    [TransactionSource.DROIT_CONSTATE]: ['/portail/droits-constate/new'],
+    [TransactionSource.FACTORING]: ['/portail/factoring/new'],
+    [TransactionSource.DECOMPTES]: ['/portail/decomptes/new'],
+    [TransactionSource.RESTITUTION]: ['/portail/restitutions/new'],
+    [TransactionSource.IMPAYEE]: ['/portail/impayees/new'],
+    [TransactionSource.PROVISION]: ['/portail/provisions/new'],
+    [TransactionSource.COMMISSION]: ['/portail/commissions/new'],
+    [TransactionSource.PRELEVEMENT]: ['/portail/prelevements/new'],
+    [TransactionSource.FRAIS_BANCAIRE]: ['/portail/frais-bancaire/new'],
+    [TransactionSource.OPERATION_ERRONE]: ['/portail/operations/errones/new'],
+    [TransactionSource.IMPOT_TAXE]: ['/portail/impots-taxes/new'],
+  };
+
+  /** Vrai si cette ligne peut être éditée depuis le récap — pilote le bouton « Éditer ». */
+  canEditFromRecap(item: RecaputilatifItem): boolean {
+    const regle = RecapitulatifComponent.CREATE_EDIT_ELIGIBILITY[item.source];
+    if (!regle) return false;
+    if (RecapitulatifComponent.EDIT_REQUIRES_SYSTEM_ADMIN[item.source] && !this.authService.isSystemAdmin()) {
+      return false;
+    }
+    return regle === 'always' || item.sens === SensOperation.ENCAISSEMENT;
+  }
+
+  /** Redirige vers la page d'édition dédiée de la source — le retour au récap est géré par le
+   * `Location.back()` déjà appelé par ce formulaire en cas de succès. */
+  editerItem(item: RecaputilatifItem): void {
+    const buildRoute = RecapitulatifComponent.EDIT_ROUTE[item.source];
+    if (!buildRoute) return;
+    this.router.navigate(buildRoute(item.id));
+  }
+
+/** Icône par source pour la modale « Ajouter » — purement visuel, aucune valeur métier. */
+  private static readonly AJOUTER_ICON: Partial<Record<TransactionSource, string>> = {
+    [TransactionSource.Virement]: 'pi pi-sync',
+    [TransactionSource.CHEQUE]: 'pi pi-money-bill',
+    [TransactionSource.LCN_ENCAISSEMENT]: 'pi pi-file',
+    [TransactionSource.VIREMENT_INTERNATIONAL]: 'pi pi-globe',
+    [TransactionSource.PREFINANCEMENT]: 'pi pi-briefcase',
+    [TransactionSource.DROIT_CONSTATE]: 'pi pi-verified',
+    [TransactionSource.FACTORING]: 'pi pi-briefcase',
+    [TransactionSource.DECOMPTES]: 'pi pi-briefcase',
+    [TransactionSource.RESTITUTION]: 'pi pi-replay',
+    [TransactionSource.IMPAYEE]: 'pi pi-exclamation-triangle',
+    [TransactionSource.PROVISION]: 'pi pi-shield',
+    [TransactionSource.COMMISSION]: 'pi pi-percentage',
+    [TransactionSource.PRELEVEMENT]: 'pi pi-credit-card',
+    [TransactionSource.FRAIS_BANCAIRE]: 'pi pi-wallet',
+    [TransactionSource.OPERATION_ERRONE]: 'pi pi-exclamation-circle',
+    [TransactionSource.IMPOT_TAXE]: 'pi pi-book',
+  };
+
+  /**
+   * Libellés raccourcis pour la modale « Ajouter » uniquement — le libellé complet
+   * (`TransactionSourceLabels`) reste utilisé partout ailleurs (tableau, badges, filtres) où il
+   * distingue Encaissement/Décaissement/Escompte. LCN Encaissement est raccourci en "LCN" ici : sa
+   * carte est la seule entrée LCN de la modale (couvre aussi la création d'un LCN Escompte, la
+   * nature se choisissant dans le formulaire), donc pas d'ambiguïté possible.
+   */
+  private static readonly AJOUTER_LABEL_OVERRIDE: Partial<Record<TransactionSource, string>> = {
+    [TransactionSource.LCN_ENCAISSEMENT]: 'LCN',
+  };
+
+  /** Une entrée « Ajouter » par source éligible — liste fixe, calculée une seule fois. */
+  readonly ajouterItems: { source: TransactionSource; label: string; icon: string; route: any[] }[] =
+    (Object.keys(RecapitulatifComponent.CREATE_ROUTE) as TransactionSource[]).map(source => ({
+      source,
+      label: RecapitulatifComponent.AJOUTER_LABEL_OVERRIDE[source] ?? TransactionSourceLabels[source] ?? source,
+      icon: RecapitulatifComponent.AJOUTER_ICON[source] ?? 'pi pi-plus-circle',
+      route: RecapitulatifComponent.CREATE_ROUTE[source]!,
+    }));
+
+  displayAjouterModal = false;
+  ajouterSearchTerm = '';
+
+  @ViewChild('ajouterSearchInput') private ajouterSearchInputRef?: ElementRef<HTMLInputElement>;
+
+  /** Filtre insensible à la casse sur le libellé — pour retrouver vite une source parmi les 16 éligibles. */
+  get filteredAjouterItems() {
+    const terme = this.ajouterSearchTerm.trim().toLowerCase();
+    if (!terme) return this.ajouterItems;
+    return this.ajouterItems.filter(item => item.label.toLowerCase().includes(terme));
+  }
+
+  openAjouterModal(): void {
+    this.ajouterSearchTerm = '';
+    this.displayAjouterModal = true;
+  }
+
+  closeAjouterModal(): void {
+    this.displayAjouterModal = false;
+  }
+
+  /** Focus le champ de recherche dès l'ouverture — modale pensée pour aller vite au clavier. */
+  onAjouterModalShow(): void {
+    this.ajouterSearchInputRef?.nativeElement.focus();
+  }
+
+  choisirAjouter(item: { route: any[] }): void {
+    this.closeAjouterModal();
+    this.router.navigate(item.route);
+  }
+
   openUnitValidation(item: RecaputilatifItem): void {
     const config = this.unitValidationConfigs.get(item.source);
     if (!config) {
@@ -1095,13 +1301,14 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
   initSearchForm(): void {
     this.searchForm = this.fb.group({
       transactionSources: [[]],
-      libelle: [''],
-      observation: [''],
+      libelleOuObservation: [''],
       numero: [''],
       sens: [null],
       dateReferenceDepuis: [null],
       dateReferenceJusqua: [null],
-      montant: [null]
+      montant: [null],
+      commissionOperation: [null],
+      impotEtTaxeMotif: [null]
     });
 
     this.subscriptions.push(
@@ -1118,6 +1325,20 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
         value: source
       }))
       .sort((a, b) => a.label.localeCompare(b.label, 'fr'));
+  }
+
+  /** Vrai quand COMMISSION fait partie des sources sélectionnées — pilote l'affichage du
+   * filtre « Motif Commission » (21/09/2026, restaure le filtre de l'ancien écran dédié). */
+  get showCommissionMotifFilter(): boolean {
+    const sources: TransactionSource[] = this.searchForm?.get('transactionSources')?.value ?? [];
+    return sources.includes(TransactionSource.COMMISSION);
+  }
+
+  /** Vrai quand IMPOT_TAXE fait partie des sources sélectionnées — pilote l'affichage du
+   * filtre « Motif Impôt/Taxe » (21/09/2026, restaure le filtre de l'ancien écran dédié). */
+  get showImpotTaxeMotifFilter(): boolean {
+    const sources: TransactionSource[] = this.searchForm?.get('transactionSources')?.value ?? [];
+    return sources.includes(TransactionSource.IMPOT_TAXE);
   }
 
   onFilterChange(): void {
@@ -1192,13 +1413,14 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
   clearSearch(): void {
     this.searchForm.reset({
       transactionSources: [],
-      libelle: '',
-      observation: '',
+      libelleOuObservation: '',
       numero: '',
       sens: null,
       dateReferenceDepuis: null,
       dateReferenceJusqua: null,
-      montant: null
+      montant: null,
+      commissionOperation: null,
+      impotEtTaxeMotif: null
     });
   }
 
@@ -1211,8 +1433,9 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       return false;
     }
     const value = this.searchForm.value;
-    return !!(value.libelle || value.observation || value.numero || value.sens || value.montant
+    return !!(value.libelleOuObservation || value.numero || value.sens || value.montant
       || value.dateReferenceDepuis || value.dateReferenceJusqua
+      || value.commissionOperation || value.impotEtTaxeMotif
       || (value.transactionSources && value.transactionSources.length > 0));
   }
 
@@ -1242,17 +1465,22 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
                        ?? value.transactionSources[0])
         : 'Types : ' + value.transactionSources.length);
     }
-    if (value.libelle) {
-      chips.push('Libellé : ' + value.libelle);
-    }
-    if (value.observation) {
-      chips.push('Observation : ' + value.observation);
+    if (value.libelleOuObservation) {
+      chips.push('Libellé / Observation : ' + value.libelleOuObservation);
     }
     if (value.numero) {
       chips.push('N° : ' + value.numero);
     }
     if (value.montant !== null && value.montant !== undefined && value.montant !== '') {
       chips.push('Montant : ' + value.montant);
+    }
+    if (value.commissionOperation) {
+      const option = this.commissionOperationOptions.find(o => o.value === value.commissionOperation);
+      chips.push('Motif Commission : ' + (option ? option.label : value.commissionOperation));
+    }
+    if (value.impotEtTaxeMotif) {
+      const option = this.motifOptions.find(o => o.value === value.impotEtTaxeMotif);
+      chips.push('Motif Impôt/Taxe : ' + (option ? option.label : value.impotEtTaxeMotif));
     }
     if (this.activeDateFilterCount > 0) {
       chips.push('Période : ' + this.activeDateFilterCount
@@ -1284,13 +1512,14 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
   private buildSearchDto(): RecapitulatifSearchDto {
     return {
       transactionSources: this.searchForm.get('transactionSources')?.value,
-      libelle: this.searchForm.get('libelle')?.value,
-      observation: this.searchForm.get('observation')?.value,
+      libelleOuObservation: this.searchForm.get('libelleOuObservation')?.value,
       numero: this.searchForm.get('numero')?.value,
       sens: this.searchForm.get('sens')?.value,
       dateReferenceDepuis: this.searchForm.get('dateReferenceDepuis')?.value,
       dateReferenceJusqua: this.searchForm.get('dateReferenceJusqua')?.value,
-      montant: this.searchForm.get('montant')?.value
+      montant: this.searchForm.get('montant')?.value,
+      commissionOperation: this.searchForm.get('commissionOperation')?.value,
+      impotEtTaxeMotif: this.searchForm.get('impotEtTaxeMotif')?.value
     };
   }
 

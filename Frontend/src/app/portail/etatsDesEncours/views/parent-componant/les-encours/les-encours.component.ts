@@ -1,5 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterOutlet, NavigationEnd } from "@angular/router";
+import { PanelMenuModule } from "primeng/panelmenu";
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Ripple } from "primeng/ripple";
@@ -21,6 +22,7 @@ import { BankStateService } from "../../../../comptes-bancaire/services/bank-sta
   standalone: true,
   imports: [
     RouterOutlet,
+    PanelMenuModule,
     CommonModule,
     Ripple,
     BreadcrumbModule,
@@ -40,8 +42,6 @@ export class LesEncoursComponent implements OnInit {
 
   items: MenuItem[] = [];
   breadcrumbItems: MenuItem[] = [];
-  /** Index de l'onglet actif dans `items` — pilote la position de l'indicateur animé. */
-  activeTabIndex = 0;
   banqueId!: number;
 
   rapprochementId: number | null = null;
@@ -111,7 +111,6 @@ export class LesEncoursComponent implements OnInit {
       this.natureEcran = LesEncoursComponent.SEGMENTS_REALISES.has(segment)
         ? 'realise'
         : 'previsionnel';
-      this.activeTabIndex = this.items.findIndex(item => item.routerLink?.at(-1) === segment);
       const bc = this.breadcrumbMap[segment];
       if (bc) {
         this.breadcrumbItems[2] = {
@@ -123,7 +122,6 @@ export class LesEncoursComponent implements OnInit {
     }
   }
 
-  /** Onglets de navigation — l'ordre pilote la position de `activeTabIndex`. */
   updateMenuItems() {
     this.items = [
       {
@@ -132,11 +130,23 @@ export class LesEncoursComponent implements OnInit {
         routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'recapitulatif']
       },
       {
-        label: 'Rapprochement en cours',
+        label: 'Rapprochement',
         icon: 'pi pi-sync',
         routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'rapprochement']
       }
     ];
+  }
+
+
+  toggleMenuItem(item: MenuItem): void {
+    if (item.items) {
+      if (item.expanded) {
+        item.expanded = false;
+      } else {
+        this.items.forEach(i => { if (i.items) i.expanded = false; });
+        item.expanded = true;
+      }
+    }
   }
 
   showClotureDialog(): void {
