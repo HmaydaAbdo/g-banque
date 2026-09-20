@@ -12,7 +12,6 @@ import com.lowagie.text.pdf.PdfPTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -21,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Agios.dtos.AgiosRequestDto;
 import staport.finance.gBanque.Agios.dtos.AgiosResponseDto;
 import staport.finance.gBanque.Agios.dtos.AgiosSearchDto;
-import staport.finance.gBanque.Agios.dtos.EncoursAgiosDto;
 import staport.finance.gBanque.Agios.entities.Agios;
 import staport.finance.gBanque.Agios.exceptions.AgiosBusinessException;
 import staport.finance.gBanque.Agios.exceptions.AgiosNotFoundException;
@@ -42,7 +40,6 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -127,54 +124,6 @@ public class AgiosService implements IAgiosService {
                 .toList();
 
         return generateAgiosListPdf("Agios", agios, buildFilterSummary(dto), null);
-    }
-
-    @Transactional(readOnly = true)
-    public byte[] exportOutstandingAgiosPdf(AgiosSearchDto dto, Long banqueId) {
-        log.info("Export PDF des agios en cours - banqueId: {}, Critères: {}", banqueId, dto);
-
-        LocalDate finDuMois = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<Agios> spec = Specification
-                .where(AgiosSpec.outstandingUntil(finDuMois))
-                .and(AgiosSpec.hasBanque(banqueId))
-                .and(AgiosSpec.hasLibelle(dto.libelle()))
-                .and(AgiosSpec.hasMontant(dto.montant()));
-
-        List<AgiosResponseDto> agios = agiosRepository
-                .findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"))
-                .stream()
-                .map(agiosMapper::toResponseDto)
-                .toList();
-
-        List<String> filterLines = buildFilterSummary(new AgiosSearchDto(banqueId, dto.libelle(), dto.montant(), null, null, null, null, null, null, null));
-
-        return generateAgiosListPdf("Encours Agios", agios, filterLines, "encours");
-    }
-
-    @Transactional(readOnly = true)
-    public EncoursAgiosDto getOutstandingAgios(AgiosSearchDto dto, Pageable pageable) {
-        LocalDate finDuMois = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<Agios> spec = Specification
-                .where(AgiosSpec.outstandingUntil(finDuMois))
-                .and(AgiosSpec.hasBanque(dto.banqueId()))
-                .and(AgiosSpec.hasLibelle(dto.libelle()))
-                .and(AgiosSpec.hasMontant(dto.montant()));
-
-        Pageable orderedPageable = pageable.getSort().isSorted()
-                ? pageable
-                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id"));
-
-        Page<AgiosResponseDto> pageDto = agiosRepository.findAll(spec, orderedPageable)
-                .map(agiosMapper::toResponseDto);
-
-        BigDecimal totalDesEncours = agiosRepository.findAll(spec).stream()
-                .map(Agios::getMontant)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        log.info("Encours agios récupérés — banqueId: {}, total: {}", dto.banqueId(), totalDesEncours);
-        return new EncoursAgiosDto(totalDesEncours, pageDto);
     }
 
     // ── Modification ──────────────────────────────────────────────────────────

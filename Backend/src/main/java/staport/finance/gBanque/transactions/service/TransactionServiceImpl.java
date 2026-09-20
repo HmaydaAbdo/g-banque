@@ -20,31 +20,13 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
-import staport.finance.gBanque.Agios.service.interfaces.IAgiosValidationService;
 import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
-import staport.finance.gBanque.cmt.echeances.services.interfaces.ICmtValidationService;
-import staport.finance.gBanque.commision.validation.services.interfaces.ICommissionValidationService;
-import staport.finance.gBanque.decomptes.validation.services.interfaces.IDecompteValidationService;
-import staport.finance.gBanque.droitConstate.validation.services.interfaces.IDroitConstateValidationService;
-import staport.finance.gBanque.factoring.validation.services.interfaces.IFactoringValidationService;
-import staport.finance.gBanque.fraisBancaires.validation.services.interfaces.IFraisBancaireValidationService;
-import staport.finance.gBanque.impayees.validation.services.interfaces.IImpayeeValidationService;
-import staport.finance.gBanque.impot_taxes.validation.services.interfaces.IImpotEtTaxeValidationService;
-import staport.finance.gBanque.operationErrone.validation.services.interfaces.IOperationErroneValidationService;
-import staport.finance.gBanque.provision.validation.services.interfaces.IProvisionValidationService;
-import staport.finance.gBanque.restitution.validation.services.interfaces.IRestitutionValidationService;
-import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.ILeasingValidationService;
-import staport.finance.gBanque.moyensDePaiements.cheques.validation.services.interfaces.IChequeValidationService;
-import staport.finance.gBanque.moyensDePaiements.lcn.validation.services.interfaces.ILcnValidationService;
-import staport.finance.gBanque.moyensDePaiements.virements.validation.services.interfaces.IVirementValidationService;
-import staport.finance.gBanque.moyensDePaiements.virementInternational.validation.services.interfaces.IVirementInternationalValidationService;
-import staport.finance.gBanque.moyensDePaiements.miseADisposition.validation.services.interfaces.IMiseADispositionValidationService;
-import staport.finance.gBanque.prefinancement.validation.services.interfaces.IPrefinancementValidationService;
-import staport.finance.gBanque.prelevements.validation.services.interfaces.IPrelevementValidationService;
 import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
+import staport.finance.gBanque.validation.services.handlers.TransactionSyncHandler;
+import staport.finance.gBanque.validation.utils.TvaResolver;
 import staport.finance.gBanque.transactions.dtos.AgreratedTransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionAggregatesDto;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
@@ -84,73 +66,22 @@ public class TransactionServiceImpl implements ITransactionService {
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
     private final StaportPdfReportService staportPdfReportService;
-    private final ILeasingValidationService leasingValidationService;
-    private final ICmtValidationService cmtValidationService;
-    private final IChequeValidationService chequeValidationService;
-    private final ILcnValidationService lcnValidationService;
-    private final IVirementValidationService virementValidationService;
-    private final IVirementInternationalValidationService virementInternationalValidationService;
-    private final IMiseADispositionValidationService miseADispositionValidationService;
-    private final IPrelevementValidationService prelevementValidationService;
-    private final IPrefinancementValidationService prefinancementValidationService;
-    private final IFactoringValidationService factoringValidationService;
-    private final IDroitConstateValidationService droitConstateValidationService;
-    private final IDecompteValidationService decompteValidationService;
-    private final IImpotEtTaxeValidationService impotEtTaxeValidationService;
-    private final ICommissionValidationService commissionValidationService;
-    private final IFraisBancaireValidationService fraisBancaireValidationService;
-    private final IRestitutionValidationService restitutionValidationService;
-    private final IOperationErroneValidationService operationErroneValidationService;
-    private final IImpayeeValidationService impayeeValidationService;
-    private final IAgiosValidationService agiosValidationService;
-    private final IProvisionValidationService provisionValidationService;
+
+    /** Un handler par {@link TransactionSource} — voir Javadoc de {@link TransactionSyncHandler}. */
+    private final Map<TransactionSource, TransactionSyncHandler> syncHandlerRegistry;
 
     public TransactionServiceImpl(TransactionRepository transactionRepository,
                               TransactionMapper transactionMapper,
                               StaportPdfReportService staportPdfReportService,
-                              ILeasingValidationService leasingValidationService,
-                              ICmtValidationService cmtValidationService,
-                              IChequeValidationService chequeValidationService,
-                              ILcnValidationService lcnValidationService,
-                              IVirementValidationService virementValidationService,
-                              IVirementInternationalValidationService virementInternationalValidationService,
-                              IMiseADispositionValidationService miseADispositionValidationService,
-                              IPrelevementValidationService prelevementValidationService,
-                              IPrefinancementValidationService prefinancementValidationService,
-                              IFactoringValidationService factoringValidationService,
-                              IDroitConstateValidationService droitConstateValidationService,
-                              IDecompteValidationService decompteValidationService,
-                              IImpotEtTaxeValidationService impotEtTaxeValidationService,
-                              ICommissionValidationService commissionValidationService,
-                              IFraisBancaireValidationService fraisBancaireValidationService,
-                              IRestitutionValidationService restitutionValidationService,
-                              IOperationErroneValidationService operationErroneValidationService,
-                              IImpayeeValidationService impayeeValidationService,
-                              IAgiosValidationService agiosValidationService,
-                              IProvisionValidationService provisionValidationService) {
+                              List<TransactionSyncHandler> syncHandlers) {
         this.transactionRepository = transactionRepository;
         this.transactionMapper = transactionMapper;
         this.staportPdfReportService = staportPdfReportService;
-        this.leasingValidationService = leasingValidationService;
-        this.cmtValidationService = cmtValidationService;
-        this.chequeValidationService = chequeValidationService;
-        this.virementValidationService = virementValidationService;
-        this.lcnValidationService = lcnValidationService;
-        this.virementInternationalValidationService = virementInternationalValidationService;
-        this.miseADispositionValidationService = miseADispositionValidationService;
-        this.prelevementValidationService = prelevementValidationService;
-        this.prefinancementValidationService = prefinancementValidationService;
-        this.factoringValidationService = factoringValidationService;
-        this.droitConstateValidationService = droitConstateValidationService;
-        this.decompteValidationService = decompteValidationService;
-        this.impotEtTaxeValidationService = impotEtTaxeValidationService;
-        this.commissionValidationService = commissionValidationService;
-        this.fraisBancaireValidationService = fraisBancaireValidationService;
-        this.restitutionValidationService = restitutionValidationService;
-        this.operationErroneValidationService = operationErroneValidationService;
-        this.impayeeValidationService = impayeeValidationService;
-        this.agiosValidationService = agiosValidationService;
-        this.provisionValidationService = provisionValidationService;
+        this.syncHandlerRegistry = syncHandlers.stream()
+                .collect(Collectors.toMap(TransactionSyncHandler::source, h -> h, (a, b) -> {
+                    throw new IllegalStateException(
+                            "Deux TransactionSyncHandler enregistrés pour la même source: " + a.source());
+                }));
     }
 
     @Override
@@ -392,236 +323,40 @@ public class TransactionServiceImpl implements ITransactionService {
                     + " : le rapprochement est définitivement clôturé.");
         }
 
+        // Le montant (débit ou crédit) n'est pas éditable ici — seule la TVA portée dessus l'est.
+        // Le sens (quel côté est non nul) ne change jamais après validation, donc le côté qui
+        // portait la TVA reste le même ; TvaResolver refait la même conversion/les mêmes bornes
+        // qu'à la validation initiale, jamais un montant de TVA fourni tel quel par le client.
+        boolean estDecaissement = transaction.getDebit() != null && transaction.getDebit().signum() > 0;
+        BigDecimal montantTtc = estDecaissement ? transaction.getDebit() : transaction.getCredit();
+        BigDecimal tvaResolue = TvaResolver.resoudre(montantTtc, updateRequestDto.tauxTva(), updateRequestDto.montantTva());
+
         transaction.setDateValeur(updateRequestDto.dateValeur());
         transaction.setDateOperations(updateRequestDto.dateOperation());
-        transaction.setTvaCollectee(updateRequestDto.tvaCollecte());
-        transaction.setTvaDeductible(updateRequestDto.tvaDeductible());
+        transaction.setLibelle(updateRequestDto.libelle());
+        transaction.setObservation(updateRequestDto.observation());
+        if (estDecaissement) {
+            transaction.setTvaDeductible(tvaResolue);
+            transaction.setTvaCollectee(BigDecimal.ZERO);
+        } else {
+            transaction.setTvaCollectee(tvaResolue);
+            transaction.setTvaDeductible(BigDecimal.ZERO);
+        }
 
         Transaction saved = transactionRepository.save(transaction);
 
-        // Synchronisation échéance leasing : si la transaction provient d'une échéance leasing,
-        // on propage dateValeur et dateOperation vers l'échéance source (referent = echeanceId).
-        if (TransactionSource.LEASING == saved.getTransactionSource() && saved.getReferent() != null) {
-            log.info("Transaction LEASING ID: {} mise à jour — synchronisation de l'échéance ID: {}",
-                    saved.getId(), saved.getReferent());
-            leasingValidationService.syncEcheanceFromTransaction(
-                    saved.getReferent(),
-                    saved.getDateValeur(),
-                    saved.getDateOperations());
-        }
-
-        // Synchronisation échéance CMT : si la transaction provient d'une échéance CMT,
-        // on propage dateValeur et dateOperation vers l'échéance source (referent = echeanceId).
-        if (TransactionSource.CMT == saved.getTransactionSource() && saved.getReferent() != null) {
-            log.info("Transaction CMT ID: {} mise à jour — synchronisation de l'échéance ID: {}",
-                    saved.getId(), saved.getReferent());
-            cmtValidationService.syncEcheanceFromTransaction(
-                    saved.getReferent(),
-                    saved.getDateValeur(),
-                    saved.getDateOperations());
-        }
-
-        // Synchronisation chèque : si la transaction provient d'un chèque, on propage
-        // dateValeur et dateOperation vers le chèque source (referent = chequeId).
-        if (TransactionSource.CHEQUE == saved.getTransactionSource() && saved.getReferent() != null) {
-            log.info("Transaction CHEQUE ID: {} mise à jour — synchronisation du chèque ID: {}",
-                    saved.getId(), saved.getReferent());
-            chequeValidationService.syncChequeFromTransaction(
-                    saved.getReferent(),
-                    saved.getDateValeur(),
-                    saved.getDateOperations());
-        }
-
-        // Synchronisation LCN : si la transaction provient d'un LCN (décaissement, encaissement ou
-        // escompte), on propage dateValeur et dateOperation vers le LCN source (referent = lcnId).
-        if ((TransactionSource.LCN_DECAISSEMENT == saved.getTransactionSource()
-                || TransactionSource.LCN_ENCAISSEMENT == saved.getTransactionSource()
-                || TransactionSource.LCN_ESCOMPTE == saved.getTransactionSource())
-                && saved.getReferent() != null) {
-            log.info("Transaction LCN ID: {} mise à jour — synchronisation du LCN ID: {}",
-                    saved.getId(), saved.getReferent());
-            lcnValidationService.syncLcnFromTransaction(
-                    saved.getReferent(),
-                    saved.getDateValeur(),
-                    saved.getDateOperations());
-        }
-
-        // Synchronisation virement : si la transaction provient d'un virement, on propage
-        // dateValeur et dateOperation vers le virement source (referent = virementId).
-        if (TransactionSource.Virement == saved.getTransactionSource() && saved.getReferent() != null) {
-            log.info("Transaction VIREMENT ID: {} mise à jour — synchronisation du virement ID: {}",
-                    saved.getId(), saved.getReferent());
-            virementValidationService.syncVirementFromTransaction(
-                    saved.getReferent(),
-                    saved.getDateValeur(),
-                    saved.getDateOperations());
-        }
-
-        // Synchronisation virement international : si la transaction provient d'un virement
-        // international, on propage dateValeur et dateOperation vers le virement international
-        // source (referent = virementInternationalId).
-        if (TransactionSource.VIREMENT_INTERNATIONAL == saved.getTransactionSource() && saved.getReferent() != null) {
-            log.info("Transaction VIREMENT INTERNATIONAL ID: {} mise à jour — synchronisation du virement international ID: {}",
-                    saved.getId(), saved.getReferent());
-            virementInternationalValidationService.syncVirementInternationalFromTransaction(
-                    saved.getReferent(),
-                    saved.getDateValeur(),
-                    saved.getDateOperations());
-        }
-
-        // Synchronisation mise à disposition : si la transaction provient d'une mise à disposition,
-        // on propage dateValeur et dateOperation vers la mise à disposition source
-        // (referent = miseADispositionId).
-        if (TransactionSource.MiseADisposition == saved.getTransactionSource() && saved.getReferent() != null) {
-            log.info("Transaction MISE A DISPOSITION ID: {} mise à jour — synchronisation de la mise à disposition ID: {}",
-                    saved.getId(), saved.getReferent());
-            miseADispositionValidationService.syncMiseADispositionFromTransaction(
-                    saved.getReferent(),
-                    saved.getDateValeur(),
-                    saved.getDateOperations());
-        }
-
-        // Synchronisation prélèvement : si la transaction provient d'un prélèvement, on propage
-        // dateValeur et dateOperation vers le prélèvement source (referent = prelevementId).
-        if (TransactionSource.PRELEVEMENT == saved.getTransactionSource() && saved.getReferent() != null) {
-            log.info("Transaction PRELEVEMENT ID: {} mise à jour — synchronisation du prélèvement ID: {}",
-                    saved.getId(), saved.getReferent());
-            prelevementValidationService.syncPrelevementFromTransaction(
-                    saved.getReferent(),
-                    saved.getDateValeur(),
-                    saved.getDateOperations());
-        }
-
-        // Synchronisation préfinancement : si la transaction provient d'un préfinancement, on
-        // propage dateValeur et dateOperation vers le préfinancement source (referent = prefinancementId).
-        if (TransactionSource.PREFINANCEMENT == saved.getTransactionSource() && saved.getReferent() != null) {
-            log.info("Transaction PREFINANCEMENT ID: {} mise à jour — synchronisation du préfinancement ID: {}",
-                    saved.getId(), saved.getReferent());
-            prefinancementValidationService.syncPrefinancementFromTransaction(
-                    saved.getReferent(),
-                    saved.getDateValeur(),
-                    saved.getDateOperations());
-        }
-
-        // Synchronisation factoring : si la transaction provient d'un factoring, on propage
-        // dateValeur et dateOperation vers le factoring source (referent = factoringId).
-        if (TransactionSource.FACTORING == saved.getTransactionSource() && saved.getReferent() != null) {
-            log.info("Transaction FACTORING ID: {} mise à jour — synchronisation du factoring ID: {}",
-                    saved.getId(), saved.getReferent());
-            factoringValidationService.syncFactoringFromTransaction(
-                    saved.getReferent(),
-                    saved.getDateValeur(),
-                    saved.getDateOperations());
-        }
-
-        // Synchronisation droit constaté : si la transaction provient d'un droit constaté, on
-        // propage dateValeur et dateOperation vers le droit constaté source (referent = droitConstateId).
-        if (TransactionSource.DROIT_CONSTATE == saved.getTransactionSource() && saved.getReferent() != null) {
-            log.info("Transaction DROIT_CONSTATE ID: {} mise à jour — synchronisation du droit constaté ID: {}",
-                    saved.getId(), saved.getReferent());
-            droitConstateValidationService.syncDroitConstateFromTransaction(
-                    saved.getReferent(),
-                    saved.getDateValeur(),
-                    saved.getDateOperations());
-        }
-
-        // Synchronisation décompte : si la transaction provient d'un décompte, on propage
-        // dateValeur et dateOperation vers le décompte source (referent = decompteId).
-        if (TransactionSource.DECOMPTES == saved.getTransactionSource() && saved.getReferent() != null) {
-            log.info("Transaction DECOMPTES ID: {} mise à jour — synchronisation du décompte ID: {}",
-                    saved.getId(), saved.getReferent());
-            decompteValidationService.syncDecompteFromTransaction(
-                    saved.getReferent(),
-                    saved.getDateValeur(),
-                    saved.getDateOperations());
-        }
-
-        // Synchronisation impôt/taxe : si la transaction provient d'un impôt/taxe, on propage
-        // dateValeur et dateOperation vers l'impôt/taxe source (referent = impotEtTaxeId).
-        if (TransactionSource.IMPOT_TAXE == saved.getTransactionSource() && saved.getReferent() != null) {
-            log.info("Transaction IMPOT_TAXE ID: {} mise à jour — synchronisation de l'impôt/taxe ID: {}",
-                    saved.getId(), saved.getReferent());
-            impotEtTaxeValidationService.syncImpotEtTaxeFromTransaction(
-                    saved.getReferent(),
-                    saved.getDateValeur(),
-                    saved.getDateOperations());
-        }
-
-        // Synchronisation commission : si la transaction provient d'une commission, on propage
-        // dateValeur et dateOperation vers la commission source (referent = commissionId).
-        if (TransactionSource.COMMISSION == saved.getTransactionSource() && saved.getReferent() != null) {
-            log.info("Transaction COMMISSION ID: {} mise à jour — synchronisation de la commission ID: {}",
-                    saved.getId(), saved.getReferent());
-            commissionValidationService.syncCommissionFromTransaction(
-                    saved.getReferent(),
-                    saved.getDateValeur(),
-                    saved.getDateOperations());
-        }
-
-        // Synchronisation frais bancaire : si la transaction provient d'un frais bancaire, on
-        // propage dateValeur et dateOperation vers le frais bancaire source (referent = fraisBancaireId).
-        if (TransactionSource.FRAIS_BANCAIRE == saved.getTransactionSource() && saved.getReferent() != null) {
-            log.info("Transaction FRAIS_BANCAIRE ID: {} mise à jour — synchronisation du frais bancaire ID: {}",
-                    saved.getId(), saved.getReferent());
-            fraisBancaireValidationService.syncFraisBancaireFromTransaction(
-                    saved.getReferent(),
-                    saved.getDateValeur(),
-                    saved.getDateOperations());
-        }
-
-        // Synchronisation restitution : si la transaction provient d'une restitution, on propage
-        // dateValeur et dateOperation vers la restitution source (referent = restitutionId).
-        if (TransactionSource.RESTITUTION == saved.getTransactionSource() && saved.getReferent() != null) {
-            log.info("Transaction RESTITUTION ID: {} mise à jour — synchronisation de la restitution ID: {}",
-                    saved.getId(), saved.getReferent());
-            restitutionValidationService.syncRestitutionFromTransaction(
-                    saved.getReferent(),
-                    saved.getDateValeur(),
-                    saved.getDateOperations());
-        }
-
-        // Synchronisation opération erronée : si la transaction provient d'une opération erronée, on
-        // propage dateValeur et dateOperation vers l'opération erronée source (referent = operationErroneId).
-        if (TransactionSource.OPERATION_ERRONE == saved.getTransactionSource() && saved.getReferent() != null) {
-            log.info("Transaction OPERATION_ERRONE ID: {} mise à jour — synchronisation de l'opération erronée ID: {}",
-                    saved.getId(), saved.getReferent());
-            operationErroneValidationService.syncOperationErroneFromTransaction(
-                    saved.getReferent(),
-                    saved.getDateValeur(),
-                    saved.getDateOperations());
-        }
-
-        // Synchronisation provision : si la transaction provient d'une provision, on propage
-        // dateValeur et dateOperation vers la provision source (referent = provisionId).
-        if (TransactionSource.PROVISION == saved.getTransactionSource() && saved.getReferent() != null) {
-            log.info("Transaction PROVISION ID: {} mise à jour — synchronisation de la provision ID: {}",
-                    saved.getId(), saved.getReferent());
-            provisionValidationService.syncProvisionFromTransaction(
-                    saved.getReferent(),
-                    saved.getDateValeur(),
-                    saved.getDateOperations());
-        }
-
-        // Synchronisation impayée : si la transaction provient d'une impayée, on propage dateValeur
-        // et dateOperation vers l'impayée source (referent = impayeeId).
-        if (TransactionSource.IMPAYEE == saved.getTransactionSource() && saved.getReferent() != null) {
-            log.info("Transaction IMPAYEE ID: {} mise à jour — synchronisation de l'impayée ID: {}",
-                    saved.getId(), saved.getReferent());
-            impayeeValidationService.syncImpayeeFromTransaction(
-                    saved.getReferent(),
-                    saved.getDateValeur(),
-                    saved.getDateOperations());
-        }
-
-        // Synchronisation agios : si la transaction provient d'un agios, on propage dateValeur
-        // et dateOperation vers l'agios source (referent = agiosId).
-        if (TransactionSource.AGIOS == saved.getTransactionSource() && saved.getReferent() != null) {
-            log.info("Transaction AGIOS ID: {} mise à jour — synchronisation de l'agios ID: {}",
-                    saved.getId(), saved.getReferent());
-            agiosValidationService.syncAgiosFromTransaction(
-                    saved.getReferent(),
-                    saved.getDateValeur(),
-                    saved.getDateOperations());
+        // Propagation vers l'entité source (architecture.md, Règle 2) — dispatch via le registre
+        // de TransactionSyncHandler, jamais un switch central. Un handler manquant (LCN legacy,
+        // CAUTION, Importation — sources sans entité à synchroniser) ne fait rien, comme l'ancien
+        // if-chain qui ne couvrait déjà pas ces valeurs.
+        if (saved.getReferent() != null) {
+            TransactionSyncHandler handler = syncHandlerRegistry.get(saved.getTransactionSource());
+            if (handler != null) {
+                log.info("Transaction {} ID: {} mise à jour — synchronisation de l'entité source ID: {}",
+                        saved.getTransactionSource(), saved.getId(), saved.getReferent());
+                handler.sync(saved.getReferent(), saved.getDateValeur(), saved.getDateOperations(),
+                        saved.getLibelle(), saved.getObservation());
+            }
         }
 
         return transactionMapper.toDto(saved);

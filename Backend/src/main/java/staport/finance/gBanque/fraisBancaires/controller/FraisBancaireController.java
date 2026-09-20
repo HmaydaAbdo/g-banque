@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -108,35 +107,6 @@ public class FraisBancaireController {
         fraisBancaireService.deleteFraisBancaire(id);
         log.info("Frais bancaire ID: {} supprimé avec succès", id);
         return ResponseEntity.noContent().build();
-    }
-
-    @Operation(summary = "Consulter les encours de frais bancaires d'une banque")
-    @GetMapping("/encours/{banqueId}")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<EncoursFraisBancaireDto> getOutstandingFraisBancaire(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursFraisBancaireSearchDto searchDto,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        log.info("Requête REST pour récupérer les frais bancaires en cours - Banque ID: {}", banqueId);
-        EncoursFraisBancaireDto result = fraisBancaireService.getOutstandingFraisBancaire(searchDto, banqueId, pageable);
-        log.info("Frais bancaires en cours récupérés - Total: {}", result.totalDesEncours());
-        return ResponseEntity.ok(result);
-    }
-
-    @Operation(summary = "Exporter en PDF l'encours de frais bancaires d'une banque",
-            description = "Mêmes critères que GET /frais-bancaire/encours/{banqueId} — sans pagination")
-    @GetMapping("/encours/{banqueId}/export/pdf")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<byte[]> exportOutstandingFraisBancairePdf(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursFraisBancaireSearchDto searchDto) {
-        log.info("Requête REST pour exporter en PDF l'encours de frais bancaires - Banque ID: {}", banqueId);
-        byte[] pdf = fraisBancaireService.exportOutstandingFraisBancairePdf(searchDto, banqueId);
-        String filename = "frais_bancaires_encours_" + LocalDate.now() + ".pdf";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", filename);
-        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
     @Operation(summary = "Changer le statut PREVU/PAYE", description = "Réservé SYSTEM_ADMIN.")

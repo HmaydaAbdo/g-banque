@@ -54,12 +54,12 @@ export class MiseADispositionFormComponent implements OnInit {
   banques: BanqueDto[] = [];
 
 
-  miseAdispoType: Type = Type.ENCAISSEMENT;
+  miseAdispoType: Type = Type.DECAISSEMENT;
   beneficiaireFixe: string = "STAPORT";
 
   items: MenuItem[] = [
     { label: 'Accueil', routerLink: '/portail' },
-    { label: 'Mise à dispositions  ( Encaissements )', routerLink: '/portail/Mise-a-disposition/decaissement' },
+    { label: 'Mise à dispositions  ( Décaissements )', routerLink: '/portail/Mise-a-disposition/decaissement' },
   ];
 
   constructor(

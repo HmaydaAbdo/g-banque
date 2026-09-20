@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -91,19 +90,6 @@ public class ProvisionController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Consulter les encours de provisions d'une banque")
-    @GetMapping("/encours/{banqueId}")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<EncoursProvisionDto> getOutstandingProvision(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursProvisionSearchDto searchDto,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        log.info("Requête REST pour récupérer les provisions en cours - Banque ID: {}", banqueId);
-        EncoursProvisionDto result = provisionService.getOutstandingProvision(searchDto, banqueId, pageable);
-        log.info("Provisions en cours récupérées - Total: {}", result.totalDesEncours());
-        return ResponseEntity.ok(result);
-    }
-
     @Operation(summary = "Changer le statut PREVU/PAYE", description = "Réservé SYSTEM_ADMIN.")
     @PatchMapping("/{id}/toggle-status")
     @PreAuthorize(SYSTEM_ADMIN)
@@ -120,21 +106,6 @@ public class ProvisionController {
     public ResponseEntity<byte[]> exporterPdf(@ModelAttribute ProvisionSearchDto searchDto) {
         byte[] pdf = provisionService.exporterPdf(searchDto);
         String filename = "provisions_" + LocalDate.now() + ".pdf";
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdf);
-    }
-
-    @Operation(summary = "Exporter l'encours de provisions d'une banque en PDF", description = "Mêmes critères de filtre que l'encours, sans pagination.")
-    @GetMapping("/encours/{banqueId}/export/pdf")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<byte[]> exporterEncoursPdf(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursProvisionSearchDto searchDto) {
-        byte[] pdf = provisionService.exporterEncoursPdf(searchDto, banqueId);
-        String filename = "provisions_encours_" + LocalDate.now() + ".pdf";
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")

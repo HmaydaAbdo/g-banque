@@ -18,22 +18,16 @@ import java.time.LocalDate;
 public interface ILcnValidationService {
 
     /**
-     * Valide un LCN de décaissement : crée la transaction bancaire associée,
-     * attache au rapprochement cible et marque le LCN comme REGLE.
+     * Valide un LCN, décaissement ou encaissement (nature ENCAISSEMENT ou ESCOMPTE)
+     * indifféremment : crée la transaction bancaire associée, attache au rapprochement cible et
+     * marque le LCN comme REGLE. Le sens et la nature ({@code Lcn.type}/{@code Lcn.natureLcn})
+     * sont lus directement sur l'entité — jamais transmis par l'appelant, une seule méthode
+     * suffit.
      *
      * @param requestDto DTO de la requête de validation
      * @return DTO de la transaction créée
      */
-    LcnTransactionResponseDto processLcnDecaissementTransaction(LcnTransactionRequest requestDto);
-
-    /**
-     * Valide un LCN d'encaissement (nature ENCAISSEMENT ou ESCOMPTE) : crée la transaction
-     * bancaire associée, attache au rapprochement cible et marque le LCN comme REGLE.
-     *
-     * @param requestDto DTO de la requête de validation
-     * @return DTO de la transaction créée
-     */
-    LcnTransactionResponseDto processLcnEncaissementTransaction(LcnTransactionRequest requestDto);
+    LcnTransactionResponseDto processLcnTransaction(LcnTransactionRequest requestDto);
 
     /**
      * Synchronise un LCN lié à une transaction mise à jour.
@@ -44,5 +38,5 @@ public interface ILcnValidationService {
      * @param dateValeur    nouvelle date de valeur de la transaction
      * @param dateOperation nouvelle date d'opération de la transaction
      */
-    void syncLcnFromTransaction(Long lcnId, LocalDate dateValeur, LocalDate dateOperation);
+    void syncLcnFromTransaction(Long lcnId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation);
 }

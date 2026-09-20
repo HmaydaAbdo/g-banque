@@ -114,12 +114,8 @@ export class RecapService {
       params = params.append('numero', searchDto.numero);
     }
 
-    if (searchDto.libelle && searchDto.libelle.length > 0) {
-      params = params.append('libelle', searchDto.libelle);
-    }
-
-    if (searchDto.observation && searchDto.observation.length > 0) {
-      params = params.append('observation', searchDto.observation);
+    if (searchDto.libelleOuObservation && searchDto.libelleOuObservation.length > 0) {
+      params = params.append('libelleOuObservation', searchDto.libelleOuObservation);
     }
 
     if (searchDto.sens) {
@@ -136,6 +132,14 @@ export class RecapService {
 
     if (searchDto.montant !== null && searchDto.montant !== undefined) {
       params = params.append('montant', searchDto.montant.toString());
+    }
+
+    if (searchDto.commissionOperation) {
+      params = params.append('commissionOperation', searchDto.commissionOperation);
+    }
+
+    if (searchDto.impotEtTaxeMotif) {
+      params = params.append('impotEtTaxeMotif', searchDto.impotEtTaxeMotif);
     }
 
     return params;

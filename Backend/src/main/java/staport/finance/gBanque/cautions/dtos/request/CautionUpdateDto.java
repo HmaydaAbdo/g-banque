@@ -8,11 +8,14 @@ import java.time.LocalDate;
  * DTO de modification d'une caution.
  *
  * <p>Tous les champs sont modifiables — y compris {@code numeroCaution},
- * {@code dateDePrise} et {@code banqueId}.
+ * {@code dateDePrise} et {@code banqueId} — que la caution soit active ou déjà clôturée.
  *
- * <p>Règle métier : la modification est interdite lorsque la caution est inactive
- * ({@code actif = false}). Cette garde est appliquée au niveau service,
- * pas au niveau DTO.
+ * <p>Règle métier : pour une caution déjà clôturée ({@code actif = false}),
+ * {@code dateDeMainLevee} reste obligatoire (une caution clôturée ne peut pas redevenir
+ * "sans main levée" via cette modification), et toute correction d'un champ impactant le
+ * calcul de la commission de clôture (banque, montant, taux, dates) la recalcule
+ * automatiquement — bloqué si cette commission est déjà réglée (PAYE) ou introuvable. Cette
+ * logique est appliquée au niveau service, pas au niveau DTO.
  */
 public record CautionUpdateDto(
 

@@ -65,6 +65,8 @@ export class CautionFormComponent implements OnInit {
   form!: FormGroup;
   isEditMode = false;
   cautionId: number | null = null;
+  /** Statut de la caution chargée en mode édition — null tant qu'elle n'est pas chargée (ou en création). */
+  cautionActif: boolean | null = null;
   loading = false;
   readonly today = new Date();
   marcheRequired = false;
@@ -158,21 +160,21 @@ export class CautionFormComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: c => {
-          if (!c.actif) {
-            this.messageService.add({
-              severity: 'warn',
-              summary:  'Accès refusé',
-              detail:   'Cette caution est archivée et ne peut pas être modifiée.',
-            });
-            setTimeout(() => this.location.back(), 1500);
-            return;
-          }
+          this.cautionActif = c.actif;
 
           this.form.patchValue({
             ...c,
             dateDePrise:     parseLocalDate(c.dateDePrise),
             dateDeMainLevee: c.dateDeMainLevee ? parseLocalDate(c.dateDeMainLevee) : null,
           });
+
+          // Caution déjà clôturée : la date de main levée devient visible (correction) et
+          // reste obligatoire — cf. règle backend (CautionServiceImpl.modifier).
+          if (!c.actif) {
+            const dateDeMainLeveeControl = this.form.get('dateDeMainLevee')!;
+            dateDeMainLeveeControl.addValidators(Validators.required);
+            dateDeMainLeveeControl.updateValueAndValidity();
+          }
 
           if (c.marcheId) {
             // Seed visible immédiatement avant que le stream ne réponde.
@@ -312,8 +314,11 @@ export class CautionFormComponent implements OnInit {
         const v = this.form.value;
         const dto: CautionRequestDto = {
           ...v,
-          dateDePrise:     toLocalDateString(v.dateDePrise)!,
-          dateDeMainLevee: v.dateDeMainLevee ? toLocalDateString(v.dateDeMainLevee) : null,
+          dateDePrise: toLocalDateString(v.dateDePrise)!,
+          // Non envoyé à la création — le backend ne l'accepte plus (se remplit via Clôturer).
+          dateDeMainLevee: this.isEditMode
+            ? (v.dateDeMainLevee ? toLocalDateString(v.dateDeMainLevee) : null)
+            : undefined,
         };
 
         const req$ = this.isEditMode

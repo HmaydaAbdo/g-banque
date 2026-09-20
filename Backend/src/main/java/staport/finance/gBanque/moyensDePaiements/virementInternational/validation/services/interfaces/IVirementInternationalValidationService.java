@@ -18,22 +18,15 @@ import java.time.LocalDate;
 public interface IVirementInternationalValidationService {
 
     /**
-     * Valide un virement international de décaissement : crée la transaction bancaire associée,
-     * attache au rapprochement cible et marque le virement international comme REGLE.
+     * Valide un virement international, décaissement ou encaissement indifféremment : crée la
+     * transaction bancaire associée, attache au rapprochement cible et marque le virement
+     * international comme REGLE. Le sens ({@code VirementInternational.type}) est lu directement
+     * sur l'entité — jamais transmis par l'appelant, une seule méthode suffit pour les deux sens.
      *
      * @param requestDto DTO de la requête de validation
      * @return DTO de la transaction créée
      */
-    VirementInternationalTransactionResponseDto processVirementInternationalDecaissementTransaction(VirementInternationalTransactionRequestDto requestDto);
-
-    /**
-     * Valide un virement international d'encaissement : crée la transaction bancaire associée,
-     * attache au rapprochement cible et marque le virement international comme REGLE.
-     *
-     * @param requestDto DTO de la requête de validation
-     * @return DTO de la transaction créée
-     */
-    VirementInternationalTransactionResponseDto processVirementInternationalEncaissementTransaction(VirementInternationalTransactionRequestDto requestDto);
+    VirementInternationalTransactionResponseDto processVirementInternationalTransaction(VirementInternationalTransactionRequestDto requestDto);
 
     /**
      * Synchronise un virement international lié à une transaction mise à jour.
@@ -43,5 +36,5 @@ public interface IVirementInternationalValidationService {
      * @param dateValeur               nouvelle date de valeur de la transaction
      * @param dateOperation            nouvelle date d'opération de la transaction
      */
-    void syncVirementInternationalFromTransaction(Long virementInternationalId, LocalDate dateValeur, LocalDate dateOperation);
+    void syncVirementInternationalFromTransaction(Long virementInternationalId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation);
 }

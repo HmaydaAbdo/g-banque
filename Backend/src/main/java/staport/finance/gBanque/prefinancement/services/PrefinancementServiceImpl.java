@@ -1,10 +1,5 @@
 package staport.finance.gBanque.prefinancement.services;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -27,10 +22,8 @@ import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundExcept
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.service.IMarcheService;
-import staport.finance.gBanque.prefinancement.dtos.request.EncoursPrefinancementSearchDto;
 import staport.finance.gBanque.prefinancement.dtos.request.PrefinancementRequestDTO;
 import staport.finance.gBanque.prefinancement.dtos.request.PrefinancementSearchDTO;
-import staport.finance.gBanque.prefinancement.dtos.response.EncoursPrefinancementDto;
 import staport.finance.gBanque.prefinancement.dtos.response.PrefinancementResponseDTO;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.prefinancement.enums.Status;
@@ -48,7 +41,6 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -70,15 +62,15 @@ import java.util.Optional;
  * <p>Anti-N+1 : {@code PrefinancementRepository.findAll} porte l'{@code @EntityGraph}
  * {@code "Prefinancement.avecAssociations"} (marché + banque du marché).
  *
- * <p>Les totaux d'encours (déblocage/remboursement) sont calculés via une requête {@code SUM}
- * construite avec le même {@link Specification} que la recherche paginée (pas de chargement de
- * la liste complète en mémoire pour sommer côté Java — conventions/performance.md).
- * {@code endOfMonth} est recalculé à chaque appel (et non figé à la construction du bean, ancien
- * bug corrigé — cf. modules_sweep).
- *
  * <p>{@link IBanqueService} est injecté uniquement pour résoudre le nom de banque affiché dans le
- * résumé des filtres des exports PDF — sans risque de cycle de bean : {@code BanqueServiceImpl} ne
- * dépend d'aucune classe du module Préfinancement (vérifié par recherche globale).
+ * résumé des filtres de {@link #exportPdf} — sans risque de cycle de bean : {@code BanqueServiceImpl}
+ * ne dépend d'aucune classe du module Préfinancement (vérifié par recherche globale).
+ *
+ * <p>19/09/2026 : les encours de remboursement/déblocage par banque (écrans dédiés
+ * {@code prefinancement-remboursements}/{@code prefinancement-deblocage}) ont été retirés — le
+ * récapitulatif unifié couvre désormais la validation de cette source. {@code getRemboursementEncoursForBanque}/
+ * {@code getDeblocageEncoursForBanque}/leurs exports PDF et le calcul de somme par
+ * {@code EntityManager} qu'ils utilisaient seuls ont été retirés avec eux.
  */
 @Service
 public class PrefinancementServiceImpl implements IPrefinancementService {
@@ -95,9 +87,6 @@ public class PrefinancementServiceImpl implements IPrefinancementService {
     private final INatureLigneFonctionnelleService natureLigneFonctionnelleService;
     private final LigneFonctionnelleReader ligneFonctionnelleReader;
     private final StaportPdfReportService staportPdfReportService;
-
-    @PersistenceContext
-    private EntityManager entityManager;
 
     public PrefinancementServiceImpl(
             PrefinancementRepository prefinancementRepository,
@@ -256,56 +245,6 @@ public class PrefinancementServiceImpl implements IPrefinancementService {
         return prefinancementMapper.toDto(updatedPrefinancement);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public EncoursPrefinancementDto getRemboursementEncoursForBanque(EncoursPrefinancementSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.info("Recherche des encours de remboursement pour la banque ID: {}", banqueId);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<Prefinancement> spec = PrefinancementSpecification.byBanqueId(banqueId)
-                .and(PrefinancementSpecification.outstandingRemboursementUntil(endOfMonth))
-                .and(PrefinancementSpecification.byMarcheName(searchDto.marcheName()))
-                .and(PrefinancementSpecification.byMarcheNumero(searchDto.marcheNumero()))
-                .and(PrefinancementSpecification.hasMontant(searchDto.montant()));
-
-        Page<Prefinancement> prefinancementPage = prefinancementRepository.findAll(spec,
-                pageable.getSort().isSorted() ? pageable
-                        : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
-
-        BigDecimal totalDesEncours = sumMontant(spec);
-        log.info("Total des encours de remboursement calculé: {} pour la banque ID: {}", totalDesEncours, banqueId);
-
-        Page<PrefinancementResponseDTO> pageDto = prefinancementPage.map(prefinancementMapper::toDto);
-
-        return new EncoursPrefinancementDto(totalDesEncours, pageDto);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public EncoursPrefinancementDto getDeblocageEncoursForBanque(EncoursPrefinancementSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.info("Recherche des encours de déblocage pour la banque ID: {}", banqueId);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<Prefinancement> spec = PrefinancementSpecification.byBanqueId(banqueId)
-                .and(PrefinancementSpecification.outstandingDeblocageUntil(endOfMonth))
-                .and(PrefinancementSpecification.byMarcheName(searchDto.marcheName()))
-                .and(PrefinancementSpecification.byMarcheNumero(searchDto.marcheNumero()))
-                .and(PrefinancementSpecification.hasMontant(searchDto.montant()));
-
-        Page<Prefinancement> prefinancementPage = prefinancementRepository.findAll(spec,
-                pageable.getSort().isSorted() ? pageable
-                        : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
-
-        BigDecimal totalDesEncours = sumMontant(spec);
-        log.info("Total des encours de déblocage calculé: {} pour la banque ID: {}", totalDesEncours, banqueId);
-
-        Page<PrefinancementResponseDTO> pageDto = prefinancementPage.map(prefinancementMapper::toDto);
-
-        return new EncoursPrefinancementDto(totalDesEncours, pageDto);
-    }
-
     // ── Export PDF ────────────────────────────────────────────────────────────
 
     @Override
@@ -327,48 +266,8 @@ public class PrefinancementServiceImpl implements IPrefinancementService {
         return generatePrefinancementPdf("État des Préfinancements", prefinancements, totalMontant, filterLines);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public byte[] exportRemboursementEncoursPdf(EncoursPrefinancementSearchDto searchDto, Long banqueId) {
-        log.info("Export PDF encours remboursement préfinancement — banque ID: {}", banqueId);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-        Specification<Prefinancement> spec = PrefinancementSpecification.byBanqueId(banqueId)
-                .and(PrefinancementSpecification.outstandingRemboursementUntil(endOfMonth))
-                .and(PrefinancementSpecification.byMarcheName(searchDto.marcheName()))
-                .and(PrefinancementSpecification.byMarcheNumero(searchDto.marcheNumero()))
-                .and(PrefinancementSpecification.hasMontant(searchDto.montant()));
-
-        List<Prefinancement> prefinancements = prefinancementRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-        BigDecimal totalMontant = sumMontant(spec);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
-
-        return generatePrefinancementPdf("Encours de Remboursement — Préfinancement", prefinancements, totalMontant, filterLines);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public byte[] exportDeblocageEncoursPdf(EncoursPrefinancementSearchDto searchDto, Long banqueId) {
-        log.info("Export PDF encours déblocage préfinancement — banque ID: {}", banqueId);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-        Specification<Prefinancement> spec = PrefinancementSpecification.byBanqueId(banqueId)
-                .and(PrefinancementSpecification.outstandingDeblocageUntil(endOfMonth))
-                .and(PrefinancementSpecification.byMarcheName(searchDto.marcheName()))
-                .and(PrefinancementSpecification.byMarcheNumero(searchDto.marcheNumero()))
-                .and(PrefinancementSpecification.hasMontant(searchDto.montant()));
-
-        List<Prefinancement> prefinancements = prefinancementRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-        BigDecimal totalMontant = sumMontant(spec);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
-
-        return generatePrefinancementPdf("Encours de Déblocage — Préfinancement", prefinancements, totalMontant, filterLines);
-    }
-
     /**
-     * Génère le contenu PDF partagé par {@link #exportPdf}, {@link #exportRemboursementEncoursPdf}
-     * et {@link #exportDeblocageEncoursPdf} — même structure de tableau (marché, banque, type,
-     * dates, montant, statut) pour les trois écrans.
+     * Génère le contenu PDF utilisé par {@link #exportPdf}.
      */
     private byte[] generatePrefinancementPdf(String title, List<Prefinancement> prefinancements,
                                               BigDecimal totalMontant, List<String> filterLines) {
@@ -527,41 +426,6 @@ public class PrefinancementServiceImpl implements IPrefinancementService {
             lines.add("Statut : " + (criteria.status() == Status.PAYE ? "Payé" : "Prévu"));
 
         return lines;
-    }
-
-    private List<String> buildEncoursFilterSummary(EncoursPrefinancementSearchDto searchDto, Long banqueId) {
-        List<String> lines = new ArrayList<>();
-
-        try {
-            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
-        } catch (ResourceNotFoundException ignored) { /* filtre obsolète — ignoré pour l'affichage */ }
-
-        if (searchDto == null) return lines;
-        if (searchDto.marcheName() != null && !searchDto.marcheName().isBlank())
-            lines.add("Nom Marché : " + searchDto.marcheName());
-        if (searchDto.marcheNumero() != null && !searchDto.marcheNumero().isBlank())
-            lines.add("N° Marché : " + searchDto.marcheNumero());
-        if (searchDto.montant() != null)
-            lines.add("Montant : " + formatMontantPdf(searchDto.montant()) + " MAD");
-
-        return lines;
-    }
-
-    /**
-     * Somme des montants correspondant à la {@link Specification} donnée, calculée en base
-     * (agrégat SQL) — jamais en chargeant les entités en mémoire pour sommer côté Java
-     * (conventions/performance.md).
-     */
-    private BigDecimal sumMontant(Specification<Prefinancement> spec) {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<BigDecimal> query = cb.createQuery(BigDecimal.class);
-        Root<Prefinancement> root = query.from(Prefinancement.class);
-        query.select(cb.coalesce(cb.sum(root.get("montant")), BigDecimal.ZERO));
-        var predicate = spec.toPredicate(root, query, cb);
-        if (predicate != null) {
-            query.where(predicate);
-        }
-        return entityManager.createQuery(query).getSingleResult();
     }
 
     private NatureLigneFonctionnelle getPrefinancementNature() {

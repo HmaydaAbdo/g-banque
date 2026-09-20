@@ -24,6 +24,15 @@
     </p-breadcrumb>
   </div>
 
+  @if (isEditMode && cautionActif === false) {
+    <div class="flex align-items-center gap-2 p-3 border-round surface-100 text-sm text-color-secondary">
+      <i class="pi pi-info-circle text-primary"></i>
+      <span>Cette caution est clôturée. Toute correction d'un champ impactant le calcul de la
+        commission (banque, montant, taux, dates) recalcule automatiquement la commission de
+        clôture.</span>
+    </div>
+  }
+
   <!-- ═══ FORM CARD ════════════════════════════════════════════════════════ -->
   <div class="surface-card border-round-xl border-1 surface-border p-4"
        style="box-shadow:0 1px 10px rgba(0,0,0,0.06)">
@@ -152,20 +161,27 @@
           }
         </div>
 
-        <!-- Date de main levée -->
-        <div class="col-12 md:col-6 lg:col-4">
-          <label class="font-semibold block mb-2 text-700 text-sm">
-            Date de main levée
-          </label>
-          <p-calendar
-            formControlName="dateDeMainLevee"
-            dateFormat="dd/mm/yy"
-            [showIcon]="true"
-            [showClear]="true"
-            appendTo="body"
-            placeholder="Non renseignée">
-          </p-calendar>
-        </div>
+        <!-- Date de main levée — visible uniquement en édition d'une caution déjà clôturée
+             (correction) : se remplit normalement via l'action "Clôturer" de la liste. -->
+        @if (isEditMode && cautionActif === false) {
+          <div class="col-12 md:col-6 lg:col-4">
+            <label class="font-semibold block mb-2 text-700 text-sm">
+              Date de main levée <span class="text-red-500">*</span>
+            </label>
+            <p-calendar
+              formControlName="dateDeMainLevee"
+              dateFormat="dd/mm/yy"
+              [showIcon]="true"
+              appendTo="body"
+              placeholder="jj/mm/aaaa">
+            </p-calendar>
+            @if (f['dateDeMainLevee'].touched && f['dateDeMainLevee'].errors?.['required']) {
+              <small class="p-error">
+                Obligatoire.
+              </small>
+            }
+          </div>
+        }
 
         <!-- Organisme -->
         <div class="col-12 md:col-6 lg:col-4">

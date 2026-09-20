@@ -85,24 +85,6 @@ public class VirementController {
         return ResponseEntity.ok(updatedVirement);
     }
 
-    @Operation(summary = "Encours de décaissement virement pour une banque")
-    @GetMapping("/decaissement/encours/{banqueId}")
-    public ResponseEntity<EncoursVirementResponseDto> getEncoursDecaissementForVirements(@PathVariable Long banqueId, EncoursVirementsSearchDto searchDto,
-                                                                                         @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        EncoursVirementResponseDto result = virementService.getEncoursDecaissementForVirements(searchDto, banqueId, pageable);
-        return ResponseEntity.ok(result);
-    }
-
-    @Operation(summary = "Encours d'encaissement virement pour une banque")
-    @GetMapping("/encaissement/encours/{banqueId}")
-    public ResponseEntity<EncoursVirementResponseDto> getEncoursEncaissementForVirements(
-            @PathVariable Long banqueId,
-            EncoursVirementsSearchDto searchDto,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        EncoursVirementResponseDto result = virementService.getEncoursEncaissementForVirements(searchDto, banqueId, pageable);
-        return ResponseEntity.ok(result);
-    }
-
     @Operation(summary = "Exporter les virements d'encaissement en PDF",
             description = "Ignore la pagination — exporte tous les résultats filtrés.")
     @GetMapping("/encaissements/export/pdf")
@@ -115,20 +97,6 @@ public class VirementController {
     @GetMapping("/decaissements/export/pdf")
     public ResponseEntity<byte[]> exportDecaissementsPdf(VirementSearchDto searchDto) {
         return pdfResponse(virementService.exportDecaissementsPdf(searchDto), "virements_decaissements");
-    }
-
-    @Operation(summary = "Exporter en PDF l'encours d'encaissement de virements d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/encaissement/encours/{banqueId}/export/pdf")
-    public ResponseEntity<byte[]> exportEncoursEncaissementPdf(@PathVariable Long banqueId, EncoursVirementsSearchDto searchDto) {
-        return pdfResponse(virementService.exportEncoursEncaissementPdf(searchDto, banqueId), "virements_encours_encaissement");
-    }
-
-    @Operation(summary = "Exporter en PDF l'encours de décaissement de virements d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/decaissement/encours/{banqueId}/export/pdf")
-    public ResponseEntity<byte[]> exportEncoursDecaissementPdf(@PathVariable Long banqueId, EncoursVirementsSearchDto searchDto) {
-        return pdfResponse(virementService.exportEncoursDecaissementPdf(searchDto, banqueId), "virements_encours_decaissement");
     }
 
     private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {

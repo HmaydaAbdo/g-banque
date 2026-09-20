@@ -25,7 +25,6 @@ import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.commision.service.ICommissionService;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
-import staport.finance.gBanque.impot_taxes.dtos.request.EncoursImpotEtTaxeSearchDto;
 import staport.finance.gBanque.impot_taxes.dtos.request.ImpotEtTaxeFusionRequest;
 import staport.finance.gBanque.impot_taxes.dtos.request.ImpotEtTaxeRequestDto;
 import staport.finance.gBanque.impot_taxes.dtos.request.ImpotEtTaxeSearchDto;
@@ -47,7 +46,6 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -202,36 +200,6 @@ public class ImpotEtTaxeServiceImpl implements IImpotEtTaxeService {
         return genererPdf("État des Impôts et Taxes", impotsEtTaxes, totalMontant, filterLines);
     }
 
-    /**
-     * Génère un export PDF de l'encours d'impôts/taxes d'une banque (mêmes critères que
-     * {@link #getOutstandingImpotEtTaxes}) — sans pagination : le fichier imprime la totalité des
-     * résultats filtrés, pas seulement la page affichée à l'écran.
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public byte[] exporterEncoursPdf(EncoursImpotEtTaxeSearchDto searchDto, Long banqueId) {
-        log.info("Export PDF encours impôts/taxes — banqueId={}", banqueId);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<ImpotEtTaxe> spec = Specification.where(ImpotEtTaxeSpecifications.outstandingUntil(endOfMonth))
-                .and(ImpotEtTaxeSpecifications.hasBanque(banqueId))
-                .and(ImpotEtTaxeSpecifications.hasLibelle(searchDto.libelle()))
-                .and(ImpotEtTaxeSpecifications.hasMotif(searchDto.motif()))
-                .and(ImpotEtTaxeSpecifications.hasMontant(searchDto.montant()));
-
-        List<ImpotEtTaxe> impotsEtTaxes = impotEtTaxeRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-
-        BigDecimal totalMontant = sumMontant(spec);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
-
-        return genererPdf("Encours des Impôts et Taxes", impotsEtTaxes, totalMontant, filterLines);
-    }
-
-    /**
-     * Construit le document PDF partagé par {@link #exporterPdf} et {@link #exporterEncoursPdf} —
-     * même mise en page, seuls le titre, les lignes et le résumé de filtres varient.
-     */
     private byte[] genererPdf(String title, List<ImpotEtTaxe> impotsEtTaxes, BigDecimal totalMontant, List<String> filterLines) {
         try {
             return staportPdfReportService.generateReport(
@@ -395,31 +363,6 @@ public class ImpotEtTaxeServiceImpl implements IImpotEtTaxeService {
             lines.add("Date de valeur min : " + dto.dateValeurDebut().format(DATE_FMT));
         if (dto.dateValeurFin() != null)
             lines.add("Date de valeur max : " + dto.dateValeurFin().format(DATE_FMT));
-
-        return lines;
-    }
-
-    /**
-     * Résumé des filtres pour l'export PDF de l'écran encours — {@code banqueId} vient du path
-     * variable (pas du DTO, contrairement à {@link #buildFilterSummary}).
-     */
-    private List<String> buildEncoursFilterSummary(EncoursImpotEtTaxeSearchDto dto, Long banqueId) {
-        List<String> lines = new ArrayList<>();
-
-        try {
-            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
-        } catch (ResourceNotFoundException e) {
-            log.debug("Banque id={} introuvable pour le résumé de filtre export encours — ignorée", banqueId);
-        }
-
-        if (dto == null) return lines;
-
-        if (dto.libelle() != null && !dto.libelle().isBlank())
-            lines.add("Libellé : " + dto.libelle());
-        if (dto.motif() != null)
-            lines.add("Motif : " + dto.motif().getMotif());
-        if (dto.montant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
 
         return lines;
     }
@@ -591,29 +534,6 @@ public class ImpotEtTaxeServiceImpl implements IImpotEtTaxeService {
 
         log.info("TVA fusionnée créée — id={}", fusionnee.getId());
         return impotEtTaxeMapper.toDto(fusionnee);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public EncoursImpotEtTaxeDto getOutstandingImpotEtTaxes(EncoursImpotEtTaxeSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.info("Récupération des encours impôts/taxes — banqueId={}", banqueId);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<ImpotEtTaxe> spec = Specification.where(ImpotEtTaxeSpecifications.outstandingUntil(endOfMonth))
-                .and(ImpotEtTaxeSpecifications.hasBanque(banqueId))
-                .and(ImpotEtTaxeSpecifications.hasLibelle(searchDto.libelle()))
-                .and(ImpotEtTaxeSpecifications.hasMotif(searchDto.motif()))
-                .and(ImpotEtTaxeSpecifications.hasMontant(searchDto.montant()));
-
-        Page<ImpotEtTaxeResponseDto> pageDto = impotEtTaxeRepository
-                .findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")))
-                .map(impotEtTaxeMapper::toDto);
-
-        BigDecimal totalDesEncours = sumMontant(spec);
-
-        log.info("Encours récupérés: {} élément(s), banqueId={}", pageDto.getTotalElements(), banqueId);
-        return new EncoursImpotEtTaxeDto(totalDesEncours, pageDto);
     }
 
     // ── Façade cross-domaine (ex. cautions) ────────────────────────────────────

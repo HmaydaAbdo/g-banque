@@ -5,7 +5,6 @@ import { Observable } from 'rxjs';
 import { RestitutionRequestDto } from '../dtos/RestitutionRequestDto';
 import { RestitutionResponseDto } from '../dtos/RestitutionResponseDto';
 import { RestitutionSearchDto } from '../dtos/RestitutionSearchDto';
-import { EncoursRestitution } from '../dtos/EncoursRestitution';
 import { PageResponse } from '../../global/types/PageResponse';
 import { toLocalDateString } from '../../global/types/date.utils';
 
@@ -94,39 +93,6 @@ export class RestitutionService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-  /**
-   * Récupérer les restitutions en cours (encours) pour une banque donnée
-   * @param banqueId L'identifiant de la banque
-   * @param searchDto Les critères de recherche optionnels
-   * @param page Le numéro de la page
-   * @param size La taille de la page
-   * @param sort Le critère de tri
-   */
-  getOutstandingRestitutions(
-    banqueId: number,
-    searchDto?: RestitutionSearchDto,
-    page: number = 0,
-    size: number = 10,
-    sort: string = 'dateEmission,desc'
-  ): Observable<EncoursRestitution> {
-
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', sort);
-
-    // Ajouter les paramètres de recherche s'ils sont fournis
-    if (searchDto) {
-      Object.entries(searchDto).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
-          params = params.set(key, String(value));
-        }
-      });
-    }
-
-    return this.http.get<EncoursRestitution>(`${this.apiUrl}/encours/${banqueId}`, { params });
-  }
-
   toggleStatus(id: number): Observable<RestitutionResponseDto> {
     return this.http.patch<RestitutionResponseDto>(
       `${this.apiUrl}/${id}/toggle-status`,
@@ -173,20 +139,4 @@ export class RestitutionService {
     }
     return params;
   }
-
-  /**
-   * Exporte en PDF l'intégralité de l'encours de restitutions d'une banque correspondant aux
-   * filtres fournis (mêmes critères que {@link getOutstandingRestitutions}, sans pagination — le
-   * PDF contient tous les résultats filtrés, pas seulement la page actuellement affichée).
-   */
-  exportEncoursPdf(banqueId: number, searchDto: RestitutionSearchDto): Observable<Blob> {
-    let params = new HttpParams();
-
-    if (searchDto.libelle)          params = params.set('libelle', searchDto.libelle);
-    if (searchDto.montant != null)  params = params.set('montant', searchDto.montant.toString());
-    if (searchDto.status)           params = params.set('status', searchDto.status);
-
-    return this.http.get(`${this.apiUrl}/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
-  }
-
 }

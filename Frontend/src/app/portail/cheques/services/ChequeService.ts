@@ -1,13 +1,10 @@
 import {Injectable} from '@angular/core';
-import { toLocalDateString } from '../../global/types/date.utils';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {environment} from '../../../../environments/environment';
 import {ChequeSearchDto} from "../dtos/ChequeSearchDto";
 import {PageResponse} from "../../global/types/PageResponse";
 import {ChequeResponseDto} from "../dtos/ChequeResponseDto";
-import {EncoursChequeResponseDto} from "../dtos/EncoursChequeResponseDto";
-import {EncoursChequeSearchDto} from "../dtos/EncoursChequeSearchDto";
 import {ChequeRequestDto} from "../dtos/ChequeRequestDto";
 
 
@@ -133,83 +130,6 @@ export class ChequeService {
     return this.http.patch<ChequeResponseDto>(url, {});
   }
 
-  /**
-   * Retrieves a paginated list of outstanding cheques for a specific bank.
-   *
-   * @param banqueId The ID of the bank to search for.
-   * @param searchDto
-   * @param page The page number to retrieve (0-indexed).
-   * @param size The number of items per page.
-   * @param sort The sorting criteria (e.g., 'dateEmission,desc').
-   * @returns An Observable of a paginated list of ChequeResponseDto.
-   */
-  getEncoursDecaissementChequesByBank(
-    banqueId: number,
-    searchDto: EncoursChequeSearchDto,
-    page: number = 0,
-    size: number = 10,
-    sort: string = 'dateEmission,desc'
-  ): Observable<EncoursChequeResponseDto> {
-
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', sort);
-
-    if (searchDto.numero) {
-      params = params.set('numero', searchDto.numero);
-    }
-    if (searchDto.beneficiaire) {
-      params = params.set('beneficiaire', searchDto.beneficiaire);
-    }
-
-    if (searchDto.montant) {
-      params = params.set('montant', searchDto.montant.toString());
-    }
-
-    const url = `${this.apiUrl}/decaissements/encours/${banqueId}`;
-    return this.http.get<EncoursChequeResponseDto>(url, {params});
-  }
-
-
-  getEncoursEncaissementChequesByBank(
-    banqueId: number,
-    searchDto: EncoursChequeSearchDto,
-    page: number = 0,
-    size: number = 10,
-    sort: string = 'dateEmission,desc'
-  ): Observable<EncoursChequeResponseDto> {
-
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', sort);
-
-
-
-    if(searchDto.dateEmission){
-      params = params.set('dateEmission', toLocalDateString(searchDto.dateEmission)!)
-    }
-
-    if(searchDto.numero){
-      params = params.set('numero', searchDto.numero)
-    }
-
-    if (searchDto.emetteur) {
-      params = params.set('emetteur', searchDto.emetteur);
-    }
-    if (searchDto.beneficiaire) {
-      params = params.set('beneficiaire', searchDto.beneficiaire);
-    }
-
-    if (searchDto.montant) {
-      params = params.set('montant', searchDto.montant.toString());
-    }
-
-    const url = `${this.apiUrl}/encaissements/encours/${banqueId}`;
-    return this.http.get<EncoursChequeResponseDto>(url, {params});
-  }
-
   exportEncaissementsPdf(searchDto: ChequeSearchDto): Observable<Blob> {
     let params = new HttpParams();
     if (searchDto.numero) {
@@ -249,39 +169,4 @@ export class ChequeService {
     return this.http.get(`${this.apiUrl}/decaissements/export/pdf`, {params, responseType: 'blob'});
   }
 
-  exportEncoursEncaissementPdf(banqueId: number, searchDto: EncoursChequeSearchDto): Observable<Blob> {
-    let params = new HttpParams();
-    if (searchDto.dateEmission) {
-      params = params.set('dateEmission', toLocalDateString(searchDto.dateEmission)!);
-    }
-    if (searchDto.numero) {
-      params = params.set('numero', searchDto.numero);
-    }
-    if (searchDto.emetteur) {
-      params = params.set('emetteur', searchDto.emetteur);
-    }
-    if (searchDto.beneficiaire) {
-      params = params.set('beneficiaire', searchDto.beneficiaire);
-    }
-    if (searchDto.montant) {
-      params = params.set('montant', searchDto.montant.toString());
-    }
-    const url = `${this.apiUrl}/encaissements/encours/${banqueId}/export/pdf`;
-    return this.http.get(url, {params, responseType: 'blob'});
-  }
-
-  exportEncoursDecaissementPdf(banqueId: number, searchDto: EncoursChequeSearchDto): Observable<Blob> {
-    let params = new HttpParams();
-    if (searchDto.numero) {
-      params = params.set('numero', searchDto.numero);
-    }
-    if (searchDto.beneficiaire) {
-      params = params.set('beneficiaire', searchDto.beneficiaire);
-    }
-    if (searchDto.montant) {
-      params = params.set('montant', searchDto.montant.toString());
-    }
-    const url = `${this.apiUrl}/decaissements/encours/${banqueId}/export/pdf`;
-    return this.http.get(url, {params, responseType: 'blob'});
-  }
 }

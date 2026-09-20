@@ -112,7 +112,7 @@ public class FraisBancaireValidationService implements IFraisBancaireValidationS
 
     @Override
     @Transactional
-    public void syncFraisBancaireFromTransaction(Long fraisBancaireId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncFraisBancaireFromTransaction(Long fraisBancaireId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation frais bancaire depuis transaction — id: {}", fraisBancaireId);
 
         FraisBancaire fraisBancaire = fraisBancaireRepository.findById(fraisBancaireId)
@@ -123,6 +123,8 @@ public class FraisBancaireValidationService implements IFraisBancaireValidationS
 
         fraisBancaire.setDateValeur(dateValeur);
         fraisBancaire.setDateOperation(dateOperation);
+        fraisBancaire.setLibelle(libelle);
+        fraisBancaire.setObservation(observation);
         fraisBancaireRepository.save(fraisBancaire);
 
         log.info("Frais bancaire id: {} synchronisé depuis transaction", fraisBancaireId);

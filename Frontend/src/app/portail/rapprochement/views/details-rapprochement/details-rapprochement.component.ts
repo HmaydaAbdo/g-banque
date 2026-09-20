@@ -29,6 +29,10 @@ import { parseLocalDate, toLocalDateString } from '../../../global/types/date.ut
 import {ToolbarModule} from "primeng/toolbar";
 import {TooltipModule} from "primeng/tooltip";
 import { StatutRapprochement } from '../../enums/StatutRapprochement';
+import { InputTextareaModule } from 'primeng/inputtextarea';
+import { DividerModule } from 'primeng/divider';
+import { TvaInputComponent } from '../../../etatsDesEncours/views/lesEncours/shared/tva-input/tva-input.component';
+import { SaisieTva, saisieTvaParDefaut, messageErreurTva } from '../../../etatsDesEncours/views/lesEncours/shared/tva-input/saisie-tva.model';
 
 @Component({
   selector: 'app-details-rapprochement',
@@ -52,6 +56,9 @@ import { StatutRapprochement } from '../../enums/StatutRapprochement';
     TooltipModule,
     SourceBadgeComponent,
     SelectButtonModule,
+    InputTextareaModule,
+    DividerModule,
+    TvaInputComponent,
   ],
   templateUrl: './details-rapprochement.component.html',
   styleUrls: ['./details-rapprochement.component.scss'],
@@ -83,6 +90,11 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
 
   displayEditDialog: boolean = false;
   editDateForm!: FormGroup;
+  /** Libellé du champ TVA — « TVA Déductible » en décaissement, « TVA Collectée » en encaissement. */
+  editTvaLabel = 'TVA Déductible';
+  /** Montant TTC de l'opération éditée (debit ou credit) — borne haute du champ TVA. */
+  editMontantMaxTva: number | null = null;
+  readonly messageErreurTva = messageErreurTva;
 
   // Export PDF filtré (mêmes filtres que le tableau des transactions ci-dessous)
   exportingReport: boolean = false;
@@ -169,13 +181,19 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
     if (v.dateValeurDebut || v.dateValeurFin) count++;
     return count;
   }
+  /**
+   * Mêmes champs, et la même politique TVA, que le dialogue de validation générique du récap
+   * (architecture.md, Règle 2) : dateEmission verrouillée (informative), pas de banque.
+   */
   initEditDialogForm(): void {
     this.editDateForm = this.fb.group({
       id: [null],
+      dateEmission: [{ value: null, disabled: true }],
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
-      tvaDeductible: [null, Validators.required],
-      tvaCollecte: [null, Validators.required]
+      libelle: ['', Validators.required],
+      observation: ['', Validators.required],
+      tva: [saisieTvaParDefaut()],
     });
   }
 
@@ -317,14 +335,34 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
 
 
   openEditDialog(transaction: TransactionResponseDto): void {
+    const estDecaissement = Number(transaction.debit) > 0;
+    this.editTvaLabel = estDecaissement ? 'TVA Déductible' : 'TVA Collectée';
+    this.editMontantMaxTva = estDecaissement ? Number(transaction.debit) : Number(transaction.credit);
+
+    // La TVA stockée n'est qu'un montant déjà résolu (pas le taux d'origine) : préremplie comme
+    // 0 % si nulle, sinon comme une saisie libre de ce montant — la seule représentation fidèle
+    // de l'état actuel sans inventer un taux qui n'a pas été conservé.
+    const tvaActuelle = estDecaissement ? Number(transaction.tvaDeductible) : Number(transaction.tvaCollectee);
+    const tvaInitiale: SaisieTva = tvaActuelle > 0
+      ? { tauxTva: null, montantTva: tvaActuelle }
+      : { tauxTva: 0, montantTva: null };
+
+    this.editDateForm.reset();
     this.editDateForm.patchValue({
       id: transaction.id,
+      dateEmission: parseLocalDate(transaction.dateEmission),
       dateValeur: parseLocalDate(transaction.dateValeur),
       dateOperation: parseLocalDate(transaction.dateOperations),
-      tvaDeductible: transaction.tvaDeductible,
-      tvaCollecte: transaction.tvaCollectee
+      libelle: transaction.libelle,
+      observation: transaction.observation,
+      tva: tvaInitiale,
     });
     this.displayEditDialog = true;
+  }
+
+  isEditInvalid(controlName: string): boolean {
+    const control = this.editDateForm.get(controlName);
+    return !!(control && control.invalid && (control.dirty || control.touched));
   }
 
   closeEditDialog(): void {
@@ -335,16 +373,18 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
   updateTransaction(): void {
     if (!this.editDateForm.valid) return;
 
-    const formValue = this.editDateForm.value;
+    const formValue = this.editDateForm.getRawValue();
+    const saisieTva: SaisieTva = formValue.tva;
     const updateDto: TransactionUpdateRequestDto = {
       dateValeur: toLocalDateString(formValue.dateValeur)!,
       dateOperation: toLocalDateString(formValue.dateOperation)!,
-      tvaDeductible: formValue.tvaDeductible,
-      tvaCollecte: formValue.tvaCollecte
+      libelle: formValue.libelle,
+      observation: formValue.observation,
+      tauxTva: saisieTva.tauxTva,
+      montantTva: saisieTva.montantTva,
     };
 
-    // Ici, utilise l'id stocké dans le formulaire ou passé en paramètre
-    const transactionId = formValue.id; // si tu l’ajoutes au FormGroup
+    const transactionId = formValue.id;
     this.transactionService.updateTransactionById(transactionId, updateDto)
       .subscribe({
         next: (updatedTransaction) => {

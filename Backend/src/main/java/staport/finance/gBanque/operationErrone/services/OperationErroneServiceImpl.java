@@ -3,7 +3,6 @@ package staport.finance.gBanque.operationErrone.services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -32,7 +31,6 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -46,12 +44,6 @@ import java.util.Locale;
  *
  * <p>Suppression bloquée si déjà PAYE (règle transversale, {@code conventions/architecture.md},
  * "Règle 5") — {@code deleteOperationErrone} lève {@link ValidationException} dans ce cas.
- *
- * <p>Bug latent corrigé (14/07/2026) : {@code endOfMonth} était auparavant un champ calculé une
- * seule fois à la construction du bean singleton — figé à la date de démarrage du serveur au lieu
- * d'être recalculé à chaque appel. Recalculé maintenant localement dans
- * {@link #getOutstandingOperationErrone}, même correctif que celui appliqué à
- * {@code ImpayeeServiceImpl}/{@code RestitutionServiceImpl} lors des sweeps précédents.
  */
 @Service
 public class OperationErroneServiceImpl implements IOperationErroneService {
@@ -162,29 +154,6 @@ public class OperationErroneServiceImpl implements IOperationErroneService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public EncoursOperationErroneDto getOutstandingOperationErrone(EncoursOperationErroneSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.info("Récupération des opérations erronées en cours - banqueId={}, Critères: {}", banqueId, searchDto);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<OperationErrone> spec = Specification.where(OperationErroneSpec.outstandingUntil(endOfMonth))
-                .and(OperationErroneSpec.hasBanque(banqueId))
-                .and(OperationErroneSpec.hasLibelle(searchDto.libelle()))
-                .and(OperationErroneSpec.hasMontant(searchDto.montant()))
-                .and(OperationErroneSpec.hasMotif(searchDto.motif()));
-
-        Page<OperationErrone> page = operationErroneRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
-        BigDecimal total = operationErroneRepository.findAll(spec).stream()
-                .map(OperationErrone::getMontant)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        log.info("Encours calculé: {}, Nombre d'opérations erronées: {}", total, page.getTotalElements());
-
-        return new EncoursOperationErroneDto(total, page.map(operationErroneMapper::toResponseDto));
-    }
-
-    @Override
     @Transactional
     @AuditableAction(operation = AuditOperation.UPDATE, entity = OperationErrone.class)
     public OperationErroneResponseDto toggleStatus(Long id) {
@@ -226,38 +195,6 @@ public class OperationErroneServiceImpl implements IOperationErroneService {
         return genererPdf("État des Opérations Erronées", operations, totalMontant, filterLines);
     }
 
-    /**
-     * Génère un export PDF de l'encours d'opérations erronées d'une banque (mêmes critères que
-     * {@link #getOutstandingOperationErrone}) — sans pagination : le fichier imprime la totalité
-     * des résultats filtrés, pas seulement la page affichée à l'écran.
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public byte[] exporterEncoursPdf(EncoursOperationErroneSearchDto searchDto, Long banqueId) {
-        log.info("Export PDF encours opérations erronées — banqueId={}", banqueId);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<OperationErrone> spec = Specification.where(OperationErroneSpec.outstandingUntil(endOfMonth))
-                .and(OperationErroneSpec.hasBanque(banqueId))
-                .and(OperationErroneSpec.hasLibelle(searchDto.libelle()))
-                .and(OperationErroneSpec.hasMontant(searchDto.montant()))
-                .and(OperationErroneSpec.hasMotif(searchDto.motif()));
-
-        List<OperationErrone> operations = operationErroneRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-
-        BigDecimal totalMontant = operations.stream()
-                .map(OperationErrone::getMontant)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
-
-        return genererPdf("Encours des Opérations Erronées", operations, totalMontant, filterLines);
-    }
-
-    /**
-     * Construit le document PDF partagé par {@link #exporterPdf} et {@link #exporterEncoursPdf} —
-     * même mise en page, seuls le titre, les lignes et le résumé de filtres varient.
-     */
     private byte[] genererPdf(String title, List<OperationErrone> operations, BigDecimal totalMontant, List<String> filterLines) {
         try {
             return staportPdfReportService.generateReport(
@@ -434,31 +371,6 @@ public class OperationErroneServiceImpl implements IOperationErroneService {
             lines.add("Date valeur min : " + dto.dateValeurDebut().format(DATE_FMT));
         if (dto.dateValeurFin() != null)
             lines.add("Date valeur max : " + dto.dateValeurFin().format(DATE_FMT));
-
-        return lines;
-    }
-
-    /**
-     * Résumé des filtres pour l'export PDF de l'écran encours — {@code banqueId} vient du path
-     * variable (pas du DTO, contrairement à {@link #buildFilterSummary}).
-     */
-    private List<String> buildEncoursFilterSummary(EncoursOperationErroneSearchDto dto, Long banqueId) {
-        List<String> lines = new ArrayList<>();
-
-        try {
-            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
-        } catch (ResourceNotFoundException e) {
-            log.debug("Banque id={} introuvable pour le résumé de filtre export encours — ignorée", banqueId);
-        }
-
-        if (dto == null) return lines;
-
-        if (dto.libelle() != null && !dto.libelle().isBlank())
-            lines.add("Libellé : " + dto.libelle());
-        if (dto.montant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
-        if (dto.motif() != null)
-            lines.add("Motif : " + libelleMotif(dto.motif()));
 
         return lines;
     }

@@ -367,10 +367,14 @@ mensuelle, et suivi du statut de chaque caution sont pris en charge directement 
   technique.
 - **Traçabilité complète** : chaque création, modification, suppression et clôture de caution est
   historisée (auteur, date), consultable à tout moment.
+- **Correction fiabilisée après clôture** : une erreur de saisie sur une caution déjà clôturée
+  (date de main levée, montant, taux…) reste corrigeable, avec recalcul automatique de la
+  commission de clôture concernée — sans double saisie ni risque d'écart entre la caution et la
+  commission facturée.
 - **Recherche par période** : la date de prise et la date de main levée peuvent chacune être
   filtrées indépendamment sur une plage précise.
-- **Export PDF** : état complet des cautions (avec filtres) exportable en un clic pour le reporting
-  ou le partage externe.
+- **Export PDF ou Excel** : état complet des cautions (avec filtres) exportable en un clic, au
+  format PDF pour le partage externe ou Excel pour le retraitement et l'analyse en interne.
 - **Couverture** : prise → suivi mensuel des commissions → main levée, pour les quatre banques
   partenaires citées.
 

@@ -187,9 +187,9 @@ Créé le 2026-07-04 pour remplacer les seuils J-7/J-30 auparavant codés en dur
 
 | Méthode | URL | `@PreAuthorize` | Justification |
 |---|---|---|---|
-| POST | `/rapprochement/process/echeance-cmt` | `FINANCE_OR_ADMIN` (hérité du niveau classe) | Validation d'une échéance CMT — crée la transaction bancaire et passe l'échéance en PAYE. Délègue à `ICmtValidationService.processCmtTransaction()` (module `cmt`, cf. Bounded Context — `architecture.md`, Règle 1). |
+| POST | `/rapprochement/process` | `FINANCE_OR_ADMIN` (hérité du niveau classe) | Validation d'une échéance CMT (parmi toutes les autres sources) — crée la transaction bancaire et passe l'échéance en PAYE. Dispatche vers `CmtBatchValidationHandler`, qui délègue à `ICmtValidationService.processCmtTransaction()` (module `cmt`, cf. Bounded Context — `architecture.md`, Règle 1). |
 
-Cet endpoint appartient au controller `ValidationController` du module `validation`, protégé au niveau classe par `@PreAuthorize(FINANCE_OR_ADMIN)` (sécurisé pour l'ensemble de ses ~25 endpoints lors du sweep Leasing, cf. `docs/rbac/leasing.md`). Il n'est donc pas re-documenté en détail ici — seule sa présence et sa délégation vers le module `cmt` sont trackées pour la cohérence de ce document.
+Cet endpoint appartient au controller `ValidationController` du module `validation`, protégé au niveau classe par `@PreAuthorize(FINANCE_OR_ADMIN)` (sécurisé lors du sweep Leasing, cf. `docs/rbac/leasing.md`, puis consolidé le 19/09/2026 — voir Chapitre 28 — Validation). Il n'est donc pas re-documenté en détail ici — seule sa présence et sa délégation vers le module `cmt` sont trackées pour la cohérence de ce document.
 
 ---
 
@@ -198,6 +198,7 @@ Cet endpoint appartient au controller `ValidationController` du module `validati
 | Route | Guard | Rôle vérifié |
 |---|---|---|
 | `/portail/cmt` (parent — `encours`, `en-attente-de-ML`, `archives`, `new`, `edit/:id`, `:id/tableau-amortissement`) | `departmentGuard('Finance')` | `DEPT_Finance:MEMBER` ou `DEPT_Finance:DIRECTOR`. `SYSTEM_ADMIN` passe toujours. |
+| `/portail/cmt/echeances/edit/:id` — nouveau (21/09/2026) | `departmentGuard('Finance')` (hérité du parent) + `systemAdminGuard` (posé sur la route elle-même) | `SYSTEM_ADMIN` uniquement — remplace le dialogue d'édition d'échéance de `TableauAmortissementComponent`, même restriction que le `PUT /echeances-cmt/{id}` (`ADMIN_ONLY`) qu'elle appelle. Atteignable aussi depuis `RecapitulatifComponent` (`CREATE_EDIT_ELIGIBILITY[CMT]`), qui vérifie `authService.isSystemAdmin()` avant d'afficher le bouton « Éditer ». |
 | `/portail/admin/cmt-config` (parent `admin.routes.ts`) — nouveau | `systemAdminGuard` (posé au niveau de `/portail/admin` dans `portail.routes.ts`) | `SYSTEM_ADMIN` uniquement. |
 
 > **Corrigé pendant ce sweep** : la route racine `cmt-routing.ts` n'avait initialement **aucun guard** — accessible à tout utilisateur authentifié quel que soit son département. Ajout de `departmentGuard('Finance')` sur toutes les routes du module, cohérent avec le backend et avec le pattern déjà en place sur `leasing-routing.module.ts`.
@@ -578,6 +579,7 @@ Créé pendant le sweep Leasing (2026-07-04) pour remplacer `leasing.contract.va
 | `/portail/leasing/organismesLeasing` (parent — liste, `new`, `edit/:id`) | `departmentGuard('Finance')` | `DEPT_Finance:MEMBER` ou `DEPT_Finance:DIRECTOR`. `SYSTEM_ADMIN` passe toujours. |
 | `/portail/leasing/contratsCadres` | `departmentGuard('Finance')` | Idem. |
 | `/portail/leasing/contratsLeasing` (parent — `encours`, `en-attente-de-ML`, `archives`, `creation/*`, `:id/tableau-amortissement`) | `departmentGuard('Finance')` | Idem. |
+| `/portail/leasing/echeances/edit/:id` — nouveau (21/09/2026) | `departmentGuard('Finance')` + `systemAdminGuard` (les deux posés directement sur la route) | `SYSTEM_ADMIN` uniquement — remplace le dialogue d'édition d'échéance de `TableauAmortissementComponent`, même restriction que le `PUT /echeances-leasing/{id}` (`ADMIN_ONLY`) qu'elle appelle. Atteignable aussi depuis `RecapitulatifComponent` (`CREATE_EDIT_ELIGIBILITY[LEASING]`), qui vérifie `authService.isSystemAdmin()` avant d'afficher le bouton « Éditer ». |
 | `/portail/admin/leasing-config` (parent `admin.routes.ts`) | `systemAdminGuard` (posé au niveau de `/portail/admin` dans `portail.routes.ts`) | `SYSTEM_ADMIN` uniquement. |
 
 ---
@@ -628,11 +630,11 @@ Créé pendant le sweep Leasing (2026-07-04) pour remplacer `leasing.contract.va
 
 ### Point hors périmètre — corrigé a posteriori (2026-07-04)
 
-`ValidationController` (`/rapprochement/*`, module `validation`, hors périmètre `leasing/`) expose `/rapprochement/process/echeance-leasing`, qui délègue à `LeasingValidationService.processLeasingTransaction()`. Signalé initialement comme **sans aucune annotation `@PreAuthorize`** — ni au niveau classe ni au niveau méthode — comme les ~24 autres endpoints `/rapprochement/process/*` de ce même controller (CMT, virements, chèques, LCN, agios, commission, etc.).
+`ValidationController` (`/rapprochement/*`, module `validation`, hors périmètre `leasing/`) exposait alors `/rapprochement/process/echeance-leasing`, qui délègue à `LeasingValidationService.processLeasingTransaction()`. Signalé initialement comme **sans aucune annotation `@PreAuthorize`** — ni au niveau classe ni au niveau méthode — comme les ~24 autres endpoints `/rapprochement/process/*` de ce même controller (CMT, virements, chèques, LCN, agios, commission, etc.) qui existaient à l'époque.
 
 **Corrigé (décision utilisateur explicite)** : `@PreAuthorize` posé au niveau classe sur `ValidationController` avec la même expression `FINANCE_OR_ADMIN` (`hasAnyAuthority('DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR', 'SYSTEM_ADMIN')`) que les autres controllers du repo, plus `@SecurityRequirement(name = "bearerAuth")`. Ce correctif sécurise les 25 endpoints du controller d'un coup (pas seulement celui du leasing), puisqu'ils partageaient tous la même faille.
 
-Cette correction a été appliquée dans le cadre du sweep Leasing car elle touchait directement son endpoint de validation, mais `ValidationController` reste dans le périmètre du module `validation`, pas `leasing/` : une fiche `docs/rbac/validation.md` dédiée (couvrant les 24 autres endpoints en détail, un par un) reste à créer lors d'un futur sweep complet de `validation`/`rapprochement`.
+Cette correction a été appliquée dans le cadre du sweep Leasing car elle touchait directement son endpoint de validation. `ValidationController` a depuis été entièrement consolidé (19/09/2026, voir Chapitre 28 — Validation) : il n'expose plus que `POST /rapprochement/process` et `DELETE /rapprochement/annuler/{id}`, tous deux sous le même `@PreAuthorize` de classe — le détail par endpoint promis ci-dessus n'a donc plus lieu d'être, il n'y a plus qu'un seul endpoint à documenter.
 
 *Ces financements interviennent souvent dans le cadre d'un Marché ; les fiches suivantes couvrent les Marchés et leurs modules satellites.*
 
@@ -748,7 +750,8 @@ private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
 | GET | `/cautions/{id}` | `FINANCE_OR_ADMIN` | Lecture. |
 | GET | `/cautions` (recherche) | `FINANCE_OR_ADMIN` | Liste paginée avec filtres. |
 | GET | `/cautions/export/pdf` | `FINANCE_OR_ADMIN` | Export PDF — mêmes filtres que la recherche, sans pagination. Paramètre optionnel `colonnes` (nouveau, 23/07/2026) : restreint les colonnes incluses dans le document ; absent, vide, ou sans valeur reconnue ⇒ toutes les colonnes. N'affecte pas le niveau d'autorisation. |
-| PUT | `/cautions/{id}` | `FINANCE_OR_ADMIN` | Modification — bloquée en service si la caution est clôturée. |
+| GET | `/cautions/export/excel` | `FINANCE_OR_ADMIN` | Export Excel (.xlsx) (nouveau, 20/09/2026) — mêmes filtres, mêmes règles pour `colonnes` et même niveau d'autorisation que `/cautions/export/pdf` ; seul le format de sortie diffère. Généré via `StaportExcelReportService` (Apache POI), pendant transversal de `StaportPdfReportService` dans `staport.finance.gBanque.reports.service`. |
+| PUT | `/cautions/{id}` | `FINANCE_OR_ADMIN` | Modification — autorisée même si la caution est clôturée (nouveau, 20/09/2026) : recalcule alors automatiquement la commission de clôture si un champ qui l'influence change, bloquée en service (exception métier, pas RBAC) si cette commission est déjà `PAYE` ou introuvable. N'affecte pas le niveau d'autorisation. |
 | DELETE | `/cautions/{id}` | `SYSTEM_ADMIN` | Règle transverse (`conventions/security.md`) : suppression toujours `SYSTEM_ADMIN`. Bloquée en service si la caution est clôturée. |
 | POST | `/cautions/{id}/cloturer` | `FINANCE_OR_ADMIN` | Clôture (main levée) — génère la commission de clôture (+ TVA si requise par la banque). |
 | POST | `/cautions/generer-commissions` | `FINANCE_OR_ADMIN` | Déclenchement manuel de la génération mensuelle des commissions. |
@@ -1220,8 +1223,8 @@ explicitement réannotées.
 | GET | `/cheques/encaissements/encours/{banqueId}/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (22/07/2026) — export PDF de l'encours d'encaissement filtré, sans pagination. |
 | GET | `/cheques/decaissements/encours/{banqueId}/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (22/07/2026) — export PDF de l'encours de décaissement filtré, sans pagination. |
 
-Endpoints de validation (rapprochement) : voir `docs/rbac/validation.md` (`ValidationController`,
-`/rapprochement/process/{decaissement,encaissement}/cheque`).
+Endpoint de validation (rapprochement) : voir Chapitre 28 — Validation (`ValidationController`,
+`POST /rapprochement/process`).
 
 ---
 
@@ -1289,8 +1292,8 @@ explicitement réannotées.
 | GET | `/lcns/encaissements/encours/{banqueId}/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (22/07/2026) — export PDF de l'encours d'encaissement filtré, sans pagination. |
 | GET | `/lcns/decaissements/encours/{banqueId}/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (22/07/2026) — export PDF de l'encours de décaissement filtré, sans pagination. |
 
-Endpoints de validation (rapprochement) : voir `docs/rbac/validation.md` (`ValidationController`,
-`/rapprochement/process/{decaissement,encaissement}/lcn`).
+Endpoint de validation (rapprochement) : voir Chapitre 28 — Validation (`ValidationController`,
+`POST /rapprochement/process`).
 
 ---
 
@@ -1359,8 +1362,8 @@ explicitement réannotées.
 | GET | `/virements/encaissement/encours/{banqueId}/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (22/07/2026) — export PDF de l'encours d'encaissement filtré, sans pagination. |
 | GET | `/virements/decaissement/encours/{banqueId}/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (22/07/2026) — export PDF de l'encours de décaissement filtré, sans pagination. |
 
-Endpoints de validation (rapprochement) : voir `docs/rbac/validation.md` (`ValidationController`,
-`/rapprochement/process/{decaissement,encaissement}/virement`).
+Endpoint de validation (rapprochement) : voir Chapitre 28 — Validation (`ValidationController`,
+`POST /rapprochement/process`).
 
 ---
 
@@ -1431,8 +1434,8 @@ explicitement réannotées.
 | GET | `/virements-internationaux/encaissement/encours/{banqueId}/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (22/07/2026) — export PDF de l'encours d'encaissement filtré, sans pagination. |
 | GET | `/virements-internationaux/decaissement/encours/{banqueId}/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (22/07/2026) — export PDF de l'encours de décaissement filtré, sans pagination. |
 
-Endpoints de validation (rapprochement) : voir `docs/rbac/validation.md` (`ValidationController`,
-`/rapprochement/process/{decaissement,encaissement}/virement-international`).
+Endpoint de validation (rapprochement) : voir Chapitre 28 — Validation (`ValidationController`,
+`POST /rapprochement/process`).
 
 ---
 
@@ -1495,8 +1498,8 @@ explicitement réannotée.
 | GET | `/misesADisposition/encours/decaissements/{banqueId}/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (22/07/2026) — export PDF de l'encours de décaissement filtré, sans pagination. |
 | GET | `/misesADisposition/encours/encaissements/{banqueId}/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (23/07/2026) — export PDF de l'encours d'encaissement filtré, sans pagination. Écran "Encaissements / Mise à disposition" du module États des encours (jusqu'ici seul le flux décaissement avait un export). |
 
-Endpoints de validation (rapprochement) : voir `docs/rbac/validation.md` (`ValidationController`,
-`/rapprochement/process/{decaissement,encaissement}/mise-a-disposition`).
+Endpoint de validation (rapprochement) : voir Chapitre 28 — Validation (`ValidationController`,
+`POST /rapprochement/process`).
 
 ---
 
@@ -1612,9 +1615,9 @@ Virement International / Mise à Disposition.
 | GET | `/prelevements/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (22/07/2026) — export PDF de la liste filtrée (mêmes filtres que `POST /prelevements/search`), sans pagination. |
 | GET | `/prelevements/encours/{banqueId}/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (22/07/2026) — export PDF de l'encours de prélèvements filtré, sans pagination. |
 
-Endpoints de validation (rapprochement) : voir `docs/rbac/validation.md` (`ValidationController`,
-`/rapprochement/process/prelevement`) — protégé par le `@PreAuthorize` de classe de
-`ValidationController` (n'était pas affecté par la faille ci-dessus, propre à `PrelevementController`).
+Endpoint de validation (rapprochement) : voir Chapitre 28 — Validation (`ValidationController`,
+`POST /rapprochement/process`) — protégé par le `@PreAuthorize` de classe de `ValidationController`
+(n'était pas affecté par la faille ci-dessus, propre à `PrelevementController`).
 
 ---
 
@@ -1714,7 +1717,7 @@ suppression ni action réservée `SYSTEM_ADMIN` dans ce module).
 | GET | `/transactions/{id}` | `FINANCE_OR_ADMIN` (classe) | Lecture d'une transaction. |
 | GET | `/transactions/{banqueId}/transactions` | `FINANCE_OR_ADMIN` (classe) | Transactions agrégées d'une banque. |
 | GET | `/transactions/{banqueId}/transactions/export/pdf` | `FINANCE_OR_ADMIN` (classe) | Nouveau (23/07/2026) — export PDF des transactions d'une banque, mêmes critères que l'endpoint ci-dessus, sans pagination. Écran "Rapprochement en cours" du module États des encours. |
-| PATCH | `/transactions/{transactionId}` | `FINANCE_OR_ADMIN` (classe) | Modification (dates, TVA) — consommée notamment par les écrans Rapprochement / États des encours. Bloquée en service si le rapprochement est définitivement clôturé. |
+| PATCH | `/transactions/{transactionId}` | `FINANCE_OR_ADMIN` (classe) | Modification d'une transaction déjà validée (dates, libellé, observation, TVA recalculée par `TvaResolver`) — le montant, la banque et la date d'émission ne sont pas éditables. Propagation automatique des champs partagés vers l'entité source (architecture.md, Règle 2). Consommée par les écrans Rapprochement (en cours et historique/détails) / États des encours. Bloquée en service si le rapprochement est définitivement clôturé. |
 
 **Corrigé pendant ce sweep** : le controller n'avait auparavant aucun `@PreAuthorize` — seule la
 règle globale `anyRequest().authenticated()` (`SecurityConfig`) s'appliquait, ce qui permettait à
@@ -1814,9 +1817,8 @@ concerné (bouton "Exporter PDF" — pas de garde supplémentaire au-delà de l'
 | GET | `/frais-bancaire/encours/{banqueId}/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (23/07/2026) — export PDF de l'encours de frais bancaires d'une banque, mêmes critères que l'endpoint ci-dessus, sans pagination. Écran "Décaissements / Frais Bancaires" du module États des encours. |
 | PATCH | `/frais-bancaire/{id}/toggle-status` | `SYSTEM_ADMIN` | Changement de statut réservé à `SYSTEM_ADMIN`, aligné sur tous les modules moyens de paiement / charges (Chèques, LCN, Virements, Impôts et Taxes, Impayées, Commissions). |
 
-Endpoint de validation (rapprochement) : voir `docs/rbac/validation.md` (`ValidationController`,
-`/rapprochement/process/frais-bancaire`) — protégé par le `@PreAuthorize` de classe de
-`ValidationController`.
+Endpoint de validation (rapprochement) : voir Chapitre 28 — Validation (`ValidationController`,
+`POST /rapprochement/process`) — protégé par le `@PreAuthorize` de classe de `ValidationController`.
 
 `ChargesFixesScheduler` (génération automatique mensuelle) appelle directement
 `IFraisBancaireService.createFraisBancaire(...)` côté serveur — hors périmètre HTTP, aucun
@@ -2037,9 +2039,8 @@ Les définitions de charges lues par ce scheduler sont administrables via
 | PATCH | `/impots-taxes/{id}/toggle-status` | `SYSTEM_ADMIN` | Changement de statut réservé à `SYSTEM_ADMIN`, aligné sur tous les modules moyens de paiement / charges (Chèques, LCN, Virements, Virement International, Mise à Disposition, Prélèvements). |
 | POST | `/impots-taxes/fusionner` | `FINANCE_OR_ADMIN` | Fusion de TVA réservée à l'équipe Finance ou à l'admin système. |
 
-Endpoint de validation (rapprochement) : voir `docs/rbac/validation.md` (`ValidationController`,
-`/rapprochement/process/impot-taxe`) — protégé par le `@PreAuthorize` de classe de
-`ValidationController`.
+Endpoint de validation (rapprochement) : voir Chapitre 28 — Validation (`ValidationController`,
+`POST /rapprochement/process`) — protégé par le `@PreAuthorize` de classe de `ValidationController`.
 
 ---
 
@@ -2126,9 +2127,9 @@ Les définitions de charges lues par ce scheduler sont administrables via
 | PATCH | `/commissions/{id}/toggle-status` | `SYSTEM_ADMIN` | Changement de statut réservé à `SYSTEM_ADMIN`, aligné sur tous les modules moyens de paiement / charges (Chèques, LCN, Virements, Virement International, Mise à Disposition, Prélèvements, Impôts et Taxes). |
 | POST | `/commissions/fusionner` | `FINANCE_OR_ADMIN` | Fusion de commissions sur cautions réservée à l'équipe Finance ou à l'admin système. |
 
-Endpoint de validation (rapprochement) : voir `docs/rbac/validation.md` (`ValidationController`,
-`/rapprochement/process/commission`) — protégé par le `@PreAuthorize` de classe de
-`ValidationController` (`FINANCE_OR_ADMIN`).
+Endpoint de validation (rapprochement) : voir Chapitre 28 — Validation (`ValidationController`,
+`POST /rapprochement/process`) — protégé par le `@PreAuthorize` de classe de `ValidationController`
+(`FINANCE_OR_ADMIN`).
 
 ### Endpoints (`CommissionConfigController`, base `/commission-config`)
 
@@ -2227,9 +2228,8 @@ Impôts et Taxes). Le RBAC applicable est celui de l'action déclenchante dans l
 | GET | `/impayees/encours/{banqueId}/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (23/07/2026) — export PDF de l'encours d'une banque (mêmes filtres que `GET /impayees/encours/{banqueId}`, `type` inclus, ignore la pagination). Bouton "Exporter PDF" sur les deux écrans d'encours (`DecaissementEncoursImpayeeComponent` et `EncaissementEncoursImpayeeComponent`, États des encours), chacun fixant `type` à sa direction. |
 | PATCH | `/impayees/{id}/toggle-status` | `SYSTEM_ADMIN` | Changement de statut réservé à `SYSTEM_ADMIN`, aligné sur tous les modules moyens de paiement / charges (Chèques, LCN, Virements, Virement International, Mise à Disposition, Prélèvements, Impôts et Taxes, Commissions). |
 
-Endpoint de validation (rapprochement) : voir `docs/rbac/validation.md` (`ValidationController`,
-`/rapprochement/process/impayee`) — protégé par le `@PreAuthorize` de classe de
-`ValidationController`.
+Endpoint de validation (rapprochement) : voir Chapitre 28 — Validation (`ValidationController`,
+`POST /rapprochement/process`) — protégé par le `@PreAuthorize` de classe de `ValidationController`.
 
 ---
 
@@ -2297,9 +2297,8 @@ accès à l'écran, cohérent avec `FINANCE_OR_ADMIN` côté backend sur les deu
 | GET | `/operation-errone/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (23/07/2026) — export PDF de la liste filtrée (mêmes filtres que `POST /operation-errone/search`, ignore la pagination). Bouton "Exporter PDF" sur l'écran liste (`OperationErroneListComponent`). Aucun export n'existait sur ce module avant cette date. |
 | GET | `/operation-errone/encours/{banqueId}/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (23/07/2026) — export PDF de l'encours d'une banque (mêmes filtres que `GET /operation-errone/encours/{banqueId}`, ignore la pagination). Bouton "Exporter PDF" sur l'écran encours (`EncoursOperationErroneComponent`, États des encours → Décaissement). |
 
-Endpoint de validation (rapprochement) : voir `docs/rbac/validation.md` (`ValidationController`,
-`/rapprochement/process/operation-errone`) — protégé par le `@PreAuthorize` de classe de
-`ValidationController`.
+Endpoint de validation (rapprochement) : voir Chapitre 28 — Validation (`ValidationController`,
+`POST /rapprochement/process`) — protégé par le `@PreAuthorize` de classe de `ValidationController`.
 
 ---
 
@@ -2365,12 +2364,10 @@ d'export.
 | GET | `/provision/export/pdf` | `FINANCE_OR_ADMIN` | Export PDF de la liste filtrée (mêmes filtres que `POST /provision/search`, ignore la pagination). Bouton "Exporter PDF" sur l'écran liste (`ProvisionListComponent`). |
 | GET | `/provision/encours/{banqueId}/export/pdf` | `FINANCE_OR_ADMIN` | Export PDF de l'encours d'une banque (mêmes filtres que `GET /provision/encours/{banqueId}`, ignore la pagination). Bouton "Exporter PDF" sur chacun des deux écrans d'encours (États des encours → Décaissement / Encaissement → Provisions). |
 
-Endpoint de validation (rapprochement) : voir chapitre Validation (`ValidationController`,
-`/rapprochement/process/provision`) — protégé par le `@PreAuthorize` de classe de
-`ValidationController`. Contrairement aux modules à double sens historiques (Virement, Chèque, LCN,
-Mise à disposition, Virement International), Provision n'a qu'un seul endpoint de validation : le
-sens de la transaction générée est déterminé côté backend par `provision.getSens()`, pas par
-l'écran appelant.
+Endpoint de validation (rapprochement) : voir Chapitre 28 — Validation (`ValidationController`,
+`POST /rapprochement/process`) — protégé par le `@PreAuthorize` de classe de `ValidationController`.
+Le sens de la transaction générée est déterminé côté backend par `provision.getSens()`, jamais
+transmis par l'appelant.
 
 ---
 
@@ -2438,9 +2435,8 @@ Aucune divergence backend/frontend : les deux premières actions ci-dessus sont 
 | GET | `/restitutions/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (23/07/2026) — export PDF de la liste filtrée (mêmes filtres que `POST /restitutions/search`, ignore la pagination). Bouton "Exporter PDF" sur l'écran liste (`RestitutionListComponent`). Aucun export n'existait sur ce module avant cette date. |
 | GET | `/restitutions/encours/{banqueId}/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (23/07/2026) — export PDF de l'encours d'une banque (mêmes filtres que `GET /restitutions/encours/{banqueId}`, ignore la pagination). Bouton "Exporter PDF" sur l'écran encours (`EncoursRestitutionComponent`, États des encours → Encaissement). |
 
-Endpoint de validation (rapprochement) : voir `docs/rbac/validation.md` (`ValidationController`,
-`/rapprochement/process/restitution`) — protégé par le `@PreAuthorize` de classe de
-`ValidationController`.
+Endpoint de validation (rapprochement) : voir Chapitre 28 — Validation (`ValidationController`,
+`POST /rapprochement/process`) — protégé par le `@PreAuthorize` de classe de `ValidationController`.
 
 ---
 
@@ -2580,44 +2576,31 @@ static final String FINANCE_OR_ADMIN =
 
 ### Endpoints — `ValidationController` (base `/rapprochement`)
 
-`@PreAuthorize(FINANCE_OR_ADMIN)` posé au niveau classe — couvre les 27 endpoints d'un coup, y
+`@PreAuthorize(FINANCE_OR_ADMIN)` posé au niveau classe — couvre les 2 endpoints d'un coup, y
 compris l'annulation de transaction (voir justification dans `docs/rbac/transactions.md`, section
 "Endpoint hors module").
 
 | Méthode | URL | Module source délégué |
 |---|---|---|
-| POST | `/rapprochement/process/echeance-leasing` | Leasing |
-| POST | `/rapprochement/process/echeance-cmt` | CMT |
-| POST | `/rapprochement/process/decaissement/mise-a-disposition` | Mise à disposition |
-| POST | `/rapprochement/process/encaissement/mise-a-disposition` | Mise à disposition |
-| POST | `/rapprochement/process/decaissement/virement` | Virements |
-| POST | `/rapprochement/process/encaissement/virement` | Virements |
-| POST | `/rapprochement/process/decaissement/cheque` | Chèques |
-| POST | `/rapprochement/process/encaissement/cheque` | Chèques |
-| POST | `/rapprochement/process/decaissement/lcn` | LCN |
-| POST | `/rapprochement/process/encaissement/lcn` | LCN |
-| POST | `/rapprochement/process/prefinancement` | Préfinancement |
-| POST | `/rapprochement/process/droit-constate` | Droits constatés |
-| POST | `/rapprochement/process/factoring` | Factoring |
-| POST | `/rapprochement/process/decompte` | Décomptes |
-| POST | `/rapprochement/process/commission` | Commission |
-| POST | `/rapprochement/process/agios` | Agios |
-| POST | `/rapprochement/process/prelevement` | Prélèvements |
-| POST | `/rapprochement/process/frais-bancaire` | Frais bancaires |
-| POST | `/rapprochement/process/impot-taxe` | Impôts et taxes |
-| POST | `/rapprochement/process/restitution` | Restitution |
-| POST | `/rapprochement/process/operation-errone` | Opérations erronées |
-| POST | `/rapprochement/process/decaissement/virement-international` | Virement international |
-| POST | `/rapprochement/process/encaissement/virement-international` | Virement international |
-| POST | `/rapprochement/process/impayee` | Impayées |
-| POST | `/rapprochement/process/provision` | Provision |
-| POST | `/rapprochement/process/lot` | Validation par lot (dispatch vers plusieurs des services ci-dessus, tout-ou-rien) |
+| POST | `/rapprochement/process` | Point d'entrée unique, toutes sources confondues (validation d'une seule opération ou d'un lot — dispatch vers le `BatchValidationHandler` de la source, tout-ou-rien) |
 | DELETE | `/rapprochement/annuler/{transactionId}` | Annulation de transaction (`ReverseTransactionService`) — documenté en détail dans `docs/rbac/transactions.md` |
 
-**Corrigé pendant ce sweep** : les 25 endpoints `POST /process/*` n'avaient aucun `@Operation`
-Swagger (le `@Tag`/`@SecurityRequirement` de classe existaient déjà, la restriction
-`FINANCE_OR_ADMIN` était donc déjà en place avant ce sweep — seule la documentation Swagger
-manquait).
+**19/09/2026 — Fusion complète validation unitaire + lot (architecture.md, Règle 1).** Les ~22
+endpoints `/process/{source}` (un par module source, plus `/process/echeance-leasing` et
+`/process/echeance-cmt`) et l'ancien `/process/lot` sont supprimés au profit du seul
+`POST /rapprochement/process` : valider une opération n'est qu'un cas particulier de valider un lot
+de taille 1 (`ids` à un élément). `BatchValidationRequestDto` porte désormais aussi `montantTva`,
+`observation` et `libelle` (n'autorisés que pour `ids` à un seul élément). Chaque
+`XxxValidationService` ne conserve qu'une seule méthode de validation par source ; le dispatch reste
+entièrement piloté par le registre de `BatchValidationHandler` (aucun changement pour ce mécanisme).
+`FINANCE_OR_ADMIN` reste la même restriction qu'avant sur le nouvel endpoint unique. Un handler a été
+ajouté à cette occasion : `LcnEscompteBatchValidationHandler` (`TransactionSource.LCN_ESCOMPTE`),
+qui n'avait jamais eu de handler de lot (seulement une validation unitaire via l'ancien endpoint
+dédié) — sans cet ajout, la fusion aurait cassé la validation des LCN d'escompte.
+
+Cette entrée remplace la précédente ("19/09/2026 — Fusion des endpoints à deux sens", qui avait
+réduit Mise à disposition/Virement/Chèque/LCN/Virement international de deux endpoints à un chacun)
+— entièrement absorbée par cette fusion plus large.
 
 ---
 
@@ -2714,9 +2697,55 @@ sélection du rapprochement actif).
 
 ### Actions conditionnées dans l'UI
 
-Aucune — toutes les actions de ce module (consultation, validation individuelle ou en lot, clôture,
-téléchargement PDF) sont disponibles à tout utilisateur ayant passé le `departmentGuard('Finance')`,
-sans condition de rôle supplémentaire dans les composants.
+Consultation, validation individuelle ou en lot, clôture, téléchargement PDF : disponibles à tout
+utilisateur ayant passé le `departmentGuard('Finance')`, sans condition de rôle supplémentaire.
+
+**Ajouter / Éditer (20/09/2026) — conditionnées par (source, sens), pas par un rôle.**
+`RecapitulatifComponent` route désormais vers l'écran dédié de création/édition de chaque source
+(mêmes pages, mêmes gardes `departmentGuard('Finance')` et mêmes endpoints `@PreAuthorize` que
+documentés dans le chapitre RBAC de chaque source — aucun nouvel endpoint, aucune autorisation
+modifiée) plutôt que de reconstruire un formulaire dans le récap. Le bouton « Éditer » par ligne et
+les entrées du menu « Ajouter » ne s'affichent que pour les combinaisons `(source, sens)` listées
+ci-dessous (`RecapitulatifComponent.CREATE_EDIT_ELIGIBILITY`/`CREATE_ROUTE`/`EDIT_ROUTE`) — matrice
+figée le 20/09/2026, reprise à l'identique du comportement des anciens écrans séparés par source :
+
+| Source | Sens éligible | Route Ajouter | Route Éditer |
+|---|---|---|---|
+| Virement | Encaissement uniquement | `/portail/Virements/new` | `/portail/Virements/edit/:id` |
+| Chèque | Encaissement uniquement | `/portail/Cheques/new` | `/portail/Cheques/edit/:id` |
+| LCN Encaissement | Les deux sens (nature imposée par le formulaire, pas par le récap) | `/portail/LCN/new` | `/portail/LCN/edit/:id` |
+| LCN Escompte (21/09/2026) | Les deux sens — même formulaire/id-space que LCN Encaissement (`LcnFormComponent`, contrôle `natureLcn`) | — (une seule carte « LCN » dans la modale Ajouter, `CREATE_ROUTE` n'a pas d'entrée dédiée puisque la route serait identique) | `/portail/LCN/edit/:id` |
+| Virement international | Les deux sens | `/portail/virements-internationaux/new` | `/portail/virements-internationaux/edit/:id` |
+| Préfinancement | Les deux sens | `/portail/préfinancements/new` | `/portail/préfinancements/edit/:id` |
+| Droit constaté | Les deux sens | `/portail/droits-constate/new` | `/portail/droits-constate/edit/:id` |
+| Factoring | Les deux sens | `/portail/factoring/new` | `/portail/factoring/edit/:id` |
+| Décomptes | Les deux sens (encaissement seul atteignable en pratique) | `/portail/decomptes/new` | `/portail/decomptes/edit/:id` |
+| Restitution | Les deux sens (encaissement seul atteignable en pratique) | `/portail/restitutions/new` | `/portail/restitutions/edit/:id` |
+| Impayée | Les deux sens | `/portail/impayees/new` | `/portail/impayees/edit/:id` |
+| Provision | Les deux sens | `/portail/provisions/new` | `/portail/provisions/edit/:id` |
+| Commission | Les deux sens (décaissement seul atteignable en pratique) | `/portail/commissions/new` | `/portail/commissions/edit/:id` |
+| Prélèvement | Les deux sens (décaissement seul atteignable en pratique) | `/portail/prelevements/new` | `/portail/prelevements/edit/:id` |
+| Frais bancaire | Les deux sens (décaissement seul atteignable en pratique) | `/portail/frais-bancaire/new` | `/portail/frais-bancaire/edit/:id` |
+| Opération erronée | Les deux sens (décaissement seul atteignable en pratique) | `/portail/operations/errones/new` | `/portail/operations/errones/edit/:id` |
+| Impôts et taxes | Les deux sens (décaissement seul atteignable en pratique) | `/portail/impots-taxes/new` | `/portail/impots-taxes/edit/:id` |
+| Leasing (21/09/2026) | Éditer uniquement (échéance `PREVU`), réservé `SYSTEM_ADMIN` | — (aucun endpoint de création d'une échéance seule n'existe) | `/portail/leasing/echeances/edit/:id` |
+| CMT (21/09/2026) | Éditer uniquement (échéance `PREVU`), réservé `SYSTEM_ADMIN` | — (aucun endpoint de création d'une échéance seule n'existe) | `/portail/cmt/echeances/edit/:id` |
+
+**Leasing/CMT — Éditer ajouté le 21/09/2026, dialogue remplacé par une page routée.** Le bouton
+« Éditer » par ligne réutilise `authService.isSystemAdmin()` en plus de `CREATE_EDIT_ELIGIBILITY`
+(voir `EDIT_REQUIRES_SYSTEM_ADMIN` dans `recapitulatif.component.ts`) pour ne s'afficher qu'aux
+administrateurs système, comme l'ancien dialogue sur l'écran de tableau d'amortissement. La
+restriction « échéance déjà payée » (statut `PAYE`) n'est pas vérifiable par le récap lui-même
+(`RecaputilatifItem` ne porte pas ce champ) : elle est vérifiée à l'ouverture de la page d'édition
+(après un `GET /echeances-leasing|cmt/{id}`) et, de toute façon, déjà bloquée par le backend
+(`PUT .../{id}` renvoie 400 si le statut n'est pas `PREVU`). Aucun bouton « Ajouter » pour ces deux
+sources : aucun endpoint de création d'une échéance seule n'existe (l'échéancier est généré à la
+création du contrat entier), donc `CREATE_ROUTE` n'a volontairement pas d'entrée pour elles.
+
+**Aucun bouton Ajouter/Éditer** pour Mise à disposition, Agios, `LCN_DECAISSEMENT`, Virement/Chèque
+en décaissement — comme dans les anciens écrans dédiés à ces combinaisons. Le retour au récap après
+un Ajouter/Éditer réussi repose sur `Location.back()`, déjà appelé par chaque formulaire en cas de
+succès — aucun mécanisme de retour n'a été ajouté spécifiquement pour le récap.
 
 ---
 
@@ -2728,7 +2757,7 @@ sans condition de rôle supplémentaire dans les composants.
 | Consulter le Récapitulatif, tous sens confondus ou filtré (API) | Équipe Finance (membre ou directeur), `SYSTEM_ADMIN` |
 | Exporter en PDF le Rapprochement en cours, le Récapitulatif ou l'encours d'un type d'opération | Équipe Finance (membre ou directeur), `SYSTEM_ADMIN` — même niveau que la consultation correspondante |
 | Consulter ou télécharger le récapitulatif général détaillé (API) | Équipe Finance (membre ou directeur), `SYSTEM_ADMIN` |
-| Valider un encours (individuel ou en lot) | Équipe Finance (membre ou directeur), `SYSTEM_ADMIN` — voir `docs/rbac/validation.md` |
+| Valider un encours (individuel ou en lot) | Équipe Finance (membre ou directeur), `SYSTEM_ADMIN` — voir Chapitre 28 — Validation |
 
 *Les modules suivants sont transverses.*
 

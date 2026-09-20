@@ -107,7 +107,7 @@ public class ImpayeeValidationService implements IImpayeeValidationService {
 
     @Override
     @Transactional
-    public void syncImpayeeFromTransaction(Long impayeeId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncImpayeeFromTransaction(Long impayeeId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation impayée depuis transaction — id: {}", impayeeId);
 
         Impayee impayee = impayeeRepository.findById(impayeeId)
@@ -118,6 +118,8 @@ public class ImpayeeValidationService implements IImpayeeValidationService {
 
         impayee.setDateValeur(dateValeur);
         impayee.setDateOperation(dateOperation);
+        impayee.setLibelle(libelle);
+        impayee.setObservation(observation);
         impayeeRepository.save(impayee);
 
         log.info("Impayée id: {} synchronisée depuis transaction", impayeeId);

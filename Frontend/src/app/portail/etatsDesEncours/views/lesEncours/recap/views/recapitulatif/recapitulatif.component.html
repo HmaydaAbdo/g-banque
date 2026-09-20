@@ -1,6 +1,7 @@
 <p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
 
-<div class="flex flex-column gap-2 w-full">
+<div class="flex flex-column gap-2 w-full route-enter">
 
   <!-- ── Barre de filtres ─────────────────────────────────────────────────────
        Une seule surface au-dessus du tableau : les totaux et l'export sont
@@ -64,21 +65,12 @@
                        appendTo="body" styleClass="w-full"></p-multiSelect>
       </div>
 
-      <div class="flex flex-column gap-1 flex-1" style="min-width:170px;">
-        <label for="libelle">Libellé</label>
+      <div class="flex flex-column gap-1 flex-1" style="min-width:220px;">
+        <label for="libelleOuObservation">Libellé / Observation</label>
         <span class="p-input-icon-left w-full">
           <i class="pi pi-search"></i>
-          <input id="libelle" pInputText type="text" formControlName="libelle"
-                 placeholder="Rechercher..." class="w-full" />
-        </span>
-      </div>
-
-      <div class="flex flex-column gap-1 flex-1" style="min-width:170px;">
-        <label for="observation">Observation</label>
-        <span class="p-input-icon-left w-full">
-          <i class="pi pi-search"></i>
-          <input id="observation" pInputText type="text" formControlName="observation"
-                 placeholder="Rechercher..." class="w-full" />
+          <input id="libelleOuObservation" pInputText type="text" formControlName="libelleOuObservation"
+                 placeholder="Rechercher dans le libellé ou l'observation..." class="w-full" />
         </span>
       </div>
 
@@ -100,6 +92,28 @@
         <input id="montant" pInputText type="number" formControlName="montant"
                placeholder="0,00" class="w-full" />
       </div>
+
+      @if (showCommissionMotifFilter) {
+        <div class="flex flex-column gap-1" style="min-width:200px;">
+          <label for="commissionOperation">Motif Commission</label>
+          <p-dropdown inputId="commissionOperation" formControlName="commissionOperation"
+                      [options]="commissionOperationOptions"
+                      optionLabel="label" optionValue="value"
+                      placeholder="Tous les motifs" [showClear]="true" [filter]="true"
+                      appendTo="body" styleClass="w-full"></p-dropdown>
+        </div>
+      }
+
+      @if (showImpotTaxeMotifFilter) {
+        <div class="flex flex-column gap-1" style="min-width:200px;">
+          <label for="impotEtTaxeMotif">Motif Impôt/Taxe</label>
+          <p-dropdown inputId="impotEtTaxeMotif" formControlName="impotEtTaxeMotif"
+                      [options]="motifOptions"
+                      optionLabel="label" optionValue="value"
+                      placeholder="Tous les motifs" [showClear]="true" [filter]="true"
+                      appendTo="body" styleClass="w-full"></p-dropdown>
+        </div>
+      }
 
       <div class="flex-shrink-0">
         <button pButton pRipple type="button"
@@ -145,11 +159,28 @@
     }
   </div>
 
+  <!-- ── Barre de sélection multi-lignes — n'apparaît que si au moins une ligne est cochée ── -->
+  @if (selectedCount > 0) {
+  <div class="flex justify-content-end align-items-center gap-2 mb-2">
+    <span class="text-sm text-500 mr-2">
+      <strong>{{ selectedCount }}</strong> opération(s) sélectionnée(s) —
+      {{ montantTotalSelection | number:'1.2-2' }} MAD
+    </span>
+    <button type="button" pButton pRipple icon="pi pi-times" label="Effacer la sélection"
+            class="p-button-text p-button-secondary" (click)="clearSelection()"></button>
+    <button type="button" pButton pRipple icon="pi pi-check-square" label="Valider en lot ({{ selectedCount }})"
+            class="p-button-success" (click)="openLotModal()"></button>
+  </div>
+  }
+
   <!-- ── Tableau (totaux + export dans sa caption) ─────────────────────────── -->
   <div class="pg-table">
     <p-table
       #dt
       [value]="recapItems"
+      dataKey="compositeKey"
+      [selection]="pageSelection"
+      (selectionChange)="onSelectionChange($event)"
       [paginator]="true"
       [rows]="10"
       [totalRecords]="totalRecords"
@@ -191,6 +222,12 @@
             </span>
           }
 
+          <button type="button" pButton pRipple label="Ajouter" icon="pi pi-plus"
+                  size="small" severity="secondary"
+                  pTooltip="Créer une nouvelle opération — ouvre le formulaire dédié à la source"
+                  tooltipPosition="left"
+                  (click)="openAjouterModal()"></button>
+
           <button type="button" pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf"
                   size="small" severity="secondary"
                   pTooltip="Exporte exactement les lignes filtrées" tooltipPosition="left"
@@ -200,6 +237,9 @@
 
       <ng-template pTemplate="header">
         <tr>
+          <th style="width: 3rem">
+            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+          </th>
           <th pSortableColumn="sens" class="text-center white-space-nowrap">
             Sens
               <p-sortIcon field="sens"></p-sortIcon>
@@ -238,11 +278,15 @@
             ID source
               <p-sortIcon field="id.entityId"></p-sortIcon>
           </th>
+          <th style="width: 8rem;">Actions</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-item>
         <tr class="table-row">
+          <td>
+            <p-tableCheckbox [value]="item"></p-tableCheckbox>
+          </td>
           <td class="text-center white-space-nowrap">
             @if (item.sens === SensOperation.DECAISSEMENT) {
               <span class="sens-badge sens-decaissement" pTooltip="Sortie de trésorerie">
@@ -292,12 +336,34 @@
               {{ item.id }}
             </span>
           </td>
+          <td>
+            <div class="flex align-items-center gap-1">
+              <button
+                type="button" pButton pRipple icon="pi pi-pencil"
+                class="p-button-rounded p-button-info"
+                [disabled]="!canEditFromRecap(item)"
+                [pTooltip]="canEditFromRecap(item) ? 'Éditer' : 'Édition non disponible pour cette source depuis le récapitulatif'"
+                tooltipPosition="top"
+                (click)="editerItem(item)"
+              ></button>
+              @if (canValidateUnitairement(item)) {
+                <button
+                  type="button" pButton pRipple icon="pi pi-check"
+                  class="p-button-rounded p-button-success"
+                  pTooltip="Valider" tooltipPosition="top"
+                  (click)="openUnitValidation(item)"
+                ></button>
+              } @else {
+                <span class="text-400 text-xs" pTooltip="Cette source n'est pas encore validable depuis le récapitulatif — utilisez son écran dédié" tooltipPosition="top">—</span>
+              }
+            </div>
+          </td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="9" class="text-center p-4">
+          <td colspan="10" class="text-center p-4">
             <div class="flex flex-column align-items-center gap-3">
               <i class="pi pi-inbox text-4xl text-400"></i>
               <div class="text-700 font-semibold">Aucune opération trouvée</div>
@@ -315,7 +381,7 @@
 
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td colspan="9" class="text-center p-4">
+          <td colspan="10" class="text-center p-4">
             <div class="flex flex-column align-items-center gap-3">
               <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
               <div class="text-700 font-semibold">Chargement du récapitulatif...</div>
@@ -328,3 +394,182 @@
   </div>
 
 </div>
+
+<!-- ── Validation en lot (multi-sources) ─────────────────────────────────────
+     Contrairement à app-validation-lot-modal (une seule transactionSource par appel),
+     ce dialogue applique les mêmes champs communs à une sélection pouvant mélanger
+     plusieurs sources/sens : le composant découpe automatiquement la sélection en
+     groupes (source, sens) et enchaîne un appel POST /process/lot par groupe. -->
+<p-dialog header="Validation en lot" [(visible)]="displayLotModal"
+          [modal]="true" [style]="{width: '50vw'}"
+          [draggable]="false" [resizable]="false" [closable]="!isLotSubmitting">
+  @if (lotForm) {
+  <form [formGroup]="lotForm" (ngSubmit)="confirmLotValidation()">
+    <div class="flex align-items-center gap-3 mb-3 p-3 border-round surface-100">
+      <i class="pi pi-check-square text-xl"></i>
+      @if (lotGroups[0]; as group) {
+      <span>
+        <strong>{{ group.ids.length }}</strong> opération(s) de type
+        <strong>{{ labelSource(group.source) }} ({{ group.sens }})</strong> — montant total
+        <strong>{{ montantTotalSelection | number:'1.2-2' }} MAD</strong>
+      </span>
+      }
+    </div>
+
+    <div class="grid p-fluid mt-1">
+      <div class="col-12 md:col-6 mb-3">
+        <app-tva-input formControlName="tva" label="TVA" inputId="recapLotTva"
+                       [autoriserSaisieLibre]="false"></app-tva-input>
+        @if (isLotInvalid('tva')) {
+        <small class="p-error">{{ messageErreurTva(lotForm.get('tva')?.errors) }}</small>
+        }
+      </div>
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <p-calendar id="recapLotDateValeur" formControlName="dateValeur" [showOnFocus]="false"
+                      dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" appendTo="body"></p-calendar>
+          <label for="recapLotDateValeur">Date de valeur</label>
+        </span>
+        @if (isLotInvalid('dateValeur')) {
+        <small class="p-error">La date de valeur est obligatoire</small>
+        }
+      </div>
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <p-calendar id="recapLotDateOperation" formControlName="dateOperation" [showOnFocus]="false"
+                      dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" appendTo="body"></p-calendar>
+          <label for="recapLotDateOperation">Date de l'opération</label>
+        </span>
+        @if (isLotInvalid('dateOperation')) {
+        <small class="p-error">La date de l'opération est obligatoire</small>
+        }
+      </div>
+    </div>
+    <p class="text-500 text-sm mt-1 mb-3">
+      Le libellé, l'observation et la date d'émission d'origine de chaque opération sont conservés automatiquement.
+    </p>
+    <p-divider></p-divider>
+    <div class="flex justify-content-end gap-2">
+      <p-button label="Annuler" icon="pi pi-times" [outlined]="true" (onClick)="closeLotModal()"></p-button>
+      <p-button label="Valider le lot" icon="pi pi-check" type="submit"
+                [disabled]="lotForm.invalid || isLotSubmitting || selectedCount === 0"
+                [loading]="isLotSubmitting"></p-button>
+    </div>
+  </form>
+  }
+</p-dialog>
+
+<!-- ── Validation unitaire ────────────────────────────────────────────────────
+     Un seul dialogue générique, piloté par unitValidationConfigs (Map source → config, voir
+     le .ts) : chaque source enregistrée y décrit comment récupérer son détail, construire sa
+     requête backend et sa politique TVA. Ajouter une source ne demande plus qu'une entrée dans
+     cette Map, jamais un nouveau dialogue. Toutes les sources sont désormais câblées (voir
+     canValidateUnitairement()) : Leasing, CMT, Chèque, LCN (décaissement, encaissement et
+     escompte), Virement, Préfinancement, Factoring, Droit constaté, Décomptes, Restitution,
+     Provision, Impayée, Virement international, Mise à disposition, Agios, Commission, Frais
+     bancaire, Prélèvement, Impôt/Taxe et Opération erronée. TVA éditable pour toutes — 20% par
+     défaut pour Leasing, 0% par défaut (libre) pour les autres, comme leurs écrans dédiés
+     respectifs. -->
+<p-dialog header="Passage au rapprochement bancaire" [(visible)]="displayUnitValidationModal"
+          [modal]="true" [style]="{width: '50vw'}"
+          [draggable]="false" [resizable]="false"
+          [closable]="!isUnitValidationSubmitting"
+          (visibleChange)="!$event && closeUnitValidationModal()">
+  @if (isUnitValidationLoading) {
+    <div class="flex align-items-center justify-content-center gap-2 p-4">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Chargement des détails de l'échéance...</span>
+    </div>
+  } @else if (unitValidationDetail && unitValidationForm) {
+    <form [formGroup]="unitValidationForm" (ngSubmit)="confirmUnitValidation()">
+      <div class="grid p-fluid mt-3">
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <p-calendar id="recapUnitDateEmission" formControlName="dateEmission" [showOnFocus]="false" [disabled]="true" [iconDisplay]="'input'" [showIcon]="true" dateFormat="dd/mm/yy"></p-calendar>
+            <label for="recapUnitDateEmission">Date d'émission</label>
+          </span>
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <app-tva-input formControlName="tva" label="TVA Déductible"
+                         inputId="recapUnitTva"
+                         [montantMax]="montantMaxTvaUnitValidation"></app-tva-input>
+          @if (isUnitValidationInvalid('tva')) {
+          <small class="p-error">{{ messageErreurTva(unitValidationForm.get('tva')?.errors) }}</small>
+          }
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <p-calendar id="recapUnitDateValeur" formControlName="dateValeur" [showOnFocus]="false" dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" appendTo="body"></p-calendar>
+            <label for="recapUnitDateValeur">Date de valeur</label>
+          </span>
+          @if (isUnitValidationInvalid('dateValeur')) {
+          <small class="p-error">La date de valeur est obligatoire</small>
+          }
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <p-calendar id="recapUnitDateOperation" formControlName="dateOperation" [showOnFocus]="false" dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" appendTo="body"></p-calendar>
+            <label for="recapUnitDateOperation">Date de l'opération</label>
+          </span>
+          @if (isUnitValidationInvalid('dateOperation')) {
+          <small class="p-error">La date de l'opération est obligatoire</small>
+          }
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <textarea id="recapUnitLibelle" pInputTextarea formControlName="libelle" rows="3"></textarea>
+            <label for="recapUnitLibelle">Libellé</label>
+          </span>
+          @if (isUnitValidationInvalid('libelle')) {
+          <small class="p-error">Le libellé est obligatoire</small>
+          }
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <textarea id="recapUnitObservation" pInputTextarea formControlName="observation" rows="3"></textarea>
+            <label for="recapUnitObservation">Observation</label>
+          </span>
+          @if (isUnitValidationInvalid('observation')) {
+          <small class="p-error">Observation est obligatoire</small>
+          }
+        </div>
+      </div>
+      <p-divider></p-divider>
+      <div class="flex justify-content-end gap-2">
+        <p-button label="Annuler" icon="pi pi-times" [outlined]="true" (onClick)="closeUnitValidationModal()"></p-button>
+        <p-button label="Valider" icon="pi pi-check" type="submit"
+                  [disabled]="unitValidationForm.invalid || isUnitValidationSubmitting"
+                  [loading]="isUnitValidationSubmitting"></p-button>
+      </div>
+    </form>
+  }
+</p-dialog>
+
+<!-- ============ Ajouter — modale centrée avec recherche ============ -->
+<p-dialog header="Ajouter une opération" [(visible)]="displayAjouterModal"
+          [modal]="true" [style]="{width: '64vw'}"
+          [draggable]="false" [resizable]="false"
+          (onShow)="onAjouterModalShow()"
+          (visibleChange)="!$event && closeAjouterModal()">
+  <div class="flex flex-column gap-3">
+    <span class="p-input-icon-left w-full">
+      <i class="pi pi-search"></i>
+      <input #ajouterSearchInput type="text" pInputText class="w-full"
+             placeholder="Rechercher une source (virement, chèque, factoring…)"
+             [(ngModel)]="ajouterSearchTerm" autocomplete="off">
+    </span>
+
+    <div class="ajouter-grid">
+      @for (item of filteredAjouterItems; track item.source) {
+        <button type="button" pButton pRipple
+                class="p-button-text ajouter-card"
+                (click)="choisirAjouter(item)">
+          <span class="ajouter-card__icon"><i [class]="item.icon"></i></span>
+          <span class="ajouter-card__label">{{ item.label }}</span>
+        </button>
+      } @empty {
+        <p class="text-500 text-center py-4 m-0 col-12">Aucune source ne correspond à « {{ ajouterSearchTerm }} ».</p>
+      }
+    </div>
+  </div>
+</p-dialog>

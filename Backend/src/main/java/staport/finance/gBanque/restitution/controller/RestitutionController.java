@@ -7,15 +7,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.restitution.dtos.EncoursRestitution;
-import staport.finance.gBanque.restitution.dtos.EncoursRestitutionSearchDto;
 import staport.finance.gBanque.restitution.dtos.RestitutionRequestDto;
 import staport.finance.gBanque.restitution.dtos.RestitutionResponseDto;
 import staport.finance.gBanque.restitution.dtos.RestitutionSearchDto;
@@ -108,21 +105,6 @@ public class RestitutionController {
         return ResponseEntity.noContent().build();
     }
 
-    // --- Get Outstanding Restitutions ---
-    @Operation(summary = "Consulter les encours de restitutions d'une banque")
-    @GetMapping("/encours/{banqueId}")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<EncoursRestitution> getOutstandingRestitutions(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursRestitutionSearchDto searchDto,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        log.info("Requête REST pour récupérer les encours de restitutions pour la banque id={}", banqueId);
-        EncoursRestitution result = restitutionService.getOutstandingRestitutions(searchDto, banqueId, pageable);
-        log.info("Encours de restitutions récupérés: {} restitutions, total des encours={}",
-                result.page().getTotalElements(), result.totalDesEncours());
-        return ResponseEntity.ok(result);
-    }
-
     // --- Toggle Status ---
     @Operation(summary = "Changer le statut PREVU/PAYE", description = "Réservé SYSTEM_ADMIN.")
     @PatchMapping("/{id}/toggle-status")
@@ -140,21 +122,6 @@ public class RestitutionController {
     public ResponseEntity<byte[]> exporterPdf(@ModelAttribute RestitutionSearchDto searchDto) {
         byte[] pdf = restitutionService.exporterPdf(searchDto);
         String filename = "restitutions_" + LocalDate.now() + ".pdf";
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdf);
-    }
-
-    @Operation(summary = "Exporter l'encours de restitutions d'une banque en PDF", description = "Mêmes critères de filtre que l'encours, sans pagination.")
-    @GetMapping("/encours/{banqueId}/export/pdf")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<byte[]> exporterEncoursPdf(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursRestitutionSearchDto searchDto) {
-        byte[] pdf = restitutionService.exporterEncoursPdf(searchDto, banqueId);
-        String filename = "restitutions_encours_" + LocalDate.now() + ".pdf";
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")

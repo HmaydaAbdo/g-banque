@@ -33,10 +33,13 @@ public interface ICautionService {
     /**
      * Modifie une caution existante.
      * Tous les champs sont modifiables, y compris {@code numeroCaution},
-     * {@code dateDePrise} et {@code banqueId}.
+     * {@code dateDePrise} et {@code banqueId} — que la caution soit active ou déjà clôturée.
      *
-     * <p>Règle métier : la modification est interdite lorsque la caution est inactive
-     * ({@code actif = false}).
+     * <p>Règle métier : pour une caution déjà clôturée ({@code actif = false}),
+     * {@code dateDeMainLevee} reste obligatoire, et toute correction d'un champ impactant le
+     * calcul de la commission de clôture la recalcule automatiquement — bloqué si cette
+     * commission est déjà réglée (PAYE) ou introuvable (caution clôturée avant l'introduction
+     * de cette fonctionnalité).
      *
      * @param id  identifiant de la caution
      * @param dto données de modification
@@ -114,4 +117,17 @@ public interface ICautionService {
      * @return contenu binaire du PDF généré
      */
     byte[] exporterPdf(CautionSearchCriteria criteres, List<String> colonnes);
+
+    /**
+     * Génère un export Excel (.xlsx) de l'intégralité des cautions correspondant aux critères
+     * fournis — mêmes règles que {@link #exporterPdf} (pas de pagination, mêmes colonnes
+     * sélectionnables), seul le format de sortie diffère.
+     *
+     * @param criteres critères de filtrage (tous optionnels — mêmes filtres que la recherche paginée)
+     * @param colonnes clés des colonnes à inclure, dans l'ordre canonique du module
+     *                 (voir {@code CautionServiceImpl.CAUTION_EXPORT_COLUMNS}) ; {@code null} ou
+     *                 vide = toutes les colonnes (comportement par défaut, rétrocompatible)
+     * @return contenu binaire du classeur Excel généré
+     */
+    byte[] exporterExcel(CautionSearchCriteria criteres, List<String> colonnes);
 }

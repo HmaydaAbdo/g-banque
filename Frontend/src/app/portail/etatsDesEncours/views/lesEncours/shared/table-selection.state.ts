@@ -6,14 +6,20 @@
  * la persistance de la sélection entre deux pages chargées en lazy — dès que
  * `value` change (nouvelle page), la sélection peut être perdue de façon
  * silencieuse. Cette classe reprend le contrôle en conservant la sélection
- * dans une Map indexée par id, décorrélée de la page actuellement affichée.
+ * dans une Map indexée par clé, décorrélée de la page actuellement affichée.
  *
- * Usage dans un composant :
+ * Usage dans un composant (clé = id numérique, cas le plus courant) :
  * ```ts
  * selectionState = new TableSelectionState<VirementResponseDto>(v => v.id);
  *
  * get pageSelection() { return this.selectionState.getPageSelection(this.virements); }
  * onSelectionChange(sel: VirementResponseDto[]) { this.selectionState.onPageSelectionChange(this.virements, sel); }
+ * ```
+ *
+ * Usage avec une clé composite (ex. écran Récapitulatif, où `entityId` seul n'est
+ * unique que combiné à `source` — plusieurs sources peuvent porter le même id) :
+ * ```ts
+ * selectionState = new TableSelectionState<RecaputilatifItem, string>(item => `${item.source}:${item.id}`);
  * ```
  *
  * Usage dans le template :
@@ -32,9 +38,13 @@
  * PrimeNG interprète comme "la sélection a changé" en continu — d'où un
  * recalcul/re-rendu en boucle de la table, pouvant geler l'écran rien qu'en
  * changeant de page, même sans aucune case cochée.
+ *
+ * @template T Type des éléments de la table.
+ * @template K Type de la clé d'identité (`number` par défaut — id simple ; `string` pour une
+ *              clé composite, ex. `` `${source}:${id}` ``).
  */
-export class TableSelectionState<T> {
-  private readonly selectionMap = new Map<number, T>();
+export class TableSelectionState<T, K = number> {
+  private readonly selectionMap = new Map<K, T>();
 
   /** Incrémenté à chaque mutation réelle de la sélection (voir invalidation du cache ci-dessous). */
   private revision = 0;
@@ -44,15 +54,15 @@ export class TableSelectionState<T> {
   private cachedRevision = -1;
   private cachedResult: T[] = [];
 
-  constructor(private readonly getId: (item: T) => number) {}
+  constructor(private readonly getId: (item: T) => K) {}
 
   /** Tous les éléments actuellement sélectionnés, toutes pages confondues. */
   get selectedItems(): T[] {
     return Array.from(this.selectionMap.values());
   }
 
-  /** Les ids des éléments sélectionnés, toutes pages confondues. */
-  get selectedIds(): number[] {
+  /** Les clés des éléments sélectionnés, toutes pages confondues. */
+  get selectedIds(): K[] {
     return Array.from(this.selectionMap.keys());
   }
 

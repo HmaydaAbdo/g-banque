@@ -18,22 +18,15 @@ import java.time.LocalDate;
 public interface IChequeValidationService {
 
     /**
-     * Valide un chèque de décaissement : crée la transaction bancaire associée,
-     * attache au rapprochement cible et marque le chèque comme REGLE.
+     * Valide un chèque, décaissement ou encaissement indifféremment : crée la transaction
+     * bancaire associée, attache au rapprochement cible et marque le chèque comme REGLE. Le sens
+     * ({@code Cheque.type}) est lu directement sur l'entité par le mapper — jamais transmis par
+     * l'appelant, une seule méthode suffit pour les deux sens.
      *
      * @param requestDto DTO de la requête de validation
      * @return DTO de la transaction créée
      */
-    ChequeTransactionResponseDto processChequeDecaissementTransaction(ChequeTransactionRequest requestDto);
-
-    /**
-     * Valide un chèque d'encaissement : crée la transaction bancaire associée,
-     * attache au rapprochement cible et marque le chèque comme REGLE.
-     *
-     * @param requestDto DTO de la requête de validation
-     * @return DTO de la transaction créée
-     */
-    ChequeTransactionResponseDto processChequeEncaissementTransaction(ChequeTransactionRequest requestDto);
+    ChequeTransactionResponseDto processChequeTransaction(ChequeTransactionRequest requestDto);
 
     /**
      * Synchronise un chèque lié à une transaction mise à jour.
@@ -43,5 +36,5 @@ public interface IChequeValidationService {
      * @param dateValeur    nouvelle date de valeur de la transaction
      * @param dateOperation nouvelle date d'opération de la transaction
      */
-    void syncChequeFromTransaction(Long chequeId, LocalDate dateValeur, LocalDate dateOperation);
+    void syncChequeFromTransaction(Long chequeId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation);
 }

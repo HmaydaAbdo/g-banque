@@ -32,7 +32,6 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -189,62 +188,6 @@ public class VirementInternationalService {
     }
 
     /**
-     * Encours de décaissement pour une banque donnée : virements ENCOURS de type DECAISSEMENT
-     * dont la date d'émission ne dépasse pas la fin du mois en cours.
-     */
-    @Transactional(readOnly = true)
-    public EncoursVirementInternationalResponseDto getEncoursDecaissement(
-            EncoursVirementsInternationalSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.debug("Récupération des encours de décaissement pour la banque ID={} avec les filtres={}",
-                banqueId, searchDto);
-
-        banqueService.findOrThrow(banqueId);
-
-        Specification<VirementInternational> spec = VirementInternationalSpec.encoursDecaissement(banqueId, finDuMoisCourant())
-                .and(VirementInternationalSpec.hasDateEmission(searchDto.getDateEmission()))
-                .and(VirementInternationalSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(VirementInternationalSpec.hasMontant(searchDto.getMontant()))
-                .and(VirementInternationalSpec.hasEmetteur(searchDto.getEmetteur()));
-
-        Page<VirementInternational> virementPage = virementInternationalRepository.findAll(spec, stablePageable(pageable));
-
-        BigDecimal totalDesEncours = virementInternationalRepository.findAll(spec).stream()
-                .map(VirementInternational::getMontant)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        log.debug("Total des encours de décaissement pour la banque ID={}: {}", banqueId, totalDesEncours);
-        return new EncoursVirementInternationalResponseDto(totalDesEncours, virementPage.map(virementInternationalMapper::toDto));
-    }
-
-    /**
-     * Encours d'encaissement pour une banque donnée : virements ENCOURS de type ENCAISSEMENT
-     * dont la date d'émission ne dépasse pas la fin du mois en cours.
-     */
-    @Transactional(readOnly = true)
-    public EncoursVirementInternationalResponseDto getEncoursEncaissement(
-            EncoursVirementsInternationalSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.debug("Récupération des encours d'encaissement pour la banque ID={} avec les filtres={}",
-                banqueId, searchDto);
-
-        banqueService.findOrThrow(banqueId);
-
-        Specification<VirementInternational> spec = VirementInternationalSpec.encoursEncaissement(banqueId, finDuMoisCourant())
-                .and(VirementInternationalSpec.hasDateEmission(searchDto.getDateEmission()))
-                .and(VirementInternationalSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(VirementInternationalSpec.hasMontant(searchDto.getMontant()))
-                .and(VirementInternationalSpec.hasEmetteur(searchDto.getEmetteur()));
-
-        Page<VirementInternational> virementPage = virementInternationalRepository.findAll(spec, stablePageable(pageable));
-
-        BigDecimal totalDesEncours = virementInternationalRepository.findAll(spec).stream()
-                .map(VirementInternational::getMontant)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        log.debug("Total des encours d'encaissement pour la banque ID={}: {}", banqueId, totalDesEncours);
-        return new EncoursVirementInternationalResponseDto(totalDesEncours, virementPage.map(virementInternationalMapper::toDto));
-    }
-
-    /**
      * Supprime un virement international. La suppression n'est autorisée que si le virement n'est
      * pas déjà réglé.
      */
@@ -275,40 +218,6 @@ public class VirementInternationalService {
         List<String> filterLines = buildFilterSummary(searchDto);
 
         return generateVirementInternationalPdf("État des Virements Internationaux", virements, total, filterLines);
-    }
-
-    @Transactional(readOnly = true)
-    public byte[] exportEncoursEncaissementPdf(EncoursVirementsInternationalSearchDto searchDto, Long banqueId) {
-        Banque banque = banqueService.findOrThrow(banqueId);
-
-        Specification<VirementInternational> spec = VirementInternationalSpec.encoursEncaissement(banqueId, finDuMoisCourant())
-                .and(VirementInternationalSpec.hasDateEmission(searchDto.getDateEmission()))
-                .and(VirementInternationalSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(VirementInternationalSpec.hasMontant(searchDto.getMontant()))
-                .and(VirementInternationalSpec.hasEmetteur(searchDto.getEmetteur()));
-
-        List<VirementInternational> virements = virementInternationalRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-        BigDecimal total = sumMontant(spec);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banque.getNom());
-
-        return generateVirementInternationalPdf("Encours d'Encaissement — Virements Internationaux", virements, total, filterLines);
-    }
-
-    @Transactional(readOnly = true)
-    public byte[] exportEncoursDecaissementPdf(EncoursVirementsInternationalSearchDto searchDto, Long banqueId) {
-        Banque banque = banqueService.findOrThrow(banqueId);
-
-        Specification<VirementInternational> spec = VirementInternationalSpec.encoursDecaissement(banqueId, finDuMoisCourant())
-                .and(VirementInternationalSpec.hasDateEmission(searchDto.getDateEmission()))
-                .and(VirementInternationalSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(VirementInternationalSpec.hasMontant(searchDto.getMontant()))
-                .and(VirementInternationalSpec.hasEmetteur(searchDto.getEmetteur()));
-
-        List<VirementInternational> virements = virementInternationalRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-        BigDecimal total = sumMontant(spec);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banque.getNom());
-
-        return generateVirementInternationalPdf("Encours de Décaissement — Virements Internationaux", virements, total, filterLines);
     }
 
     private BigDecimal sumMontant(Specification<VirementInternational> spec) {
@@ -487,36 +396,11 @@ public class VirementInternationalService {
         return lines;
     }
 
-    private List<String> buildEncoursFilterSummary(EncoursVirementsInternationalSearchDto dto, String banqueNom) {
-        List<String> lines = new ArrayList<>();
-        if (banqueNom != null) {
-            lines.add("Banque : " + banqueNom);
-        }
-        if (dto == null) return lines;
-        if (dto.getBeneficiaire() != null && !dto.getBeneficiaire().isBlank())
-            lines.add("Bénéficiaire : " + dto.getBeneficiaire());
-        if (dto.getEmetteur() != null && !dto.getEmetteur().isBlank())
-            lines.add("Émetteur : " + dto.getEmetteur());
-        if (dto.getMontant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.getMontant()) + " MAD");
-        if (dto.getDateEmission() != null)
-            lines.add("Date émission : " + dto.getDateEmission().format(DATE_FMT));
-        return lines;
-    }
-
     // ── Helpers internes ──────────────────────────────────────────────────────
 
     private VirementInternational trouverOuLeverException(Long id) {
         return virementInternationalRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("VirementInternational with id " + id + " not found."));
-    }
-
-    /**
-     * Fin du mois courant — recalculée à chaque appel (et non mise en cache) pour que
-     * les calculs d'encours restent corrects après le premier jour suivant le déploiement.
-     */
-    private LocalDate finDuMoisCourant() {
-        return LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
     }
 
     private Pageable stablePageable(Pageable pageable) {

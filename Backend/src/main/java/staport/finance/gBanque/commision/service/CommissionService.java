@@ -26,6 +26,7 @@ import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.commision.dtos.*;
 import staport.finance.gBanque.commision.entities.Commission;
+import staport.finance.gBanque.commision.enums.TypeCommission;
 import staport.finance.gBanque.commision.mapper.CommissionMapper;
 import staport.finance.gBanque.commision.repository.CommisionRepository;
 import staport.finance.gBanque.commision.specs.CommissionSpecifications;
@@ -51,7 +52,6 @@ import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -77,8 +77,6 @@ public class CommissionService implements ICommissionService {
     private final StaportPdfReportService   staportPdfReportService;
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
-    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
     public CommissionService(CommisionRepository commissionRepository,
                              IBanqueService banqueService,
@@ -205,38 +203,6 @@ public class CommissionService implements ICommissionService {
         commissionRepository.delete(commission);
         log.info("Commission deleted successfully id={}", id);
     }
-    /**
-     * Retrieves a paginated list of outstanding commissions and calculates their total amount.
-     * Outstanding commissions are those with a 'PREVU' status and an emission date in the past.
-     *
-     * @param pageable Pagination and sorting information.
-     * @param searchDto Optional search criteria (e.g., for filtering by bank, libelle, etc.).
-     * @return An EncoursCommissionDto containing the page of commissions and the total outstanding amount.
-     */
-    @Transactional(readOnly = true)
-    public EncoursCommissionDto getOutstandingCommissions(EncoursCommissionSearchDto searchDto, Long banqueId, Pageable pageable) {
-        // Build the specification to filter the records
-        Specification<Commission> spec = Specification.where(CommissionSpecifications.outstandingUntil(endOfMonth))
-                .and(CommissionSpecifications.hasBanque(banqueId))
-                .and(CommissionSpecifications.hasLibelle(searchDto.libelle()))
-                .and(CommissionSpecifications.hasOperation(searchDto.operation()))
-                .and(CommissionSpecifications.hasMontant(searchDto.montant()));
-
-        // Garantir un tri stable par id pour éviter les doublons inter-pages
-        Pageable stablePageable = pageable.getSort().isSorted()
-                ? pageable
-                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id"));
-
-        Page<CommissionResponseDto> pageDto = commissionRepository
-                .findAll(spec, stablePageable)
-                .map(commissionMapper::toResponseDto);
-
-        BigDecimal totalDesEncours = sumMontant(spec);
-
-        return new EncoursCommissionDto(totalDesEncours, pageDto);
-    }
-
-
     // ── Export PDF ────────────────────────────────────────────────────────────
 
     /**
@@ -257,33 +223,6 @@ public class CommissionService implements ICommissionService {
         return genererPdf("État des Commissions", commissions, totalMontant, filterLines);
     }
 
-    /**
-     * Génère un export PDF de l'encours de commissions d'une banque (mêmes critères que
-     * {@link #getOutstandingCommissions}) — sans pagination : le fichier imprime la totalité des
-     * résultats filtrés, pas seulement la page affichée à l'écran.
-     */
-    @Transactional(readOnly = true)
-    public byte[] exporterEncoursPdf(EncoursCommissionSearchDto searchDto, Long banqueId) {
-        log.info("Export PDF encours commissions — banqueId={}", banqueId);
-
-        Specification<Commission> spec = Specification.where(CommissionSpecifications.outstandingUntil(endOfMonth))
-                .and(CommissionSpecifications.hasBanque(banqueId))
-                .and(CommissionSpecifications.hasLibelle(searchDto.libelle()))
-                .and(CommissionSpecifications.hasOperation(searchDto.operation()))
-                .and(CommissionSpecifications.hasMontant(searchDto.montant()));
-
-        List<Commission> commissions = commissionRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-
-        BigDecimal totalMontant = sumMontant(spec);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
-
-        return genererPdf("Encours des Commissions", commissions, totalMontant, filterLines);
-    }
-
-    /**
-     * Construit le document PDF partagé par {@link #exporterPdf} et {@link #exporterEncoursPdf} —
-     * même mise en page, seuls le titre, les lignes et le résumé de filtres varient.
-     */
     private byte[] genererPdf(String title, List<Commission> commissions, BigDecimal totalMontant, List<String> filterLines) {
         try {
             return staportPdfReportService.generateReport(
@@ -457,31 +396,6 @@ public class CommissionService implements ICommissionService {
             lines.add("Date de valeur min : " + dto.dateValeurDebut().format(DATE_FMT));
         if (dto.dateValeurFin() != null)
             lines.add("Date de valeur max : " + dto.dateValeurFin().format(DATE_FMT));
-
-        return lines;
-    }
-
-    /**
-     * Résumé des filtres pour l'export PDF de l'écran encours — {@code banqueId} vient du path
-     * variable (pas du DTO, contrairement à {@link #buildFilterSummary}).
-     */
-    private List<String> buildEncoursFilterSummary(EncoursCommissionSearchDto dto, Long banqueId) {
-        List<String> lines = new ArrayList<>();
-
-        try {
-            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
-        } catch (ResourceNotFoundException e) {
-            log.debug("Banque id={} introuvable pour le résumé de filtre export encours — ignorée", banqueId);
-        }
-
-        if (dto == null) return lines;
-
-        if (dto.libelle() != null && !dto.libelle().isBlank())
-            lines.add("Libellé : " + dto.libelle());
-        if (dto.operation() != null)
-            lines.add("Opération : " + dto.operation());
-        if (dto.montant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
 
         return lines;
     }
@@ -896,7 +810,7 @@ public class CommissionService implements ICommissionService {
     @Override
     @Transactional
     public CommissionResponseDto creerCommissionCaution(Long cautionId, Long banqueId, BigDecimal montant,
-            LocalDate dateEmission, String libelle, String observation) {
+            LocalDate dateEmission, String libelle, String observation, TypeCommission type) {
 
         Banque banque = banqueService.findOrThrow(banqueId);
 
@@ -908,14 +822,23 @@ public class CommissionService implements ICommissionService {
         commission.setLibelle(libelle);
         commission.setObservation(observation);
         commission.setStatus(Status.PREVU);
+        commission.setTypeCommission(type);
         // Référence par proxy — évite de charger l'entité Caution complète pour ce seul FK.
         commission.setCaution(entityManager.getReference(Caution.class, cautionId));
 
         Commission sauvegardee = commissionRepository.save(commission);
-        log.info("Commission caution créée — id={}, cautionId={}, montant={}",
-                sauvegardee.getId(), cautionId, montant);
+        log.info("Commission caution créée — id={}, cautionId={}, type={}, montant={}",
+                sauvegardee.getId(), cautionId, type, montant);
 
         return commissionMapper.toResponseDto(sauvegardee);
+    }
+
+    @Override
+    public List<CommissionResponseDto> findByCautionAndType(Long cautionId, TypeCommission type) {
+        return commissionRepository.findByCaution_IdAndTypeCommission(cautionId, type)
+                .stream()
+                .map(commissionMapper::toResponseDto)
+                .toList();
     }
 
     // ── Façade dédiée aux commissions générées automatiquement sur impôt/taxe ──

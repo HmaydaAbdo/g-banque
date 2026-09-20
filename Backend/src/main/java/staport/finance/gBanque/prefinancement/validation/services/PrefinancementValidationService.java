@@ -126,7 +126,7 @@ public class PrefinancementValidationService implements IPrefinancementValidatio
 
     @Override
     @Transactional
-    public void syncPrefinancementFromTransaction(Long prefinancementId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncPrefinancementFromTransaction(Long prefinancementId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation préfinancement depuis transaction — id: {}", prefinancementId);
 
         Prefinancement prefinancement = prefinancementRepository.findById(prefinancementId)
@@ -137,6 +137,8 @@ public class PrefinancementValidationService implements IPrefinancementValidatio
 
         prefinancement.setDateValeur(dateValeur);
         prefinancement.setDateOperation(dateOperation);
+        prefinancement.setLibelle(libelle);
+        prefinancement.setObservation(observation);
         prefinancementRepository.save(prefinancement);
 
         log.info("Préfinancement id: {} synchronisé depuis transaction", prefinancementId);

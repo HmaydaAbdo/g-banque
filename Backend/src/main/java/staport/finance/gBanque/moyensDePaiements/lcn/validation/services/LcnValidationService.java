@@ -58,27 +58,22 @@ public class LcnValidationService implements ILcnValidationService {
         this.soldeCascadeService = soldeCascadeService;
     }
 
-    @Override
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = Lcn.class, idAccessor = "getLcnId")
-    public LcnTransactionResponseDto processLcnDecaissementTransaction(LcnTransactionRequest requestDto) {
-        log.info("Validation LCN décaissement — id: {}", requestDto.getId());
-        return processTransaction(requestDto);
-    }
-
-    @Override
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = Lcn.class, idAccessor = "getLcnId")
-    public LcnTransactionResponseDto processLcnEncaissementTransaction(LcnTransactionRequest requestDto) {
-        log.info("Validation LCN encaissement — id: {}", requestDto.getId());
-        return processTransaction(requestDto);
-    }
-
     /**
-     * Logique commune décaissement/encaissement — le sens et la nature du LCN
-     * ({@code Lcn.type}/{@code Lcn.natureLcn}) déterminent le traitement effectué par le mapper.
+     * Valide un LCN, décaissement ou encaissement (ou escompte) indifféremment — le sens et la
+     * nature du LCN ({@code Lcn.type}/{@code Lcn.natureLcn}) sont lus directement sur l'entité par
+     * le mapper, jamais transmis par l'appelant : une seule méthode suffit, sans branchement
+     * (fusion du 19/09/2026 des deux anciennes méthodes
+     * {@code processLcnDecaissementTransaction}/{@code processLcnEncaissementTransaction}, dont
+     * les corps étaient déjà identiques). Le registre {@code BatchValidationHandler} garde en
+     * revanche deux entrées ({@code LCN_DECAISSEMENT}/{@code LCN_ENCAISSEMENT}) — c'est le sens
+     * porté par {@code TransactionSource} qui distingue les deux handlers, pas cette méthode.
      */
-    private LcnTransactionResponseDto processTransaction(LcnTransactionRequest requestDto) {
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Lcn.class, idAccessor = "getLcnId")
+    public LcnTransactionResponseDto processLcnTransaction(LcnTransactionRequest requestDto) {
+        log.info("Validation LCN — id: {}", requestDto.getId());
+
         Lcn lcn = lcnRepository.findById(requestDto.getId())
                 .orElseThrow(() -> {
                     log.warn("LCN introuvable — id: {}", requestDto.getId());
@@ -113,7 +108,7 @@ public class LcnValidationService implements ILcnValidationService {
 
     @Override
     @Transactional
-    public void syncLcnFromTransaction(Long lcnId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncLcnFromTransaction(Long lcnId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation LCN depuis transaction — id: {}", lcnId);
 
         Lcn lcn = lcnRepository.findById(lcnId)
@@ -124,6 +119,8 @@ public class LcnValidationService implements ILcnValidationService {
 
         lcn.setDateValeur(dateValeur);
         lcn.setDateOperation(dateOperation);
+        lcn.setLibelle(libelle);
+        lcn.setObservation(observation);
         lcnRepository.save(lcn);
 
         log.info("LCN id: {} synchronisé depuis transaction", lcnId);

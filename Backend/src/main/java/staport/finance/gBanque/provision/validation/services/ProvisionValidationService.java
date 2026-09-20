@@ -112,7 +112,7 @@ public class ProvisionValidationService implements IProvisionValidationService {
 
     @Override
     @Transactional
-    public void syncProvisionFromTransaction(Long provisionId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncProvisionFromTransaction(Long provisionId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation provision depuis transaction — id: {}", provisionId);
 
         Provision provision = provisionRepository.findById(provisionId)
@@ -123,6 +123,8 @@ public class ProvisionValidationService implements IProvisionValidationService {
 
         provision.setDateValeur(dateValeur);
         provision.setDateOperation(dateOperation);
+        provision.setLibelle(libelle);
+        provision.setObservation(observation);
         provisionRepository.save(provision);
 
         log.info("Provision id: {} synchronisée depuis transaction", provisionId);

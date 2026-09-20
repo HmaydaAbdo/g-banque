@@ -6,7 +6,6 @@ import { ImpayeeRequestDto } from '../dtos/ImpayeeRequestDto';
 import { ImpayeeResponseDto } from '../dtos/ImpayeeResponseDto';
 import { ImpayeeSearchDto } from '../dtos/ImpayeeSearchDto';
 import { PageResponse } from '../../global/types/PageResponse';
-import { EncoursImpayeeDto } from '../dtos/EncoursImpayeeDto';
 import { toLocalDateString } from '../../global/types/date.utils';
 
 @Injectable({
@@ -70,42 +69,6 @@ export class ImpayeeService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-  // --- Get outstanding impayees ---
-  getOutstandingImpayees(
-    banqueId: number,
-    searchDto: ImpayeeSearchDto,
-    page: number = 0,
-    size: number = 10,
-    sort: string = 'dateEmission'
-  ): Observable<EncoursImpayeeDto> {
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', sort);
-
-    if (searchDto.libelle) {
-      params = params.set('libelle', searchDto.libelle);
-    }
-
-    if (searchDto.motif) {
-      params = params.set('motif', searchDto.motif);
-    }
-
-    if (searchDto.type) {
-      params = params.set('type', searchDto.type);
-    }
-
-    if (searchDto.montant) {
-      params = params.set('montant', searchDto.montant.toString());
-    }
-
-    if (searchDto.status) {
-      params = params.set('status', searchDto.status);
-    }
-
-    return this.http.get<EncoursImpayeeDto>(`${this.apiUrl}/encours/${banqueId}`, { params });
-  }
-
   // --- Toggle Status ---
   toggleStatus(id: number): Observable<ImpayeeResponseDto> {
     return this.http.patch<ImpayeeResponseDto>(`${this.apiUrl}/${id}/toggle-status`, {});
@@ -151,22 +114,5 @@ export class ImpayeeService {
       params = params.set('dateValeurFin', toLocalDateString(searchDto.dateValeurFin)!);
     }
     return params;
-  }
-
-  /**
-   * Exporte en PDF l'intégralité de l'encours d'impayées d'une banque correspondant aux filtres
-   * fournis (mêmes critères que {@link getOutstandingImpayees}, {@code type} inclus, sans
-   * pagination — le PDF contient tous les résultats filtrés, pas seulement la page actuellement
-   * affichée).
-   */
-  exportEncoursPdf(banqueId: number, searchDto: ImpayeeSearchDto): Observable<Blob> {
-    let params = new HttpParams();
-
-    if (searchDto.libelle)         params = params.set('libelle', searchDto.libelle);
-    if (searchDto.motif)           params = params.set('motif', searchDto.motif);
-    if (searchDto.type)            params = params.set('type', searchDto.type);
-    if (searchDto.montant != null) params = params.set('montant', searchDto.montant.toString());
-
-    return this.http.get(`${this.apiUrl}/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
   }
 }

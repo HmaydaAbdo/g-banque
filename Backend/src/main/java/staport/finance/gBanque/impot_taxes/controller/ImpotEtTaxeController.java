@@ -5,13 +5,11 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.impot_taxes.dtos.request.EncoursImpotEtTaxeSearchDto;
 import staport.finance.gBanque.impot_taxes.dtos.request.ImpotEtTaxeFusionRequest;
 import staport.finance.gBanque.impot_taxes.dtos.request.ImpotEtTaxeRequestDto;
 import staport.finance.gBanque.impot_taxes.dtos.request.ImpotEtTaxeSearchDto;
@@ -99,38 +97,6 @@ public class ImpotEtTaxeController {
     public ResponseEntity<Void> deleteImpotEtTaxe(@PathVariable Long id) {
         impotEtTaxeService.deleteImpotEtTaxe(id);
         return ResponseEntity.noContent().build();
-    }
-
-    @Operation(summary = "Consulter les encours d'impôts/taxes d'une banque")
-    @GetMapping("/encours/{banqueId}")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<EncoursImpotEtTaxeDto> getOutstandingImpotEtTaxes(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursImpotEtTaxeSearchDto searchDto,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        return ResponseEntity.ok(impotEtTaxeService.getOutstandingImpotEtTaxes(searchDto, banqueId, pageable));
-    }
-
-    /**
-     * Exporte en PDF l'intégralité de l'encours d'impôts/taxes d'une banque correspondant aux
-     * critères fournis (mêmes filtres que {@code GET /impots-taxes/encours/{banqueId}}) — sans
-     * pagination : le fichier contient tous les résultats filtrés, pas seulement la page
-     * actuellement affichée à l'écran.
-     */
-    @Operation(summary = "Exporter en PDF l'encours d'impôts/taxes d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/encours/{banqueId}/export/pdf")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<byte[]> exporterEncoursPdf(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursImpotEtTaxeSearchDto searchDto) {
-        byte[] pdf = impotEtTaxeService.exporterEncoursPdf(searchDto, banqueId);
-        String filename = "impots_taxes_encours_" + LocalDate.now() + ".pdf";
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdf);
     }
 
     @Operation(summary = "Changer le statut PREVU/PAYE", description = "Réservé SYSTEM_ADMIN.")

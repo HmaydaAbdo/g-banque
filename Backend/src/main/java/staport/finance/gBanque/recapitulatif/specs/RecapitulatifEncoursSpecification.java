@@ -1,6 +1,7 @@
 package staport.finance.gBanque.recapitulatif.specs;
 
 import org.springframework.data.jpa.domain.Specification;
+import staport.finance.gBanque.impot_taxes.enums.Motif;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.recapitulatif.dtos.request.RecapitulatifSearchDto;
 import staport.finance.gBanque.recapitulatif.entities.RecapitulatifEncoursView;
@@ -50,18 +51,25 @@ public final class RecapitulatifEncoursSpecification {
                         : cb.like(cb.lower(root.get("numero")), "%" + numero.toLowerCase() + "%");
     }
 
-    public static Specification<RecapitulatifEncoursView> byLibelle(String libelle) {
-        return (root, query, cb) ->
-                (libelle == null || libelle.isBlank())
-                        ? cb.conjunction()
-                        : cb.like(cb.lower(root.get("libelle")), "%" + libelle.toLowerCase() + "%");
-    }
-
-    public static Specification<RecapitulatifEncoursView> byObservation(String observation) {
-        return (root, query, cb) ->
-                (observation == null || observation.isBlank())
-                        ? cb.conjunction()
-                        : cb.like(cb.lower(root.get("observation")), "%" + observation.toLowerCase() + "%");
+    /**
+     * Un seul terme testé sur {@code libelle}, {@code observation} OU {@code
+     * rechercheComplementaire} (sous-chaîne, insensible à la casse) — fusion du 21/09/2026 de deux
+     * filtres auparavant combinés en AND sur des colonnes distinctes, l'utilisateur ne sachant
+     * souvent pas laquelle des deux contient le terme cherché. {@code rechercheComplementaire}
+     * (colonne invisible, voir {@code v_recapitulatif_encours.sql}) restaure des critères des
+     * anciens écrans par source perdus par la vue selon le sens (émetteur, organisme Leasing).
+     */
+    public static Specification<RecapitulatifEncoursView> byLibelleOuObservation(String terme) {
+        return (root, query, cb) -> {
+            if (terme == null || terme.isBlank()) {
+                return cb.conjunction();
+            }
+            String pattern = "%" + terme.toLowerCase() + "%";
+            return cb.or(
+                    cb.like(cb.lower(root.get("libelle")), pattern),
+                    cb.like(cb.lower(root.get("observation")), pattern),
+                    cb.like(cb.lower(root.get("rechercheComplementaire")), pattern));
+        };
     }
 
     /**
@@ -74,8 +82,36 @@ public final class RecapitulatifEncoursSpecification {
     }
 
     /**
+     * Filtre optionnel exact sur le motif (type) d'une Commission — ne s'applique qu'aux lignes
+     * COMMISSION (une ligne d'une autre source n'est jamais exclue par ce critère), restaurant le
+     * filtre « Motif » de l'ancien écran dédié (21/09/2026).
+     */
+    public static Specification<RecapitulatifEncoursView> byCommissionOperation(TransactionSource operation) {
+        return (root, query, cb) ->
+                operation == null
+                        ? cb.conjunction()
+                        : cb.or(
+                                cb.notEqual(root.get("id").get("sourceType"), TransactionSource.COMMISSION),
+                                cb.equal(root.get("commissionOperation"), operation.name()));
+    }
+
+    /**
+     * Filtre optionnel exact sur le motif d'un Impôt/Taxe — ne s'applique qu'aux lignes
+     * IMPOT_TAXE (une ligne d'une autre source n'est jamais exclue par ce critère), restaurant le
+     * filtre « Motif » de l'ancien écran dédié (21/09/2026).
+     */
+    public static Specification<RecapitulatifEncoursView> byImpotEtTaxeMotif(Motif motif) {
+        return (root, query, cb) ->
+                motif == null
+                        ? cb.conjunction()
+                        : cb.or(
+                                cb.notEqual(root.get("id").get("sourceType"), TransactionSource.IMPOT_TAXE),
+                                cb.equal(root.get("impotTaxeMotif"), motif.name()));
+    }
+
+    /**
      * Combine les critères fixes (banque, sens, encours entre deux dates) avec les filtres
-     * dynamiques optionnels de {@link RecapitulatifSearchDto} (sources, libellé, observation,
+     * dynamiques optionnels de {@link RecapitulatifSearchDto} (sources, libellé/observation,
      * plage de montant).
      *
      * <p>Le sens est reçu ici sous sa forme legacy {@link Type} — celle portée par la vue SQL —
@@ -94,10 +130,11 @@ public final class RecapitulatifEncoursSpecification {
 
         if (searchDto != null) {
             spec = spec.and(bySources(searchDto.transactionSources()))
-                    .and(byLibelle(searchDto.libelle()))
-                    .and(byObservation(searchDto.observation()))
+                    .and(byLibelleOuObservation(searchDto.libelleOuObservation()))
                     .and(byNumero(searchDto.numero()))
-                    .and(byMontant(searchDto.montant()));
+                    .and(byMontant(searchDto.montant()))
+                    .and(byCommissionOperation(searchDto.commissionOperation()))
+                    .and(byImpotEtTaxeMotif(searchDto.impotEtTaxeMotif()));
         }
 
         return spec;

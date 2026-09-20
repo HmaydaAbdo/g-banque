@@ -12,5 +12,5 @@ public interface IImpayeeValidationService {
 
     ImpayeeTransactionResponseDto processImpayeeTransaction(ImpayeeTransactionRequestDto requestDto);
 
-    void syncImpayeeFromTransaction(Long impayeeId, LocalDate dateValeur, LocalDate dateOperation);
+    void syncImpayeeFromTransaction(Long impayeeId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation);
 }

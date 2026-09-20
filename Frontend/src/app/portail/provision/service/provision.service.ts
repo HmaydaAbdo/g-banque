@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ProvisionResponseDto } from "../dtos/ProvisionResponseDto";
-import { EncoursProvisionDto } from "../dtos/EncoursProvisionDto";
 import { ProvisionSearchDto } from "../dtos/ProvisionSearchDto";
 import { ProvisionRequestDto } from "../dtos/ProvisionRequestDto";
 import { environment } from "../../../../environments/environment";
@@ -85,41 +84,6 @@ export class ProvisionService {
   }
 
   /**
-   * Récupérer les encours des provisions pour une banque
-   * GET /provision/encours/{banqueId}
-   */
-  getOutstandingProvision(
-    banqueId: number,
-    searchDto: ProvisionSearchDto = {},
-    page: number = 0,
-    size: number = 10,
-    sort: string = 'dateEmission,desc'
-  ): Observable<EncoursProvisionDto> {
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', sort);
-
-    if (searchDto.libelle) {
-      params = params.set('libelle', searchDto.libelle);
-    }
-    if (searchDto.montant !== undefined && searchDto.montant !== null) {
-      params = params.set('montant', searchDto.montant.toString());
-    }
-    if (searchDto.motif) {
-      params = params.set('motif', searchDto.motif);
-    }
-    if (searchDto.sens) {
-      params = params.set('sens', searchDto.sens);
-    }
-
-    return this.http.get<EncoursProvisionDto>(
-      `${this.apiUrl}/encours/${banqueId}`,
-      { params }
-    );
-  }
-
-  /**
    * Basculer le statut d'une provision (PREVU <-> PAYE)
    * PATCH /provision/{id}/toggle-status
    */
@@ -170,21 +134,5 @@ export class ProvisionService {
       params = params.set('dateValeurFin', toLocalDateString(searchDto.dateValeurFin)!);
     }
     return params;
-  }
-
-  /**
-   * Exporte en PDF l'intégralité de l'encours de provisions d'une banque correspondant aux
-   * filtres fournis (mêmes critères que {@link getOutstandingProvision}, sans pagination).
-   * GET /provision/encours/{banqueId}/export/pdf
-   */
-  exportEncoursPdf(banqueId: number, searchDto: ProvisionSearchDto): Observable<Blob> {
-    let params = new HttpParams();
-
-    if (searchDto.libelle)         params = params.set('libelle', searchDto.libelle);
-    if (searchDto.montant != null) params = params.set('montant', searchDto.montant.toString());
-    if (searchDto.motif)           params = params.set('motif', searchDto.motif);
-    if (searchDto.sens)            params = params.set('sens', searchDto.sens);
-
-    return this.http.get(`${this.apiUrl}/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
   }
 }

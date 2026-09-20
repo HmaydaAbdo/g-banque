@@ -5,8 +5,6 @@ import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.EcheanceLeasingResponseDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.EcheanceLeasingSearchDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.EcheanceLeasingUpdateRequestDTO;
-import staport.finance.gBanque.leasing.echeancesLeasing.dto.EncoursLeasingRequestDTO;
-import staport.finance.gBanque.leasing.echeancesLeasing.dto.EncoursLeasingResponseDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.TableauAmortissementDTO;
 
 public interface IEcheanceLeasingService {
@@ -40,13 +38,16 @@ public interface IEcheanceLeasingService {
 
     EcheanceLeasingResponseDTO updateEcheance(Long id, EcheanceLeasingUpdateRequestDTO dto);
 
-    EncoursLeasingResponseDTO getEncoursLeasingForBanque(EncoursLeasingRequestDTO requestDTO, Pageable pageable);
-
     /**
-     * Exporte en PDF l'encours d'échéances de leasing d'une banque (mêmes critères que
-     * {@link #getEncoursLeasingForBanque}, sans pagination).
+     * Récupère une échéance de leasing par son identifiant.
+     * Utilisé par l'écran de récapitulatif unifié (validation) pour résoudre le contrat de
+     * leasing (contratLeasingId, numéro de contrat, montants HT/TVA) avant l'ouverture du
+     * formulaire de validation, sans dupliquer cette logique côté frontend.
+     *
+     * @param id L'identifiant de l'échéance de leasing
+     * @return Le DTO de l'échéance correspondante
      */
-    byte[] exportEncoursLeasingPdf(EncoursLeasingRequestDTO requestDTO);
+    EcheanceLeasingResponseDTO getEcheanceLeasingById(Long id);
 
     boolean hasPaidEcheances(Long contratId);
 

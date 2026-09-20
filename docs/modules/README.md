@@ -1430,8 +1430,10 @@ liée à un marché (facultatif) et à une nature de ligne fonctionnelle (obliga
 
 **Prise** (`dateDePrise`) : date d'émission de la caution. Ne peut pas être dans le futur.
 
-**Main levée** (`dateDeMainLevee`) : date de clôture de la caution. Renseignée uniquement lors de
-la clôture — vide tant que la caution est active.
+**Main levée** (`dateDeMainLevee`) : date de clôture de la caution. Vide tant que la caution est
+active — impossible à saisir à la création, elle se renseigne exclusivement via l'action
+**Clôturer**. Une fois la caution clôturée, cette date reste corrigeable depuis le formulaire de
+modification (voir section 4, action **Modifier**).
 
 | Statut (`actif`) | Signification |
 |---|---|
@@ -1468,8 +1470,10 @@ cautions.
     → Caution passée à actif = false, dateDeMainLevee renseignée
 ```
 
-Une caution clôturée n'est plus modifiable et n'est plus incluse dans la génération mensuelle des
-commissions.
+Une caution clôturée n'est plus incluse dans la génération mensuelle des commissions. Elle reste
+modifiable (voir section 4, action **Modifier**) : toute correction d'un champ qui influence le
+calcul de la commission de clôture (banque, montant, taux, date de prise, date de main levée)
+déclenche son recalcul automatique.
 
 ---
 
@@ -1480,23 +1484,33 @@ commissions.
 | Écran | Description |
 |---|---|
 | Liste des cautions | Vue principale, filtrable par numéro, banque, nature, marché, organisme, date de prise, montant, statut |
-| Création / modification d'une caution | Formulaire — modification bloquée si la caution est clôturée |
+| Création / modification d'une caution | Formulaire — la date de main levée n'apparaît qu'en modification d'une caution déjà clôturée (correction) |
 | Commissions sur cautions | Liste des commissions générées (prorata d'entrée, mensuelles, clôture) — export PDF disponible |
 | TVA sur cautions | Liste des TVA générées sur les commissions (banques concernées uniquement) — export PDF disponible (nouveau, 2026-07-22) |
-| Export PDF | Export de l'intégralité des cautions filtrées (pas seulement la page affichée) — colonnes du document sélectionnables à la demande (nouveau, 23/07/2026) |
+| Export (PDF ou Excel) | Export de l'intégralité des cautions filtrées (pas seulement la page affichée) — format et colonnes du document sélectionnables à la demande (Excel : nouveau, 20/09/2026) |
 
 #### Actions disponibles
 
-- **Créer** une caution.
-- **Modifier** une caution active (tous les champs sont modifiables, y compris la banque, la
-  nature, le marché et le numéro).
+- **Créer** une caution — sans date de main levée : ce champ n'existe pas sur le formulaire de
+  création, il se renseigne uniquement via l'action **Clôturer**.
+- **Modifier** une caution, active ou déjà clôturée (tous les champs sont modifiables, y compris
+  la banque, la nature, le marché et le numéro) :
+  - pour une caution **active**, le formulaire est identique à la création (pas de champ main
+    levée) ;
+  - pour une caution **déjà clôturée**, le champ date de main levée apparaît en plus, pour
+    correction — il reste obligatoire. Modifier un champ qui influence le calcul de la commission
+    de clôture (banque, montant, taux, date de prise, date de main levée) recalcule
+    automatiquement cette commission ; l'opération est bloquée si cette commission est déjà
+    réglée (payée) ou si elle est introuvable (caution clôturée avant l'introduction de cette
+    fonctionnalité) — dans ces deux cas, une correction manuelle par un administrateur est
+    nécessaire.
 - **Clôturer** (main levée) une caution active : demande la date de main levée, génère
   automatiquement la commission de clôture.
 - **Supprimer** définitivement une caution active — réservée à l'administrateur système.
-- **Exporter en PDF** les cautions selon les filtres appliqués, en choisissant au préalable les
-  colonnes à inclure dans le document (numéro de caution, banque, nature, marché, organisme,
-  désignation, date de prise, main levée, montant, taux, statut) — au moins une colonne doit être
-  sélectionnée ; toutes sont cochées par défaut.
+- **Exporter** les cautions selon les filtres appliqués, en choisissant au préalable le format
+  (PDF ou Excel) et les colonnes à inclure dans le document (numéro de caution, banque, nature,
+  marché, organisme, désignation, date de prise, main levée, montant, taux, statut) — au moins une
+  colonne doit être sélectionnée ; toutes sont cochées par défaut, le format PDF est présélectionné.
 - **Exporter en PDF** les commissions sur cautions ou les TVA sur cautions selon les filtres
   appliqués à chacun de ces deux écrans (sélection de colonnes non disponible sur ces deux exports).
 - **Générer manuellement** les commissions du mois (normalement automatique, voir section 6).

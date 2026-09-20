@@ -30,6 +30,7 @@ import staport.finance.gBanque.cautions.repository.CautionRepository;
 import staport.finance.gBanque.cautions.specifications.CautionSpecification;
 import staport.finance.gBanque.commision.dtos.CommissionResponseDto;
 import staport.finance.gBanque.commision.entities.Commission;
+import staport.finance.gBanque.commision.enums.TypeCommission;
 import staport.finance.gBanque.commision.service.ICommissionService;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
@@ -37,10 +38,19 @@ import staport.finance.gBanque.impot_taxes.enums.Motif;
 import staport.finance.gBanque.impot_taxes.service.IImpotEtTaxeService;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.service.IMarcheService;
+import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
+import staport.finance.gBanque.reports.service.StaportExcelReportService;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
+
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.util.CellRangeAddress;
 
 import java.awt.Color;
 import java.math.BigDecimal;
@@ -94,6 +104,7 @@ public class CautionServiceImpl implements ICautionService {
     private final IImpotEtTaxeService                impotEtTaxeService;
     private final CommissionCautionStrategieFactory  strategieFactory;
     private final StaportPdfReportService            staportPdfReportService;
+    private final StaportExcelReportService          staportExcelReportService;
 
     /** Taux de TVA légal applicable aux commissions sur cautions bancaires (statutaire, non configurable). */
     private static final BigDecimal TAUX_TVA = new BigDecimal("0.10");
@@ -108,7 +119,8 @@ public class CautionServiceImpl implements ICautionService {
             ICommissionService commissionService,
             IImpotEtTaxeService impotEtTaxeService,
             CommissionCautionStrategieFactory strategieFactory,
-            StaportPdfReportService staportPdfReportService) {
+            StaportPdfReportService staportPdfReportService,
+            StaportExcelReportService staportExcelReportService) {
         this.cautionRepository    = cautionRepository;
         this.cautionMapper        = cautionMapper;
         this.banqueService        = banqueService;
@@ -118,6 +130,7 @@ public class CautionServiceImpl implements ICautionService {
         this.impotEtTaxeService   = impotEtTaxeService;
         this.strategieFactory     = strategieFactory;
         this.staportPdfReportService = staportPdfReportService;
+        this.staportExcelReportService = staportExcelReportService;
     }
 
     // ── Création ──────────────────────────────────────────────────────────────
@@ -161,7 +174,7 @@ public class CautionServiceImpl implements ICautionService {
                 CommissionResponseDto prorataPersiste = commissionService.creerCommissionCaution(
                         sauvegardee.getId(), banque.getId(), prorataCalcule.getMontant(),
                         prorataCalcule.getDateEmission(), prorataCalcule.getLibelle(),
-                        prorataCalcule.getObservation());
+                        prorataCalcule.getObservation(), TypeCommission.PRORATA_ENTREE);
                 log.info("Prorata d'entrée créé — caution id: {}, dateEmission: {}, montant: {}",
                         sauvegardee.getId(), prorataPersiste.dateEmission(), prorataPersiste.montant());
 
@@ -193,13 +206,7 @@ public class CautionServiceImpl implements ICautionService {
         log.info("Modification caution — id: {}", id);
 
         Caution caution = trouverOuLeverException(id);
-
-        // Règle métier : une caution inactive ne peut pas être modifiée
-        if (Boolean.FALSE.equals(caution.getActif())) {
-            throw new CautionBusinessException(
-                "La caution id: " + id + " est archivée et ne peut pas être modifiée."
-            );
-        }
+        boolean etaitCloturee = Boolean.FALSE.equals(caution.getActif());
 
         // Vérification unicité numeroCaution si modification de ce champ
         if (!caution.getNumeroCaution().equals(dto.numeroCaution()) &&
@@ -219,6 +226,19 @@ public class CautionServiceImpl implements ICautionService {
         caution.setBanque(banque);
         caution.setNature(nature);
         caution.setMarche(marche);
+
+        // Règle métier : une caution déjà clôturée reste clôturée — modifier() ne permet pas
+        // de la rouvrir, seulement de corriger ses champs (dont la date de main levée). Toute
+        // correction impactant le calcul de la commission de clôture (banque, montant, taux,
+        // dates) la recalcule automatiquement — voir docs/modules/README.md, chapitre Caution.
+        if (etaitCloturee) {
+            if (caution.getDateDeMainLevee() == null) {
+                throw new CautionBusinessException(
+                    "La date de main levée est obligatoire pour une caution déjà clôturée."
+                );
+            }
+            recalculerCommissionCloture(caution);
+        }
 
         Caution modifiee = cautionRepository.save(caution);
         log.info("Caution modifiée — id: {}", modifiee.getId());
@@ -495,6 +515,174 @@ public class CautionServiceImpl implements ICautionService {
         return nf.format(montant);
     }
 
+    // ── Export Excel ────────────────────────────────────────────────────────
+
+    /**
+     * Génère l'export Excel des cautions — même sélection de données et de colonnes que
+     * {@link #exporterPdf} ({@link #CAUTION_EXPORT_COLUMNS}, {@link #resolveCautionColonnes}),
+     * seule la mise en forme (POI/{@link StaportExcelReportService}) diffère.
+     */
+    @Override
+    public byte[] exporterExcel(CautionSearchCriteria criteres, List<String> colonnesSelectionnees) {
+        log.debug("Export Excel cautions — critères: {}, colonnes: {}", criteres, colonnesSelectionnees);
+
+        List<Caution> cautions = cautionRepository.findAll(
+            CautionSpecification.parCriteres(criteres),
+            Sort.by(Sort.Direction.DESC, "dateDePrise")
+        );
+
+        BigDecimal totalMontant = cautions.stream()
+            .map(Caution::getMontant)
+            .filter(java.util.Objects::nonNull)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        List<String> filterLines = buildFilterSummary(criteres);
+        List<String> colonnes = resolveCautionColonnes(colonnesSelectionnees);
+        boolean montantInclus = colonnes.contains("montant");
+
+        return staportExcelReportService.generateReport("Cautions", (workbook, sheet) -> {
+            short montantFormat = workbook.createDataFormat().getFormat("#,##0.00");
+            int lastCol = colonnes.size() - 1;
+
+            org.apache.poi.ss.usermodel.Font titleFont = workbook.createFont();
+            titleFont.setBold(true);
+            titleFont.setFontHeightInPoints((short) 14);
+            CellStyle titleStyle = workbook.createCellStyle();
+            titleStyle.setFont(titleFont);
+            titleStyle.setAlignment(HorizontalAlignment.CENTER);
+
+            org.apache.poi.ss.usermodel.Font subFont = workbook.createFont();
+            subFont.setFontHeightInPoints((short) 9);
+            subFont.setColor(IndexedColors.GREY_50_PERCENT.getIndex());
+            CellStyle subStyle = workbook.createCellStyle();
+            subStyle.setFont(subFont);
+            subStyle.setAlignment(HorizontalAlignment.CENTER);
+
+            org.apache.poi.ss.usermodel.Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setColor(IndexedColors.WHITE.getIndex());
+            CellStyle headerStyle = workbook.createCellStyle();
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.ROYAL_BLUE.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
+
+            CellStyle textStyle = workbook.createCellStyle();
+
+            CellStyle numberStyle = workbook.createCellStyle();
+            numberStyle.setDataFormat(montantFormat);
+            numberStyle.setAlignment(HorizontalAlignment.RIGHT);
+
+            org.apache.poi.ss.usermodel.Font statutFont = workbook.createFont();
+            statutFont.setBold(true);
+            statutFont.setColor(IndexedColors.WHITE.getIndex());
+            CellStyle statutActifStyle = workbook.createCellStyle();
+            statutActifStyle.setFont(statutFont);
+            statutActifStyle.setFillForegroundColor(IndexedColors.GREEN.getIndex());
+            statutActifStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            statutActifStyle.setAlignment(HorizontalAlignment.CENTER);
+            CellStyle statutInactifStyle = workbook.createCellStyle();
+            statutInactifStyle.setFont(statutFont);
+            statutInactifStyle.setFillForegroundColor(IndexedColors.ORANGE.getIndex());
+            statutInactifStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            statutInactifStyle.setAlignment(HorizontalAlignment.CENTER);
+
+            org.apache.poi.ss.usermodel.Font totalFont = workbook.createFont();
+            totalFont.setBold(true);
+            CellStyle totalLabelStyle = workbook.createCellStyle();
+            totalLabelStyle.setFont(totalFont);
+            totalLabelStyle.setFillForegroundColor(IndexedColors.PALE_BLUE.getIndex());
+            totalLabelStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            totalLabelStyle.setAlignment(HorizontalAlignment.RIGHT);
+            CellStyle totalValueStyle = workbook.createCellStyle();
+            totalValueStyle.setFont(totalFont);
+            totalValueStyle.setFillForegroundColor(IndexedColors.PALE_BLUE.getIndex());
+            totalValueStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            totalValueStyle.setAlignment(HorizontalAlignment.RIGHT);
+            totalValueStyle.setDataFormat(montantFormat);
+
+            int rowIdx = 0;
+
+            Row titleRow = sheet.createRow(rowIdx++);
+            org.apache.poi.ss.usermodel.Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue("État des Cautions");
+            titleCell.setCellStyle(titleStyle);
+            if (lastCol > 0) sheet.addMergedRegion(new CellRangeAddress(titleRow.getRowNum(), titleRow.getRowNum(), 0, lastCol));
+
+            String exportInfo = "Exporté le " + LocalDate.now().format(DATE_FMT)
+                    + "  •  " + cautions.size() + " caution(s)";
+            if (!filterLines.isEmpty()) {
+                exportInfo += "  •  Filtres : " + String.join("  |  ", filterLines);
+            }
+            Row subRow = sheet.createRow(rowIdx++);
+            org.apache.poi.ss.usermodel.Cell subCell = subRow.createCell(0);
+            subCell.setCellValue(exportInfo);
+            subCell.setCellStyle(subStyle);
+            if (lastCol > 0) sheet.addMergedRegion(new CellRangeAddress(subRow.getRowNum(), subRow.getRowNum(), 0, lastCol));
+
+            rowIdx++; // ligne vide de séparation
+
+            Row headerRow = sheet.createRow(rowIdx++);
+            for (int i = 0; i < colonnes.size(); i++) {
+                org.apache.poi.ss.usermodel.Cell cell = headerRow.createCell(i);
+                cell.setCellValue(CAUTION_COLUMN_LABELS.get(colonnes.get(i)));
+                cell.setCellStyle(headerStyle);
+            }
+
+            for (Caution c : cautions) {
+                Row row = sheet.createRow(rowIdx++);
+                for (int i = 0; i < colonnes.size(); i++) {
+                    String colonne = colonnes.get(i);
+                    org.apache.poi.ss.usermodel.Cell cell = row.createCell(i);
+                    switch (colonne) {
+                        case "montant" -> {
+                            cell.setCellValue(c.getMontant() != null ? c.getMontant().doubleValue() : 0d);
+                            cell.setCellStyle(numberStyle);
+                        }
+                        case "taux" -> {
+                            cell.setCellValue(c.getTaux() != null ? c.getTaux().doubleValue() : 0d);
+                            cell.setCellStyle(numberStyle);
+                        }
+                        case "statut" -> {
+                            boolean actif = Boolean.TRUE.equals(c.getActif());
+                            cell.setCellValue(actif ? "ACTIVE" : "INACTIVE");
+                            cell.setCellStyle(actif ? statutActifStyle : statutInactifStyle);
+                        }
+                        default -> {
+                            cell.setCellValue(cautionColumnValue(colonne, c));
+                            cell.setCellStyle(textStyle);
+                        }
+                    }
+                }
+            }
+
+            if (montantInclus) {
+                int montantIndex = colonnes.indexOf("montant");
+                Row totalRow = sheet.createRow(rowIdx);
+                String totalLabelText = "TOTAL — " + cautions.size() + " caution(s)";
+
+                for (int i = 0; i < colonnes.size(); i++) {
+                    org.apache.poi.ss.usermodel.Cell cell = totalRow.createCell(i);
+                    cell.setCellStyle(i == montantIndex ? totalValueStyle : totalLabelStyle);
+                }
+
+                if (montantIndex > 0) {
+                    totalRow.getCell(0).setCellValue(totalLabelText);
+                    if (montantIndex > 1) {
+                        sheet.addMergedRegion(new CellRangeAddress(totalRow.getRowNum(), totalRow.getRowNum(), 0, montantIndex - 1));
+                    }
+                    totalRow.getCell(montantIndex).setCellValue(totalMontant.doubleValue());
+                } else {
+                    totalRow.getCell(0).setCellValue(totalLabelText + " : " + formatMontantPdf(totalMontant) + " MAD");
+                }
+            }
+
+            for (int i = 0; i < colonnes.size(); i++) {
+                sheet.autoSizeColumn(i);
+            }
+        });
+    }
+
     private List<String> buildFilterSummary(CautionSearchCriteria criteres) {
         List<String> lines = new ArrayList<>();
         if (criteres == null) return lines;
@@ -599,18 +787,44 @@ public class CautionServiceImpl implements ICautionService {
                 });
         }
 
-        // 5. Calcul et persistance de la commission de clôture
+        // 5. Calcul et persistance de la commission de clôture (+ TVA éventuelle)
+        CommissionResponseDto commissionPersistee = genererCommissionCloture(caution, request.dateDeMainLevee());
+
+        // 6. Clôture de la caution
+        caution.setDateDeMainLevee(request.dateDeMainLevee());
+        caution.setActif(false);
+        cautionRepository.save(caution);
+        log.info("Caution id: {} clôturée avec succès", id);
+
+        return new CloturerCautionResponse(
+                cautionMapper.toDto(caution),
+                commissionPersistee
+        );
+    }
+
+    /**
+     * Calcule et persiste la commission de clôture (+ TVA si la stratégie de la banque
+     * l'exige) pour une caution — factorisé entre {@link #cloturer} (première clôture) et
+     * {@link #recalculerCommissionCloture} (correction d'une caution déjà clôturée). Ne
+     * touche ni au prorata d'entrée ni au statut/à la date de main levée de la caution —
+     * ces deux aspects restent propres à chaque appelant.
+     */
+    private CommissionResponseDto genererCommissionCloture(Caution caution, LocalDate dateDeMainLevee) {
+        String nomBanque = caution.getBanque().getNom();
+        CommissionCautionStrategie strategie = strategieFactory.trouver(nomBanque)
+                .orElseThrow(() -> new CautionBusinessException(
+                        "Aucune stratégie de commission enregistrée pour la banque '" + nomBanque + "'."));
+
         // Objet transitoire — ses champs portent le calcul métier de la stratégie ; il n'est
         // jamais persisté directement (encapsulation du module commission).
-        Commission commissionCalculee = strategie.calculerMainLevee(caution, request.dateDeMainLevee());
+        Commission commissionCalculee = strategie.calculerMainLevee(caution, dateDeMainLevee);
         CommissionResponseDto commissionPersistee = commissionService.creerCommissionCaution(
                 caution.getId(), caution.getBanque().getId(), commissionCalculee.getMontant(),
                 commissionCalculee.getDateEmission(), commissionCalculee.getLibelle(),
-                commissionCalculee.getObservation());
+                commissionCalculee.getObservation(), TypeCommission.CLOTURE);
         log.info("Commission de clôture générée — id: {}, montant: {}",
                 commissionPersistee.id(), commissionPersistee.montant());
 
-        // 5b. TVA si la stratégie l'exige (ex. BMCI)
         if (strategie.genererTva()) {
             BigDecimal montantTva = commissionPersistee.montant()
                     .multiply(TAUX_TVA)
@@ -623,16 +837,56 @@ public class CautionServiceImpl implements ICautionService {
             log.info("TVA de clôture générée — montant: {}", montantTva);
         }
 
-        // 6. Clôture de la caution
-        caution.setDateDeMainLevee(request.dateDeMainLevee());
-        caution.setActif(false);
-        cautionRepository.save(caution);
-        log.info("Caution id: {} clôturée avec succès", id);
+        return commissionPersistee;
+    }
 
-        return new CloturerCautionResponse(
-                cautionMapper.toDto(caution),
-                commissionPersistee
-        );
+    /**
+     * Recalcule la commission de clôture d'une caution déjà clôturée dont un champ impactant
+     * ce calcul (banque, montant, taux, dates) vient d'être corrigé via {@link #modifier}.
+     *
+     * <p>Retrouve la commission {@code CLOTURE} de la caution ({@code TypeCommission}) — pas
+     * par libellé/date d'émission, qui peuvent coïncider avec une commission mensuelle du même
+     * mois pour les banques sans prorata de sortie (BMCI, CDM, SAHAM BANK). Bloque plutôt que
+     * de deviner si :
+     * <ul>
+     *   <li>aucune commission {@code CLOTURE} n'est trouvée — caution clôturée avant
+     *       l'introduction de ce champ ;</li>
+     *   <li>plusieurs sont trouvées — anomalie de données ;</li>
+     *   <li>elle est déjà réglée ({@code PAYE}) — {@code conventions/architecture.md}, règle 5 :
+     *       une opération déjà réglée n'est jamais supprimée/recalculée silencieusement.</li>
+     * </ul>
+     * Dans ces trois cas, une correction manuelle par un administrateur est requise.
+     */
+    private void recalculerCommissionCloture(Caution caution) {
+        List<CommissionResponseDto> existantes =
+                commissionService.findByCautionAndType(caution.getId(), TypeCommission.CLOTURE);
+
+        if (existantes.isEmpty()) {
+            throw new CautionBusinessException(
+                "Impossible de recalculer la commission de clôture de la caution id: " + caution.getId()
+                + " — aucune commission de clôture identifiable (caution clôturée avant l'introduction de "
+                + "cette fonctionnalité). Contacter un administrateur pour une correction manuelle."
+            );
+        }
+        if (existantes.size() > 1) {
+            throw new CautionBusinessException(
+                "Anomalie : " + existantes.size() + " commissions de clôture trouvées pour la caution id: "
+                + caution.getId() + " — correction manuelle requise."
+            );
+        }
+
+        CommissionResponseDto existante = existantes.get(0);
+        if (existante.status() != Status.PREVU) {
+            throw new CautionBusinessException(
+                "La commission de clôture de la caution id: " + caution.getId()
+                + " est déjà réglée (PAYE) — modification de la caution impossible."
+            );
+        }
+
+        // deleteCommission supprime aussi, en cascade, la TVA liée si elle existe.
+        commissionService.deleteCommission(existante.id());
+        genererCommissionCloture(caution, caution.getDateDeMainLevee());
+        log.info("Commission de clôture recalculée — caution id: {}", caution.getId());
     }
 
     // ── Helpers internes ──────────────────────────────────────────────────────

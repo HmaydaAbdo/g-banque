@@ -1,10 +1,5 @@
 package staport.finance.gBanque.droitConstate.service;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -26,9 +21,7 @@ import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.droitConstate.dtos.request.DroitConstateRequestDto;
 import staport.finance.gBanque.droitConstate.dtos.request.DroitConstateSearchDto;
-import staport.finance.gBanque.droitConstate.dtos.request.EncoursDroitConstateSearchDto;
 import staport.finance.gBanque.droitConstate.dtos.response.DroitConstateResponseDto;
-import staport.finance.gBanque.droitConstate.dtos.response.EncoursDroitConstateDto;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.droitConstate.mapper.DroitConstateMapper;
 import staport.finance.gBanque.droitConstate.repositories.DroitConstateRepository;
@@ -49,7 +42,6 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -69,10 +61,11 @@ import java.util.Optional;
  * <p>Anti-N+1 : {@code DroitConstateRepository.findAll} porte l'{@code @EntityGraph}
  * {@code "DroitConstate.avecAssociations"} (marché + banque directe).
  *
- * <p>Les totaux d'encours (déblocage/remboursement) sont calculés via une requête {@code SUM}
- * construite avec le même {@link Specification} que la recherche paginée (pas de chargement de
- * la liste complète en mémoire pour sommer côté Java — conventions/performance.md).
- * {@code endOfMonth} est recalculé à chaque appel (et non figé à la construction du bean).
+ * <p>19/09/2026 : les encours de remboursement/déblocage par banque (écrans dédiés
+ * {@code droit-constate-remboursements}/{@code droit-constate-deblocage}) ont été retirés — le
+ * récapitulatif unifié couvre désormais la validation de cette source. {@code getRemboursementEncoursForBanque}/
+ * {@code getDeblocageEncoursForBanque}/leurs exports PDF et le calcul de somme par
+ * {@code EntityManager} qu'ils utilisaient seuls ont été retirés avec eux.
  */
 @Service
 public class DroitConstateServiceImpl implements IDroitConstateService {
@@ -89,9 +82,6 @@ public class DroitConstateServiceImpl implements IDroitConstateService {
     private final LigneFonctionnelleSpecifiqueReader ligneFonctionnelleSpecifiqueReader;
     private final LigneFonctionnelleReader ligneFonctionnelleReader;
     private final StaportPdfReportService staportPdfReportService;
-
-    @PersistenceContext
-    private EntityManager entityManager;
 
     public DroitConstateServiceImpl(DroitConstateRepository droitConstateRepository,
                                      DroitConstateMapper droitConstateMapper,
@@ -251,56 +241,6 @@ public class DroitConstateServiceImpl implements IDroitConstateService {
         return droitConstateMapper.toDto(updatedDroitConstate);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public EncoursDroitConstateDto getRemboursementEncoursForBanque(EncoursDroitConstateSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.info("Récupération des encours de remboursement pour la banque ID: {}", banqueId);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<DroitConstate> spec = DroitConstateSpec.byBanqueId(banqueId)
-                .and(DroitConstateSpec.outstandingRemboursementUntil(endOfMonth))
-                .and(DroitConstateSpec.byMarcheName(searchDto.marcheName()))
-                .and(DroitConstateSpec.byMarcheNumero(searchDto.marcheNumero()))
-                .and(DroitConstateSpec.hasMontant(searchDto.montant()));
-
-        Page<DroitConstate> droitConstatePage = droitConstateRepository.findAll(spec,
-                pageable.getSort().isSorted() ? pageable
-                        : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
-
-        BigDecimal totalDesEncours = sumMontant(spec);
-        log.info("Total des encours de remboursement calculé: {} pour la banque ID: {}", totalDesEncours, banqueId);
-
-        Page<DroitConstateResponseDto> pageDto = droitConstatePage.map(droitConstateMapper::toDto);
-
-        return new EncoursDroitConstateDto(totalDesEncours, pageDto);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public EncoursDroitConstateDto getDeblocageEncoursForBanque(EncoursDroitConstateSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.info("Récupération des encours de déblocage pour la banque ID: {}", banqueId);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<DroitConstate> spec = DroitConstateSpec.byBanqueId(banqueId)
-                .and(DroitConstateSpec.outstandingDeblocageUntil(endOfMonth))
-                .and(DroitConstateSpec.byMarcheName(searchDto.marcheName()))
-                .and(DroitConstateSpec.byMarcheNumero(searchDto.marcheNumero()))
-                .and(DroitConstateSpec.hasMontant(searchDto.montant()));
-
-        Page<DroitConstate> droitConstatePage = droitConstateRepository.findAll(spec,
-                pageable.getSort().isSorted() ? pageable
-                        : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
-
-        BigDecimal totalDesEncours = sumMontant(spec);
-        log.info("Total des encours de déblocage calculé: {} pour la banque ID: {}", totalDesEncours, banqueId);
-
-        Page<DroitConstateResponseDto> pageDto = droitConstatePage.map(droitConstateMapper::toDto);
-
-        return new EncoursDroitConstateDto(totalDesEncours, pageDto);
-    }
-
     // ── Export PDF ────────────────────────────────────────────────────────────
 
     @Override
@@ -322,48 +262,10 @@ public class DroitConstateServiceImpl implements IDroitConstateService {
         return generateDroitConstatePdf("État des Droits Constatés", droitConstates, totalMontant, filterLines);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public byte[] exportRemboursementEncoursPdf(EncoursDroitConstateSearchDto searchDto, Long banqueId) {
-        log.info("Export PDF encours remboursement droit constaté — banque ID: {}", banqueId);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-        Specification<DroitConstate> spec = DroitConstateSpec.byBanqueId(banqueId)
-                .and(DroitConstateSpec.outstandingRemboursementUntil(endOfMonth))
-                .and(DroitConstateSpec.byMarcheName(searchDto.marcheName()))
-                .and(DroitConstateSpec.byMarcheNumero(searchDto.marcheNumero()))
-                .and(DroitConstateSpec.hasMontant(searchDto.montant()));
-
-        List<DroitConstate> droitConstates = droitConstateRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-        BigDecimal totalMontant = sumMontant(spec);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
-
-        return generateDroitConstatePdf("Encours de Remboursement — Droit Constaté", droitConstates, totalMontant, filterLines);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public byte[] exportDeblocageEncoursPdf(EncoursDroitConstateSearchDto searchDto, Long banqueId) {
-        log.info("Export PDF encours déblocage droit constaté — banque ID: {}", banqueId);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-        Specification<DroitConstate> spec = DroitConstateSpec.byBanqueId(banqueId)
-                .and(DroitConstateSpec.outstandingDeblocageUntil(endOfMonth))
-                .and(DroitConstateSpec.byMarcheName(searchDto.marcheName()))
-                .and(DroitConstateSpec.byMarcheNumero(searchDto.marcheNumero()))
-                .and(DroitConstateSpec.hasMontant(searchDto.montant()));
-
-        List<DroitConstate> droitConstates = droitConstateRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-        BigDecimal totalMontant = sumMontant(spec);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
-
-        return generateDroitConstatePdf("Encours de Déblocage — Droit Constaté", droitConstates, totalMontant, filterLines);
-    }
-
     /**
-     * Génère le contenu PDF partagé par {@link #exportPdf}, {@link #exportRemboursementEncoursPdf}
-     * et {@link #exportDeblocageEncoursPdf}. Contrairement à Préfinancement/Factoring, la colonne
-     * "Banque" utilise le champ direct {@code DroitConstate.banque} (pas {@code marche.banque}).
+     * Génère le contenu PDF utilisé par {@link #exportPdf}. Contrairement à Préfinancement/
+     * Factoring, la colonne "Banque" utilise le champ direct {@code DroitConstate.banque} (pas
+     * {@code marche.banque}).
      */
     private byte[] generateDroitConstatePdf(String title, List<DroitConstate> droitConstates,
                                              BigDecimal totalMontant, List<String> filterLines) {
@@ -522,41 +424,6 @@ public class DroitConstateServiceImpl implements IDroitConstateService {
             lines.add("Statut : " + (criteria.status() == Status.PAYE ? "Payé" : "Prévu"));
 
         return lines;
-    }
-
-    private List<String> buildEncoursFilterSummary(EncoursDroitConstateSearchDto searchDto, Long banqueId) {
-        List<String> lines = new ArrayList<>();
-
-        try {
-            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
-        } catch (ResourceNotFoundException ignored) { /* filtre obsolète — ignoré pour l'affichage */ }
-
-        if (searchDto == null) return lines;
-        if (searchDto.marcheName() != null && !searchDto.marcheName().isBlank())
-            lines.add("Nom Marché : " + searchDto.marcheName());
-        if (searchDto.marcheNumero() != null && !searchDto.marcheNumero().isBlank())
-            lines.add("N° Marché : " + searchDto.marcheNumero());
-        if (searchDto.montant() != null)
-            lines.add("Montant : " + formatMontantPdf(searchDto.montant()) + " MAD");
-
-        return lines;
-    }
-
-    /**
-     * Somme des montants correspondant à la {@link Specification} donnée, calculée en base
-     * (agrégat SQL) — jamais en chargeant les entités en mémoire pour sommer côté Java
-     * (conventions/performance.md).
-     */
-    private BigDecimal sumMontant(Specification<DroitConstate> spec) {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<BigDecimal> query = cb.createQuery(BigDecimal.class);
-        Root<DroitConstate> root = query.from(DroitConstate.class);
-        query.select(cb.coalesce(cb.sum(root.get("montant")), BigDecimal.ZERO));
-        var predicate = spec.toPredicate(root, query, cb);
-        if (predicate != null) {
-            query.where(predicate);
-        }
-        return entityManager.createQuery(query).getSingleResult();
     }
 
     private NatureLigneFonctionnelle getDroitConstateNature() {

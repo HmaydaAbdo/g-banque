@@ -107,7 +107,7 @@ public class OperationErroneValidationService implements IOperationErroneValidat
 
     @Override
     @Transactional
-    public void syncOperationErroneFromTransaction(Long operationErroneId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncOperationErroneFromTransaction(Long operationErroneId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation opération erronée depuis transaction — id: {}", operationErroneId);
 
         OperationErrone operationErrone = operationErroneRepository.findById(operationErroneId)
@@ -118,6 +118,8 @@ public class OperationErroneValidationService implements IOperationErroneValidat
 
         operationErrone.setDateValeur(dateValeur);
         operationErrone.setDateOperation(dateOperation);
+        operationErrone.setLibelle(libelle);
+        operationErrone.setObservation(observation);
         operationErroneRepository.save(operationErrone);
 
         log.info("Opération erronée id: {} synchronisée depuis transaction", operationErroneId);

@@ -24,14 +24,10 @@ import {TableauAmortissementCMTResponseDto} from '../../dtos/TableauAmortissemen
 import {EcheanceCMTResponseDto} from '../../dtos/EcheanceCMTResponseDto';
 import {StatutEcheanceCMT} from '../../enums/StatutEcheanceCMT';
 import {EcheanceCMTSearchDto} from '../../dtos/EcheanceCMTSearchDto';
-import {DialogModule} from "primeng/dialog";
-import {InputTextModule} from "primeng/inputtext";
-import {InputTextareaModule} from "primeng/inputtextarea";
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import {AuthService} from "../../../../auth/services/auth.service";
 import {finalize} from "rxjs/operators";
 import {CalendarModule} from "primeng/calendar";
-import {EcheanceCMTUpdateRequest} from "../../dtos/EcheanceCMTUpdateRequest";
 
 
 @Component({
@@ -54,9 +50,6 @@ import {EcheanceCMTUpdateRequest} from "../../dtos/EcheanceCMTUpdateRequest";
     InputSwitchModule,
     RippleModule,
     FormsModule,
-    DialogModule,
-    InputTextModule,
-    InputTextareaModule,
     BreadcrumbModule,
     CalendarModule
   ],
@@ -74,10 +67,6 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
 
   searchForm!: FormGroup;
   statutOptions: { label: string, value: StatutEcheanceCMT }[] = [];
-
-  showEditDialog = false;
-  editingEcheanceId: number | null = null;
-  editForm!: FormGroup;
 
   @ViewChild('dt') dt: Table | undefined;
 
@@ -137,15 +126,6 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
       dateValeurDebut: [null as Date | null],
       dateValeurFin: [null as Date | null],
       statutPaiement: [null]
-    });
-
-    this.editForm = this.fb.group({
-      dateEcheance: [null],
-      montant: [null],
-      dateOperation: [null],
-      dateValeur: [null],
-      observation: [null],
-      libelle: [null]
     });
   }
 
@@ -310,55 +290,9 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
 
   }
 
-  openEditDialog(echeance: EcheanceCMTResponseDto): void {
-    this.editingEcheanceId = echeance.id;
-    this.editForm.reset({
-      dateEcheance: echeance.dateEcheance ? new Date(echeance.dateEcheance) : null,
-      montant: echeance.montantTtc,
-      dateOperation: echeance.dateOperation ? new Date(echeance.dateOperation) : null,
-      dateValeur: echeance.dateValuer ? new Date(echeance.dateValuer) : null,
-      observation: echeance.observation ?? null,
-      libelle: echeance.libelle ?? null
-    });
-    this.showEditDialog = true;
-  }
-
-  closeEditDialog(): void {
-    this.showEditDialog = false;
-    this.editingEcheanceId = null;
-    this.editForm.reset();
-  }
-
-  saveEdit(): void {
-    if (!this.editingEcheanceId || this.editForm.invalid) return;
-
-    const toIso = (d: Date | null | undefined): string | null =>
-      d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : null;
-
-    const raw = this.editForm.value;
-    const dto: EcheanceCMTUpdateRequest = {
-      dateEcheance: toIso(raw.dateEcheance)!,
-      montant: raw.montant,
-      dateOperation: toIso(raw.dateOperation),
-      dateValeur: toIso(raw.dateValeur),
-      observation: raw.observation ?? null,
-      libelle: raw.libelle ?? null
-    };
-
-    this.loading = true;
-    this.echeanceCmtService.updateEcheance(this.editingEcheanceId, dto).pipe(
-      finalize(() => { this.loading = false; })
-    ).subscribe({
-      next: () => {
-        this.closeEditDialog();
-        this.loadEcheances(this.lastLazyLoadEvent);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Succès',
-          detail: 'Échéance mise à jour avec succès.'
-        });
-      }
-    });
+  /** Navigue vers la page d'édition dédiée de cette échéance (remplace l'ancien dialogue). */
+  editEcheance(echeance: EcheanceCMTResponseDto): void {
+    this.router.navigate(['/portail/cmt/echeances/edit', echeance.id]);
   }
 
 }

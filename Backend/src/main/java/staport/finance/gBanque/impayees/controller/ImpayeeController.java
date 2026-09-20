@@ -7,7 +7,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -85,14 +84,6 @@ public class ImpayeeController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Consulter les encours d'impayées d'une banque")
-    @GetMapping("/encours/{banqueId}")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<EncoursImpayeeDto> getOutstandingImpayees(@PathVariable Long banqueId, @ModelAttribute EncoursImpayeeSearchDto searchDto, @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        log.info("Requête REST: Récupération encours pour banqueId={}", banqueId);
-        return ResponseEntity.ok(impayeeService.getOutstandingImpayees(searchDto, banqueId, pageable));
-    }
-
     /**
      * Exporte en PDF l'intégralité des impayées correspondant aux critères fournis (mêmes filtres
      * que {@code POST /impayees/search}) — sans pagination : le fichier contient tous les
@@ -107,30 +98,6 @@ public class ImpayeeController {
 
         byte[] pdf = impayeeService.exporterPdf(searchDto);
         String filename = "impayees_" + LocalDate.now() + ".pdf";
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdf);
-    }
-
-    /**
-     * Exporte en PDF l'intégralité de l'encours d'impayées d'une banque correspondant aux
-     * critères fournis (mêmes filtres que {@code GET /impayees/encours/{banqueId}}, {@code type}
-     * inclus) — sans pagination : le fichier contient tous les résultats filtrés, pas seulement la
-     * page actuellement affichée à l'écran.
-     */
-    @Operation(summary = "Exporter en PDF l'encours d'impayées d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/encours/{banqueId}/export/pdf")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<byte[]> exporterEncoursPdf(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursImpayeeSearchDto searchDto) {
-        log.info("GET /impayees/encours/{}/export/pdf — type={}", banqueId, searchDto.type());
-
-        byte[] pdf = impayeeService.exporterEncoursPdf(searchDto, banqueId);
-        String filename = "impayees_encours_" + LocalDate.now() + ".pdf";
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")

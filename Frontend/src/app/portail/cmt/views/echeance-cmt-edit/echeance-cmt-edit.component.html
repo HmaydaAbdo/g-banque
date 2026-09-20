@@ -1,0 +1,85 @@
+<p-toast></p-toast>
+
+<div class="portail-section w-full h-full overflow-y-scroll pt-2 pb-8 px-5 route-enter">
+
+  <p class="text-center font-bold text-xl mb-3">Modifier l'échéance CMT</p>
+
+  @if (loading) {
+    <div class="flex justify-content-center my-5">
+      <p-progressSpinner></p-progressSpinner>
+    </div>
+  }
+
+  @if (!loading && loadError) {
+    <div class="flex flex-column align-items-center gap-3 my-5">
+      <i class="pi pi-exclamation-triangle text-4xl text-orange-500"></i>
+      <p class="text-700">{{ loadError }}</p>
+      <button pButton pRipple label="Retour" icon="pi pi-arrow-left" severity="secondary" (click)="cancel()"></button>
+    </div>
+  }
+
+  @if (!loading && !loadError && echeance) {
+    <div class="flex justify-content-center mb-4">
+      <div class="flex align-items-center gap-3 p-3 border-round surface-100" style="max-width: 32rem;">
+        <i class="pi pi-file text-xl"></i>
+        <span>
+          Crédit <strong>{{ echeance.credit.designation }}</strong> — Échéance N°
+          <strong>{{ echeance.numeroEcheance }}</strong>
+        </span>
+      </div>
+    </div>
+
+    @if (!isEditable) {
+      <div class="flex flex-column align-items-center gap-3 my-5">
+        <i class="pi pi-lock text-4xl text-orange-500"></i>
+        <p class="text-700 text-center">
+          Cette échéance est au statut <strong>{{ echeance.statutPaiement }}</strong> — seules les
+          échéances au statut <strong>PREVU</strong> peuvent être modifiées.
+        </p>
+        <button pButton pRipple label="Retour" icon="pi pi-arrow-left" severity="secondary" (click)="cancel()"></button>
+      </div>
+    } @else {
+      <form [formGroup]="editForm" (ngSubmit)="save()" class="flex justify-content-center">
+        <div class="p-fluid formgrid grid" style="max-width: 42rem;">
+
+          <div class="col-12 md:col-6 field">
+            <label class="font-semibold text-sm">Date échéance <span class="p-text-danger">*</span></label>
+            <p-calendar formControlName="dateEcheance" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body"></p-calendar>
+          </div>
+
+          <div class="col-12 md:col-6 field">
+            <label class="font-semibold text-sm">Montant <span class="p-text-danger">*</span></label>
+            <p-inputNumber formControlName="montant" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [min]="0.01" suffix=" MAD"></p-inputNumber>
+          </div>
+
+          <div class="col-12 md:col-6 field">
+            <label class="font-semibold text-sm">Date opération</label>
+            <p-calendar formControlName="dateOperation" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body"></p-calendar>
+          </div>
+
+          <div class="col-12 md:col-6 field">
+            <label class="font-semibold text-sm">Date valeur</label>
+            <p-calendar formControlName="dateValeur" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body"></p-calendar>
+          </div>
+
+          <div class="col-12 field">
+            <label class="font-semibold text-sm">Observation</label>
+            <textarea pInputTextarea formControlName="observation" rows="2"></textarea>
+          </div>
+
+          <div class="col-12 field">
+            <label class="font-semibold text-sm">Libellé</label>
+            <input pInputText formControlName="libelle" />
+          </div>
+
+          <div class="col-12 flex justify-content-end gap-2 mt-2">
+            <button pButton pRipple type="button" label="Annuler" icon="pi pi-times" severity="secondary" (click)="cancel()"></button>
+            <button pButton pRipple type="submit" label="Enregistrer" icon="pi pi-check" [loading]="submitting" [disabled]="editForm.invalid || submitting"></button>
+          </div>
+
+        </div>
+      </form>
+    }
+  }
+
+</div>

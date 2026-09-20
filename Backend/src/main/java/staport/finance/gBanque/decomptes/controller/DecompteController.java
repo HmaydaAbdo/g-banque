@@ -17,9 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import staport.finance.gBanque.decomptes.dtos.request.DecompteRequestDto;
 import staport.finance.gBanque.decomptes.dtos.request.DecompteSearchDto;
-import staport.finance.gBanque.decomptes.dtos.request.EncoursDecompteSearchDto;
 import staport.finance.gBanque.decomptes.dtos.response.DecompteResponseDto;
-import staport.finance.gBanque.decomptes.dtos.response.EncoursDecompteDto;
 import staport.finance.gBanque.decomptes.service.IDecompteService;
 
 /**
@@ -104,28 +102,6 @@ public class DecompteController {
     public ResponseEntity<byte[]> exportPdf(@ModelAttribute DecompteSearchDto searchDTO) {
         byte[] pdf = decompteService.exportToPdf(searchDTO);
         return pdfResponse(pdf, "decomptes");
-    }
-
-    @Operation(summary = "Consulter les encours de décomptes d'une banque")
-    @GetMapping("/encours/{banqueId}")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<EncoursDecompteDto> getEncoursForDecomptes(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursDecompteSearchDto searchDTO,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        EncoursDecompteDto result = decompteService.getDecomptesEncoursForBanque(searchDTO, banqueId, pageable);
-        return ResponseEntity.ok(result);
-    }
-
-    @Operation(summary = "Exporter en PDF l'encours de décomptes d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/encours/{banqueId}/export/pdf")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<byte[]> exportEncoursPdf(
-            @PathVariable Long banqueId,
-            @ModelAttribute EncoursDecompteSearchDto searchDTO) {
-        byte[] pdf = decompteService.exportEncoursPdf(searchDTO, banqueId);
-        return pdfResponse(pdf, "decomptes_encours");
     }
 
     private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {

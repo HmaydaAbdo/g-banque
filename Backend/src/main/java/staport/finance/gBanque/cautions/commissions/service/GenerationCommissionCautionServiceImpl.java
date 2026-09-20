@@ -11,6 +11,7 @@ import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.cautions.repository.CautionRepository;
 import staport.finance.gBanque.commision.dtos.CommissionResponseDto;
 import staport.finance.gBanque.commision.entities.Commission;
+import staport.finance.gBanque.commision.enums.TypeCommission;
 import staport.finance.gBanque.commision.service.ICommissionService;
 import staport.finance.gBanque.impot_taxes.enums.Motif;
 import staport.finance.gBanque.impot_taxes.service.IImpotEtTaxeService;
@@ -142,7 +143,7 @@ public class GenerationCommissionCautionServiceImpl implements IGenerationCommis
             CommissionResponseDto commissionPersistee = commissionService.creerCommissionCaution(
                     caution.getId(), caution.getBanque().getId(), commissionCalculee.getMontant(),
                     commissionCalculee.getDateEmission(), commissionCalculee.getLibelle(),
-                    commissionCalculee.getObservation());
+                    commissionCalculee.getObservation(), TypeCommission.MENSUELLE);
             commissionsCreees.add(commissionPersistee);
 
             // 4d. TVA — uniquement pour les banques dont la stratégie l'autorise. CDM (et toute

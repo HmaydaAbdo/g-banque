@@ -6,8 +6,6 @@ import { EcheanceLeasingResponse } from "../dtos/EcheanceLeasingResponse";
 import { EcheanceLeasingUpdateRequest } from "../dtos/EcheanceLeasingUpdateRequest";
 import { TableauAmortissement } from "../dtos/table-amortissement";
 import { EcheanceLeasingSearchDTO } from "../dtos/echeance-leasing-search";
-import { EncoursLeasingRequestDTO } from "../dtos/encours-leasing-request.dto";
-import { EncoursLeasingResponseDTO } from "../dtos/encours-leasing-response.dto";
 import { toLocalDateString } from "../../../global/types/date.utils";
 
 
@@ -91,6 +89,16 @@ export class EcheanceLeasingService {
   }
 
   /**
+   * Récupère une échéance de leasing par son identifiant.
+   * Utilisé par l'écran de récapitulatif unifié pour résoudre le contrat de leasing
+   * (contratLeasingId, numéro de contrat, montants HT/TVA) avant l'ouverture du
+   * formulaire de validation — sans dupliquer cette logique côté frontend.
+   */
+  getEcheanceLeasingById(id: number): Observable<EcheanceLeasingResponse> {
+    return this.http.get<EcheanceLeasingResponse>(`${this.apiUrl}/${id}`);
+  }
+
+  /**
    * Marks a specific EcheanceLeasing installment as paid.
    */
   toggleStatus(id: number): Observable<EcheanceLeasingResponse> {
@@ -104,55 +112,5 @@ export class EcheanceLeasingService {
    */
   updateEcheance(id: number, dto: EcheanceLeasingUpdateRequest): Observable<EcheanceLeasingResponse> {
     return this.http.put<EcheanceLeasingResponse>(`${this.apiUrl}/${id}`, dto);
-  }
-
-  /**
-   * Récupère les encours de leasing en fonction des critères de recherche.
-   */
-  getEncoursLeasing(request: EncoursLeasingRequestDTO): Observable<EncoursLeasingResponseDTO> {
-    let params = new HttpParams();
-
-    params = params.append('banqueId', request.banqueId.toString());
-
-    if (request.page !== undefined) {
-      params = params.append('page', request.page.toString());
-    }
-    if (request.size !== undefined) {
-      params = params.append('size', request.size.toString());
-    }
-    if (request.sort) {
-      params = params.append('sort', request.sort);
-    }
-    if (request.organismeLeasingId) {
-      params = params.append('organismeLeasingId', request.organismeLeasingId.toString());
-    }
-    if (request.numeroContrat) {
-      params = params.append('numeroContrat', request.numeroContrat.toString());
-    }
-    if (request.montant) {
-      params = params.append('montant', request.montant.toString());
-    }
-
-    return this.http.get<EncoursLeasingResponseDTO>(`${this.apiUrl}/encours`, { params });
-  }
-
-  /**
-   * Exporte en PDF l'encours d'échéances de leasing d'une banque (mêmes critères que
-   * {@link getEncoursLeasing}, sans pagination).
-   */
-  exportEncoursLeasingPdf(request: EncoursLeasingRequestDTO): Observable<Blob> {
-    let params = new HttpParams().set('banqueId', request.banqueId.toString());
-
-    if (request.organismeLeasingId) {
-      params = params.set('organismeLeasingId', request.organismeLeasingId.toString());
-    }
-    if (request.numeroContrat) {
-      params = params.set('numeroContrat', request.numeroContrat.toString());
-    }
-    if (request.montant) {
-      params = params.set('montant', request.montant.toString());
-    }
-
-    return this.http.get(`${this.apiUrl}/encours/export/pdf`, { params, responseType: 'blob' });
   }
 }

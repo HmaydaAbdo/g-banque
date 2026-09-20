@@ -32,7 +32,6 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -203,42 +202,6 @@ public class MiseADispositionService {
         return toDto(miseADisposition);
     }
 
-    @Transactional(readOnly = true)
-    public EncoursMiseAdisposition getEncoursDecaissementsForMiseADispositionByBank(EncoursMiseAdispositionSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.debug("Récupération des encours de décaissement pour les mises à disposition de la banque ID={} avec les filtres={}", banqueId, searchDto);
-
-        Specification<MiseADisposition> spec = MiseADispositionSpec.encoursDecaissement(banqueId, finDuMoisCourant())
-                .and(MiseADispositionSpec.hasNumero(searchDto.getNumero()))
-                .and(MiseADispositionSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(MiseADispositionSpec.hasMontant(searchDto.getMontant()))
-                .and(MiseADispositionSpec.hasType(Type.DECAISSEMENT));
-
-        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, stablePageable(pageable));
-        BigDecimal totalDesEncours = miseADispositionRepository.findAll(spec).stream().map(MiseADisposition::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        log.debug("Total des encours de décaissement pour la banque ID={}: {}", banqueId, totalDesEncours);
-        return new EncoursMiseAdisposition(totalDesEncours, miseADispositionPage.map(this::toDto));
-    }
-
-    @Transactional(readOnly = true)
-    public EncoursMiseAdisposition getEncoursEncaissementsForMiseADispositionByBank(EncoursMiseAdispositionSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.debug("Récupération des encours d'encaissement pour les mises à disposition de la banque ID={} avec les filtres={}", banqueId, searchDto);
-
-        Specification<MiseADisposition> spec = MiseADispositionSpec.encoursEncaissement(banqueId, finDuMoisCourant())
-                .and(MiseADispositionSpec.hasNumero(searchDto.getNumero()))
-                .and(MiseADispositionSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(MiseADispositionSpec.hasMontant(searchDto.getMontant()))
-                .and(MiseADispositionSpec.hasType(Type.ENCAISSEMENT))
-                .and(MiseADispositionSpec.hasEmetteur(searchDto.getEmetteur()))
-                .and(MiseADispositionSpec.hasDateEmission(searchDto.getDateEmission()));
-
-        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, stablePageable(pageable));
-        BigDecimal totalDesEncours = miseADispositionRepository.findAll(spec).stream().map(MiseADisposition::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        log.debug("Total des encours d'encaissement pour la banque ID={}: {}", banqueId, totalDesEncours);
-        return new EncoursMiseAdisposition(totalDesEncours, miseADispositionPage.map(this::toDto));
-    }
-
     // ── Export PDF ────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
@@ -251,38 +214,6 @@ public class MiseADispositionService {
         List<String> filterLines = buildFilterSummary(searchDto);
 
         return generateMisesADispositionPdf("État des Mises à Disposition de Décaissement", mads, total, filterLines);
-    }
-
-    @Transactional(readOnly = true)
-    public byte[] exportEncoursDecaissementPdf(EncoursMiseAdispositionSearchDto searchDto, Long banqueId) {
-        Specification<MiseADisposition> spec = MiseADispositionSpec.encoursDecaissement(banqueId, finDuMoisCourant())
-                .and(MiseADispositionSpec.hasNumero(searchDto.getNumero()))
-                .and(MiseADispositionSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(MiseADispositionSpec.hasMontant(searchDto.getMontant()))
-                .and(MiseADispositionSpec.hasType(Type.DECAISSEMENT));
-
-        List<MiseADisposition> mads = miseADispositionRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-        BigDecimal total = sumMontant(spec);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
-
-        return generateMisesADispositionPdf("Encours de Décaissement — Mises à Disposition", mads, total, filterLines);
-    }
-
-    @Transactional(readOnly = true)
-    public byte[] exportEncoursEncaissementPdf(EncoursMiseAdispositionSearchDto searchDto, Long banqueId) {
-        Specification<MiseADisposition> spec = MiseADispositionSpec.encoursEncaissement(banqueId, finDuMoisCourant())
-                .and(MiseADispositionSpec.hasNumero(searchDto.getNumero()))
-                .and(MiseADispositionSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(MiseADispositionSpec.hasMontant(searchDto.getMontant()))
-                .and(MiseADispositionSpec.hasType(Type.ENCAISSEMENT))
-                .and(MiseADispositionSpec.hasEmetteur(searchDto.getEmetteur()))
-                .and(MiseADispositionSpec.hasDateEmission(searchDto.getDateEmission()));
-
-        List<MiseADisposition> mads = miseADispositionRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-        BigDecimal total = sumMontant(spec);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
-
-        return generateMisesADispositionPdf("Encours d'Encaissement — Mises à Disposition", mads, total, filterLines);
     }
 
     private BigDecimal sumMontant(Specification<MiseADisposition> spec) {
@@ -456,36 +387,11 @@ public class MiseADispositionService {
         return lines;
     }
 
-    private List<String> buildEncoursFilterSummary(EncoursMiseAdispositionSearchDto dto, Long banqueId) {
-        List<String> lines = new ArrayList<>();
-        try {
-            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
-        } catch (ResourceNotFoundException ignored) {
-            // Filtre obsolète (banque supprimée depuis) — ignoré silencieusement dans le résumé PDF.
-        }
-        if (dto == null) return lines;
-        if (dto.getNumero() != null && !dto.getNumero().isBlank())
-            lines.add("N° MAD : " + dto.getNumero());
-        if (dto.getBeneficiaire() != null && !dto.getBeneficiaire().isBlank())
-            lines.add("Bénéficiaire : " + dto.getBeneficiaire());
-        if (dto.getMontant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.getMontant()) + " MAD");
-        return lines;
-    }
-
     // ── Helpers internes ──────────────────────────────────────────────────────
 
     private MiseADisposition trouverOuLeverException(Long id) {
         return miseADispositionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Mise à disposition with id " + id + " not found."));
-    }
-
-    /**
-     * Fin du mois courant — recalculée à chaque appel (et non mise en cache) pour que
-     * les calculs d'encours restent corrects après le premier jour suivant le déploiement.
-     */
-    private LocalDate finDuMoisCourant() {
-        return LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
     }
 
     private Pageable stablePageable(Pageable pageable) {

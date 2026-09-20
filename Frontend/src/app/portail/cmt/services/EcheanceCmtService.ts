@@ -6,8 +6,6 @@ import {environment} from "../../../../environments/environment";
 import {EcheanceCMTResponseDto} from "../dtos/EcheanceCMTResponseDto";
 import {TableauAmortissementCMTResponseDto} from "../dtos/TableauAmortissementCMTResponseDto";
 import {EcheanceCMTSearchDto} from "../dtos/EcheanceCMTSearchDto";
-import {EncoursCMTRequestDTO} from "../dtos/EncoursCMTRequestDTO";
-import {EncoursCMTResponseDTO} from "../dtos/EncoursCMTResponseDTO";
 import {EcheanceCMTUpdateRequest} from "../dtos/EcheanceCMTUpdateRequest";
 import {toLocalDateString} from "../../global/types/date.utils";
 
@@ -83,6 +81,16 @@ export class EcheanceCmtService {
   }
 
   /**
+   * Récupère une échéance de crédit à moyen terme par son identifiant.
+   * Utilisé par l'écran de récapitulatif unifié pour résoudre le crédit CMT
+   * (creditMoyenTermeId, désignation, montant TTC) avant l'ouverture du
+   * formulaire de validation — sans dupliquer cette logique côté frontend.
+   */
+  getEcheanceCMTById(id: number): Observable<EcheanceCMTResponseDto> {
+    return this.http.get<EcheanceCMTResponseDto>(`${this.apiUrl}/${id}`);
+  }
+
+  /**
    * Marks a specific installment as paid.
    */
   toggleStatus(id: number): Observable<EcheanceCMTResponseDto> {
@@ -97,60 +105,6 @@ export class EcheanceCmtService {
   updateEcheance(id: number, dto: EcheanceCMTUpdateRequest): Observable<EcheanceCMTResponseDto> {
     return this.http.put<EcheanceCMTResponseDto>(`${this.apiUrl}/${id}`, dto);
   }
-
-  /**
-   * Récupère les encours du crédit moyen terme en fonction des critères de recherche.
-   * @param request Le DTO de requête contenant les filtres (banqueId, periode, organismeLeasingId, etc.).
-   * @returns Un Observable de l'objet de réponse des encours.
-   */
-  getEncoursCMT(request: EncoursCMTRequestDTO): Observable<EncoursCMTResponseDTO> {
-    let params = new HttpParams();
-
-    // Ajout des paramètres obligatoires
-    params = params.append('banqueId', request.banqueId.toString());
-
-
-
-    if (request.page !== undefined) {
-      params = params.append('page', request.page.toString());
-    }
-    if (request.size !== undefined) {
-      params = params.append('size', request.size.toString());
-    }
-    if (request.sort) {
-      params = params.append('sort', request.sort);
-    }
-
-    if( request.designation ){
-      params = params.append('designation', request.designation);
-    }
-
-    if( request.montant ){
-      params = params.append('montant', request.montant.toString());
-    }
-
-    return this.http.get<EncoursCMTResponseDTO>(`${this.apiUrl}/encours`, { params });
-  }
-
-  /**
-   * Exporte en PDF l'encours d'échéances CMT d'une banque (mêmes critères que
-   * {@link getEncoursCMT}, sans pagination).
-   */
-  exportEncoursCMTPdf(request: EncoursCMTRequestDTO): Observable<Blob> {
-    let params = new HttpParams().set('banqueId', request.banqueId.toString());
-
-    if (request.designation) {
-      params = params.set('designation', request.designation);
-    }
-    if (request.montant) {
-      params = params.set('montant', request.montant.toString());
-    }
-
-    return this.http.get(`${this.apiUrl}/encours/export/pdf`, { params, responseType: 'blob' });
-  }
-
-
-
 
 
 

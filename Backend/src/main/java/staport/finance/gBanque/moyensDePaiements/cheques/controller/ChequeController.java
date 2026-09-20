@@ -84,24 +84,6 @@ public class ChequeController {
         return ResponseEntity.ok(chequeService.toggleChequeStatus(id));
     }
 
-    @Operation(summary = "Encours de décaissement par banque")
-    @GetMapping("/decaissements/encours/{banqueId}")
-    public ResponseEntity<EncoursChequeResponseDto> getEncoursDecaissementForCheques(
-            @PathVariable Long banqueId,
-            EncoursChequeSearchDto searchDto,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        return ResponseEntity.ok(chequeService.getEncoursDecaissementForCheques(searchDto, banqueId, pageable));
-    }
-
-    @Operation(summary = "Encours d'encaissement par banque")
-    @GetMapping("/encaissements/encours/{banqueId}")
-    public ResponseEntity<EncoursChequeResponseDto> getEncoursEncaissementForCheques(
-            @PathVariable Long banqueId,
-            EncoursChequeSearchDto searchDto,
-            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        return ResponseEntity.ok(chequeService.getEncoursEncaissementForCheques(searchDto, banqueId, pageable));
-    }
-
     @Operation(summary = "Exporter les chèques d'encaissement en PDF",
             description = "Ignore la pagination — exporte tous les résultats filtrés.")
     @GetMapping("/encaissements/export/pdf")
@@ -114,20 +96,6 @@ public class ChequeController {
     @GetMapping("/decaissements/export/pdf")
     public ResponseEntity<byte[]> exportDecaissementsPdf(ChequeSearchDto searchDto) {
         return pdfResponse(chequeService.exportDecaissementsPdf(searchDto), "cheques_decaissements");
-    }
-
-    @Operation(summary = "Exporter en PDF l'encours d'encaissement de chèques d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/encaissements/encours/{banqueId}/export/pdf")
-    public ResponseEntity<byte[]> exportEncoursEncaissementPdf(@PathVariable Long banqueId, EncoursChequeSearchDto searchDto) {
-        return pdfResponse(chequeService.exportEncoursEncaissementPdf(searchDto, banqueId), "cheques_encours_encaissement");
-    }
-
-    @Operation(summary = "Exporter en PDF l'encours de décaissement de chèques d'une banque",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
-    @GetMapping("/decaissements/encours/{banqueId}/export/pdf")
-    public ResponseEntity<byte[]> exportEncoursDecaissementPdf(@PathVariable Long banqueId, EncoursChequeSearchDto searchDto) {
-        return pdfResponse(chequeService.exportEncoursDecaissementPdf(searchDto, banqueId), "cheques_encours_decaissement");
     }
 
     private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {

@@ -59,23 +59,20 @@ public class MiseADispositionValidationService implements IMiseADispositionValid
         this.soldeCascadeService = soldeCascadeService;
     }
 
+    /**
+     * Valide une mise à disposition, décaissement ou encaissement indifféremment — le sens
+     * ({@code MiseADisposition.type}) est lu directement sur l'entité par le mapper, jamais
+     * transmis par l'appelant : une seule méthode suffit, sans branchement (fusion du 19/09/2026
+     * des deux anciennes méthodes {@code processMiseAdispositionDecaissementTransaction}/
+     * {@code processMiseAdispositionEncaissementTransaction}, dont les corps étaient déjà
+     * identiques).
+     */
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
     @AuditableAction(operation = AuditOperation.UPDATE, entity = MiseADisposition.class, idAccessor = "getMiseADispositionId")
-    public MiseAdispositionTransactionResponseDto processMiseAdispositionDecaissementTransaction(MiseAdispositionTransactionRequestDto requestDto) {
-        log.info("Validation mise à disposition décaissement — id: {}", requestDto.getId());
-        return processTransaction(requestDto);
-    }
+    public MiseAdispositionTransactionResponseDto processMiseAdispositionTransaction(MiseAdispositionTransactionRequestDto requestDto) {
+        log.info("Validation mise à disposition — id: {}", requestDto.getId());
 
-    @Override
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = MiseADisposition.class, idAccessor = "getMiseADispositionId")
-    public MiseAdispositionTransactionResponseDto processMiseAdispositionEncaissementTransaction(MiseAdispositionTransactionRequestDto requestDto) {
-        log.info("Validation mise à disposition encaissement — id: {}", requestDto.getId());
-        return processTransaction(requestDto);
-    }
-
-    private MiseAdispositionTransactionResponseDto processTransaction(MiseAdispositionTransactionRequestDto requestDto) {
         MiseADisposition miseADisposition = miseADispositionRepository.findById(requestDto.getId())
                 .orElseThrow(() -> {
                     log.warn("Mise à disposition introuvable — id: {}", requestDto.getId());
@@ -110,7 +107,7 @@ public class MiseADispositionValidationService implements IMiseADispositionValid
 
     @Override
     @Transactional
-    public void syncMiseADispositionFromTransaction(Long miseADispositionId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncMiseADispositionFromTransaction(Long miseADispositionId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation mise à disposition depuis transaction — id: {}", miseADispositionId);
 
         MiseADisposition miseADisposition = miseADispositionRepository.findById(miseADispositionId)
@@ -121,6 +118,8 @@ public class MiseADispositionValidationService implements IMiseADispositionValid
 
         miseADisposition.setDateValeur(dateValeur);
         miseADisposition.setDateOperation(dateOperation);
+        miseADisposition.setLibelle(libelle);
+        miseADisposition.setObservation(observation);
         miseADispositionRepository.save(miseADisposition);
 
         log.info("Mise à disposition id: {} synchronisée depuis transaction", miseADispositionId);

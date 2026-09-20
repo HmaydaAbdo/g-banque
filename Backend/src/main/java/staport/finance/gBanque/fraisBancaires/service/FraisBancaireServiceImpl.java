@@ -12,7 +12,6 @@ import com.lowagie.text.pdf.PdfPTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -24,8 +23,6 @@ import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
-import staport.finance.gBanque.fraisBancaires.dtos.EncoursFraisBancaireDto;
-import staport.finance.gBanque.fraisBancaires.dtos.EncoursFraisBancaireSearchDto;
 import staport.finance.gBanque.fraisBancaires.dtos.FraisBancaireRequestDto;
 import staport.finance.gBanque.fraisBancaires.dtos.FraisBancaireResponseDto;
 import staport.finance.gBanque.fraisBancaires.dtos.FraisBancaireSearchDto;
@@ -42,7 +39,6 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -182,51 +178,6 @@ public class FraisBancaireServiceImpl implements IFraisBancaireService {
 
         fraisBancaireRepository.deleteById(id);
         log.info("Frais bancaire ID: {} supprimé avec succès", id);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public EncoursFraisBancaireDto getOutstandingFraisBancaire(EncoursFraisBancaireSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.info("Récupération des frais bancaires en cours - banqueId={}, Critères: {}", banqueId, searchDto);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<FraisBancaire> spec = Specification.where(FraisBancaireSpecification.outstandingUntil(endOfMonth))
-                .and(FraisBancaireSpecification.hasBanque(banqueId))
-                .and(FraisBancaireSpecification.hasLibelle(searchDto.libelle()))
-                .and(FraisBancaireSpecification.hasMontant(searchDto.montant()));
-
-        Page<FraisBancaire> page = fraisBancaireRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
-        BigDecimal total = fraisBancaireRepository.findAll(spec).stream()
-                .map(FraisBancaire::getMontant)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        log.info("Encours calculé: {}, Nombre de frais: {}", total, page.getTotalElements());
-
-        Page<FraisBancaireResponseDto> pageDto = page.map(fraisBancaireMapper::toResponseDto);
-        return new EncoursFraisBancaireDto(total, pageDto);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public byte[] exportOutstandingFraisBancairePdf(EncoursFraisBancaireSearchDto searchDto, Long banqueId) {
-        log.info("Export PDF de l'encours de frais bancaires - banqueId={}, Critères: {}", banqueId, searchDto);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<FraisBancaire> spec = Specification.where(FraisBancaireSpecification.outstandingUntil(endOfMonth))
-                .and(FraisBancaireSpecification.hasBanque(banqueId))
-                .and(FraisBancaireSpecification.hasLibelle(searchDto.libelle()))
-                .and(FraisBancaireSpecification.hasMontant(searchDto.montant()));
-
-        List<FraisBancaireResponseDto> dtos = fraisBancaireRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"))
-                .stream()
-                .map(fraisBancaireMapper::toResponseDto)
-                .toList();
-
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
-
-        return generateFraisBancairePdf("Encours de Frais Bancaires", dtos, filterLines);
     }
 
     @Override
@@ -396,23 +347,6 @@ public class FraisBancaireServiceImpl implements IFraisBancaireService {
         }
         if (dto.dateValeurFin() != null) {
             lines.add("Date valeur max : " + dto.dateValeurFin().format(DATE_FMT));
-        }
-        return lines;
-    }
-
-    private List<String> buildEncoursFilterSummary(EncoursFraisBancaireSearchDto dto, Long banqueId) {
-        List<String> lines = new ArrayList<>();
-        try {
-            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
-        } catch (ResourceNotFoundException e) {
-            log.debug("Banque id={} introuvable pour le résumé de filtre export — ignorée", banqueId);
-        }
-        if (dto == null) return lines;
-        if (dto.libelle() != null && !dto.libelle().isBlank()) {
-            lines.add("Libellé : " + dto.libelle());
-        }
-        if (dto.montant() != null) {
-            lines.add("Montant : " + formatMontantFb(dto.montant()));
         }
         return lines;
     }

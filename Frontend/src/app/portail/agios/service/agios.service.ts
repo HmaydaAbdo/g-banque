@@ -6,7 +6,6 @@ import { environment } from '../../../../environments/environment';
 import { AgiosRequestDto } from '../dtos/AgiosRequestDto';
 import { AgiosResponseDto } from '../dtos/AgiosResponseDto';
 import { AgiosSearchDto } from '../dtos/AgiosSearchDto';
-import { EncoursAgiosDto } from '../dtos/EncoursAgiosDto';
 import { PageResponse } from '../../global/types/PageResponse';
 import { toLocalDateString } from '../../global/types/date.utils';
 
@@ -64,28 +63,6 @@ export class AgiosService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-  getOutstandingAgios(
-    banqueId: number,
-    dto?: AgiosSearchDto,
-    page = 0,
-    size = 10,
-    sort = 'dateEmission,desc'
-  ): Observable<EncoursAgiosDto> {
-    let params = new HttpParams()
-      .set('page', page)
-      .set('size', size)
-      .set('sort', sort);
-
-    if (dto) {
-      Object.entries(dto).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
-          params = params.set(key, String(value));
-        }
-      });
-    }
-    return this.http.get<EncoursAgiosDto>(`${this.apiUrl}/encours/${banqueId}`, { params });
-  }
-
   toggleStatus(id: number): Observable<AgiosResponseDto> {
     return this.http.patch<AgiosResponseDto>(`${this.apiUrl}/${id}/toggle-status`, {});
   }
@@ -122,17 +99,5 @@ export class AgiosService {
       params = params.set('dateValeurFin', toLocalDateString(dto.dateValeurFin)!);
     }
     return params;
-  }
-
-  exportOutstandingAgiosPdf(banqueId: number, dto?: AgiosSearchDto): Observable<Blob> {
-    let params = new HttpParams();
-    if (dto) {
-      Object.entries(dto).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
-          params = params.set(key, String(value));
-        }
-      });
-    }
-    return this.http.get(`${this.apiUrl}/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
   }
 }

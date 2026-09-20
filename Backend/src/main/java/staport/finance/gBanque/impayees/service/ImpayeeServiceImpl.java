@@ -4,7 +4,6 @@ package staport.finance.gBanque.impayees.service;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -34,7 +33,6 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -45,12 +43,6 @@ import java.util.Locale;
  * <p>Encapsulation des domaines (architecture.md) : la résolution de la {@link Banque} passe
  * exclusivement par {@link IBanqueService} — jamais par injection directe de
  * {@code BanqueRepository}.
- *
- * <p>Bug latent corrigé (14/07/2026) : {@code endOfMonth} était auparavant un champ calculé une
- * seule fois à la construction du bean singleton — figé à la date de démarrage du serveur au lieu
- * d'être recalculé à chaque appel. Recalculé maintenant localement dans
- * {@link #getOutstandingImpayees}, même correctif que celui appliqué à
- * {@code EcheanceCMTService} lors du sweep CMT.
  */
 @Service
 public class ImpayeeServiceImpl implements IImpayeeService {
@@ -199,32 +191,6 @@ public class ImpayeeServiceImpl implements IImpayeeService {
         return impayeeMapper.toResponseDto(updated);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public EncoursImpayeeDto getOutstandingImpayees(EncoursImpayeeSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.info("Récupération des encours impayées - banqueId={}, Critères: {}", banqueId, searchDto);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<Impayee> spec = Specification.where(ImpayeeSpecifications.outstandingUntil(endOfMonth, searchDto.type()))
-                .and(ImpayeeSpecifications.hasBanque(banqueId))
-                .and(ImpayeeSpecifications.hasLibelle(searchDto.libelle()))
-                .and(ImpayeeSpecifications.hasMotif(searchDto.motif()))
-                .and(ImpayeeSpecifications.hasNumero(searchDto.numero()))
-                .and(ImpayeeSpecifications.hasMontant(searchDto.montant()));
-
-        Page<Impayee> impayeePage = impayeeRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
-
-        BigDecimal totalDesEncours = impayeeRepository.findAll(spec).stream()
-                .map(Impayee::getMontant)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        Page<ImpayeeResponseDto> pageDto = impayeePage.map(impayeeMapper::toResponseDto);
-
-        log.info("Encours récupérés: {} éléments, Total: {}", pageDto.getTotalElements(), totalDesEncours);
-        return new EncoursImpayeeDto(totalDesEncours, pageDto);
-    }
-
     // ── Export PDF ────────────────────────────────────────────────────────────
 
     /**
@@ -246,34 +212,6 @@ public class ImpayeeServiceImpl implements IImpayeeService {
         return genererPdf("État des Impayées", impayees, totalMontant, filterLines);
     }
 
-    /**
-     * Génère un export PDF de l'encours d'impayées d'une banque (mêmes critères que
-     * {@link #getOutstandingImpayees}, {@code type} inclus) — sans pagination : le fichier imprime
-     * la totalité des résultats filtrés, pas seulement la page affichée à l'écran.
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public byte[] exporterEncoursPdf(EncoursImpayeeSearchDto searchDto, Long banqueId) {
-        log.info("Export PDF encours impayées — banqueId={}, type={}", banqueId, searchDto.type());
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<Impayee> spec = Specification.where(ImpayeeSpecifications.outstandingUntil(endOfMonth, searchDto.type()))
-                .and(ImpayeeSpecifications.hasBanque(banqueId))
-                .and(ImpayeeSpecifications.hasLibelle(searchDto.libelle()))
-                .and(ImpayeeSpecifications.hasMotif(searchDto.motif()))
-                .and(ImpayeeSpecifications.hasNumero(searchDto.numero()))
-                .and(ImpayeeSpecifications.hasMontant(searchDto.montant()));
-
-        List<Impayee> impayees = impayeeRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-
-        BigDecimal totalMontant = sumMontant(impayees);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
-
-        String titre = "Encours des Impayées" + (searchDto.type() != null ? " — " + libelleType(searchDto.type()) : "");
-        return genererPdf(titre, impayees, totalMontant, filterLines);
-    }
-
     private String libelleType(Type type) {
         return type == Type.ENCAISSEMENT ? "Encaissements" : "Décaissements";
     }
@@ -285,10 +223,6 @@ public class ImpayeeServiceImpl implements IImpayeeService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    /**
-     * Construit le document PDF partagé par {@link #exporterPdf} et {@link #exporterEncoursPdf} —
-     * même mise en page, seuls le titre, les lignes et le résumé de filtres varient.
-     */
     private byte[] genererPdf(String title, List<Impayee> impayees, BigDecimal totalMontant, List<String> filterLines) {
         try {
             return staportPdfReportService.generateReport(
@@ -458,33 +392,6 @@ public class ImpayeeServiceImpl implements IImpayeeService {
             lines.add("Date de valeur min : " + dto.dateValeurDebut().format(DATE_FMT));
         if (dto.dateValeurFin() != null)
             lines.add("Date de valeur max : " + dto.dateValeurFin().format(DATE_FMT));
-
-        return lines;
-    }
-
-    /**
-     * Résumé des filtres pour l'export PDF de l'écran encours — {@code banqueId} vient du path
-     * variable (pas du DTO, contrairement à {@link #buildFilterSummary}).
-     */
-    private List<String> buildEncoursFilterSummary(EncoursImpayeeSearchDto dto, Long banqueId) {
-        List<String> lines = new ArrayList<>();
-
-        try {
-            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
-        } catch (ResourceNotFoundException e) {
-            log.debug("Banque id={} introuvable pour le résumé de filtre export encours — ignorée", banqueId);
-        }
-
-        if (dto == null) return lines;
-
-        if (dto.libelle() != null && !dto.libelle().isBlank())
-            lines.add("Libellé : " + dto.libelle());
-        if (dto.motif() != null)
-            lines.add("Motif : " + dto.motif());
-        if (dto.numero() != null && !dto.numero().isBlank())
-            lines.add("Numéro : " + dto.numero());
-        if (dto.montant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
 
         return lines;
     }

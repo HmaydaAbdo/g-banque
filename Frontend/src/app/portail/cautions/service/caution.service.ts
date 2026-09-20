@@ -130,13 +130,21 @@ export class CautionService {
    *                 dans `caution-list.component.ts`) ; omis ou vide = toutes les colonnes.
    */
   exportPdf(criteres: CautionSearchDto, colonnes?: string[]): Observable<Blob> {
-    let params = this.buildFilterParams(criteres);
-    if (colonnes && colonnes.length > 0) {
-      colonnes.forEach(colonne => {
-        params = params.append('colonnes', colonne);
-      });
-    }
-    return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
+    return this.http.get(`${this.apiUrl}/export/pdf`, {
+      params: this.buildExportParams(criteres, colonnes),
+      responseType: 'blob',
+    });
+  }
+
+  /**
+   * Exporte en Excel (.xlsx) l'intégralité des cautions correspondant aux filtres actifs —
+   * mêmes critères et mêmes colonnes que {@link exportPdf}, seul le format diffère.
+   */
+  exportExcel(criteres: CautionSearchDto, colonnes?: string[]): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/export/excel`, {
+      params: this.buildExportParams(criteres, colonnes),
+      responseType: 'blob',
+    });
   }
 
   // ── Helpers privés ────────────────────────────────────────────────────────
@@ -157,6 +165,17 @@ export class CautionService {
     if (criteres.montant   != null) params = params.set('montant',       criteres.montant.toString());
     if (criteres.actif     != null) params = params.set('actif',         criteres.actif.toString());
 
+    return params;
+  }
+
+  /** Construit les query params communs aux deux exports (PDF et Excel) : filtres + colonnes. */
+  private buildExportParams(criteres: CautionSearchDto, colonnes?: string[]): HttpParams {
+    let params = this.buildFilterParams(criteres);
+    if (colonnes && colonnes.length > 0) {
+      colonnes.forEach(colonne => {
+        params = params.append('colonnes', colonne);
+      });
+    }
     return params;
   }
 

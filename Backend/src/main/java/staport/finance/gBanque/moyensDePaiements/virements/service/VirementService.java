@@ -32,7 +32,6 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -165,45 +164,6 @@ public class VirementService {
         return toDto(virement);
     }
 
-    @Transactional(readOnly = true)
-    public EncoursVirementResponseDto getEncoursDecaissementForVirements(EncoursVirementsSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.debug("Récupération des encours de décaissement pour la banque ID={} avec les filtres={}", banqueId, searchDto);
-
-        Specification<Virement> spec = VirementSpec.encoursDecaissement(banqueId, finDuMoisCourant())
-                .and(VirementSpec.hasDateEmission(searchDto.getDateEmission()))
-                .and(VirementSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(VirementSpec.hasMontant(searchDto.getMontant()));
-
-        Page<Virement> virementPage = virementRepository.findAll(spec, stablePageable(pageable));
-
-        BigDecimal totalDesEncours = virementRepository.findAll(spec).stream()
-                .map(Virement::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        log.debug("Total des encours de décaissement pour la banque ID={}: {}", banqueId, totalDesEncours);
-        return new EncoursVirementResponseDto(totalDesEncours, virementPage.map(this::toDto));
-    }
-
-    @Transactional(readOnly = true)
-    public EncoursVirementResponseDto getEncoursEncaissementForVirements(EncoursVirementsSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.debug("Récupération des encours d'encaissement pour la banque ID={} avec les filtres={}", banqueId, searchDto);
-
-        Banque banqueBeneficiaire = banqueService.findOrThrow(banqueId);
-
-        Specification<Virement> spec = VirementSpec.encoursEncaissement(banqueBeneficiaire.getNom(), finDuMoisCourant())
-                .and(VirementSpec.hasDateEmission(searchDto.getDateEmission()))
-                .and(VirementSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(VirementSpec.hasMontant(searchDto.getMontant()))
-                .and(VirementSpec.hasEmetteur(searchDto.getEmetteur()));
-
-        Page<Virement> virementPage = virementRepository.findAll(spec, stablePageable(pageable));
-
-        BigDecimal totalDesEncours = virementRepository.findAll(spec).stream()
-                .map(Virement::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        log.debug("Total des encours d'encaissement pour la banque ID={}: {}", banqueId, totalDesEncours);
-        return new EncoursVirementResponseDto(totalDesEncours, virementPage.map(this::toDto));
-    }
-
     /**
      * Supprime un virement saisi manuellement.
      *
@@ -283,37 +243,6 @@ public class VirementService {
         List<String> filterLines = buildFilterSummary(searchDto);
 
         return generateVirementPdf("État des Virements de Décaissement", virements, total, filterLines);
-    }
-
-    @Transactional(readOnly = true)
-    public byte[] exportEncoursEncaissementPdf(EncoursVirementsSearchDto searchDto, Long banqueId) {
-        Banque banqueBeneficiaire = banqueService.findOrThrow(banqueId);
-
-        Specification<Virement> spec = VirementSpec.encoursEncaissement(banqueBeneficiaire.getNom(), finDuMoisCourant())
-                .and(VirementSpec.hasDateEmission(searchDto.getDateEmission()))
-                .and(VirementSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(VirementSpec.hasMontant(searchDto.getMontant()))
-                .and(VirementSpec.hasEmetteur(searchDto.getEmetteur()));
-
-        List<Virement> virements = virementRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-        BigDecimal total = sumMontant(spec);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueBeneficiaire.getNom());
-
-        return generateVirementPdf("Encours d'Encaissement — Virements", virements, total, filterLines);
-    }
-
-    @Transactional(readOnly = true)
-    public byte[] exportEncoursDecaissementPdf(EncoursVirementsSearchDto searchDto, Long banqueId) {
-        Specification<Virement> spec = VirementSpec.encoursDecaissement(banqueId, finDuMoisCourant())
-                .and(VirementSpec.hasDateEmission(searchDto.getDateEmission()))
-                .and(VirementSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(VirementSpec.hasMontant(searchDto.getMontant()));
-
-        List<Virement> virements = virementRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-        BigDecimal total = sumMontant(spec);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueService.findOrThrow(banqueId).getNom());
-
-        return generateVirementPdf("Encours de Décaissement — Virements", virements, total, filterLines);
     }
 
     private BigDecimal sumMontant(Specification<Virement> spec) {
@@ -496,36 +425,11 @@ public class VirementService {
         return lines;
     }
 
-    private List<String> buildEncoursFilterSummary(EncoursVirementsSearchDto dto, String banqueNom) {
-        List<String> lines = new ArrayList<>();
-        if (banqueNom != null) {
-            lines.add("Banque : " + banqueNom);
-        }
-        if (dto == null) return lines;
-        if (dto.getBeneficiaire() != null && !dto.getBeneficiaire().isBlank())
-            lines.add("Bénéficiaire : " + dto.getBeneficiaire());
-        if (dto.getEmetteur() != null && !dto.getEmetteur().isBlank())
-            lines.add("Émetteur : " + dto.getEmetteur());
-        if (dto.getMontant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.getMontant()) + " MAD");
-        if (dto.getDateEmission() != null)
-            lines.add("Date émission : " + dto.getDateEmission().format(DATE_FMT));
-        return lines;
-    }
-
     // ── Helpers internes ──────────────────────────────────────────────────────
 
     private Virement trouverOuLeverException(Long id) {
         return virementRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Virement with id " + id + " not found."));
-    }
-
-    /**
-     * Fin du mois courant — recalculée à chaque appel (et non mise en cache) pour que
-     * les calculs d'encours restent corrects après le premier jour suivant le déploiement.
-     */
-    private LocalDate finDuMoisCourant() {
-        return LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
     }
 
     private Pageable stablePageable(Pageable pageable) {

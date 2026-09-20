@@ -6,8 +6,6 @@ import {PageResponse} from "../../global/types/PageResponse";
 import {DecompteRequestDto} from "../dtos/DecompteRequestDto";
 import {DecompteResponseDto} from "../dtos/DecompteResponseDto";
 import {DecompteSearchDto} from "../dtos/DecompteSearchDto";
-import {EncoursDecompteDto} from "../dtos/EncoursDecompteDto";
-import {EncoursDecompteSearchDto} from "../dtos/EncoursDecompteSearchDto";
 
 @Injectable({
   providedIn: 'root',
@@ -141,61 +139,6 @@ export class DecompteService {
 
   toggleStatus(id: number): Observable<DecompteResponseDto> {
     return this.http.patch<DecompteResponseDto>(`${this.apiUrl}/${id}/toggle`, {});
-  }
-
-  /**
-   * Retrieves the encours (in progress) décomptes records for a specific banque.
-   *
-   * @param banqueId The ID of the banque.
-   * @param searchDto
-   * @param page The page number (0-indexed).
-   * @param size The number of elements per page.
-   * @param sort The sorting string (e.g., 'dateEmission,asc').
-   * @returns An Observable of a paginated list of décomptes response DTOs.
-   */
-  getEncoursDecomptes(
-    banqueId: number,
-    searchDto:EncoursDecompteSearchDto,
-    page: number = 0,
-    size: number = 10,
-    sort: string = 'dateEmission,asc'
-  ): Observable<EncoursDecompteDto> {
-
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', sort);
-
-    if(searchDto.marcheName){
-      params = params.set('marcheName', searchDto.marcheName);
-    }
-
-    if (searchDto.marcheNumero) {
-      params = params.set('marcheNumero', searchDto.marcheNumero);
-    }
-
-    if(searchDto.montant){
-      params = params.set('montant', searchDto.montant.toString());
-    }
-
-    return this.http.get<EncoursDecompteDto>(
-      `${this.apiUrl}/encours/${banqueId}`,
-      { params }
-    );
-  }
-
-  /**
-   * Exporte en PDF l'encours de décomptes d'une banque (mêmes filtres que
-   * {@link getEncoursDecomptes}, sans pagination).
-   */
-  exportEncoursPdf(banqueId: number, searchDto: EncoursDecompteSearchDto): Observable<Blob> {
-    let params = new HttpParams();
-
-    if (searchDto.marcheName) params = params.set('marcheName', searchDto.marcheName);
-    if (searchDto.marcheNumero) params = params.set('marcheNumero', searchDto.marcheNumero);
-    if (searchDto.montant) params = params.set('montant', searchDto.montant.toString());
-
-    return this.http.get(`${this.apiUrl}/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
   }
 
 }

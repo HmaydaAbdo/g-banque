@@ -155,6 +155,32 @@ public class CautionController {
                 .body(pdf);
     }
 
+    // ── Export Excel ──────────────────────────────────────────────────────────
+
+    /**
+     * Exporte en Excel (.xlsx) l'intégralité des cautions correspondant aux critères fournis —
+     * mêmes règles que {@link #exporterPdf} (pas de pagination, colonnes sélectionnables via le
+     * même paramètre {@code colonnes}), seul le format de sortie diffère.
+     */
+    @Operation(summary = "Exporter les cautions en Excel",
+            description = "Ignore la pagination — exporte tous les résultats filtrés. Même paramètre "
+                    + "optionnel `colonnes` que /export/pdf.")
+    @GetMapping("/export/excel")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exporterExcel(
+            @ModelAttribute CautionSearchCriteria criteres,
+            @RequestParam(required = false) List<String> colonnes) {
+        log.info("GET /cautions/export/excel — critères: {}, colonnes: {}", criteres, colonnes);
+
+        byte[] excel = cautionService.exporterExcel(criteres, colonnes);
+        String filename = "cautions_" + LocalDate.now() + ".xlsx";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(excel);
+    }
+
     // ── Modification ──────────────────────────────────────────────────────────
 
     @Operation(summary = "Modifier une caution")

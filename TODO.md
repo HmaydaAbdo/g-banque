@@ -80,6 +80,74 @@ Leasing — passer le montant en `@Context`) → service (appel `TvaResolver.res
       résultat fonctionnel (« calcule la TVA associée ») toujours exact, jamais le mécanisme de
       saisie (liste déroulante vs montant libre), donc rien n'y est devenu faux.
 
+### Documentation à mettre à jour — validation unifiée (reporté depuis le 19/09/2026)
+
+Décision HMAYDA du 19/09/2026 : ne pas mettre à jour `docs/modules`, `docs/direction`,
+`docs/guide-utilisateur` au fil des sources migrées (validation unifiée + annulation + édition
+d'une transaction déjà validée, tous les trois par le même mécanisme de registre de handlers),
+pour éviter un rattrapage partiel/incohérent en cours de refactoring — à faire en une fois, pour
+toutes les sources, une fois le chantier applicatif stabilisé. `docs/rbac/README.md` est déjà à
+jour (mis à jour dans les mêmes changements que le code, comme l'exige CLAUDE.md).
+
+Périmètre du rattrapage :
+- `docs/modules/README.md` — chapitre Validation : décrire le mécanisme actuel (point d'entrée
+  unique `POST /rapprochement/process`, un handler par source) au lieu de l'ancien (endpoints par
+  source)
+- `docs/direction/README.md` — chapitre Validation : mentionner la consolidation comme bénéfice
+  (moins de code, plus simple à faire évoluer)
+- `docs/guide-utilisateur/*.md` — écrans de validation/annulation/édition de transaction déjà
+  validée : décrire le dialogue générique partagé (mêmes champs pour valider et pour modifier)
+
+Voir `REFACTORING-VALIDATION-UNIFIEE.md` (journal complet, suites 8 à 11) et mémoire
+`project-validation-unifiee-recap` pour le détail technique.
+
+**Ajouts au périmètre du rattrapage (21/09/2026)**, à intégrer dans le même passage documentaire :
+- `docs/modules/README.md` — chapitre Leasing et chapitre CMT : décrire la nouvelle possibilité
+  d'éditer une échéance `PREVU` via une page dédiée (`/portail/leasing/echeances/edit/:id` et
+  `/portail/cmt/echeances/edit/:id`, réservée aux administrateurs système), à la place du dialogue
+  historique sur le tableau d'amortissement ; mentionner qu'elle est aussi atteignable depuis le
+  récapitulatif unifié.
+- `docs/guide-utilisateur/admin.md` — même écran : capture/description du nouveau parcours
+  d'édition (avant : dialogue sur place : après : navigation vers une page dédiée, retour en arrière
+  au clic sur Annuler/Enregistrer).
+- `docs/modules/README.md` — chapitre Mise à disposition : le bug (`type` toujours ENCAISSEMENT
+  quel que soit l'écran) est corrigé côté frontend le 21/09/2026, mais **les enregistrements créés
+  avant cette date restent en base avec `type=ENCAISSEMENT`** alors qu'ils sont tous en réalité des
+  décaissements — décision à prendre avec HMAYDA sur une éventuelle correction de données
+  existantes (hors périmètre frontend, nécessite un script/migration côté backend).
+- `docs/modules/README.md` et `docs/guide-utilisateur/*.md` — chapitre Récapitulatif : les filtres
+  « Libellé » et « Observation » du récapitulatif unifié ont été fusionnés en un seul champ
+  « Libellé / Observation » le 21/09/2026 (un seul terme, cherché sur les deux colonnes à la fois,
+  OR insensible à la casse) — à refléter dans la description des filtres de cet écran.
+- `docs/modules/README.md` et `docs/guide-utilisateur/*.md` — chapitre Récapitulatif : critères de
+  recherche restaurés le 21/09/2026 pour retrouver la couverture des anciens écrans séparés :
+  émetteur (Virement, Virement international, Chèque, LCN, Mise à disposition) et organisme
+  (Leasing) sont désormais aussi cherchés par le champ « Libellé / Observation » (sans nouveau
+  champ visible) ; deux nouveaux filtres déroulants « Motif Commission » et « Motif Impôt/Taxe »
+  apparaissent quand la source correspondante est sélectionnée. Voir
+  `REFACTORING-VALIDATION-UNIFIEE.md` (journal) pour le détail technique. **Rappel déploiement** :
+  `sql/v_recapitulatif_encours.sql` doit être ré-exécuté sur la base pour que les 3 nouvelles
+  colonnes existent — sans ça le backend échoue au premier appel de l'écran Récapitulatif.
+
+### Refonte visuelle — écrans États des encours (reporté le 20/09/2026)
+
+HMAYDA juge la mise en page actuelle de « Rapprochement en cours » (et probablement
+« Récapitulatifs », même gabarit de tableau dense) pas assez organisée — trop de colonnes, KPI
+compressés en une seule ligne de texte plutôt que des cartes.
+
+**Déjà fait (20/09/2026)** : le shell `LesEncoursComponent` — vue par défaut passée à
+Récapitulatifs, ancienne sidebar rétractable remplacée par un onglet segmenté compact (dégradé
+indigo/violet, ombre colorée, easing « spring »), transition d'entrée `route-enter` sur les deux
+vues routées.
+
+**Reste à faire** : refonte du contenu de la page elle-même (carte banque, ligne de KPI, filtres,
+tableau). Maquette proposée dans un artifact Design (canvas), à valider avec HMAYDA avant portage
+dans le vrai code Angular : https://claude.ai/artifact/7NwaMXVW6Fn8Z6KKdPB6x4 — principe : cartes
+KPI au lieu d'une ligne de texte, carte banque réorganisée en blocs, tableau réduit de 11 à 6
+colonnes (dates regroupées, libellé+observation fusionnés, débit+crédit fusionnés avec indicateur
+de sens, TVA déductible+collectée fusionnées). Non implémenté dans le code — HMAYDA a explicitement
+demandé de reporter à une autre session.
+
 Historique complet des sweeps et validations déjà terminés : mémoire `modules_sweep` (et les
 mémoires dédiées `project_gbanque_moyens_paiement_sweep`, `project_gbanque_marches_archivage`,
 `project_gbanque_funpaiement_sync`, `project_gbanque_champs_non_affiches_audit`), ainsi que

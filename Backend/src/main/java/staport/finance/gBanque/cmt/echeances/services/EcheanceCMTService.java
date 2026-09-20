@@ -19,8 +19,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.cmt.echeances.dtos.*;
@@ -28,6 +26,7 @@ import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
 import staport.finance.gBanque.cmt.echeances.enums.StatutEcheanceCMT;
 import staport.finance.gBanque.cmt.echeances.mappers.EcheanceCMTMapper;
 import staport.finance.gBanque.cmt.echeances.repositories.EcheanceCMTRepository;
+import staport.finance.gBanque.cmt.echeances.services.interfaces.IEcheanceCMTService;
 import staport.finance.gBanque.cmt.echeances.specification.EcheanceCMTSpecification;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
@@ -52,7 +51,7 @@ import java.util.Locale;
  */
 @Service
 @Transactional(readOnly = true)
-public class EcheanceCMTService {
+public class EcheanceCMTService implements IEcheanceCMTService {
 
     private static final Logger log = LoggerFactory.getLogger(EcheanceCMTService.class);
     private static final int SCALE = 2;
@@ -65,21 +64,19 @@ public class EcheanceCMTService {
     private static final Color BORDER_GRAY = Color.decode("#e5e7eb");
 
     private final EcheanceCMTRepository echeanceCmtRepository;
-    private final IBanqueService banqueService;
     private final EcheanceCMTMapper echeanceCmtMapper;
     private final StaportPdfReportService staportPdfReportService;
 
     public EcheanceCMTService(EcheanceCMTRepository echeanceCmtRepository,
-                              IBanqueService banqueService,
                               EcheanceCMTMapper echeanceCmtMapper,
                               StaportPdfReportService staportPdfReportService) {
         this.echeanceCmtRepository = echeanceCmtRepository;
-        this.banqueService = banqueService;
         this.echeanceCmtMapper = echeanceCmtMapper;
         this.staportPdfReportService = staportPdfReportService;
     }
 
     @Transactional
+    @Override
     public void generateEcheances(CreditMoyenTerme credit) {
         LocalDate dateDebut = credit.getDateDebut();
         List<EcheanceCMT> echeances = new ArrayList<>();
@@ -104,6 +101,7 @@ public class EcheanceCMTService {
     }
 
     @Transactional
+    @Override
     public void regenerateEcheances(CreditMoyenTerme credit) {
         if (hasPaidEcheances(credit.getId())) {
             throw new ValidationException("Impossible de régénérer les échéances car certaines ont déjà été payées.");
@@ -116,6 +114,7 @@ public class EcheanceCMTService {
 
     @Transactional
     @AuditableAction(operation = AuditOperation.UPDATE, entity = EcheanceCMT.class)
+    @Override
     public EcheanceCMTResponseDto toggleStatus(Long echeanceId) {
         EcheanceCMT echeance = echeanceCmtRepository.findById(echeanceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Echeance avec l'ID " + echeanceId + " introuvable."));
@@ -141,6 +140,7 @@ public class EcheanceCMTService {
      */
     @Transactional
     @AuditableAction(operation = AuditOperation.UPDATE, entity = EcheanceCMT.class)
+    @Override
     public EcheanceCMTResponseDto updateEcheance(Long id, EcheanceCMTUpdateRequestDto dto) {
         EcheanceCMT echeance = echeanceCmtRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Echeance avec l'ID " + id + " introuvable."));
@@ -163,6 +163,7 @@ public class EcheanceCMTService {
     }
 
     @Transactional(readOnly = true)
+    @Override
     public TableauAmortissementCMTResponseDto getTableauAmortissementForCMT(CreditMoyenTerme credit, EcheanceCMTSearchDto searchDto, Pageable pageable) {
         Long creditId = credit.getId();
         List<EcheanceCMT> allEcheancesForTotals = echeanceCmtRepository.findByCreditMoyenTerme(credit);
@@ -200,40 +201,30 @@ public class EcheanceCMTService {
         );
     }
 
+    @Override
     public boolean hasPaidEcheances(Long creditId) {
         return echeanceCmtRepository.existsByCreditMoyenTermeIdAndStatutPaiement(creditId, StatutEcheanceCMT.PAYE);
     }
 
+    /**
+     * Récupère une échéance de crédit à moyen terme par son identifiant.
+     * Utilisé par l'écran de récapitulatif unifié (validation) pour résoudre le crédit CMT
+     * (creditMoyenTermeId, désignation, montant TTC) avant l'ouverture du formulaire de
+     * validation, sans dupliquer cette logique côté frontend.
+     *
+     * @param id L'identifiant de l'échéance CMT
+     * @return Le DTO de l'échéance correspondante
+     */
     @Transactional(readOnly = true)
-    public EncoursCMTResponseDTO getEncoursCMTForBanque(EncoursCMTRequestDTO requestDTO, Pageable pageable) {
-        Banque banque = banqueService.findOrThrow(requestDTO.banqueId());
-
-        LocalDate finDeMoisCourant = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<EcheanceCMT> spec = EcheanceCMTSpecification.byCreditBanqueId(requestDTO.banqueId())
-                .and(EcheanceCMTSpecification.outstandingUntil(finDeMoisCourant))
-                .and(EcheanceCMTSpecification.byCreditDesignationLike(requestDTO.designation()))
-                .and(EcheanceCMTSpecification.byMontant(requestDTO.montant()));
-
-        Page<EcheanceCMT> encoursEcheancesPage = echeanceCmtRepository.findAll(spec, defaultSort(pageable));
-        Page<EcheanceCMTResponseDto> echeancesDtoPage = encoursEcheancesPage.map(echeanceCmtMapper::toResponseDto);
-
-        List<EcheanceCMT> allOutstandingEcheances = echeanceCmtRepository.findAll(spec);
-        BigDecimal totalEncours = allOutstandingEcheances.stream()
-                .map(EcheanceCMT::getMontant)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .setScale(SCALE, RoundingMode.HALF_UP);
-
-        log.info("Encours CMT calculés — banqueId: {}, total: {}", banque.getId(), totalEncours);
-
-        return new EncoursCMTResponseDTO(
-                banque.getId(),
-                banque.getNom(),
-                totalEncours,
-                echeancesDtoPage
-        );
+    @Override
+    public EcheanceCMTResponseDto getEcheanceCMTById(Long id) {
+        EcheanceCMT echeance = echeanceCmtRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Échéance CMT non trouvée — ID: {}", id);
+                    return new ResourceNotFoundException("Echeance avec l'ID " + id + " introuvable.");
+                });
+        return echeanceCmtMapper.toResponseDto(echeance);
     }
-
 
     /**
      * Supprime toutes les échéances d'un crédit à moyen terme.
@@ -243,6 +234,7 @@ public class EcheanceCMTService {
      * @return Le nombre d'échéances supprimées
      */
     @Transactional
+    @Override
     public int deleteEcheancesByCreditMoyenTerme(CreditMoyenTerme credit) {
         List<EcheanceCMT> echeances = echeanceCmtRepository.findByCreditMoyenTerme(credit);
         int nombreEcheances = echeances.size();
@@ -257,131 +249,6 @@ public class EcheanceCMTService {
         return pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id"));
     }
 
-    /**
-     * Exporte en PDF l'encours d'échéances CMT d'une banque (mêmes critères que
-     * {@link #getEncoursCMTForBanque}, sans pagination).
-     */
-    @Transactional(readOnly = true)
-    public byte[] exportEncoursCMTPdf(EncoursCMTRequestDTO requestDTO) {
-        Banque banque = banqueService.findOrThrow(requestDTO.banqueId());
-
-        LocalDate finDeMoisCourant = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<EcheanceCMT> spec = EcheanceCMTSpecification.byCreditBanqueId(requestDTO.banqueId())
-                .and(EcheanceCMTSpecification.outstandingUntil(finDeMoisCourant))
-                .and(EcheanceCMTSpecification.byCreditDesignationLike(requestDTO.designation()))
-                .and(EcheanceCMTSpecification.byMontant(requestDTO.montant()));
-
-        List<EcheanceCMT> echeances = echeanceCmtRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEcheance"));
-        BigDecimal totalEncours = echeances.stream()
-                .map(EcheanceCMT::getMontant)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .setScale(SCALE, RoundingMode.HALF_UP);
-
-        List<String> filterLines = new ArrayList<>();
-        filterLines.add("Banque : " + banque.getNom());
-        if (requestDTO.designation() != null && !requestDTO.designation().isBlank()) {
-            filterLines.add("Désignation : " + requestDTO.designation());
-        }
-        if (requestDTO.montant() != null) {
-            filterLines.add("Montant : " + formatMontantPdf(requestDTO.montant()) + " MAD");
-        }
-
-        String title = "Encours d'Échéances CMT — " + banque.getNom();
-
-        try {
-            return staportPdfReportService.generateReport(title, (doc, writer) -> {
-                try {
-                    Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
-                    Font subFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.decode("#374151"));
-                    Font hdrFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
-                    Font cellFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
-                    Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.decode("#1e3a8a"));
-
-                    doc.add(Chunk.NEWLINE);
-                    doc.add(Chunk.NEWLINE);
-
-                    Paragraph titleParagraph = new Paragraph(title, titleFont);
-                    titleParagraph.setAlignment(Element.ALIGN_CENTER);
-                    doc.add(titleParagraph);
-
-                    String exportInfo = "Exporté le " + LocalDate.now().format(DATE_FMT)
-                            + "  •  " + echeances.size() + " échéance(s)";
-                    if (!filterLines.isEmpty()) {
-                        exportInfo += "  •  Filtres : " + String.join("  |  ", filterLines);
-                    }
-                    Paragraph sub = new Paragraph(exportInfo, subFont);
-                    sub.setAlignment(Element.ALIGN_CENTER);
-                    sub.setSpacingAfter(8f);
-                    doc.add(sub);
-
-                    float[] colWidths = {26f, 12f, 15f, 15f, 12f};
-                    PdfPTable table = new PdfPTable(colWidths);
-                    table.setWidthPercentage(100f);
-                    table.setSpacingBefore(8f);
-                    table.setHeaderRows(1);
-
-                    for (String h : new String[]{"Crédit", "N° Échéance", "Date d'échéance", "Montant (MAD)", "Statut"}) {
-                        PdfPCell c = new PdfPCell(new Phrase(h, hdrFont));
-                        c.setBackgroundColor(MED_BLUE);
-                        c.setPadding(5f);
-                        c.setHorizontalAlignment(Element.ALIGN_CENTER);
-                        c.setBorderColor(Color.WHITE);
-                        c.setBorderWidth(0.5f);
-                        table.addCell(c);
-                    }
-
-                    for (int i = 0; i < echeances.size(); i++) {
-                        EcheanceCMT e = echeances.get(i);
-                        Color rowBg = i % 2 == 0 ? Color.WHITE : ROW_ALT;
-
-                        addPdfCell(table, e.getCreditMoyenTerme() != null ? e.getCreditMoyenTerme().getDesignation() : "—", cellFont, rowBg, BORDER_GRAY, Element.ALIGN_LEFT);
-                        addPdfCell(table, String.valueOf(e.getNumeroEcheance()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_CENTER);
-                        addPdfCell(table, e.getDateEcheance() != null ? e.getDateEcheance().format(DATE_FMT) : "—", cellFont, rowBg, BORDER_GRAY, Element.ALIGN_CENTER);
-                        addPdfCell(table, formatMontantPdf(e.getMontant()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_RIGHT);
-
-                        boolean paye = e.getStatutPaiement() == StatutEcheanceCMT.PAYE;
-                        PdfPCell statusCell = new PdfPCell(new Phrase(
-                                paye ? "PAYÉ" : "PRÉVU",
-                                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE)));
-                        statusCell.setBackgroundColor(paye ? GREEN : ORANGE);
-                        statusCell.setPadding(4f);
-                        statusCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                        statusCell.setBorderColor(BORDER_GRAY);
-                        statusCell.setBorderWidth(0.5f);
-                        table.addCell(statusCell);
-                    }
-
-                    PdfPCell totalLabel = new PdfPCell(new Phrase("TOTAL — " + echeances.size() + " échéance(s)", totalFont));
-                    totalLabel.setColspan(3);
-                    totalLabel.setBackgroundColor(LIGHT_BLUE);
-                    totalLabel.setPadding(5f);
-                    totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                    totalLabel.setBorderColor(MED_BLUE);
-                    table.addCell(totalLabel);
-
-                    PdfPCell totalVal = new PdfPCell(new Phrase(formatMontantPdf(totalEncours) + " MAD", totalFont));
-                    totalVal.setBackgroundColor(LIGHT_BLUE);
-                    totalVal.setPadding(5f);
-                    totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                    totalVal.setBorderColor(MED_BLUE);
-                    table.addCell(totalVal);
-
-                    PdfPCell empty = new PdfPCell(new Phrase(""));
-                    empty.setBackgroundColor(LIGHT_BLUE);
-                    empty.setBorderColor(MED_BLUE);
-                    table.addCell(empty);
-
-                    doc.add(table);
-                } catch (DocumentException e) {
-                    throw new RuntimeException("Erreur lors de la génération du contenu du PDF de l'encours CMT.", e);
-                }
-            });
-        } catch (DocumentException e) {
-            throw new RuntimeException("Erreur lors de la génération du PDF de l'encours CMT.", e);
-        }
-    }
-
     // ========================== EXPORT PDF ==========================
 
     /**
@@ -390,6 +257,7 @@ public class EcheanceCMTService {
      * l'écran du tableau d'amortissement.
      */
     @Transactional(readOnly = true)
+    @Override
     public byte[] exportTableauAmortissementPdf(CreditMoyenTerme credit, EcheanceCMTSearchDto searchDto) {
         log.info("Export PDF du tableau d'amortissement — crédit CMT ID: {}", credit.getId());
 

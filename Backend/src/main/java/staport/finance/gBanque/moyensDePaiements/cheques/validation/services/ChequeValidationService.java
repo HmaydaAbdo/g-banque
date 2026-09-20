@@ -58,27 +58,19 @@ public class ChequeValidationService implements IChequeValidationService {
         this.soldeCascadeService = soldeCascadeService;
     }
 
-    @Override
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = Cheque.class, idAccessor = "getChequeId")
-    public ChequeTransactionResponseDto processChequeDecaissementTransaction(ChequeTransactionRequest requestDto) {
-        log.info("Validation chèque décaissement — id: {}", requestDto.getIdCheque());
-        return processTransaction(requestDto);
-    }
-
-    @Override
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = Cheque.class, idAccessor = "getChequeId")
-    public ChequeTransactionResponseDto processChequeEncaissementTransaction(ChequeTransactionRequest requestDto) {
-        log.info("Validation chèque encaissement — id: {}", requestDto.getIdCheque());
-        return processTransaction(requestDto);
-    }
-
     /**
-     * Logique commune décaissement/encaissement — seul le sens du chèque
-     * ({@code Cheque.type}) change le traitement effectué par le mapper.
+     * Valide un chèque, décaissement ou encaissement indifféremment — le sens
+     * ({@code Cheque.type}) est lu directement sur l'entité par le mapper, jamais transmis par
+     * l'appelant : une seule méthode suffit, sans branchement (fusion du 19/09/2026 des deux
+     * anciennes méthodes {@code processChequeDecaissementTransaction}/
+     * {@code processChequeEncaissementTransaction}, dont les corps étaient déjà identiques).
      */
-    private ChequeTransactionResponseDto processTransaction(ChequeTransactionRequest requestDto) {
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Cheque.class, idAccessor = "getChequeId")
+    public ChequeTransactionResponseDto processChequeTransaction(ChequeTransactionRequest requestDto) {
+        log.info("Validation chèque — id: {}", requestDto.getIdCheque());
+
         Cheque cheque = chequeRepository.findById(requestDto.getIdCheque())
                 .orElseThrow(() -> {
                     log.warn("Chèque introuvable — id: {}", requestDto.getIdCheque());
@@ -114,7 +106,7 @@ public class ChequeValidationService implements IChequeValidationService {
 
     @Override
     @Transactional
-    public void syncChequeFromTransaction(Long chequeId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncChequeFromTransaction(Long chequeId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation chèque depuis transaction — id: {}", chequeId);
 
         Cheque cheque = chequeRepository.findById(chequeId)
@@ -125,6 +117,8 @@ public class ChequeValidationService implements IChequeValidationService {
 
         cheque.setDateValeur(dateValeur);
         cheque.setDateOperation(dateOperation);
+        cheque.setLibelle(libelle);
+        cheque.setObservation(observation);
         chequeRepository.save(cheque);
 
         log.info("Chèque id: {} synchronisé depuis transaction", chequeId);

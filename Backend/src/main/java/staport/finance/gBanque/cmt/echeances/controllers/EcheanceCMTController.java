@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.cmt.echeances.dtos.*;
-import staport.finance.gBanque.cmt.echeances.services.EcheanceCMTService;
+import staport.finance.gBanque.cmt.echeances.services.interfaces.IEcheanceCMTService;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.cmt.services.CreditMoyenTermeService;
 
@@ -33,10 +33,10 @@ public class EcheanceCMTController {
             "hasAuthority('SYSTEM_ADMIN') or hasAuthority('DEPT_Finance:MEMBER') or hasAuthority('DEPT_Finance:DIRECTOR')";
     private static final String ADMIN_ONLY = "hasAuthority('SYSTEM_ADMIN')";
 
-    private final EcheanceCMTService echeanceCmtService;
+    private final IEcheanceCMTService echeanceCmtService;
     private final CreditMoyenTermeService creditMoyenTermeService;
 
-    public EcheanceCMTController(EcheanceCMTService echeanceCmtService, CreditMoyenTermeService creditMoyenTermeService) {
+    public EcheanceCMTController(IEcheanceCMTService echeanceCmtService, CreditMoyenTermeService creditMoyenTermeService) {
         this.echeanceCmtService = echeanceCmtService;
         this.creditMoyenTermeService = creditMoyenTermeService;
     }
@@ -71,20 +71,6 @@ public class EcheanceCMTController {
         return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
-    @Operation(summary = "Exporter en PDF l'encours d'échéances CMT d'une banque",
-            description = "Mêmes critères que GET /echeances-cmt/encours — sans pagination")
-    @ApiResponse(responseCode = "404", description = "Banque introuvable")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    @GetMapping("/encours/export/pdf")
-    public ResponseEntity<byte[]> exportEncoursCMTPdf(@Valid @ModelAttribute EncoursCMTRequestDTO requestDTO) {
-        byte[] pdf = echeanceCmtService.exportEncoursCMTPdf(requestDTO);
-        String filename = "encours_cmt_" + requestDTO.banqueId() + "_" + LocalDate.now() + ".pdf";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", filename);
-        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
-    }
-
     @Operation(summary = "Basculer le statut d'une échéance (PREVU ↔ PAYE)",
             description = "Action sensible réservée à l'administrateur système")
     @ApiResponse(responseCode = "404", description = "Échéance introuvable")
@@ -106,13 +92,12 @@ public class EcheanceCMTController {
         return ResponseEntity.ok(echeanceCmtService.updateEcheance(id, dto));
     }
 
-    @Operation(summary = "Récupérer les encours CMT d'une banque")
-    @ApiResponse(responseCode = "404", description = "Banque introuvable")
+    @Operation(summary = "Détail d'une échéance CMT",
+            description = "Utilisé par l'écran de récapitulatif unifié pour résoudre le crédit CMT (creditMoyenTermeId, désignation, montant TTC) avant l'ouverture du formulaire de validation")
+    @ApiResponse(responseCode = "404", description = "Échéance introuvable")
     @PreAuthorize(FINANCE_OR_ADMIN)
-    @GetMapping("/encours")
-    public ResponseEntity<EncoursCMTResponseDTO> getEncoursCMT(
-            @Valid @ModelAttribute EncoursCMTRequestDTO requestDTO,
-            Pageable pageable) {
-        return ResponseEntity.ok(echeanceCmtService.getEncoursCMTForBanque(requestDTO, pageable));
+    @GetMapping("/{id}")
+    public ResponseEntity<EcheanceCMTResponseDto> getEcheanceCMTById(@PathVariable Long id) {
+        return ResponseEntity.ok(echeanceCmtService.getEcheanceCMTById(id));
     }
 }

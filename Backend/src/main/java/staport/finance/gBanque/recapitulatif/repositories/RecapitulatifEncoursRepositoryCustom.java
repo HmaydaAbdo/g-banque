@@ -10,7 +10,7 @@ import java.util.Map;
 /**
  * Agrégation (SUM) sur {@link RecapitulatifEncoursView} respectant une {@link Specification}
  * arbitraire — nécessaire car {@code JpaSpecificationExecutor} ne fournit pas d'agrégat natif,
- * et les filtres dynamiques de {@code RecapitulatifSearchDto} (sources, libellé, observation,
+ * et les filtres dynamiques de {@code RecapitulatifSearchDto} (sources, libellé/observation,
  * sens) doivent être reflétés dans les totaux, pas seulement dans la page retournée.
  */
 public interface RecapitulatifEncoursRepositoryCustom {

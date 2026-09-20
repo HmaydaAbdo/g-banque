@@ -7,8 +7,6 @@ import { environment } from "../../../../environments/environment";
 import { FactoringRequestDto } from "../dtos/FactoringRequestDto";
 import { FactoringResponseDto } from "../dtos/FactoringResponseDto";
 import { FactoringSearchDto } from "../dtos/FactoringSearchDto";
-import { EncoursFactoringDto } from "../dtos/EncoursFactoringDto";
-import { EncoursFactoringSearchDto } from "../dtos/EncoursFactoringSearchDto";
 import {PageResponse} from "../../global/types/PageResponse";
 
 
@@ -134,89 +132,6 @@ export class FactoringService {
     return this.http.patch<FactoringResponseDto>(`${this.apiUrl}/${id}/toggleStatus`, {});
   }
 
-  // --- Encours Operations ---
-
-  /**
-   * Retrieves the encours (in progress) **remboursement** records for a specific banque.
-   * (GET /factoring/remboursement/encours/{banqueId})
-   *
-   * @param banqueId The ID of the banque.
-   * @param searchDto Search criteria for marcheName and marcheNumero.
-   * @param page The page number (0-indexed).
-   * @param size The number of elements per page.
-   * @param sort The sorting string (default 'dateEmission,asc').
-   * @returns An Observable of EncoursFactoringDto.
-   */
-  getEncoursForRemboursement(
-    banqueId: number,
-    searchDto: EncoursFactoringSearchDto,
-    page: number = 0,
-    size: number = 10,
-    sort: string = 'dateEmission,asc'
-  ): Observable<EncoursFactoringDto> {
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', sort);
-
-    if (searchDto.marcheName) {
-      params = params.set('marcheName', searchDto.marcheName);
-    }
-
-    if (searchDto.marcheNumero) {
-      params = params.set('marcheNumero', searchDto.marcheNumero);
-    }
-
-    if (searchDto.montant) {
-      params = params.set('montant', searchDto.montant.toString());
-    }
-
-    return this.http.get<EncoursFactoringDto>(
-      `${this.apiUrl}/remboursement/encours/${banqueId}`,
-      { params }
-    );
-  }
-
-  /**
-   * Retrieves the encours (in progress) **déblocage** records for a specific banque.
-   * (GET /factoring/deblocage/encours/{banqueId})
-   *
-   * @param banqueId The ID of the banque.
-   * @param searchDto Search criteria for marcheName and marcheNumero.
-   * @param page The page number (0-indexed).
-   * @param size The number of elements per page.
-   * @param sort The sorting string (default 'dateEmission,asc').
-   * @returns An Observable of EncoursFactoringDto.
-   */
-  getEncoursForDeblocage(
-    banqueId: number,
-    searchDto: EncoursFactoringSearchDto,
-    page: number = 0,
-    size: number = 10,
-    sort: string = 'dateEmission,asc'
-  ): Observable<EncoursFactoringDto> {
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', sort);
-
-    if (searchDto.marcheName) {
-      params = params.set('marcheName', searchDto.marcheName);
-    }
-    if (searchDto.marcheNumero) {
-      params = params.set('marcheNumero', searchDto.marcheNumero);
-    }
-
-    if (searchDto.montant) {
-      params = params.set('montant', searchDto.montant.toString());
-    }
-
-    return this.http.get<EncoursFactoringDto>(
-      `${this.apiUrl}/deblocage/encours/${banqueId}`,
-      { params }
-    );
-  }
-
   // --- Export PDF ---
 
   /**
@@ -233,33 +148,5 @@ export class FactoringService {
     params = this.appendDateRangeParams(params, searchDTO);
 
     return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
-  }
-
-  /**
-   * Exporte en PDF l'encours de remboursement d'une banque (mêmes filtres que
-   * {@link getEncoursForRemboursement}, sans pagination).
-   */
-  exportRemboursementEncoursPdf(banqueId: number, searchDto: EncoursFactoringSearchDto): Observable<Blob> {
-    let params = new HttpParams();
-
-    if (searchDto.marcheName) params = params.set('marcheName', searchDto.marcheName);
-    if (searchDto.marcheNumero) params = params.set('marcheNumero', searchDto.marcheNumero);
-    if (searchDto.montant) params = params.set('montant', searchDto.montant.toString());
-
-    return this.http.get(`${this.apiUrl}/remboursement/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
-  }
-
-  /**
-   * Exporte en PDF l'encours de déblocage d'une banque (mêmes filtres que
-   * {@link getEncoursForDeblocage}, sans pagination).
-   */
-  exportDeblocageEncoursPdf(banqueId: number, searchDto: EncoursFactoringSearchDto): Observable<Blob> {
-    let params = new HttpParams();
-
-    if (searchDto.marcheName) params = params.set('marcheName', searchDto.marcheName);
-    if (searchDto.marcheNumero) params = params.set('marcheNumero', searchDto.marcheNumero);
-    if (searchDto.montant) params = params.set('montant', searchDto.montant.toString());
-
-    return this.http.get(`${this.apiUrl}/deblocage/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
   }
 }

@@ -118,7 +118,7 @@ public class DecompteValidationService implements IDecompteValidationService {
 
     @Override
     @Transactional
-    public void syncDecompteFromTransaction(Long decompteId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncDecompteFromTransaction(Long decompteId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation décompte depuis transaction — id: {}", decompteId);
 
         Decompte decompte = decompteRepository.findById(decompteId)
@@ -129,6 +129,8 @@ public class DecompteValidationService implements IDecompteValidationService {
 
         decompte.setDateValeur(dateValeur);
         decompte.setDateOperation(dateOperation);
+        decompte.setLibelle(libelle);
+        decompte.setObservation(observation);
         decompteRepository.save(decompte);
 
         log.info("Décompte id: {} synchronisé depuis transaction", decompteId);

@@ -6,6 +6,7 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
 import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
+import staport.finance.gBanque.commision.enums.TypeCommission;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import java.math.BigDecimal;
@@ -51,6 +52,16 @@ public class Commission {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private Status status=Status.PREVU;
+
+    /**
+     * Catégorie de la commission (prorata d'entrée / mensuelle / clôture) — renseignée
+     * uniquement pour les commissions générées automatiquement depuis une caution.
+     * {@code null} pour toute autre commission (virement, impôt/taxe, saisie manuelle) et
+     * pour les commissions caution générées avant l'introduction de ce champ.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_commission", length = 50)
+    private TypeCommission typeCommission;
 
     /**
      * Caution à l'origine de cette commission — nullable.
@@ -162,6 +173,14 @@ public class Commission {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public TypeCommission getTypeCommission() {
+        return typeCommission;
+    }
+
+    public void setTypeCommission(TypeCommission typeCommission) {
+        this.typeCommission = typeCommission;
     }
 
     public Caution getCaution() {

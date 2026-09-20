@@ -2,8 +2,6 @@ package staport.finance.gBanque.restitution.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import staport.finance.gBanque.restitution.dtos.EncoursRestitution;
-import staport.finance.gBanque.restitution.dtos.EncoursRestitutionSearchDto;
 import staport.finance.gBanque.restitution.dtos.RestitutionRequestDto;
 import staport.finance.gBanque.restitution.dtos.RestitutionResponseDto;
 import staport.finance.gBanque.restitution.dtos.RestitutionSearchDto;
@@ -27,11 +25,7 @@ public interface IRestitutionService {
 
     void deleteRestitution(Long id);
 
-    EncoursRestitution getOutstandingRestitutions(EncoursRestitutionSearchDto searchDto, Long banqueId, Pageable pageable);
-
     RestitutionResponseDto toggleStatus(Long id);
 
     byte[] exporterPdf(RestitutionSearchDto searchDto);
-
-    byte[] exporterEncoursPdf(EncoursRestitutionSearchDto searchDto, Long banqueId);
 }

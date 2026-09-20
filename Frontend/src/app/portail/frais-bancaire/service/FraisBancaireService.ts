@@ -6,7 +6,6 @@ import { environment } from '../../../../environments/environment';
 import { FraisBancaireRequestDto } from '../dtos/FraisBancaireRequestDto';
 import { FraisBancaireResponseDto } from '../dtos/FraisBancaireResponseDto';
 import { FraisBancaireSearchDto } from '../dtos/FraisBancaireSearchDto';
-import { EncoursFraisBancaireDto } from '../dtos/EncoursFraisBancaireDto';
 import { PageResponse } from '../../global/types/PageResponse';
 import { toLocalDateString } from '../../global/types/date.utils';
 
@@ -150,59 +149,6 @@ export class FraisBancaireService {
   deleteFraisBancaire(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
-
-  /**
-   * Retrieves a paginated list of outstanding Frais Bancaires for a specific bank,
-   * including the total outstanding amount.
-   *
-   * @param banqueId ID of the bank for which to retrieve Frais Bancaires.
-   * @param searchDto Optional filter criteria.
-   * @param page Current page number (0-indexed).
-   * @param size Number of records per page.
-   * @param sort Sorting criteria, e.g., 'dateEmission,desc'.
-   * @returns Observable emitting the EncoursFraisBancaireDto.
-   */
-  getOutstandingFraisBancaire(
-    banqueId: number,
-    searchDto?: FraisBancaireSearchDto,
-    page: number = 0,
-    size: number = 10,
-    sort: string = 'dateEmission,desc'
-  ): Observable<EncoursFraisBancaireDto> {
-
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', sort);
-
-    if (searchDto) {
-      Object.entries(searchDto).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
-          params = params.set(key, String(value));
-        }
-      });
-    }
-
-    return this.http.get<EncoursFraisBancaireDto>(`${this.apiUrl}/encours/${banqueId}`, { params });
-  }
-
-  /**
-   * Exporte en PDF l'encours de frais bancaires d'une banque (mêmes critères que
-   * {@link getOutstandingFraisBancaire}, sans pagination).
-   */
-  exportOutstandingFraisBancairePdf(banqueId: number, searchDto?: FraisBancaireSearchDto): Observable<Blob> {
-    let params = new HttpParams();
-
-    if (searchDto?.libelle) {
-      params = params.set('libelle', searchDto.libelle);
-    }
-    if (searchDto?.montant !== null && searchDto?.montant !== undefined) {
-      params = params.set('montant', searchDto.montant.toString());
-    }
-
-    return this.http.get(`${this.apiUrl}/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
-  }
-
 
   toggleStatus(id: number): Observable<FraisBancaireResponseDto> {
     return this.http.patch<FraisBancaireResponseDto>(`${this.apiUrl}/${id}/toggle-status`, {});

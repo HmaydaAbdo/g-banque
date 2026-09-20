@@ -1,10 +1,5 @@
 package staport.finance.gBanque.factoring.service;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -24,10 +19,8 @@ import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
-import staport.finance.gBanque.factoring.dtos.request.EncoursFactoringSearchDto;
 import staport.finance.gBanque.factoring.dtos.request.FactoringRequestDto;
 import staport.finance.gBanque.factoring.dtos.request.FactoringSearchDto;
-import staport.finance.gBanque.factoring.dtos.response.EncoursFactoringDto;
 import staport.finance.gBanque.factoring.dtos.response.FactoringResponseDto;
 import staport.finance.gBanque.factoring.entities.Factoring;
 import staport.finance.gBanque.factoring.mapper.FactoringMapper;
@@ -48,7 +41,6 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -66,14 +58,15 @@ import java.util.Optional;
  * <p>Anti-N+1 : {@code FactoringRepository.findAll} porte l'{@code @EntityGraph}
  * {@code "Factoring.avecAssociations"} (marché + banque du marché).
  *
- * <p>Les totaux d'encours (déblocage/remboursement) sont calculés via une requête {@code SUM}
- * construite avec le même {@link Specification} que la recherche paginée (pas de chargement de
- * la liste complète en mémoire pour sommer côté Java — conventions/performance.md).
- * {@code endOfMonth} est recalculé à chaque appel (et non figé à la construction du bean).
- *
  * <p>{@link IBanqueService} est injecté uniquement pour résoudre le nom de banque affiché dans le
- * résumé des filtres des exports PDF — sans risque de cycle de bean : {@code BanqueServiceImpl} ne
- * dépend d'aucune classe du module Factoring (vérifié par recherche globale).
+ * résumé des filtres de {@link #exportPdf} — sans risque de cycle de bean : {@code BanqueServiceImpl}
+ * ne dépend d'aucune classe du module Factoring (vérifié par recherche globale).
+ *
+ * <p>19/09/2026 : les encours de remboursement/déblocage par banque (écrans dédiés
+ * {@code factoring-remboursement}/{@code factoring-deblocage}) ont été retirés — le récapitulatif
+ * unifié couvre désormais la validation de cette source. {@code getRemboursementEncoursForBanque}/
+ * {@code getDeblocageEncoursForBanque}/leurs exports PDF et le calcul de somme par
+ * {@code EntityManager} qu'ils utilisaient seuls ont été retirés avec eux.
  */
 @Service
 public class FactoringServiceImpl implements IFactoringService {
@@ -90,9 +83,6 @@ public class FactoringServiceImpl implements IFactoringService {
     private final LigneFonctionnelleReader ligneFonctionnelleReader;
     private final INatureLigneFonctionnelleService natureLigneFonctionnelleService;
     private final StaportPdfReportService staportPdfReportService;
-
-    @PersistenceContext
-    private EntityManager entityManager;
 
     public FactoringServiceImpl(FactoringRepository factoringRepository,
                                  IMarcheService marcheService,
@@ -247,56 +237,6 @@ public class FactoringServiceImpl implements IFactoringService {
         return factoringMapper.toDto(updatedFactoring);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public EncoursFactoringDto getRemboursementEncoursForBanque(EncoursFactoringSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.info("Récupération des encours de remboursement factoring pour la banque ID: {}", banqueId);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<Factoring> spec = FactoringSpec.byBanqueId(banqueId)
-                .and(FactoringSpec.outstandingRemboursementUntil(endOfMonth))
-                .and(FactoringSpec.byMarcheName(searchDto.marcheName()))
-                .and(FactoringSpec.byMarcheNumero(searchDto.marcheNumero()))
-                .and(FactoringSpec.hasMontant(searchDto.montant()));
-
-        Page<Factoring> factoringPage = factoringRepository.findAll(spec,
-                pageable.getSort().isSorted() ? pageable
-                        : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
-
-        BigDecimal totalDesEncours = sumMontant(spec);
-        log.info("Total des encours de remboursement factoring calculé: {} pour la banque ID: {}", totalDesEncours, banqueId);
-
-        Page<FactoringResponseDto> pageDto = factoringPage.map(factoringMapper::toDto);
-
-        return new EncoursFactoringDto(totalDesEncours, pageDto);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public EncoursFactoringDto getDeblocageEncoursForBanque(EncoursFactoringSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.info("Récupération des encours de déblocage factoring pour la banque ID: {}", banqueId);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-        Specification<Factoring> spec = FactoringSpec.byBanqueId(banqueId)
-                .and(FactoringSpec.outstandingDeblocageUntil(endOfMonth))
-                .and(FactoringSpec.byMarcheName(searchDto.marcheName()))
-                .and(FactoringSpec.byMarcheNumero(searchDto.marcheNumero()))
-                .and(FactoringSpec.hasMontant(searchDto.montant()));
-
-        Page<Factoring> factoringPage = factoringRepository.findAll(spec,
-                pageable.getSort().isSorted() ? pageable
-                        : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
-
-        BigDecimal totalDesEncours = sumMontant(spec);
-        log.info("Total des encours de déblocage factoring calculé: {} pour la banque ID: {}", totalDesEncours, banqueId);
-
-        Page<FactoringResponseDto> pageDto = factoringPage.map(factoringMapper::toDto);
-
-        return new EncoursFactoringDto(totalDesEncours, pageDto);
-    }
-
     // ── Export PDF ────────────────────────────────────────────────────────────
 
     @Override
@@ -318,47 +258,8 @@ public class FactoringServiceImpl implements IFactoringService {
         return generateFactoringPdf("État des Factorings", factorings, totalMontant, filterLines);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public byte[] exportRemboursementEncoursPdf(EncoursFactoringSearchDto searchDto, Long banqueId) {
-        log.info("Export PDF encours remboursement factoring — banque ID: {}", banqueId);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-        Specification<Factoring> spec = FactoringSpec.byBanqueId(banqueId)
-                .and(FactoringSpec.outstandingRemboursementUntil(endOfMonth))
-                .and(FactoringSpec.byMarcheName(searchDto.marcheName()))
-                .and(FactoringSpec.byMarcheNumero(searchDto.marcheNumero()))
-                .and(FactoringSpec.hasMontant(searchDto.montant()));
-
-        List<Factoring> factorings = factoringRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-        BigDecimal totalMontant = sumMontant(spec);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
-
-        return generateFactoringPdf("Encours de Remboursement — Factoring", factorings, totalMontant, filterLines);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public byte[] exportDeblocageEncoursPdf(EncoursFactoringSearchDto searchDto, Long banqueId) {
-        log.info("Export PDF encours déblocage factoring — banque ID: {}", banqueId);
-
-        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-        Specification<Factoring> spec = FactoringSpec.byBanqueId(banqueId)
-                .and(FactoringSpec.outstandingDeblocageUntil(endOfMonth))
-                .and(FactoringSpec.byMarcheName(searchDto.marcheName()))
-                .and(FactoringSpec.byMarcheNumero(searchDto.marcheNumero()))
-                .and(FactoringSpec.hasMontant(searchDto.montant()));
-
-        List<Factoring> factorings = factoringRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
-        BigDecimal totalMontant = sumMontant(spec);
-        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
-
-        return generateFactoringPdf("Encours de Déblocage — Factoring", factorings, totalMontant, filterLines);
-    }
-
     /**
-     * Génère le contenu PDF partagé par {@link #exportPdf}, {@link #exportRemboursementEncoursPdf}
-     * et {@link #exportDeblocageEncoursPdf}.
+     * Génère le contenu PDF utilisé par {@link #exportPdf}.
      */
     private byte[] generateFactoringPdf(String title, List<Factoring> factorings,
                                          BigDecimal totalMontant, List<String> filterLines) {
@@ -517,41 +418,6 @@ public class FactoringServiceImpl implements IFactoringService {
             lines.add("Statut : " + (criteria.status() == Status.PAYE ? "Payé" : "Prévu"));
 
         return lines;
-    }
-
-    private List<String> buildEncoursFilterSummary(EncoursFactoringSearchDto searchDto, Long banqueId) {
-        List<String> lines = new ArrayList<>();
-
-        try {
-            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
-        } catch (ResourceNotFoundException ignored) { /* filtre obsolète — ignoré pour l'affichage */ }
-
-        if (searchDto == null) return lines;
-        if (searchDto.marcheName() != null && !searchDto.marcheName().isBlank())
-            lines.add("Nom Marché : " + searchDto.marcheName());
-        if (searchDto.marcheNumero() != null && !searchDto.marcheNumero().isBlank())
-            lines.add("N° Marché : " + searchDto.marcheNumero());
-        if (searchDto.montant() != null)
-            lines.add("Montant : " + formatMontantPdf(searchDto.montant()) + " MAD");
-
-        return lines;
-    }
-
-    /**
-     * Somme des montants correspondant à la {@link Specification} donnée, calculée en base
-     * (agrégat SQL) — jamais en chargeant les entités en mémoire pour sommer côté Java
-     * (conventions/performance.md).
-     */
-    private BigDecimal sumMontant(Specification<Factoring> spec) {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<BigDecimal> query = cb.createQuery(BigDecimal.class);
-        Root<Factoring> root = query.from(Factoring.class);
-        query.select(cb.coalesce(cb.sum(root.get("montant")), BigDecimal.ZERO));
-        var predicate = spec.toPredicate(root, query, cb);
-        if (predicate != null) {
-            query.where(predicate);
-        }
-        return entityManager.createQuery(query).getSingleResult();
     }
 
     private NatureLigneFonctionnelle getFactoringNature() {

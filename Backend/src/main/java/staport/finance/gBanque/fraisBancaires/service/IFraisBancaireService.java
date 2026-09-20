@@ -2,8 +2,6 @@ package staport.finance.gBanque.fraisBancaires.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import staport.finance.gBanque.fraisBancaires.dtos.EncoursFraisBancaireDto;
-import staport.finance.gBanque.fraisBancaires.dtos.EncoursFraisBancaireSearchDto;
 import staport.finance.gBanque.fraisBancaires.dtos.FraisBancaireRequestDto;
 import staport.finance.gBanque.fraisBancaires.dtos.FraisBancaireResponseDto;
 import staport.finance.gBanque.fraisBancaires.dtos.FraisBancaireSearchDto;
@@ -40,14 +38,6 @@ public interface IFraisBancaireService {
     FraisBancaireResponseDto updateFraisBancaire(Long id, FraisBancaireRequestDto requestDto);
 
     void deleteFraisBancaire(Long id);
-
-    EncoursFraisBancaireDto getOutstandingFraisBancaire(EncoursFraisBancaireSearchDto searchDto, Long banqueId, Pageable pageable);
-
-    /**
-     * Exporte en PDF l'encours de frais bancaires d'une banque (mêmes critères que
-     * {@link #getOutstandingFraisBancaire}, sans pagination).
-     */
-    byte[] exportOutstandingFraisBancairePdf(EncoursFraisBancaireSearchDto searchDto, Long banqueId);
 
     FraisBancaireResponseDto toggleStatus(Long id);
 
