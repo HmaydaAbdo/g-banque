@@ -135,7 +135,7 @@
                       [showIcon]="false"
                       [minDate]="minDate"
                       [maxDate]="maxDate"
-                      placeholder="Fin trimestre"
+                      [placeholder]="typeAgios === TypeAgios.FACTORING ? 'Fin de mois' : 'Fin trimestre'"
                       [showClear]="true"
                       (onSelect)="onDateLimiteChange(dt)"
                       (onClear)="clearDateLimite(dt)"

@@ -42,7 +42,7 @@
               size="small"
               [loading]="recalculEnCours"
               (click)="recalculer(dt)"
-              pTooltip="Recalcul global — toutes les banques, trimestre en cours"
+              pTooltip="Recalcul global — toutes les banques, période en cours"
               tooltipPosition="bottom">
       </button>
     </div>
@@ -84,7 +84,8 @@
       </p-inputNumber>
 
       <p-dropdown [options]="trimestreOptions" formControlName="trimestre"
-                  optionLabel="label" optionValue="value" placeholder="Trimestre"
+                  optionLabel="label" optionValue="value"
+                  [placeholder]="searchForm.get('type')?.value === TypeAgios.FACTORING ? 'Mois' : 'Trimestre'"
                   [showClear]="true" appendTo="body"
                   [style]="{'min-width':'130px'}">
       </p-dropdown>
@@ -133,8 +134,8 @@
           <th pSortableColumn="typeAgios" style="min-width:130px">
             Type <p-sortIcon field="typeAgios"></p-sortIcon>
           </th>
-          <th pSortableColumn="trimestre" class="text-center" style="width:80px">
-            Trim. <p-sortIcon field="trimestre"></p-sortIcon>
+          <th pSortableColumn="trimestre" class="text-center" style="width:90px">
+            Période <p-sortIcon field="trimestre"></p-sortIcon>
           </th>
           <th pSortableColumn="annee" class="text-center" style="width:76px">
             Année <p-sortIcon field="annee"></p-sortIcon>
@@ -158,10 +159,17 @@
           <td class="text-600 text-sm">{{ getTypeLabel(trim) }}</td>
 
           <td class="text-center">
-            <span class="inline-flex align-items-center justify-content-center border-round font-bold text-sm"
-                  style="width:1.9rem;height:1.9rem;background:var(--color-info-light);color:var(--color-info-text)">
-              T{{ trim.trimestre }}
-            </span>
+            @if (trim.typeAgios === TypeAgios.FACTORING) {
+              <span class="inline-flex align-items-center justify-content-center border-round font-bold text-sm px-2"
+                    style="height:1.9rem;background:var(--color-info-light);color:var(--color-info-text)">
+                {{ getPeriodeLabel(trim) }}
+              </span>
+            } @else {
+              <span class="inline-flex align-items-center justify-content-center border-round font-bold text-sm"
+                    style="width:1.9rem;height:1.9rem;background:var(--color-info-light);color:var(--color-info-text)">
+                T{{ trim.trimestre }}
+              </span>
+            }
           </td>
 
           <td class="text-center font-semibold text-700">{{ trim.annee }}</td>

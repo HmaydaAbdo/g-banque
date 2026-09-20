@@ -90,6 +90,7 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
 
   // Template refs
   readonly StatutTrimestre = StatutTrimestre;
+  readonly TypeAgios = TypeAgios;
 
   ngOnInit(): void {
     this.route.params

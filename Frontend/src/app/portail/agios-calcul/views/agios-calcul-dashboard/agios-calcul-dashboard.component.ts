@@ -91,12 +91,26 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
     value: t
   }));
 
-  trimestreOptions = [
+  private static readonly TRIMESTRE_OPTIONS = [
     { label: 'T1', value: 1 },
     { label: 'T2', value: 2 },
     { label: 'T3', value: 3 },
     { label: 'T4', value: 4 },
   ];
+
+  private static readonly MOIS_LABELS = [
+    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
+  ];
+
+  private static readonly MOIS_OPTIONS = AgiosCalculDashboardComponent.MOIS_LABELS
+    .map((label, i) => ({ label, value: i + 1 }));
+
+  /**
+   * Options du filtre de période — mensuelles (Factoring) ou trimestrielles (les autres types),
+   * selon le type d'agios sélectionné. Trimestrielles par défaut (aucun type = "toutes").
+   */
+  trimestreOptions = AgiosCalculDashboardComponent.TRIMESTRE_OPTIONS;
 
   statutOptions = [
     { label: 'En cours', value: StatutTrimestre.OUVERT },
@@ -109,6 +123,7 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
   // Template refs
   readonly StatutTrimestre = StatutTrimestre;
   readonly TypeAgiosLabels = TypeAgiosLabels;
+  readonly TypeAgios = TypeAgios;
 
   ngOnInit(): void {
     this.items = [
@@ -123,6 +138,24 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
         distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
       )
       .subscribe(() => this.onFilterChange());
+
+    // Le filtre "période" doit proposer des mois pour Factoring (mensuel) et des trimestres
+    // pour les autres types — sans quoi on ne peut pas filtrer Factoring au-delà du mois 4.
+    this.searchForm.get('type')!.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((type: TypeAgios | null) => {
+        const isMensuel = type === TypeAgios.FACTORING;
+        this.trimestreOptions = isMensuel
+          ? AgiosCalculDashboardComponent.MOIS_OPTIONS
+          : AgiosCalculDashboardComponent.TRIMESTRE_OPTIONS;
+        // La valeur sélectionnée peut ne plus correspondre à la nouvelle échelle (ex. mois 9
+        // sélectionné puis type changé vers un type trimestriel où seuls 1-4 existent).
+        const maxValide = isMensuel ? 12 : 4;
+        const current = this.searchForm.get('trimestre')!.value;
+        if (current != null && current > maxValide) {
+          this.searchForm.get('trimestre')!.setValue(null);
+        }
+      });
   }
 
   ngOnDestroy(): void {
@@ -269,8 +302,9 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
   }
 
   recalculerParBanque(trim: AgiosTrimestrielResponseDto, dt: Table): void {
+    const periode = this.getPeriodeLabel(trim);
     this.confirmationService.confirm({
-      message: `Recalculer les agios <strong>${TypeAgiosLabels[trim.typeAgios]}</strong> T${trim.trimestre}/${trim.annee} pour <strong>${trim.banqueNom}</strong> ?`,
+      message: `Recalculer les agios <strong>${TypeAgiosLabels[trim.typeAgios]}</strong> ${periode} pour <strong>${trim.banqueNom}</strong> ?`,
       header: 'Confirmer le recalcul',
       icon: 'pi pi-refresh',
       acceptLabel: 'Recalculer',
@@ -287,7 +321,7 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
             next: () => {
               this.messageService.add({
                 severity: 'success', summary: 'Recalcul terminé',
-                detail: `T${trim.trimestre}/${trim.annee} — ${trim.banqueNom} recalculé avec succès.`
+                detail: `${periode} — ${trim.banqueNom} recalculé avec succès.`
               });
               this.onFilterChange(dt);
             },
@@ -298,8 +332,9 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
   }
 
   cloturer(trim: AgiosTrimestrielResponseDto, dt: Table): void {
+    const periode = this.getPeriodeLabel(trim);
     this.confirmationService.confirm({
-      message: `Clôturer définitivement ${TypeAgiosLabels[trim.typeAgios]} T${trim.trimestre}/${trim.annee} pour ${trim.banqueNom} ?\nMontant TTC: ${trim.totalAgiosTTC.toFixed(2)} MAD — un agios PREVU sera créé.`,
+      message: `Clôturer définitivement ${TypeAgiosLabels[trim.typeAgios]} ${periode} pour ${trim.banqueNom} ?\nMontant TTC: ${trim.totalAgiosTTC.toFixed(2)} MAD — un agios PREVU sera créé.`,
       header: 'Confirmer la clôture',
       icon: 'pi pi-lock',
       acceptLabel: 'Clôturer',
@@ -316,7 +351,7 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
           next: result => {
             this.messageService.add({
               severity: 'success', summary: 'Clôturé',
-              detail: `T${result.trimestre}/${result.annee} clôturé — TTC: ${result.totalAgiosTTC.toFixed(2)} MAD`
+              detail: `${this.getPeriodeLabel(result)} clôturé — TTC: ${result.totalAgiosTTC.toFixed(2)} MAD`
             });
             this.onFilterChange(dt);
           },
@@ -347,6 +382,18 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
 
   getTypeLabel(trim: AgiosTrimestrielResponseDto): string {
     return TypeAgiosLabels[trim.typeAgios] || trim.typeAgios;
+  }
+
+  /**
+   * Libellé de la période d'une ligne — "Septembre 2026" pour Factoring (mensuel, le champ
+   * `trimestre` contient alors le numéro de mois 1-12), "T3/2026" pour les autres types
+   * (trimestriel) — mirroring `AgiosCalculDetailComponent.periodeLabel`.
+   */
+  getPeriodeLabel(trim: { typeAgios: TypeAgios; trimestre: number; annee: number }): string {
+    if (trim.typeAgios === TypeAgios.FACTORING) {
+      return `${AgiosCalculDashboardComponent.MOIS_LABELS[(trim.trimestre - 1) % 12]} ${trim.annee}`;
+    }
+    return `T${trim.trimestre}/${trim.annee}`;
   }
 
   isAdmin(): boolean {

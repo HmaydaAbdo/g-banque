@@ -870,7 +870,7 @@ public class AgiosOrchestrateurService {
 
                         addOrchPdfCell(table, t.banqueNom(), cellFont, rowBg, Element.ALIGN_LEFT);
                         addOrchPdfCell(table, t.typeAgios() != null ? t.typeAgios().getLibelle() : "—", cellFont, rowBg, Element.ALIGN_LEFT);
-                        addOrchPdfCell(table, "T" + t.trimestre() + "/" + t.annee(), cellFont, rowBg, Element.ALIGN_CENTER);
+                        addOrchPdfCell(table, libellePeriode(t.typeAgios(), t.trimestre(), t.annee()), cellFont, rowBg, Element.ALIGN_CENTER);
                         addOrchPdfCell(table, formatMontantOrch(t.totalAgiosHT()), cellFont, rowBg, Element.ALIGN_RIGHT);
                         addOrchPdfCell(table, formatMontantOrch(t.totalTVA()), cellFont, rowBg, Element.ALIGN_RIGHT);
                         addOrchPdfCell(table, formatMontantOrch(t.totalAgiosTTC()), cellFont, rowBg, Element.ALIGN_RIGHT);
@@ -939,7 +939,9 @@ public class AgiosOrchestrateurService {
             lines.add("Année : " + dto.annee());
         }
         if (dto.trimestre() != null) {
-            lines.add("Trimestre : T" + dto.trimestre());
+            boolean mensuel = dto.type() != null && dto.type().getPeriodeCalcul() == PeriodeCalculAgios.MENSUEL;
+            lines.add((mensuel ? "Mois : " : "Trimestre : ")
+                    + (mensuel ? MOIS_LABELS[(dto.trimestre() - 1) % 12] : "T" + dto.trimestre()));
         }
         if (dto.statut() != null) {
             lines.add("Statut : " + dto.statut().name());
@@ -1067,7 +1069,9 @@ public class AgiosOrchestrateurService {
             lines.add("Année : " + dto.annee());
         }
         if (dto.trimestre() != null) {
-            lines.add("Période : " + dto.trimestre());
+            boolean mensuel = dto.type() != null && dto.type().getPeriodeCalcul() == PeriodeCalculAgios.MENSUEL;
+            lines.add((mensuel ? "Mois : " : "Trimestre : ")
+                    + (mensuel ? MOIS_LABELS[(dto.trimestre() - 1) % 12] : "T" + dto.trimestre()));
         }
         if (dto.dateLimite() != null) {
             lines.add("Date limite : " + dto.dateLimite().format(DATE_FMT));
@@ -1095,5 +1099,24 @@ public class AgiosOrchestrateurService {
         symbols.setDecimalSeparator(',');
         DecimalFormat formatter = new DecimalFormat("#,##0.00", symbols);
         return formatter.format(montant);
+    }
+
+    private static final String[] MOIS_LABELS = {
+            "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+            "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+    };
+
+    /**
+     * Libellé d'une période — "Septembre 2026" pour {@link TypeAgios#FACTORING} (mensuel, le
+     * champ {@code trimestre} contient alors le numéro de mois 1-12), "T3/2026" pour les autres
+     * types (trimestriel). Mirroring le frontend ({@code AgiosCalculDetailComponent.periodeLabel}
+     * / {@code AgiosCalculDashboardComponent.getPeriodeLabel}) — ne jamais préfixer "T" pour
+     * Factoring, sous peine d'afficher des valeurs impossibles comme "T9".
+     */
+    private String libellePeriode(TypeAgios type, int trimestreOuMois, int annee) {
+        if (type == TypeAgios.FACTORING) {
+            return MOIS_LABELS[(trimestreOuMois - 1) % 12] + " " + annee;
+        }
+        return "T" + trimestreOuMois + "/" + annee;
     }
 }
