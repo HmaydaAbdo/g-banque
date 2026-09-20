@@ -34,9 +34,9 @@ public class CommissionBatchValidationHandler implements BatchValidationHandler 
     @Override
     public OperationValideeDto processOne(Long id, BatchValidationRequestDto requestDto) {
         CommissionTransactionRequestDto dto = new CommissionTransactionRequestDto(
-                id, requestDto.tauxTva(), null, null,
+                id, requestDto.tauxTva(), requestDto.montantTva(), null,
                 requestDto.dateValeur(), requestDto.dateOperation(),
-                null, null, requestDto.rapprochementId());
+                requestDto.observation(), requestDto.libelle(), requestDto.rapprochementId());
         CommissionTransactionResponseDto r = commissionValidationService.processCommissionTransaction(dto);
         return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
     }

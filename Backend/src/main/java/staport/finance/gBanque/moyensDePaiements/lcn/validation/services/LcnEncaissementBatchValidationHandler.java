@@ -13,7 +13,7 @@ import staport.finance.gBanque.validation.services.handlers.BatchValidationHandl
  * Gère la validation en lot des LCN d'encaissement (nature ENCAISSEMENT) pour
  * {@code BatchValidationService} — voir {@link LcnDecaissementBatchValidationHandler} pour le cas
  * particulier LCN (sens porté par {@code TransactionSource}, pas par {@code requestDto.sens()}) et
- * pour {@code LCN_ESCOMPTE} (volontairement sans handler).
+ * {@code LcnEscompteBatchValidationHandler} pour le troisième handler LCN.
  */
 @Component
 public class LcnEncaissementBatchValidationHandler implements BatchValidationHandler {
@@ -36,6 +36,9 @@ public class LcnEncaissementBatchValidationHandler implements BatchValidationHan
         dto.setDateValeur(requestDto.dateValeur());
         dto.setDateOperation(requestDto.dateOperation());
         dto.setTauxTva(requestDto.tauxTva());
+        dto.setMontantTva(requestDto.montantTva());
+        dto.setObservation(requestDto.observation());
+        dto.setLibelle(requestDto.libelle());
         dto.setRapprochementId(requestDto.rapprochementId());
         LcnTransactionResponseDto r = lcnValidationService.processLcnTransaction(dto);
         return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());

@@ -355,3 +355,15 @@
     &::before { background: var(--status-definitif-dot); }
   }
 }
+
+// Entrée d'une vue routée — rejoue à chaque activation puisque le router insère un nouvel
+// élément DOM à chaque navigation. Usage : sur le conteneur racine du template d'un composant
+// routé, ex. <div class="flex flex-column gap-2 w-full route-enter">.
+@keyframes routeEnter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.route-enter {
+  animation: routeEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}

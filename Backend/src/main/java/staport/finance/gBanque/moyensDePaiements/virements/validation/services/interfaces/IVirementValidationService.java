@@ -36,5 +36,5 @@ public interface IVirementValidationService {
      * @param dateValeur    nouvelle date de valeur de la transaction
      * @param dateOperation nouvelle date d'opération de la transaction
      */
-    void syncVirementFromTransaction(Long virementId, LocalDate dateValeur, LocalDate dateOperation);
+    void syncVirementFromTransaction(Long virementId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation);
 }

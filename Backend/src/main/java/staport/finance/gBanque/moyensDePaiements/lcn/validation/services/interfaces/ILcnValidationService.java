@@ -38,5 +38,5 @@ public interface ILcnValidationService {
      * @param dateValeur    nouvelle date de valeur de la transaction
      * @param dateOperation nouvelle date d'opération de la transaction
      */
-    void syncLcnFromTransaction(Long lcnId, LocalDate dateValeur, LocalDate dateOperation);
+    void syncLcnFromTransaction(Long lcnId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation);
 }

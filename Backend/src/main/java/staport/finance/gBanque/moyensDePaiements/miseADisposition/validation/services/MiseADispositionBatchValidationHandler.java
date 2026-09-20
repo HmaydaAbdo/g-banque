@@ -39,6 +39,9 @@ public class MiseADispositionBatchValidationHandler implements BatchValidationHa
         dto.setDateValeur(requestDto.dateValeur());
         dto.setDateOperation(requestDto.dateOperation());
         dto.setTauxTva(requestDto.tauxTva());
+        dto.setMontantTva(requestDto.montantTva());
+        dto.setObservation(requestDto.observation());
+        dto.setLibelle(requestDto.libelle());
         dto.setRapprochementId(requestDto.rapprochementId());
         MiseAdispositionTransactionResponseDto r = miseADispositionValidationService.processMiseAdispositionTransaction(dto);
         return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());

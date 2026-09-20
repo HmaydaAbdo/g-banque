@@ -35,9 +35,9 @@ public class ImpayeeBatchValidationHandler implements BatchValidationHandler {
     @Override
     public OperationValideeDto processOne(Long id, BatchValidationRequestDto requestDto) {
         ImpayeeTransactionRequestDto dto = new ImpayeeTransactionRequestDto(
-                id, requestDto.tauxTva(), null, null,
+                id, requestDto.tauxTva(), requestDto.montantTva(), null,
                 requestDto.dateValeur(), requestDto.dateOperation(),
-                null, null, requestDto.rapprochementId());
+                requestDto.observation(), requestDto.libelle(), requestDto.rapprochementId());
         ImpayeeTransactionResponseDto r = impayeeValidationService.processImpayeeTransaction(dto);
         return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
     }

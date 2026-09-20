@@ -34,9 +34,9 @@ public class OperationErroneBatchValidationHandler implements BatchValidationHan
     @Override
     public OperationValideeDto processOne(Long id, BatchValidationRequestDto requestDto) {
         OperationErroneTransactionRequestDto dto = new OperationErroneTransactionRequestDto(
-                id, requestDto.tauxTva(), null, null,
+                id, requestDto.tauxTva(), requestDto.montantTva(), null,
                 requestDto.dateValeur(), requestDto.dateOperation(),
-                null, null, requestDto.rapprochementId());
+                requestDto.observation(), requestDto.libelle(), requestDto.rapprochementId());
         OperationErroneTransactionResponseDto r = operationErroneValidationService.processOperationErroneTransaction(dto);
         return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
     }

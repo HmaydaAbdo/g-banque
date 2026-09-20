@@ -12,5 +12,5 @@ public interface IRestitutionValidationService {
 
     RestitutionTransactionResponseDto processRestitutionTransaction(RestitutionTransactionRequestDto requestDto);
 
-    void syncRestitutionFromTransaction(Long restitutionId, LocalDate dateValeur, LocalDate dateOperation);
+    void syncRestitutionFromTransaction(Long restitutionId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation);
 }

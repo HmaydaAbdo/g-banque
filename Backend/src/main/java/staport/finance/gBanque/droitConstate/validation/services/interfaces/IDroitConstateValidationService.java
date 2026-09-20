@@ -34,5 +34,5 @@ public interface IDroitConstateValidationService {
      * @param dateValeur      nouvelle date de valeur de la transaction
      * @param dateOperation   nouvelle date d'opération de la transaction
      */
-    void syncDroitConstateFromTransaction(Long droitConstateId, LocalDate dateValeur, LocalDate dateOperation);
+    void syncDroitConstateFromTransaction(Long droitConstateId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation);
 }

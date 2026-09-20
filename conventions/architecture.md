@@ -110,83 +110,199 @@ BanqueRepository
 
 # Modules générant des transactions — Règles de validation et synchronisation
 
-## Règle 1 — La logique de validation appartient au module source
+## Règle 1 — La logique de validation appartient au module source ; un seul point d'entrée générique la déclenche
 
-Lorsqu'un module métier génère des transactions bancaires (rapprochement), **la logique de validation doit vivre dans ce module**, pas dans le service générique `ValidationService`.
+Lorsqu'un module métier génère des transactions bancaires (rapprochement), **la logique de
+validation doit vivre dans ce module**, pas dans le service générique `BatchValidationService`.
+Mais le déclenchement de cette logique — que ce soit pour une opération seule ou pour un lot — passe
+par **un seul point d'entrée HTTP générique**, jamais par un endpoint dédié à la source.
+
+**Historique (révisé le 19/09/2026) :** jusqu'au 19/09/2026, chaque source avait son propre couple
+de méthodes de service (parfois deux, une par sens) et son propre endpoint REST unitaire
+(`/process/{source}`), en plus de l'endpoint de lot générique — soit ~25 endpoints distincts pour
+un seul et même geste métier ("valider ceci"). Cette duplication a été éliminée : valider une seule
+opération n'est qu'un cas particulier de valider un lot de taille 1. Le patron ci-dessous est
+désormais la seule façon correcte d'ajouter une source — il ne s'agit pas d'une préférence, c'est
+la règle.
 
 ### Structure obligatoire
 
 Pour tout module `Xxx` qui produit des transactions :
 
 ```text
-leasing/
-└── echeancesLeasing/
+xxx/
+└── validation/
     ├── services/
     │   ├── interfaces/
-    │   │   └── IXxxValidationService.java   ← interface du domaine
-    │   └── XxxValidationService.java        ← implémentation
+    │   │   └── IXxxValidationService.java     ← interface du domaine
+    │   ├── XxxValidationService.java          ← implémentation
+    │   └── XxxBatchValidationHandler.java     ← @Component implements BatchValidationHandler
     ├── dto/
-    │   ├── XxxTransactionRequestDTO.java    ← record Java
-    │   └── XxxTransactionResponseDTO.java   ← record Java
+    │   ├── XxxTransactionRequestDto.java      ← record ou classe, un seul (pas un par sens)
+    │   └── XxxTransactionResponseDto.java
     └── mapper/
-        └── XxxTransactionMapper.java        ← MapStruct abstract class
+        └── XxxTransactionMapper.java          ← MapStruct abstract class
 ```
 
 ### Responsabilités de `XxxValidationService`
 
 * Récupérer les entités du **même domaine** (ses propres repositories).
+* Exposer **une seule méthode de validation** (`processXxxTransaction`), quel que soit le nombre de
+  sens que la source distingue. Si la source a un sens (décaissement/encaissement), il est lu
+  directement sur l'entité (par le mapper) — jamais transmis par l'appelant sous forme de deux
+  méthodes ou deux endpoints. Deux méthodes identiques à l'exception de leur nom sont un signe que
+  la logique de sens n'existe pas vraiment et que la duplication doit être supprimée.
 * Construire la transaction via son `XxxTransactionMapper`.
 * Attacher la transaction au rapprochement cible et la sauvegarder.
 * Mettre à jour l'entité source (statut, dates) après persistance.
 
+### Responsabilités de `XxxBatchValidationHandler`
+
+* Implémente `BatchValidationHandler` (`source()` + `processOne(Long id, BatchValidationRequestDto)`).
+* `@Component` — découvert et enregistré automatiquement par Spring dans le registre de
+  `BatchValidationService`, aucune modification d'une classe centrale n'est nécessaire pour ajouter
+  une source.
+* Construit le DTO unitaire de la source à partir des champs communs de `BatchValidationRequestDto`
+  et appelle l'unique méthode de `IXxxValidationService`.
+* C'est le **seul** point qui sait comment construire le DTO unitaire de sa source — ni
+  `ValidationController`, ni le frontend, n'ont besoin de connaître sa forme exacte au-delà des
+  champs communs.
+
 ### Rôle de `ValidationController`
 
-`ValidationController` reste le point d'entrée HTTP unique pour tous les rapprochements. Il **délègue** chaque endpoint au service de validation du module concerné via son interface :
+`ValidationController` n'expose **qu'un seul endpoint de validation** pour toutes les sources,
+`POST /rapprochement/process`, qui accepte un `BatchValidationRequestDto` (`ids` porte un ou
+plusieurs identifiants — valider une opération seule, c'est envoyer `ids` avec un seul élément) et
+délègue au registre de `BatchValidationHandler` :
 
 ```java
-// Correct
-@PostMapping("/process/echeance-leasing")
-public ResponseEntity<LeasingTransactionResponseDTO> processLeasingTransaction(
-        @Valid @RequestBody LeasingTransactionRequestDTO dto) {
-    return new ResponseEntity<>(leasingValidationService.processLeasingTransaction(dto), CREATED);
+// Correct — un seul endpoint pour toutes les sources, une ou plusieurs opérations
+@PostMapping("/process")
+public ResponseEntity<BatchValidationResponseDto> processTransaction(
+        @Valid @RequestBody BatchValidationRequestDto requestDto) {
+    return new ResponseEntity<>(batchValidationService.processBatch(requestDto), CREATED);
 }
+
+// Interdit — un endpoint dédié à une source
+@PostMapping("/process/echeance-leasing")
+public ResponseEntity<LeasingTransactionResponseDTO> processLeasingTransaction(...) { ... }
+
+// Interdit — deux endpoints pour distinguer le sens
+@PostMapping("/process/decaissement/virement")
+@PostMapping("/process/encaissement/virement")
 
 // Interdit
 validationService.processXxx(...); // logique métier du module Xxx dans ValidationService
 ```
 
-### Ce que `ValidationService` ne doit jamais contenir
+Ajouter une nouvelle source ne demande donc **jamais** de toucher `ValidationController` :
+seulement une implémentation de `BatchValidationHandler` dans le module de cette source (voir
+`BatchValidationService`, dont le Javadoc de classe documente les familles de patron existantes —
+sens explicite, sens porté par `TransactionSource`, sens porté par l'entité).
+
+### Champs propres à une opération, transmis uniquement quand `ids` a un seul élément
+
+`libellé`, `observation`, `date d'émission` et le montant de TVA en saisie libre (`montantTva`)
+n'ont de sens que pour **une** opération — les appliquer à un lot de N opérations écraserait des
+valeurs propres à chacune. `BatchValidationRequestDto` les porte en champs optionnels, mais
+`BatchValidationService` rejette la requête si l'un d'eux est renseigné alors que `ids` contient
+plusieurs éléments. Pour un vrai lot (`ids.size() > 1`), ces champs restent `null` et chaque
+`BatchValidationHandler` retombe sur l'entité source (via son mapper), exactement comme avant.
+
+### Ce que `BatchValidationService` ne doit jamais contenir
 
 * Aucun repository d'un autre module.
 * Aucune entité d'un autre module.
 * Aucune logique métier propre à un module (ex : vérification du statut d'une échéance leasing).
+* Aucun `case`/`switch` sur `TransactionSource` pour dispatcher vers un service — c'est le rôle du
+  registre de `BatchValidationHandler`.
+
+### Frontend — même principe, un seul point d'appel
+
+Le frontend n'a besoin que d'**un seul** appel HTTP de validation (`ValidationService.valider`, avec
+`ids` à un seul élément pour une opération unitaire) — jamais d'une méthode dédiée par source. Le
+dialogue générique de validation unitaire (`recapitulatif.component.ts`, `unitValidationConfigs`) ne
+construit que les champs propres à l'affichage et au routage vers la bonne source (via
+`toCommonDetail`/`toRoutingFields`) ; c'est une fonction partagée, pas une par source, qui construit
+la requête `BatchValidationRequestDto` et appelle `valider`.
+
+### Le même patron s'applique à l'annulation (`ReverseTransactionService`)
+
+L'annulation d'une transaction (`DELETE /rapprochement/annuler/{id}`) est le geste symétrique de la
+validation — remettre l'entité source à son état initial plutôt que de la faire passer à PAYE — et
+suit donc le même principe : la logique d'annulation appartient au module source, un registre
+générique la déclenche, jamais un `switch` central.
+
+```text
+xxx/
+└── validation/
+    └── services/
+        └── XxxReversalHandler.java   ← @Component implements TransactionReversalHandler
+```
+
+`TransactionReversalHandler` (`source()` + `reset(Long referentId)`) est le miroir exact de
+`BatchValidationHandler` côté annulation : une implémentation par source, découverte
+automatiquement par Spring, enregistrée dans `ReverseTransactionService` par `source()`.
+`ReverseTransactionService.resetEntiteSource` ne fait que consulter ce registre — aucun `case`/
+`switch` sur `TransactionSource`, aucun repository d'un autre module injecté directement. Ajouter
+une nouvelle source à l'annulation ne demande jamais de modifier `ReverseTransactionService`,
+seulement d'ajouter une implémentation de `TransactionReversalHandler` dans le module de cette
+source (migration du 19/09/2026 : remplace un `switch` de 20 cas et une vingtaine de repositories
+injectés directement dans le service).
 
 ---
 
 ## Règle 2 — Synchronisation Transaction ↔ Entité source
 
-Lorsqu'une transaction est liée à une entité source (via `Transaction.referent` + `Transaction.transactionSource`), **toute modification de la transaction doit être propagée à l'entité source**.
+Lorsqu'une transaction est liée à une entité source (via `Transaction.referent` + `Transaction.transactionSource`), **toute modification de la transaction doit être propagée à l'entité source** — le système ne doit jamais laisser Transaction et entité source diverger sur les champs qu'elles partagent.
 
 ### Mécanisme
 
 * `Transaction.referent` contient l'ID de l'entité source.
 * `Transaction.transactionSource` identifie le module (`LEASING`, `CMT`, etc.).
-* `TransactionService.updateTransactionById()` délègue la synchronisation au service de validation du module détecté.
+* `TransactionService.updateTransactionById()` dispatche la synchronisation via un registre de
+  `TransactionSyncHandler` (migration du 20/09/2026 : remplace un if-chain de 20 branches sur
+  `TransactionSource`, même principe que {@code BatchValidationHandler} et
+  `TransactionReversalHandler` — voir Règle 1) — aucun `case`/`switch` central, aucune
+  modification de `TransactionServiceImpl` pour ajouter une source.
 
 ```java
-if (TransactionSource.LEASING == saved.getTransactionSource() && saved.getReferent() != null) {
-    leasingValidationService.syncEcheanceFromTransaction(
-            saved.getReferent(), saved.getDateValeur(), saved.getDateOperations());
+TransactionSyncHandler handler = syncHandlerRegistry.get(saved.getTransactionSource());
+if (handler != null) {
+    handler.sync(saved.getReferent(), saved.getDateValeur(), saved.getDateOperations(),
+            saved.getLibelle(), saved.getObservation());
 }
 ```
+
+Un handler manquant (LCN legacy jamais écrit, CAUTION, Importation — sources sans entité à
+synchroniser) ne déclenche aucune erreur : la transaction elle-même est toujours mise à jour, seule
+la propagation est ignorée.
 
 ### Interface obligatoire
 
 Tout `IXxxValidationService` doit exposer une méthode de synchronisation :
 
 ```java
-void syncXxxFromTransaction(Long sourceId, LocalDate dateValeur, LocalDate dateOperation);
+void syncXxxFromTransaction(Long sourceId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation);
 ```
+
+Chaque `XxxSyncHandler` (`@Component implements TransactionSyncHandler`, un par source, dans le
+même module que le `XxxBatchValidationHandler` correspondant) ne fait que router vers cette
+méthode — la logique métier (retrouver l'entité, poser les champs, sauvegarder) reste dans le
+service, jamais dans le handler.
+
+### Champs synchronisés — et ceux qui ne le sont volontairement pas
+
+`dateValeur`, `dateOperation`, `libelle` et `observation` existent à la fois sur `Transaction` et
+sur l'entité source : modifier l'un doit toujours reposer l'autre à la même valeur. La TVA
+(`tvaDeductible`/`tvaCollectee`) n'existe en revanche que sur `Transaction` — aucune propagation
+n'est nécessaire pour elle, mais sa valeur doit toujours être **recalculée par `TvaResolver`** à
+partir du même montant TTC fixe (l'entité source), jamais acceptée telle quelle depuis le client :
+c'est ce qui garantit qu'un montant de TVA ne peut jamais dépasser ou diverger du montant réel de
+l'opération. `dateEmission`, le montant lui-même (`debit`/`credit`) et la banque de prélèvement ne
+sont **jamais éditables** après validation — modifier le montant ou la banque d'une opération déjà
+comptabilisée n'est pas une correction de saisie, c'est une opération différente (annuler puis
+revalider, voir `ReverseTransactionService`).
 
 ### Règle de blocage
 
@@ -198,7 +314,7 @@ Une entité source dont le statut est terminal (`PAYE`, `VALIDE`, etc.) **ne peu
 |---|---|
 | Validation d'une entité source | Transaction créée + entité mise à jour (statut + dates) |
 | Modification directe de l'entité source (si PREVU) | Modification de l'entité uniquement |
-| Modification de la transaction liée (update) | Propagation automatique vers l'entité source |
+| Modification d'une transaction déjà validée (`PATCH /transactions/{id}`) | Transaction mise à jour (dates, libellé, observation, TVA recalculée) + propagation automatique des champs partagés vers l'entité source |
 
 ---
 

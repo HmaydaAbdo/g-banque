@@ -80,6 +80,46 @@ Leasing — passer le montant en `@Context`) → service (appel `TvaResolver.res
       résultat fonctionnel (« calcule la TVA associée ») toujours exact, jamais le mécanisme de
       saisie (liste déroulante vs montant libre), donc rien n'y est devenu faux.
 
+### Documentation à mettre à jour — validation unifiée (reporté depuis le 19/09/2026)
+
+Décision HMAYDA du 19/09/2026 : ne pas mettre à jour `docs/modules`, `docs/direction`,
+`docs/guide-utilisateur` au fil des sources migrées (validation unifiée + annulation + édition
+d'une transaction déjà validée, tous les trois par le même mécanisme de registre de handlers),
+pour éviter un rattrapage partiel/incohérent en cours de refactoring — à faire en une fois, pour
+toutes les sources, une fois le chantier applicatif stabilisé. `docs/rbac/README.md` est déjà à
+jour (mis à jour dans les mêmes changements que le code, comme l'exige CLAUDE.md).
+
+Périmètre du rattrapage :
+- `docs/modules/README.md` — chapitre Validation : décrire le mécanisme actuel (point d'entrée
+  unique `POST /rapprochement/process`, un handler par source) au lieu de l'ancien (endpoints par
+  source)
+- `docs/direction/README.md` — chapitre Validation : mentionner la consolidation comme bénéfice
+  (moins de code, plus simple à faire évoluer)
+- `docs/guide-utilisateur/*.md` — écrans de validation/annulation/édition de transaction déjà
+  validée : décrire le dialogue générique partagé (mêmes champs pour valider et pour modifier)
+
+Voir `REFACTORING-VALIDATION-UNIFIEE.md` (journal complet, suites 8 à 11) et mémoire
+`project-validation-unifiee-recap` pour le détail technique.
+
+### Refonte visuelle — écrans États des encours (reporté le 20/09/2026)
+
+HMAYDA juge la mise en page actuelle de « Rapprochement en cours » (et probablement
+« Récapitulatifs », même gabarit de tableau dense) pas assez organisée — trop de colonnes, KPI
+compressés en une seule ligne de texte plutôt que des cartes.
+
+**Déjà fait (20/09/2026)** : le shell `LesEncoursComponent` — vue par défaut passée à
+Récapitulatifs, ancienne sidebar rétractable remplacée par un onglet segmenté compact (dégradé
+indigo/violet, ombre colorée, easing « spring »), transition d'entrée `route-enter` sur les deux
+vues routées.
+
+**Reste à faire** : refonte du contenu de la page elle-même (carte banque, ligne de KPI, filtres,
+tableau). Maquette proposée dans un artifact Design (canvas), à valider avec HMAYDA avant portage
+dans le vrai code Angular : https://claude.ai/artifact/7NwaMXVW6Fn8Z6KKdPB6x4 — principe : cartes
+KPI au lieu d'une ligne de texte, carte banque réorganisée en blocs, tableau réduit de 11 à 6
+colonnes (dates regroupées, libellé+observation fusionnés, débit+crédit fusionnés avec indicateur
+de sens, TVA déductible+collectée fusionnées). Non implémenté dans le code — HMAYDA a explicitement
+demandé de reporter à une autre session.
+
 Historique complet des sweeps et validations déjà terminés : mémoire `modules_sweep` (et les
 mémoires dédiées `project_gbanque_moyens_paiement_sweep`, `project_gbanque_marches_archivage`,
 `project_gbanque_funpaiement_sync`, `project_gbanque_champs_non_affiches_audit`), ainsi que

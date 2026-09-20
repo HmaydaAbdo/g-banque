@@ -15,10 +15,10 @@ import staport.finance.gBanque.validation.dtos.lot.OperationValideeDto;
  * {@code BatchValidationService.processOne}, seulement d'ajouter une implémentation dans le module
  * de cette source.
  * <p>
- * Migration menée du 14 au 19/09/2026 : les 20 sources de la validation en lot sont désormais
- * toutes portées par ce patron ({@code LeasingBatchValidationHandler},
- * {@code CmtBatchValidationHandler}, {@code ChequeBatchValidationHandler},
- * {@code LcnDecaissementBatchValidationHandler}, {@code LcnEncaissementBatchValidationHandler},
+ * Migration menée du 14 au 19/09/2026 : les 22 sources (dont les 3 LCN) sont désormais toutes
+ * portées par ce patron ({@code LeasingBatchValidationHandler}, {@code CmtBatchValidationHandler},
+ * {@code ChequeBatchValidationHandler}, {@code LcnDecaissementBatchValidationHandler},
+ * {@code LcnEncaissementBatchValidationHandler}, {@code LcnEscompteBatchValidationHandler},
  * {@code VirementBatchValidationHandler}, {@code PrefinancementBatchValidationHandler},
  * {@code FactoringBatchValidationHandler}, {@code DroitConstateBatchValidationHandler},
  * {@code DecompteBatchValidationHandler}, {@code RestitutionBatchValidationHandler},
@@ -26,11 +26,13 @@ import staport.finance.gBanque.validation.dtos.lot.OperationValideeDto;
  * {@code VirementInternationalBatchValidationHandler}, {@code MiseADispositionBatchValidationHandler},
  * {@code AgiosBatchValidationHandler}, {@code CommissionBatchValidationHandler},
  * {@code FraisBancaireBatchValidationHandler}, {@code PrelevementBatchValidationHandler},
- * {@code ImpotEtTaxeBatchValidationHandler}, {@code OperationErroneBatchValidationHandler}), chacun
- * en remplacement à l'identique du {@code case} qu'il portait auparavant dans le switch historique
- * de {@code BatchValidationService.processOne} (désormais supprimé) — aucun changement de
- * comportement. {@code TransactionSource.LCN_ESCOMPTE} n'a jamais eu de handler ni de case — non
- * pris en charge en lot, avant comme après cette migration.
+ * {@code ImpotEtTaxeBatchValidationHandler}, {@code OperationErroneBatchValidationHandler}). Le
+ * 19/09/2026, la fusion de la validation unitaire dans ce même registre (architecture.md, Règle 1)
+ * a comblé le seul trou restant : {@code LcnEscompteBatchValidationHandler}, ajouté à cette
+ * occasion — {@code TransactionSource.LCN_ESCOMPTE} avait sa propre validation unitaire (ancien
+ * endpoint dédié, indifférent à la nature du LCN) mais jamais de handler de lot ; sans cet ajout,
+ * la fusion aurait cassé la validation de ces LCN plutôt que de simplement supprimer un endpoint
+ * devenu redondant.
  */
 public interface BatchValidationHandler {
 

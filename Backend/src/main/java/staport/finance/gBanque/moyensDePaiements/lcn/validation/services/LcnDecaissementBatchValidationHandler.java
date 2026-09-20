@@ -17,9 +17,9 @@ import staport.finance.gBanque.validation.services.handlers.BatchValidationHandl
  * distincts ({@code LcnDecaissementBatchValidationHandler}, {@code LcnEncaissementBatchValidationHandler})
  * plutôt qu'un seul avec branchement sur le sens ; ce partage par clé de registre ne change pas
  * avec la fusion du 19/09/2026 des méthodes {@code ILcnValidationService} — seule la couche
- * service n'a désormais plus qu'une méthode. {@code TransactionSource.LCN_ESCOMPTE} n'a
- * volontairement pas de handler : il n'était déjà pas géré par l'ancien switch (retombait sur le
- * {@code default} et levait une exception), comportement inchangé.
+ * service n'a désormais plus qu'une méthode. Voir {@code LcnEscompteBatchValidationHandler} pour
+ * le troisième handler LCN ({@code TransactionSource.LCN_ESCOMPTE}), ajouté le 19/09/2026 en même
+ * temps que la fusion validation unitaire/lot.
  */
 @Component
 public class LcnDecaissementBatchValidationHandler implements BatchValidationHandler {
@@ -42,6 +42,9 @@ public class LcnDecaissementBatchValidationHandler implements BatchValidationHan
         dto.setDateValeur(requestDto.dateValeur());
         dto.setDateOperation(requestDto.dateOperation());
         dto.setTauxTva(requestDto.tauxTva());
+        dto.setMontantTva(requestDto.montantTva());
+        dto.setObservation(requestDto.observation());
+        dto.setLibelle(requestDto.libelle());
         dto.setRapprochementId(requestDto.rapprochementId());
         LcnTransactionResponseDto r = lcnValidationService.processLcnTransaction(dto);
         return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());

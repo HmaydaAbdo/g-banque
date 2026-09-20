@@ -51,10 +51,10 @@ public class LeasingBatchValidationHandler implements BatchValidationHandler {
                 null,
                 requestDto.dateValeur(),
                 requestDto.dateOperation(),
-                null,
+                requestDto.observation(),
                 requestDto.tauxTva(),
-                null,
-                null,
+                requestDto.montantTva(),
+                requestDto.libelle(),
                 requestDto.rapprochementId());
         LeasingTransactionResponseDTO r = leasingValidationService.processLeasingTransaction(contratLeasing, dto);
         return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());

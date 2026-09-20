@@ -107,7 +107,7 @@ public class MiseADispositionValidationService implements IMiseADispositionValid
 
     @Override
     @Transactional
-    public void syncMiseADispositionFromTransaction(Long miseADispositionId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncMiseADispositionFromTransaction(Long miseADispositionId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation mise à disposition depuis transaction — id: {}", miseADispositionId);
 
         MiseADisposition miseADisposition = miseADispositionRepository.findById(miseADispositionId)
@@ -118,6 +118,8 @@ public class MiseADispositionValidationService implements IMiseADispositionValid
 
         miseADisposition.setDateValeur(dateValeur);
         miseADisposition.setDateOperation(dateOperation);
+        miseADisposition.setLibelle(libelle);
+        miseADisposition.setObservation(observation);
         miseADispositionRepository.save(miseADisposition);
 
         log.info("Mise à disposition id: {} synchronisée depuis transaction", miseADispositionId);

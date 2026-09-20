@@ -118,7 +118,7 @@ public class PrelevementValidationService implements IPrelevementValidationServi
 
     @Override
     @Transactional
-    public void syncPrelevementFromTransaction(Long prelevementId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncPrelevementFromTransaction(Long prelevementId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation prélèvement depuis transaction — id: {}", prelevementId);
 
         Prelevement prelevement = prelevementRepository.findById(prelevementId)
@@ -129,6 +129,8 @@ public class PrelevementValidationService implements IPrelevementValidationServi
 
         prelevement.setDateValeur(dateValeur);
         prelevement.setDateOperation(dateOperation);
+        prelevement.setLibelle(libelle);
+        prelevement.setObservation(observation);
         prelevementRepository.save(prelevement);
 
         log.info("Prélèvement id: {} synchronisé depuis transaction", prelevementId);

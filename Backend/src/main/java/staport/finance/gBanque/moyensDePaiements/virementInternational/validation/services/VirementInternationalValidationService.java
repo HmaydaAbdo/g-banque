@@ -108,7 +108,7 @@ public class VirementInternationalValidationService implements IVirementInternat
 
     @Override
     @Transactional
-    public void syncVirementInternationalFromTransaction(Long virementInternationalId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncVirementInternationalFromTransaction(Long virementInternationalId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation virement international depuis transaction — id: {}", virementInternationalId);
 
         VirementInternational virementInternational = virementInternationalRepository.findById(virementInternationalId)
@@ -119,6 +119,8 @@ public class VirementInternationalValidationService implements IVirementInternat
 
         virementInternational.setDateValeur(dateValeur);
         virementInternational.setDateOperation(dateOperation);
+        virementInternational.setLibelle(libelle);
+        virementInternational.setObservation(observation);
         virementInternationalRepository.save(virementInternational);
 
         log.info("Virement international id: {} synchronisé depuis transaction", virementInternationalId);

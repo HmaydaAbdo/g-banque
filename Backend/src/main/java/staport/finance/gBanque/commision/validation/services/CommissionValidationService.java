@@ -114,7 +114,7 @@ public class CommissionValidationService implements ICommissionValidationService
 
     @Override
     @Transactional
-    public void syncCommissionFromTransaction(Long commissionId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncCommissionFromTransaction(Long commissionId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation commission depuis transaction — id: {}", commissionId);
 
         Commission commission = commisionRepository.findById(commissionId)
@@ -125,6 +125,8 @@ public class CommissionValidationService implements ICommissionValidationService
 
         commission.setDateValeur(dateValeur);
         commission.setDateOperation(dateOperation);
+        commission.setLibelle(libelle);
+        commission.setObservation(observation);
         commisionRepository.save(commission);
 
         log.info("Commission id: {} synchronisée depuis transaction", commissionId);

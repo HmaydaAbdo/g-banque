@@ -112,7 +112,7 @@ public class CmtValidationService implements ICmtValidationService {
     @Override
     @Transactional
     @AuditableAction(operation = AuditOperation.UPDATE, entity = EcheanceCMT.class)
-    public void syncEcheanceFromTransaction(Long echeanceId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncEcheanceFromTransaction(Long echeanceId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation échéance CMT depuis transaction — écheanceId: {}", echeanceId);
 
         EcheanceCMT echeance = echeanceCMTRepository.findById(echeanceId)
@@ -123,6 +123,8 @@ public class CmtValidationService implements ICmtValidationService {
 
         echeance.setDateValeur(dateValeur);
         echeance.setDateOperation(dateOperation);
+        echeance.setLibelle(libelle);
+        echeance.setObservation(observation);
         echeanceCMTRepository.save(echeance);
 
         log.info("Échéance ID: {} synchronisée depuis transaction", echeanceId);

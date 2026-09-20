@@ -11,7 +11,7 @@ export const ETATS_DES_ENCOURS_ROUTES: Routes = [
     canActivate: [rapprochementActifGuard],
     loadComponent: () => import('./views/parent-componant/les-encours/les-encours.component').then(m => m.LesEncoursComponent),
     children: [
-      { path: '', redirectTo: 'rapprochement', pathMatch: 'full' },
+      { path: '', redirectTo: 'recapitulatif', pathMatch: 'full' },
 
       { path: 'rapprochement', loadComponent: () => import('./views/lesEncours/rapprochemnt-encours/rapprochemnt-encours.component').then(m => m.RapprochemntEncoursComponent) },
 

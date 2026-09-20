@@ -36,12 +36,12 @@ public class AgiosBatchValidationHandler implements BatchValidationHandler {
         AgiosValidationRequest dto = new AgiosValidationRequest(
                 id,
                 requestDto.tauxTva(),
-                null,
+                requestDto.montantTva(),
                 null,
                 requestDto.dateValeur(),
                 requestDto.dateOperation(),
-                null,
-                null,
+                requestDto.observation(),
+                requestDto.libelle(),
                 requestDto.rapprochementId());
         AgiosTransactionResponse r = agiosValidationService.processAgiosToTransaction(dto);
         return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());

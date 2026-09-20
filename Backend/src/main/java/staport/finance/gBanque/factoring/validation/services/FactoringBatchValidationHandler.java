@@ -39,6 +39,9 @@ public class FactoringBatchValidationHandler implements BatchValidationHandler {
         dto.setDateValeur(requestDto.dateValeur());
         dto.setDateOperation(requestDto.dateOperation());
         dto.setTauxTva(requestDto.tauxTva());
+        dto.setMontantTva(requestDto.montantTva());
+        dto.setObservation(requestDto.observation());
+        dto.setLibelle(requestDto.libelle());
         dto.setRapprochementId(requestDto.rapprochementId());
         FactoringTransactionResponse r = factoringValidationService.processFactoringTransaction(dto);
         return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());

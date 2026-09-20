@@ -30,7 +30,7 @@ public interface IAgiosValidationService {
      * @param dateValeur    nouvelle date de valeur
      * @param dateOperation nouvelle date d'opération
      */
-    void syncAgiosFromTransaction(Long agiosId, LocalDate dateValeur, LocalDate dateOperation);
+    void syncAgiosFromTransaction(Long agiosId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation);
 
     /**
      * Remet un agios à l'état PREVU lors de l'annulation de sa transaction liée.

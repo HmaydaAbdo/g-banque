@@ -40,9 +40,9 @@ public class DecompteBatchValidationHandler implements BatchValidationHandler {
                 requestDto.dateValeur(),
                 requestDto.dateOperation(),
                 requestDto.tauxTva(),
-                null,
-                null,
-                null,
+                requestDto.montantTva(),
+                requestDto.libelle(),
+                requestDto.observation(),
                 requestDto.rapprochementId());
         DecompteTransactionResponseDto r = decompteValidationService.processDecompteTransaction(dto);
         return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());

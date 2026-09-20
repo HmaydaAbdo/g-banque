@@ -106,7 +106,7 @@ public class AgiosValidationService implements IAgiosValidationService {
      */
     @Override
     @Transactional
-    public void syncAgiosFromTransaction(Long agiosId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncAgiosFromTransaction(Long agiosId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation agios depuis transaction — agiosId: {}", agiosId);
 
         Agios agios = agiosRepository.findById(agiosId)
@@ -122,6 +122,8 @@ public class AgiosValidationService implements IAgiosValidationService {
 
         agios.setDateValeur(dateValeur);
         agios.setDateOperation(dateOperation);
+        agios.setLibelle(libelle);
+        agios.setObservation(observation);
         agiosRepository.save(agios);
 
         log.info("Agios ID: {} synchronisé depuis transaction", agiosId);

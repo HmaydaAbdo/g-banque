@@ -12,5 +12,5 @@ public interface IOperationErroneValidationService {
 
     OperationErroneTransactionResponseDto processOperationErroneTransaction(OperationErroneTransactionRequestDto requestDto);
 
-    void syncOperationErroneFromTransaction(Long operationErroneId, LocalDate dateValeur, LocalDate dateOperation);
+    void syncOperationErroneFromTransaction(Long operationErroneId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation);
 }

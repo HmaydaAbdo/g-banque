@@ -182,7 +182,7 @@ export class ValidationLotModalComponent {
     };
 
     this.isSubmitting = true;
-    this.validationService.validerEnLot(request).subscribe({
+    this.validationService.valider(request).subscribe({
       next: (response) => {
         this.messageService.add({
           severity: 'success',

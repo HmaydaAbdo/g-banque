@@ -36,5 +36,5 @@ public interface IChequeValidationService {
      * @param dateValeur    nouvelle date de valeur de la transaction
      * @param dateOperation nouvelle date d'opération de la transaction
      */
-    void syncChequeFromTransaction(Long chequeId, LocalDate dateValeur, LocalDate dateOperation);
+    void syncChequeFromTransaction(Long chequeId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation);
 }

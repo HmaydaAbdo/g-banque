@@ -35,9 +35,9 @@ public class RestitutionBatchValidationHandler implements BatchValidationHandler
     @Override
     public OperationValideeDto processOne(Long id, BatchValidationRequestDto requestDto) {
         RestitutionTransactionRequestDto dto = new RestitutionTransactionRequestDto(
-                id, requestDto.tauxTva(), null, null,
+                id, requestDto.tauxTva(), requestDto.montantTva(), null,
                 requestDto.dateValeur(), requestDto.dateOperation(),
-                null, null, requestDto.rapprochementId());
+                requestDto.observation(), requestDto.libelle(), requestDto.rapprochementId());
         RestitutionTransactionResponseDto r = restitutionValidationService.processRestitutionTransaction(dto);
         return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
     }

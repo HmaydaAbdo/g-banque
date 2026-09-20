@@ -16,5 +16,5 @@ public interface IProvisionValidationService {
      * Propage {@code dateValeur}/{@code dateOperation} vers la provision source après modification
      * de sa transaction (architecture.md, Règle 2).
      */
-    void syncProvisionFromTransaction(Long provisionId, LocalDate dateValeur, LocalDate dateOperation);
+    void syncProvisionFromTransaction(Long provisionId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation);
 }

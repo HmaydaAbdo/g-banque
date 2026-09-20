@@ -40,6 +40,9 @@ public class DroitConstateBatchValidationHandler implements BatchValidationHandl
         dto.setDateValeur(requestDto.dateValeur());
         dto.setDateOperation(requestDto.dateOperation());
         dto.setTauxTva(requestDto.tauxTva());
+        dto.setMontantTva(requestDto.montantTva());
+        dto.setObservation(requestDto.observation());
+        dto.setLibelle(requestDto.libelle());
         dto.setRapprochementId(requestDto.rapprochementId());
         DroitConstateTransactionResponse r = droitConstateValidationService.processDroitConstateTransaction(dto);
         return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());

@@ -108,7 +108,7 @@ public class LcnValidationService implements ILcnValidationService {
 
     @Override
     @Transactional
-    public void syncLcnFromTransaction(Long lcnId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncLcnFromTransaction(Long lcnId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation LCN depuis transaction — id: {}", lcnId);
 
         Lcn lcn = lcnRepository.findById(lcnId)
@@ -119,6 +119,8 @@ public class LcnValidationService implements ILcnValidationService {
 
         lcn.setDateValeur(dateValeur);
         lcn.setDateOperation(dateOperation);
+        lcn.setLibelle(libelle);
+        lcn.setObservation(observation);
         lcnRepository.save(lcn);
 
         log.info("LCN id: {} synchronisé depuis transaction", lcnId);

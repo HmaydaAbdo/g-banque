@@ -34,5 +34,5 @@ public interface IPrelevementValidationService {
      * @param dateValeur    nouvelle date de valeur de la transaction
      * @param dateOperation nouvelle date d'opération de la transaction
      */
-    void syncPrelevementFromTransaction(Long prelevementId, LocalDate dateValeur, LocalDate dateOperation);
+    void syncPrelevementFromTransaction(Long prelevementId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation);
 }

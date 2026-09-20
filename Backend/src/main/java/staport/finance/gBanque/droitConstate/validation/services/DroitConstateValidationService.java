@@ -126,7 +126,7 @@ public class DroitConstateValidationService implements IDroitConstateValidationS
 
     @Override
     @Transactional
-    public void syncDroitConstateFromTransaction(Long droitConstateId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncDroitConstateFromTransaction(Long droitConstateId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation droit constaté depuis transaction — id: {}", droitConstateId);
 
         DroitConstate droitConstate = droitConstateRepository.findById(droitConstateId)
@@ -137,6 +137,8 @@ public class DroitConstateValidationService implements IDroitConstateValidationS
 
         droitConstate.setDateValeur(dateValeur);
         droitConstate.setDateOperation(dateOperation);
+        droitConstate.setLibelle(libelle);
+        droitConstate.setObservation(observation);
         droitConstateRepository.save(droitConstate);
 
         log.info("Droit constaté id: {} synchronisé depuis transaction", droitConstateId);

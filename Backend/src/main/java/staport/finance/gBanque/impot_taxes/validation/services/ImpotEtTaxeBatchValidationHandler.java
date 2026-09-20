@@ -34,9 +34,9 @@ public class ImpotEtTaxeBatchValidationHandler implements BatchValidationHandler
     @Override
     public OperationValideeDto processOne(Long id, BatchValidationRequestDto requestDto) {
         ImpotEtTaxeTransactionRequestDto dto = new ImpotEtTaxeTransactionRequestDto(
-                id, requestDto.tauxTva(), null, null,
+                id, requestDto.tauxTva(), requestDto.montantTva(), null,
                 requestDto.dateValeur(), requestDto.dateOperation(),
-                null, null, requestDto.rapprochementId());
+                requestDto.observation(), requestDto.libelle(), requestDto.rapprochementId());
         ImpotEtTaxeTransactionResponseDto r = impotEtTaxeValidationService.processImpotEtTaxeTransaction(dto);
         return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
     }

@@ -34,9 +34,9 @@ public class FraisBancaireBatchValidationHandler implements BatchValidationHandl
     @Override
     public OperationValideeDto processOne(Long id, BatchValidationRequestDto requestDto) {
         FraisBancaireTransactionRequestDto dto = new FraisBancaireTransactionRequestDto(
-                id, requestDto.tauxTva(), null, null,
+                id, requestDto.tauxTva(), requestDto.montantTva(), null,
                 requestDto.dateValeur(), requestDto.dateOperation(),
-                null, null, requestDto.rapprochementId());
+                requestDto.observation(), requestDto.libelle(), requestDto.rapprochementId());
         FraisBancaireTransactionResponseDto r = fraisBancaireValidationService.processFraisBancaireTransaction(dto);
         return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
     }

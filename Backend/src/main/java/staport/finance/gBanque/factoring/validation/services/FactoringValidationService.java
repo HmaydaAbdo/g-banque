@@ -124,7 +124,7 @@ public class FactoringValidationService implements IFactoringValidationService {
 
     @Override
     @Transactional
-    public void syncFactoringFromTransaction(Long factoringId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncFactoringFromTransaction(Long factoringId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation factoring depuis transaction — id: {}", factoringId);
 
         Factoring factoring = factoringRepository.findById(factoringId)
@@ -135,6 +135,8 @@ public class FactoringValidationService implements IFactoringValidationService {
 
         factoring.setDateValeur(dateValeur);
         factoring.setDateOperation(dateOperation);
+        factoring.setLibelle(libelle);
+        factoring.setObservation(observation);
         factoringRepository.save(factoring);
 
         log.info("Factoring id: {} synchronisé depuis transaction", factoringId);

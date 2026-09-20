@@ -41,65 +41,45 @@ import {
 } from "../../../shared/tva-input/saisie-tva.model";
 import { EcheanceLeasingService } from "../../../../../../leasing/contratsLeasing/services/EcheanceLeasingService";
 import { EcheanceLeasingResponse } from "../../../../../../leasing/contratsLeasing/dtos/EcheanceLeasingResponse";
-import { LeasingTransactionRequest } from "../../../../../dtos/leasing/LeasingTransactionRequest";
 import { EcheanceCmtService } from "../../../../../../cmt/services/EcheanceCmtService";
 import { EcheanceCMTResponseDto } from "../../../../../../cmt/dtos/EcheanceCMTResponseDto";
-import { CmtTransactionRequest } from "../../../../../dtos/cmt/CmtTransactionRequest";
 import { ChequeService } from "../../../../../../cheques/services/ChequeService";
 import { ChequeResponseDto } from "../../../../../../cheques/dtos/ChequeResponseDto";
-import { ChequeTransactionRequest } from "../../../../../dtos/cheques/ChequeTransactionRequest";
 import { LcnService } from "../../../../../../LCN/service/LcnService";
 import { LcnResponseDTO } from "../../../../../../LCN/dtos/LcnResponseDTO";
-import { LcnTransactionRequest } from "../../../../../dtos/lcn/LcnTransactionRequest";
 import { VirementService } from "../../../../../../Virements/service/VirementService";
 import { VirementResponseDto } from "../../../../../../Virements/dtos/VirementResponseDto";
-import { VirementTransactionRequestDto } from "../../../../../dtos/virements/VirementTransactionRequestDto";
 import { Type as SensType } from "../../../../../../Virements/Type";
 import { PrefinancementService } from "../../../../../../prefinancements/service/PrefinancementService";
 import { PrefinancementResponseDTO } from "../../../../../../prefinancements/dtos/PrefinancementResponseDTO";
-import { PrefinancementTransactionRequest } from "../../../../../dtos/prefinancement/PrefinancementTransactionRequest";
 import { DroitConstateService } from "../../../../../../droitsConstate/service/DroitConstateService";
 import { DroitConstateResponseDto } from "../../../../../../droitsConstate/dtos/DroitConstateResponseDto";
-import { DroitConstateTransactionRequest } from "../../../../../dtos/droits_constate/DroitConstateTransactionRequest";
 import { FactoringService } from "../../../../../../factoring/service/FactoringService";
 import { FactoringResponseDto } from "../../../../../../factoring/dtos/FactoringResponseDto";
-import { FactoringTransactionRequest } from "../../../../../dtos/factoring/FactoringTransactionRequest";
 import { DecompteService } from "../../../../../../decomptes/service/DecompteService";
 import { DecompteResponseDto } from "../../../../../../decomptes/dtos/DecompteResponseDto";
-import { DecompteTransactionRequest } from "../../../../../dtos/decomptes/DecompteTransactionRequest";
 import { RestitutionService } from "../../../../../../restitution/service/restitution.service";
 import { RestitutionResponseDto } from "../../../../../../restitution/dtos/RestitutionResponseDto";
-import { RestitutionValidationRequest } from "../../../../../dtos/restitution/RestitutionValidationRequest";
 import { ProvisionService } from "../../../../../../provision/service/provision.service";
 import { ProvisionResponseDto } from "../../../../../../provision/dtos/ProvisionResponseDto";
-import { ProvisionValidationRequest } from "../../../../../dtos/provision/ProvisionValidationRequest";
 import { ImpayeeService } from "../../../../../../impayees/service/ImpayeeService";
 import { ImpayeeResponseDto } from "../../../../../../impayees/dtos/ImpayeeResponseDto";
-import { ImpayeeValidationRequest } from "../../../../../dtos/impayee/Impayeevalidationrequest";
 import { VirementInternationalService } from "../../../../../../virementInternational/service/virement-international.service";
 import { VirementInternationalResponseDto } from "../../../../../../virementInternational/dtos/VirementInternationalResponseDto";
-import { VirementInternationalTransactionRequestDto } from "../../../../../dtos/virementsInternationaux/VirementInternationalTransactionRequestDto";
 import { MiseADispositionService } from "../../../../../../Mise-à-disposition/service/MiseADispositionService";
 import { MiseADispositionResponseDto } from "../../../../../../Mise-à-disposition/dtos/MiseADispositionResponseDto";
-import { MiseAdispositionTransactionRequestDto } from "../../../../../dtos/mise_a_disposition/MiseAdispositionTransactionRequestDto";
 import { AgiosService } from "../../../../../../agios/service/agios.service";
 import { AgiosResponseDto } from "../../../../../../agios/dtos/AgiosResponseDto";
-import { AgiosValidationRequest } from "../../../../../dtos/agios/agios-validation-request.dto";
 import { CommissionService } from "../../../../../../commission/service/commission.service";
 import { CommissionResponseDto } from "../../../../../../commission/dtos/commission-response.dto";
-import { CommissionValidationDto } from "../../../../../dtos/commission/CommissionValidationDto";
 import { FraisBancaireService } from "../../../../../../frais-bancaire/service/FraisBancaireService";
 import { FraisBancaireResponseDto } from "../../../../../../frais-bancaire/dtos/FraisBancaireResponseDto";
-import { FraisBancaireValidationRequest } from "../../../../../dtos/frais-bancaire/frais-bancaire-validation-request.dto";
 import { PrelevementService } from "../../../../../../prelevements/service/prelevement.service";
 import { PrelevementResponseDto } from "../../../../../../prelevements/dtos/PrelevementResponseDto";
-import { PrelevementValidationRequestDto } from "../../../../../dtos/prelevement/prelevement-validation-request.dto";
 import { ImpotEtTaxeService } from "../../../../../../impotEtTaxes/service/ImpotEtTaxeService";
 import { ImpotEtTaxeResponseDto } from "../../../../../../impotEtTaxes/dtos/ImpotEtTaxeResponseDto";
-import { ImpotEtTaxeValidationRequest } from "../../../../../dtos/impotsEtTaxes/ImpotEtTaxeValidationRequest";
 import { OperationErroneService } from "../../../../../../operationErronées/service/operation-errone.service";
 import { OperationErroneResponseDto } from "../../../../../../operationErronées/dtos/OperationErroneResponseDto";
-import { OperationErroneValidationRequest } from "../../../../../dtos/operation-erronés/OperationErroneValidationRequest";
 import { parseLocalDate } from '../../../../../../global/types/date.utils';
 
 /** Options du dropdown de filtre de sens — `null` = « Tous », aucun filtre appliqué. */
@@ -110,7 +90,7 @@ interface SensOption {
 
 /**
  * Un groupe d'opérations sélectionnées partageant (source, sens) — l'unité d'appel de
- * POST /rapprochement/process/lot, qui n'accepte qu'un seul type et un seul sens par requête
+ * POST /rapprochement/process, qui n'accepte qu'un seul type et un seul sens par requête
  * (voir BatchValidationRequestDto). Sert aussi à détecter une sélection hétérogène :
  * {@code lotGroups.length > 1} signifie que la sélection mélange plusieurs sources/sens, auquel
  * cas « Valider en lot » refuse d'ouvrir le dialogue (voir {@code selectionEstHomogene}).
@@ -162,7 +142,13 @@ interface UnitValidationConfig<TDetail = any> {
   confirmHeader: string;
   successDetail: string;
   fetchErrorDetail: string;
-  buildAndSubmit: (detail: TDetail, formValue: any, rapprochementId: number) => Observable<unknown>;
+  /**
+   * Route la requête vers la bonne source (et son sens/banqueId le cas échéant) — depuis la
+   * fusion du 19/09/2026 de la validation unitaire dans BatchValidationRequestDto
+   * (architecture.md, Règle 1), tout le reste (ids, dates, TVA, observation, libellé) est commun
+   * à toutes les sources et construit une seule fois par `submitUnitValidation`.
+   */
+  toRoutingFields: (detail: TDetail) => Pick<BatchValidationRequestDto, 'transactionSource' | 'sens' | 'banqueId'>;
 }
 
 @Component({
@@ -300,7 +286,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     this.selectionState.clear();
   }
 
-  /** Regroupe la sélection par (source, sens) — un groupe = un appel POST /process/lot. */
+  /** Regroupe la sélection par (source, sens) — un groupe = un appel POST /process. */
   get lotGroups(): LotGroup[] {
     const groups = new Map<string, LotGroup>();
     for (const item of this.selectionState.selectedItems) {
@@ -325,7 +311,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
    * Faux dès que la sélection mélange plusieurs sources ou plusieurs sens. La validation en lot
    * n'applique qu'un seul jeu de champs communs (TVA, dates) à tout le lot : l'appliquer à des
    * opérations de nature différente n'a pas de sens métier. Décision du 19/09/2026 : remplace le
-   * découpage automatique en plusieurs appels /process/lot par un refus explicite — l'utilisateur
+   * découpage automatique en plusieurs appels /process par un refus explicite — l'utilisateur
    * doit sélectionner une seule combinaison (source, sens) à la fois.
    */
   get selectionEstHomogene(): boolean {
@@ -413,7 +399,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Un seul appel POST /process/lot — la sélection est garantie homogène (voir openLotModal). */
+  /** Un seul appel POST /process — la sélection est garantie homogène (voir openLotModal). */
   private submitLot(group: LotGroup): void {
     const rapprochementId = this.bankStateService.getRapprochementId();
     const formValue = this.lotForm.getRawValue();
@@ -435,7 +421,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     this.isLotSubmitting = true;
 
     this.subscriptions.push(
-      this.validationService.validerEnLot(request).subscribe({
+      this.validationService.valider(request).subscribe({
         next: (response: BatchValidationResponseDto) => {
           this.messageService.add({
             severity: 'success',
@@ -463,12 +449,14 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
 
   // ==================== Validation unitaire ====================
   // Un seul dialogue générique (voir UnitValidationConfig plus haut), piloté par la Map
-  // ci-dessous : Leasing et CMT sont câblés (les 22 autres écrans "Encours" restent l'unique
-  // moyen de validation ligne par ligne pour leur source, jusqu'à leur propre migration).
-  // Décision du 14/09/2026 (remplace les deux dialogues Leasing/CMT distincts du pilote initial) :
-  // la quasi-totalité du formulaire (dates, libellé, observation, TVA) est identique d'une
-  // source à l'autre ; seules la forme du DTO de détail, celle de la requête de validation et
-  // la politique TVA varient — capturées ici plutôt que dupliquées dans un dialogue par source.
+  // ci-dessous : les 22 sources y sont câblées. Décision du 14/09/2026 (remplace les deux
+  // dialogues Leasing/CMT distincts du pilote initial) : la quasi-totalité du formulaire (dates,
+  // libellé, observation, TVA) est identique d'une source à l'autre ; seules la forme du DTO de
+  // détail et le routage (source/sens/banqueId) varient — capturés ici plutôt que dupliqués dans
+  // un dialogue par source. Depuis la fusion du 19/09/2026 de la validation unitaire dans
+  // BatchValidationRequestDto (architecture.md, Règle 1), chaque config ne construit même plus sa
+  // propre requête : `toRoutingFields` ne fournit que le routage, `submitUnitValidation`
+  // construit la requête complète une seule fois pour toutes les sources.
 
   /**
    * Une config par source câblée. `any` assumé au niveau de la Map (voir UnitValidationConfig) —
@@ -493,23 +481,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement',
       successDetail: 'Échéance rapprochée avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de cette échéance de leasing.',
-      buildAndSubmit: (d: EcheanceLeasingResponse, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: LeasingTransactionRequest = {
-          contratLeasingId: d.contratLeasingId,
-          echeanceId: d.id,
-          transactionSource: TransactionSource.LEASING,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.echeanceLeasingToRapprochemnt(request);
-      },
+      toRoutingFields: () => ({ transactionSource: TransactionSource.LEASING }),
     }],
     [TransactionSource.CMT, {
       fetchDetail: (id: number) => this.echeanceCmtService.getEcheanceCMTById(id),
@@ -527,22 +499,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement CMT',
       successDetail: 'Échéance CMT rapprochée avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de cette échéance CMT.',
-      buildAndSubmit: (d: EcheanceCMTResponseDto, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: CmtTransactionRequest = {
-          creditMoyenTermeId: d.credit.id,
-          echeanceId: d.id,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.echeanceCmtToRapprochement(request);
-      },
+      toRoutingFields: () => ({ transactionSource: TransactionSource.CMT }),
     }],
     [TransactionSource.CHEQUE, {
       fetchDetail: (id: number) => this.chequeService.getChequeById(id),
@@ -560,30 +517,17 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement Chèque',
       successDetail: 'Chèque rapproché avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de ce chèque.',
-      // Un seul endpoint depuis la fusion du 19/09/2026 (dateEmission reste verrouillée ici, comme
-      // Leasing/CMT : décision HMAYDA du 19/09/2026, voir REFACTORING-VALIDATION-UNIFIEE.md).
-      buildAndSubmit: (d: ChequeResponseDto, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: ChequeTransactionRequest = {
-          idCheque: d.id,
-          transactionSource: TransactionSource.CHEQUE,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.chequeToRapprochement(request);
-      },
+      // `sens` reste obligatoire côté backend (homogénéité de la sélection en lot), même si le
+      // handler ne le consomme plus depuis la fusion du 19/09/2026 — lu sur `d.type`.
+      toRoutingFields: (d: ChequeResponseDto) => ({
+        transactionSource: TransactionSource.CHEQUE,
+        sens: d.type as unknown as SensOperation,
+      }),
     }],
     // LCN : contrairement à Cheque/Virement, le sens (et la nature encaissement/escompte) est déjà
     // porté par la source elle-même (LCN_DECAISSEMENT / LCN_ENCAISSEMENT / LCN_ESCOMPTE, voir
-    // v_recapitulatif_encours) — chaque entrée appelle directement le bon endpoint, aucun test
-    // runtime sur le détail nécessaire (contrairement à Cheque/Virement qui n'ont qu'une seule
-    // TransactionSource et lisent `d.type`).
+    // v_recapitulatif_encours) — pas de champ `sens` à transmettre, chaque entrée route
+    // directement vers son propre TransactionSource.
     [TransactionSource.LCN_DECAISSEMENT, {
       fetchDetail: (id: number) => this.lcnService.getLcnById(id),
       toCommonDetail: (d: LcnResponseDTO): UnitValidationDetail => ({
@@ -600,25 +544,9 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement LCN',
       successDetail: 'LCN rapproché avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de ce LCN.',
-      buildAndSubmit: (d: LcnResponseDTO, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: LcnTransactionRequest = {
-          id: d.id,
-          transactionSource: TransactionSource.LCN_DECAISSEMENT,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.lcnToRapprochement(request);
-      },
+      toRoutingFields: () => ({ transactionSource: TransactionSource.LCN_DECAISSEMENT }),
     }],
-    // LCN_ENCAISSEMENT et LCN_ESCOMPTE partagent la même configuration — un seul endpoint
-    // backend depuis la fusion du 19/09/2026, appelé indifféremment par les trois entrées LCN.
+    // LCN_ENCAISSEMENT et LCN_ESCOMPTE partagent la même configuration, à la source près.
     [TransactionSource.LCN_ENCAISSEMENT, {
       fetchDetail: (id: number) => this.lcnService.getLcnById(id),
       toCommonDetail: (d: LcnResponseDTO): UnitValidationDetail => ({
@@ -634,22 +562,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement LCN',
       successDetail: 'LCN rapproché avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de ce LCN.',
-      buildAndSubmit: (d: LcnResponseDTO, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: LcnTransactionRequest = {
-          id: d.id,
-          transactionSource: TransactionSource.LCN_ENCAISSEMENT,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.lcnToRapprochement(request);
-      },
+      toRoutingFields: () => ({ transactionSource: TransactionSource.LCN_ENCAISSEMENT }),
     }],
     [TransactionSource.LCN_ESCOMPTE, {
       fetchDetail: (id: number) => this.lcnService.getLcnById(id),
@@ -666,22 +579,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement LCN',
       successDetail: 'LCN rapproché avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de ce LCN.',
-      buildAndSubmit: (d: LcnResponseDTO, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: LcnTransactionRequest = {
-          id: d.id,
-          transactionSource: TransactionSource.LCN_ESCOMPTE,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.lcnToRapprochement(request);
-      },
+      toRoutingFields: () => ({ transactionSource: TransactionSource.LCN_ESCOMPTE }),
     }],
     [TransactionSource.Virement, {
       fetchDetail: (id: number) => this.virementService.getVirementById(id),
@@ -699,32 +597,18 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement Virement',
       successDetail: 'Virement rapproché avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de ce virement.',
-      // Un seul endpoint depuis la fusion du 19/09/2026 — le sens (`Virement.type`) est lu sur
-      // l'entité côté backend, plus besoin de brancher ici.
-      buildAndSubmit: (d: VirementResponseDto, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: VirementTransactionRequestDto = {
-          id: d.id,
-          transactionSource: TransactionSource.Virement,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.virementToRapprochement(request);
-      },
+      // `sens` reste obligatoire côté backend (homogénéité de la sélection en lot) — lu sur `d.type`.
+      toRoutingFields: (d: VirementResponseDto) => ({
+        transactionSource: TransactionSource.Virement,
+        sens: d.type as unknown as SensOperation,
+      }),
     }],
     // Préfinancement/Factoring/Droit constaté/Décomptes : sens (remboursement/déblocage) porté par
     // l'entité elle-même (champ `type`, ou fixe pour Décomptes), jamais un choix fait à la
-    // validation — un seul endpoint par source, aucun branchement runtime nécessaire ici
-    // (contrairement à Cheque/Virement). `banqueId` vient du détail lui-même (`d.banqueId` /
-    // `d.banqueEncaissementId` pour Décomptes), pas de la route : c'est la banque du marché
-    // (Préfinancement/Factoring), celle propre à l'entité (Droit constaté) ou la banque
-    // d'encaissement (Décomptes), déjà résolue côté backend dans le DTO de détail.
+    // validation — aucun `sens` à transmettre ici (contrairement à Cheque/Virement). `banqueId`
+    // vient du détail lui-même (`d.banqueId` / `d.banqueEncaissementId` pour Décomptes) : c'est la
+    // banque du marché (Préfinancement/Factoring), celle propre à l'entité (Droit constaté) ou la
+    // banque d'encaissement (Décomptes), déjà résolue côté backend dans le DTO de détail.
     [TransactionSource.PREFINANCEMENT, {
       fetchDetail: (id: number) => this.prefinancementService.getPrefinancementById(id),
       toCommonDetail: (d: PrefinancementResponseDTO): UnitValidationDetail => ({
@@ -740,22 +624,10 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement Préfinancement',
       successDetail: 'Préfinancement validé et rapproché avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de ce préfinancement.',
-      buildAndSubmit: (d: PrefinancementResponseDTO, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: PrefinancementTransactionRequest = {
-          prefinancementId: d.id,
-          banqueId: d.banqueId,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.prefinancementToRapprochement(request);
-      },
+      toRoutingFields: (d: PrefinancementResponseDTO) => ({
+        transactionSource: TransactionSource.PREFINANCEMENT,
+        banqueId: d.banqueId,
+      }),
     }],
     [TransactionSource.FACTORING, {
       fetchDetail: (id: number) => this.factoringService.getFactoringById(id),
@@ -772,22 +644,10 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement Factoring',
       successDetail: 'Factoring validé et rapproché avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de ce factoring.',
-      buildAndSubmit: (d: FactoringResponseDto, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: FactoringTransactionRequest = {
-          factoringId: d.id,
-          banqueId: d.banqueId,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.factoringToRapprochement(request);
-      },
+      toRoutingFields: (d: FactoringResponseDto) => ({
+        transactionSource: TransactionSource.FACTORING,
+        banqueId: d.banqueId,
+      }),
     }],
     [TransactionSource.DROIT_CONSTATE, {
       fetchDetail: (id: number) => this.droitConstateService.getDroitConstateById(id),
@@ -804,22 +664,10 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement Droit Constaté',
       successDetail: 'Droit constaté validé et rapproché avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de ce droit constaté.',
-      buildAndSubmit: (d: DroitConstateResponseDto, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: DroitConstateTransactionRequest = {
-          droitConstateId: d.id,
-          banqueId: d.banqueId,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.droitConstateToRapprochement(request);
-      },
+      toRoutingFields: (d: DroitConstateResponseDto) => ({
+        transactionSource: TransactionSource.DROIT_CONSTATE,
+        banqueId: d.banqueId,
+      }),
     }],
     [TransactionSource.DECOMPTES, {
       fetchDetail: (id: number) => this.decompteService.getDecompteById(id),
@@ -836,29 +684,17 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement Décompte',
       successDetail: 'Décompte validé et rapproché avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de ce décompte.',
-      buildAndSubmit: (d: DecompteResponseDto, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: DecompteTransactionRequest = {
-          decompteId: d.id,
-          banqueId: d.banqueEncaissementId,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.decompteToRapprochement(request);
-      },
+      toRoutingFields: (d: DecompteResponseDto) => ({
+        transactionSource: TransactionSource.DECOMPTES,
+        banqueId: d.banqueEncaissementId,
+      }),
     }],
     // Restitution/Provision/Impayée : même principe que Préfinancement & co (sens porté par
-    // l'entité, un seul endpoint, aucun branchement runtime) mais SANS banqueId — la banque est
-    // résolue côté backend depuis l'entité elle-même (`Restitution.banque`/`Provision.banque`/
-    // `Impayee.banque`), jamais transmise par l'appelant. Pas de numéro de pièce naturel pour
-    // Restitution/Provision (contrairement aux sources marché) : recapLabel/recapValue retombent
-    // sur l'ID, comme l'affichent déjà leurs écrans dédiés respectifs. Impayée a un `numero`.
+    // l'entité, aucun `sens`/`banqueId` à transmettre) — la banque est résolue côté backend
+    // depuis l'entité elle-même (`Restitution.banque`/`Provision.banque`/`Impayee.banque`), jamais
+    // transmise par l'appelant. Pas de numéro de pièce naturel pour Restitution/Provision
+    // (contrairement aux sources marché) : recapLabel/recapValue retombent sur l'ID, comme
+    // l'affichent déjà leurs écrans dédiés respectifs. Impayée a un `numero`.
     [TransactionSource.RESTITUTION, {
       fetchDetail: (id: number) => this.restitutionService.getById(id),
       toCommonDetail: (d: RestitutionResponseDto): UnitValidationDetail => ({
@@ -874,21 +710,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement Restitution',
       successDetail: 'Restitution validée avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de cette restitution.',
-      buildAndSubmit: (d: RestitutionResponseDto, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: RestitutionValidationRequest = {
-          idRestitution: d.id,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.restitutionToRapprochement(request);
-      },
+      toRoutingFields: () => ({ transactionSource: TransactionSource.RESTITUTION }),
     }],
     [TransactionSource.PROVISION, {
       fetchDetail: (id: number) => this.provisionService.getById(id),
@@ -905,21 +727,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement Provision',
       successDetail: 'Provision validée avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de cette provision.',
-      buildAndSubmit: (d: ProvisionResponseDto, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: ProvisionValidationRequest = {
-          idProvision: d.id,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.provisionToRapprochement(request);
-      },
+      toRoutingFields: () => ({ transactionSource: TransactionSource.PROVISION }),
     }],
     [TransactionSource.IMPAYEE, {
       fetchDetail: (id: number) => this.impayeeService.getImpayeeById(id),
@@ -936,21 +744,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement Impayée',
       successDetail: 'Impayée validée avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de cette impayée.',
-      buildAndSubmit: (d: ImpayeeResponseDto, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: ImpayeeValidationRequest = {
-          idImpayee: d.id,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.impayeeToRapprochement(request);
-      },
+      toRoutingFields: () => ({ transactionSource: TransactionSource.IMPAYEE }),
     }],
     [TransactionSource.VIREMENT_INTERNATIONAL, {
       fetchDetail: (id: number) => this.virementInternationalService.getVirementInternationalById(id),
@@ -968,24 +762,11 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement Virement international',
       successDetail: 'Virement international rapproché avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de ce virement international.',
-      // Un seul endpoint depuis la fusion du 19/09/2026 — le sens (`VirementInternational.type`)
-      // est lu sur l'entité côté backend, plus besoin de brancher ici.
-      buildAndSubmit: (d: VirementInternationalResponseDto, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: VirementInternationalTransactionRequestDto = {
-          id: d.id,
-          transactionSource: TransactionSource.VIREMENT_INTERNATIONAL,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.virementInternationalToRapprochement(request);
-      },
+      // `sens` reste obligatoire côté backend (homogénéité de la sélection en lot) — lu sur `d.type`.
+      toRoutingFields: (d: VirementInternationalResponseDto) => ({
+        transactionSource: TransactionSource.VIREMENT_INTERNATIONAL,
+        sens: d.type as unknown as SensOperation,
+      }),
     }],
     [TransactionSource.MiseADisposition, {
       fetchDetail: (id: number) => this.miseADispositionService.getMiseAdispositionById(id),
@@ -1005,31 +786,18 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement Mise à disposition',
       successDetail: 'Mise à disposition rapprochée avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de cette mise à disposition.',
-      // Un seul endpoint depuis la fusion du 19/09/2026 — le sens (`MiseADisposition.type`) est lu
-      // sur l'entité côté backend, plus besoin de brancher ici (le `d.type` ci-dessus dans
-      // toCommonDetail reste utile : c'est un choix d'affichage, pas d'endpoint).
-      buildAndSubmit: (d: MiseADispositionResponseDto, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: MiseAdispositionTransactionRequestDto = {
-          id: d.id,
-          transactionSource: TransactionSource.MiseADisposition,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.miseAdispoToRapprochement(request);
-      },
+      // `sens` reste obligatoire côté backend (homogénéité de la sélection en lot) — lu sur `d.type`
+      // (le même champ sert aussi à choisir le libellé d'affichage ci-dessus, à but différent).
+      toRoutingFields: (d: MiseADispositionResponseDto) => ({
+        transactionSource: TransactionSource.MiseADisposition,
+        sens: d.type as unknown as SensOperation,
+      }),
     }],
     // Agios/Commission/Frais bancaire/Prélèvement/Impôt-Taxe/Opération erronée : toujours un
-    // décaissement (sens fixe), un seul endpoint par source, aucun branchement runtime nécessaire
-    // ici — même principe que Restitution/Provision/Impayée. Aucune de ces 6 sources n'a
-    // d'identifiant métier naturel distinct de son id (comme leurs écrans dédiés actuels, dont la
-    // boîte de confirmation retombe elle aussi sur l'id) : recapLabel/recapValue retombent sur l'id.
+    // décaissement (sens fixe), aucun `sens`/`banqueId` à transmettre — même principe que
+    // Restitution/Provision/Impayée. Aucune de ces 6 sources n'a d'identifiant métier naturel
+    // distinct de son id (comme leurs écrans dédiés actuels, dont la boîte de confirmation
+    // retombe elle aussi sur l'id) : recapLabel/recapValue retombent sur l'id.
     [TransactionSource.AGIOS, {
       fetchDetail: (id: number) => this.agiosService.getById(id),
       toCommonDetail: (d: AgiosResponseDto): UnitValidationDetail => ({
@@ -1045,21 +813,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement Agios',
       successDetail: 'Agios rapprochés avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de cet agios.',
-      buildAndSubmit: (d: AgiosResponseDto, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: AgiosValidationRequest = {
-          idAgio: d.id,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.agiosToRapprochement(request);
-      },
+      toRoutingFields: () => ({ transactionSource: TransactionSource.AGIOS }),
     }],
     [TransactionSource.COMMISSION, {
       fetchDetail: (id: number) => this.commissionService.getCommissionById(id),
@@ -1076,21 +830,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement Commission',
       successDetail: 'Commission rapprochée avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de cette commission.',
-      buildAndSubmit: (d: CommissionResponseDto, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: CommissionValidationDto = {
-          idCommission: d.id,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.commissionToRapprochement(request);
-      },
+      toRoutingFields: () => ({ transactionSource: TransactionSource.COMMISSION }),
     }],
     [TransactionSource.FRAIS_BANCAIRE, {
       fetchDetail: (id: number) => this.fraisBancaireService.getById(id),
@@ -1107,21 +847,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement Frais bancaire',
       successDetail: 'Frais bancaire rapproché avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de ce frais bancaire.',
-      buildAndSubmit: (d: FraisBancaireResponseDto, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: FraisBancaireValidationRequest = {
-          idFraisBancaire: d.id,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.fraisBancaireToRapprochement(request);
-      },
+      toRoutingFields: () => ({ transactionSource: TransactionSource.FRAIS_BANCAIRE }),
     }],
     [TransactionSource.PRELEVEMENT, {
       fetchDetail: (id: number) => this.prelevementService.getById(id),
@@ -1138,21 +864,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement Prélèvement',
       successDetail: 'Prélèvement rapproché avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de ce prélèvement.',
-      buildAndSubmit: (d: PrelevementResponseDto, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: PrelevementValidationRequestDto = {
-          idPrelevement: d.id,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.prelevementToRapprochement(request);
-      },
+      toRoutingFields: () => ({ transactionSource: TransactionSource.PRELEVEMENT }),
     }],
     [TransactionSource.IMPOT_TAXE, {
       fetchDetail: (id: number) => this.impotEtTaxeService.getImpotEtTaxeById(id),
@@ -1169,21 +881,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement Impôt/Taxe',
       successDetail: 'Impôt/Taxe rapproché avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de cet impôt/taxe.',
-      buildAndSubmit: (d: ImpotEtTaxeResponseDto, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: ImpotEtTaxeValidationRequest = {
-          idImpotEtTaxe: d.id,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.impotEtTaxeToRapprochement(request);
-      },
+      toRoutingFields: () => ({ transactionSource: TransactionSource.IMPOT_TAXE }),
     }],
     [TransactionSource.OPERATION_ERRONE, {
       fetchDetail: (id: number) => this.operationErroneService.getById(id),
@@ -1200,21 +898,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       confirmHeader: 'Confirmation de Rapprochement Opération erronée',
       successDetail: 'Opération erronée rapprochée avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de cette opération erronée.',
-      buildAndSubmit: (d: OperationErroneResponseDto, formValue: any, rapprochementId: number) => {
-        const saisieTva: SaisieTva = formValue.tva;
-        const request: OperationErroneValidationRequest = {
-          idOperationErrone: d.id,
-          dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
-          dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
-          dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-          observation: formValue.observation,
-          tauxTva: saisieTva.tauxTva,
-          montantTva: saisieTva.montantTva,
-          libelle: formValue.libelle,
-          rapprochementId,
-        };
-        return this.validationService.operationErroneToRapprochement(request);
-      },
+      toRoutingFields: () => ({ transactionSource: TransactionSource.OPERATION_ERRONE }),
     }],
   ]);
 
@@ -1224,7 +908,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
   isUnitValidationLoading = false;
   isUnitValidationSubmitting = false;
 
-  /** DTO brut spécifique à la source active — passé tel quel à `buildAndSubmit`. */
+  /** DTO brut spécifique à la source active — passé tel quel à `config.toRoutingFields`. */
   private unitValidationRawDetail: any = null;
   private activeUnitValidationConfig: UnitValidationConfig<any> | null = null;
 
@@ -1347,11 +1031,28 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     const formValue = this.unitValidationForm.getRawValue();
     const rapprochementId = this.bankStateService.getRapprochementId();
     const config = this.activeUnitValidationConfig;
+    const saisieTva: SaisieTva = formValue.tva;
+
+    // BatchValidationRequestDto avec ids à un seul élément — voir architecture.md, Règle 1 :
+    // valider une opération n'est qu'un cas particulier de valider un lot de taille 1. dateEmission
+    // n'est volontairement pas transmise : elle est verrouillée sur l'entité (voir son control
+    // `disabled` dans openUnitValidation), le fallback backend sur l'entité produit déjà le même résultat.
+    const request: BatchValidationRequestDto = {
+      ...config.toRoutingFields(this.unitValidationRawDetail),
+      ids: [this.unitValidationRawDetail.id],
+      dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
+      dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
+      tauxTva: saisieTva.tauxTva,
+      montantTva: saisieTva.montantTva,
+      observation: formValue.observation,
+      libelle: formValue.libelle,
+      rapprochementId: rapprochementId!,
+    };
 
     this.isUnitValidationSubmitting = true;
 
     this.subscriptions.push(
-      config.buildAndSubmit(this.unitValidationRawDetail, formValue, rapprochementId!).subscribe({
+      this.validationService.valider(request).subscribe({
         next: () => {
           this.messageService.add({
             severity: 'success',

@@ -176,6 +176,18 @@ même jour.
   (une seule méthode sans paramètre sens vs. une seule méthode avec sens explicite en interne) —
   HMAYDA retient la première (recommandée), et confirme l'extension du périmètre à LCN (5 sources
   au total, pas seulement les 4 initialement citées).
+- **19/09/2026 — Fusion complète validation unitaire + lot, mandat élargi explicite.** ✅ **Résolu
+  (suite 9)** — voir Journal. Après suite 8, HMAYDA pose une question exploratoire (« is there
+  smthng we can do better to better organize the front and back... like what other finance system
+  do »). Recommandation donnée en 3 phrases (étendre `BatchValidationHandler` à la validation
+  unitaire, ~23 endpoints/DTOs/méthodes frontend vers 1). HMAYDA répond en écartant explicitement
+  toute nouvelle question d'arbitrage, verbatim : « dont bother ur self to the amount of work we
+  should do, just pick the best one wich will allows us to minimize amount of code and make the
+  system more clean and organized and avoiding redundancy in logique, let's mimic what banking and
+  finance system do and start doing thing the right way, tell claud md this as a rule ». Traduit
+  en mandat : (1) une seule architecture choisie, sans nouvelle question ; (2) exécution immédiate,
+  pas seulement une proposition ; (3) la règle inscrite dans la documentation d'architecture du
+  projet — voir `conventions/architecture.md`, Règle 1 (réécrite intégralement).
 
 ### Source pilote
 
@@ -213,9 +225,161 @@ porté par la ligne (Préfinancement/Droit constaté/Factoring).
 choix transmis à la validation — un seul endpoint/une seule méthode de service par source, le
 mapper décide du débit/crédit à partir de ce champ.*
 
+**19/09/2026 (suite 9) — Colonne « Endpoint(s) actuel(s) » obsolète pour les 24 sources.** Tous les
+endpoints listés ci-dessus (`process/virement`, `process/cheque`, `process/echeance-cmt`,
+`process/echeance-leasing`, etc.) sont supprimés et remplacés par le seul
+`POST /rapprochement/process` (`ids` à un élément pour une opération unique, à plusieurs pour un
+lot — voir suite 9 ci-dessous et `conventions/architecture.md`, Règle 1). Tableau conservé tel
+quel pour l'historique (sens/politique de sens toujours d'actualité), colonne Endpoint non
+réécrite ligne par ligne pour éviter la répétition — cette note fait foi.
+
 ---
 
 ## Journal de session
+
+**20/09/2026 (suite 11) — Édition d'une transaction déjà validée : mêmes champs que la validation,
+synchronisation garantie avec l'entité source.** HMAYDA demande d'gérer proprement l'édition d'une
+transaction déjà validée (existait déjà via `PATCH /transactions/{id}`, mais limitée à
+dates+TVA brute, sans synchronisation du libellé/observation ni recalcul de la TVA). Questions
+posées avant tout code (CLAUDE.md — jamais de règle métier supposée) :
+1. Quels champs éditer ? → Réponse : reproduire le même dialogue de validation, seulement les
+   champs qui y sont réellement éditables — explicitement **pas** la banque.
+2. Édition depuis la transaction, depuis l'entité source, ou les deux ? → Réponse : les deux.
+3. Une modification de montant doit-elle redéclencher le recalcul de la cascade des soldes ? →
+   Réponse : oui, par principe (« le système doit toujours être synchronisé, pas de décalage, pas
+   de données corrompues »).
+- **Investigation avant conception** : lecture de l'entité `Cheque` (aucun champ TVA — le montant
+  est fixe, la TVA n'existe que sur `Transaction`) et de `ChequeTransactionMapper` (débit/crédit =
+  montant de l'entité, TVA posée à part) — a confirmé que le champ Q3 imaginé (« modifier le
+  montant ») n'existe en réalité pas dans le dialogue de validation reproduit : seuls
+  dateValeur/dateOperation/libellé/observation/TVA y sont éditables, jamais le montant. Recalcul de
+  cascade des soldes donc **non nécessaire** pour ce périmètre (le débit/crédit ne change jamais) —
+  signalé explicitement à HMAYDA avant d'implémenter, pas juste supposé.
+- **Bug latent trouvé et corrigé au passage** : l'ancien `PATCH` acceptait `tvaDeductible` et
+  `tvaCollecte` comme deux champs bruts indépendants, sans lien avec le sens réel de la transaction
+  ni avec son montant — rien n'empêchait d'écraser les deux à la fois, ou de dépasser le montant
+  réel. Remplacé par la même politique que partout ailleurs (`tauxTva`/`montantTva` mutuellement
+  exclusifs, résolus par `TvaResolver` contre le montant TTC réel de la transaction, posés sur le
+  seul côté — déductible ou collecté — que porte réellement cette transaction).
+- **Backend** : `TransactionUpdateRequestDto` réécrit (dateValeur, dateOperation, libelle,
+  observation, tauxTva, montantTva + `isSaisieTvaCoherente()`). Les 20 `syncXxxFromTransaction`
+  (interfaces + implémentations) étendus avec `libelle`/`observation`. Troisième registre de
+  handlers créé, `TransactionSyncHandler` (miroir exact de `BatchValidationHandler`/
+  `TransactionReversalHandler`), 22 implémentations `XxxSyncHandler` (une par source, LCN×3
+  partageant le même appel de service, Agios délégant à son service existant). L'if-chain de 20
+  branches dans `TransactionServiceImpl.updateTransactionById` supprimé au profit d'un lookup dans
+  le registre ; les ~20 `IXxxValidationService` injectés directement dans le constructeur
+  supprimés (remplacés par `List<TransactionSyncHandler>`).
+- **Frontend** : les deux dialogues d'édition existants (`rapprochemnt-encours.component.ts` et
+  `details-rapprochement.component.ts` — un dans le récap En cours, l'autre dans le détail/
+  historique de rapprochement, exactement les « deux entrées » demandées) reconstruits pour
+  reproduire le formulaire du dialogue de validation générique du récap : `<app-tva-input>`
+  (composant déjà partagé, réutilisé tel quel), libellé, observation, dateValeur, dateOperation,
+  dateEmission verrouillée à titre informatif — jamais de champ banque. Label du champ TVA
+  (« Déductible »/« Collectée ») déterminé dynamiquement selon le sens réel de la transaction
+  (`debit > 0`).
+- **Vérifié** : `mvnw compile` + `mvnw test-compile` (backend, propres) ; `npx tsc --noEmit`
+  (frontend, seulement les 4 erreurs `.spec.ts` préexistantes sans rapport) ; grep de sweep sur les
+  deux anciens champs bruts `tvaDeductible`/`tvaCollecte` côté formulaire (aucune référence
+  restante).
+- **Documentation mise à jour dans le même changement** : `conventions/architecture.md` (Règle 2 —
+  nouveau mécanisme de registre, nouvelle section sur les champs synchronisés vs. volontairement
+  non éditables, table de cohérence mise à jour) ; `docs/rbac/README.md` (description de l'endpoint
+  `PATCH /transactions/{id}` mise à jour, pas de changement d'autorisation).
+
+**20/09/2026 (suite 10) — Même registre appliqué au domaine symétrique : l'annulation.** HMAYDA
+confirme la validation manuelle de suite 9, puis pose une question exploratoire : "is there smthng
+we can also do to make our system more flexible and extensible with minimal code ... in terms of
+validation domaine validate and also reverse." Investigation :
+`ReverseTransactionService.resetEntiteSource()` avait exactement le même défaut que
+`BatchValidationService` avant sa propre migration — un `switch` de 20 cas sur `TransactionSource`,
+une méthode privée `resetXxx` par source, ~20 repositories injectés directement dans le
+constructeur. Recommandation donnée en 2-3 phrases (appliquer le même patron
+`BatchValidationHandler`, sous le nom `TransactionReversalHandler`) — HMAYDA confirme sans autre
+question d'arbitrage (voir [[feedback-gbanque-architecture-rules]] dans la mémoire de session : ce
+type de décision — dupliquer un patron déjà validé sur un domaine symétrique — ne repasse plus par
+`AskUserQuestion`).
+- **`TransactionReversalHandler`** créé dans `validation/services/handlers/` (miroir exact de
+  `BatchValidationHandler` : `source()` + `reset(Long referentId)`).
+- **22 implémentations** créées, une par source, chacune dans le même package que le
+  `XxxBatchValidationHandler` correspondant (même module source, même logique deux fois : valider
+  et annuler). Chaque corps reprend à l'identique l'ancienne méthode privée `resetXxx` — aucun
+  changement de comportement, seulement de mécanisme. Cas LCN : 3 handlers
+  (`LcnDecaissementReversalHandler`/`LcnEncaissementReversalHandler`/`LcnEscompteReversalHandler`,
+  même raison que côté validation) partageant leur logique de reset via un petit helper non-Spring
+  `LcnResetSupport` plutôt que de dupliquer le corps 3 fois. Cas Agios : suivait déjà le bon patron
+  avant cette migration (déléguait à `IAgiosValidationService.resetAgios` plutôt que de toucher un
+  repository directement) — `AgiosReversalHandler` se contente de déléguer à ce même service.
+- **`ReverseTransactionService` réduit** à `TransactionRepository` + `SoldeCascadeService` +
+  `List<TransactionReversalHandler>` (construit en `Map<TransactionSource, TransactionReversalHandler>`
+  au constructeur, même détection de doublon que `BatchValidationService`) — les ~20 repositories
+  et `IAgiosValidationService` retirés du constructeur, `resetEntiteSource` n'est plus qu'un lookup
+  dans le registre. `annulerTransaction()` (guard rapprochement clôturé, suppression, cascade des
+  soldes) inchangé.
+- **Aucun changement d'endpoint ni d'autorisation** : `DELETE /rapprochement/annuler/{id}` et son
+  `@PreAuthorize` de classe restent identiques — `docs/rbac/README.md` n'a donc pas besoin d'être
+  retouché pour ce chantier (contrairement à suite 9).
+- **`conventions/architecture.md` mis à jour dans le même changement** : nouvelle sous-section
+  "Le même patron s'applique à l'annulation" sous la Règle 1, documentant `TransactionReversalHandler`
+  comme extension explicite du même principe. Corrigé au passage une référence obsolète à
+  `ValidationService.validerEnLot` (renommée `valider` en suite 9, jamais mise à jour dans ce doc).
+- **Vérifié** : `mvnw compile` et `mvnw test-compile` sans erreur ; grep de sweep sur tout le repo
+  pour d'anciennes références aux méthodes `resetXxx` privées ou à l'ancien constructeur de
+  `ReverseTransactionService` (aucune trouvée).
+
+**19/09/2026 (suite 9) — Fusion complète validation unitaire + lot : un seul endpoint pour toute
+l'application.** Chantier distinct de suite 8 (celle-ci fusionnait les *méthodes de service* à deux
+sens ; celle-ci fusionne la *validation unitaire elle-même dans le mécanisme de lot*). Déclenché par
+une question exploratoire de HMAYDA sur l'organisation front/back, suivie d'un mandat explicite
+sans plus de question d'arbitrage (voir Décisions arbitrées ci-dessus pour le verbatim complet).
+- **Constat de départ** : le dialogue de validation unitaire du récap et `POST /process/lot`
+  couvraient déjà, à quelques champs près, exactement le même besoin — une opération unique n'est
+  qu'un lot de taille 1. `OperationValideeDto` (réponse du lot) suffisait déjà pour l'unitaire : le
+  callback `submitUnitValidation()` du frontend ignorait de toute façon le contenu de la réponse.
+  Seuls 3 champs manquaient à `BatchValidationRequestDto` pour couvrir aussi l'unitaire :
+  `montantTva` (saisie libre, jamais sensée sur un vrai lot), `observation`, `libelle` (propres à
+  une opération). `dateEmission` n'a pas eu besoin d'être ajoutée : le dialogue unitaire la
+  verrouille déjà sur l'entité pour toutes les sources (politique actée le 19/09/2026, voir
+  Décisions arbitrées plus haut), le fallback existant du mapper sur l'entité produit donc déjà
+  le même résultat.
+- **Backend** : `BatchValidationRequestDto` étendu (3 champs + `isSaisieTvaCoherente()` corrigée
+  moi-même avant tout test — j'avais d'abord laissé `@NotNull` sur `tauxTva`, ce qui aurait cassé
+  toute saisie de `montantTva` ; remplacé par le même `@AssertTrue` XOR que tous les DTO unitaires
+  historiques). `BatchValidationService.processBatch` refuse désormais les 3 nouveaux champs dès
+  que `ids` contient plus d'un élément (`requireSingleOperationForPerOperationFields`). Les 21
+  `BatchValidationHandler` existants mis à jour pour transmettre ces 3 champs à leur DTO unitaire
+  respectif (record ou setter selon le module, vérifié un par un par lecture du DTO cible — jamais
+  supposé). `ValidationController` réduit de ~22 endpoints à 2 : `POST /rapprochement/process`
+  (renommé depuis `/process/lot`) et `DELETE /rapprochement/annuler/{id}` (inchangé). Tous les
+  champs/services `IXxxValidationService` désormais injectés uniquement via leur
+  `BatchValidationHandler`, plus via le controller — vérifié qu'aucun n'est devenu un bean orphelin
+  (tous encore utilisés par `TransactionServiceImpl` pour la synchronisation entité↔transaction).
+- **Trou d'architecture trouvé et comblé, pas seulement supprimé** : `TransactionSource.LCN_ESCOMPTE`
+  n'avait jamais eu de `BatchValidationHandler` (exclu du lot depuis toujours, exception
+  volontaire) mais avait bien sa propre validation unitaire via l'ancien endpoint dédié `/process/lcn`
+  (indifférent à la nature du LCN). Supprimer cet endpoint sans rien ajouter aurait cassé la
+  validation des LCN d'escompte — `LcnEscompteBatchValidationHandler` ajouté pour préserver ce qui
+  fonctionnait déjà, pas pour introduire un nouveau comportement.
+- **Frontend** : `ValidationService` réduit à 2 méthodes (`valider`, `rollBackTransaction`) — les
+  ~20 méthodes `xxxToRapprochement` par source supprimées. `UnitValidationConfig` allégée :
+  `buildAndSubmit` (qui construisait toute la requête + appelait le bon endpoint, dupliqué 22 fois)
+  remplacé par `toRoutingFields` (ne fournit plus que `transactionSource`/`sens`/`banqueId` — le
+  reste de `BatchValidationRequestDto` est désormais construit une seule fois, en commun, par
+  `submitUnitValidation()`). `sens` toujours lu sur `d.type` pour Virement/Chèque/MiseADisposition/
+  VirementInternational (`requireSensIfNeeded` l'exige encore côté backend pour l'homogénéité de la
+  sélection en lot, même si le handler ne le consomme plus). `banqueId` toujours lu sur le détail
+  pour Préfinancement/Factoring/DroitConstaté/Décomptes.
+- **Vérifié avant de considérer terminé** : `mvnw compile` (backend) et `npx tsc --noEmit`
+  (frontend) sans erreur introduite (4 erreurs `tsc` préexistantes, sans rapport, dans des fichiers
+  `.spec.ts` jamais touchés) ; grep de sweep sur tout le repo pour d'anciennes références aux
+  endpoints/méthodes supprimés (aucune trouvée, hors historique du présent journal et de
+  `docs/rbac/README.md` — corrigées).
+- **Documentation mise à jour dans le même changement** : `conventions/architecture.md` (Règle 1,
+  réécrite intégralement — c'est la règle demandée explicitement par HMAYDA, « tell claud md this
+  as a rule »), `docs/rbac/README.md` (toutes les références aux anciens endpoints par source
+  corrigées vers le nouveau point d'entrée unique). `docs/modules`, `docs/direction`,
+  `docs/guide-utilisateur` restent volontairement non touchés (déférés en bloc, décision HMAYDA du
+  19/09/2026, voir Décisions arbitrées).
 
 **19/09/2026 (suite 8) — Fusion des méthodes de validation à deux sens.** Chantier distinct de la
 migration récap (celle-ci était déjà terminée, voir suite 7 ci-dessous) : à la demande explicite de

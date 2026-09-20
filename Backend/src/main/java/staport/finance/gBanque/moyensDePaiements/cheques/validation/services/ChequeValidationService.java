@@ -106,7 +106,7 @@ public class ChequeValidationService implements IChequeValidationService {
 
     @Override
     @Transactional
-    public void syncChequeFromTransaction(Long chequeId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncChequeFromTransaction(Long chequeId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation chèque depuis transaction — id: {}", chequeId);
 
         Cheque cheque = chequeRepository.findById(chequeId)
@@ -117,6 +117,8 @@ public class ChequeValidationService implements IChequeValidationService {
 
         cheque.setDateValeur(dateValeur);
         cheque.setDateOperation(dateOperation);
+        cheque.setLibelle(libelle);
+        cheque.setObservation(observation);
         chequeRepository.save(cheque);
 
         log.info("Chèque id: {} synchronisé depuis transaction", chequeId);

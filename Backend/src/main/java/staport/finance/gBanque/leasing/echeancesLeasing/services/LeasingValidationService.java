@@ -111,7 +111,7 @@ public class LeasingValidationService implements ILeasingValidationService {
      */
     @Override
     @Transactional
-    public void syncEcheanceFromTransaction(Long echeanceId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncEcheanceFromTransaction(Long echeanceId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation échéance leasing depuis transaction — écheanceId: {}", echeanceId);
 
         EcheanceLeasing echeance = echeanceLeasingRepository.findById(echeanceId)
@@ -123,6 +123,8 @@ public class LeasingValidationService implements ILeasingValidationService {
 
         echeance.setDateValeur(dateValeur);
         echeance.setDateOperation(dateOperation);
+        echeance.setLibelle(libelle);
+        echeance.setObservation(observation);
         echeanceLeasingRepository.save(echeance);
 
         log.info("Échéance ID: {} synchronisée depuis transaction", echeanceId);

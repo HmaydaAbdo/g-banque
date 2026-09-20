@@ -471,76 +471,67 @@
   header="Modifier une transaction"
   [(visible)]="displayEditDialog"
   [modal]="true"
+  [style]="{width: '50vw'}"
+  [draggable]="false"
+  [resizable]="false"
   [closable]="true">
 
   <form [formGroup]="editDateForm">
-    <!-- Date d'opération -->
-    <div class=" flex flex-column  mb-3">
-      <label class="font-semibold text-sm">Date d'opération</label>
-      <p-calendar
-        formControlName="dateOperation"
-        dateFormat="dd/mm/yy"
-        appendTo="body"
-        [showIcon]="true"
-        [readonlyInput]="true"
-        [showOnFocus]="false"
-        [inputStyle]="{'cursor':'pointer'}">
-      </p-calendar>
-      @if (editDateForm.get('dateOperation')?.invalid && editDateForm.get('dateOperation')?.touched) {
-        <small class="text-red-500">
-          La date d'opération est obligatoire
-        </small>
-      }
-    </div>
-
-    <!-- Date de valeur -->
-    <div class=" flex flex-column  mb-3">
-      <label class="font-semibold text-sm">Date de valeur</label>
-      <p-calendar
-        formControlName="dateValeur"
-        dateFormat="dd/mm/yy"
-        appendTo="body"
-        [showOnFocus]="false"
-        [showIcon]="true"
-        [readonlyInput]="true"
-        [inputStyle]="{'cursor':'pointer'}">
-      </p-calendar>
-      @if (editDateForm.get('dateValeur')?.invalid && editDateForm.get('dateValeur')?.touched) {
-        <small class="text-red-500">
-          La date de valeur est obligatoire
-        </small>
-      }
-    </div>
-
-    <!-- TVA Déductible -->
-    <div class=" flex flex-column  mb-3">
-      <label class="font-semibold text-sm">TVA Déductible</label>
-      <input type="number"
-             pInputText
-             formControlName="tvaDeductible"
-             class="w-full"/>
-      @if (editDateForm.get('tvaDeductible')?.invalid && editDateForm.get('tvaDeductible')?.touched) {
-        <small class="text-red-500">
-          Ce champ est obligatoire
-        </small>
-      }
-    </div>
-
-    <!-- TVA Collectée -->
-    <div class=" flex flex-column  mb-3">
-      <label class="font-semibold text-sm">TVA Collectée</label>
-      <input type="number"
-             pInputText
-             formControlName="tvaCollecte"
-             class="w-full"/>
-      @if (editDateForm.get('tvaCollecte')?.invalid && editDateForm.get('tvaCollecte')?.touched) {
-        <small class="text-red-500">
-          Ce champ est obligatoire
-        </small>
-      }
+    <div class="grid p-fluid mt-3">
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <p-calendar id="detailsEditDateEmission" formControlName="dateEmission" [showOnFocus]="false" [disabled]="true" [iconDisplay]="'input'" [showIcon]="true" dateFormat="dd/mm/yy"></p-calendar>
+          <label for="detailsEditDateEmission">Date d'émission</label>
+        </span>
+      </div>
+      <div class="col-12 md:col-6 mb-3">
+        <app-tva-input formControlName="tva" [label]="editTvaLabel"
+                       inputId="detailsEditTva"
+                       [montantMax]="editMontantMaxTva"></app-tva-input>
+        @if (isEditInvalid('tva')) {
+          <small class="p-error">{{ messageErreurTva(editDateForm.get('tva')?.errors) }}</small>
+        }
+      </div>
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <p-calendar id="detailsEditDateValeur" formControlName="dateValeur" [showOnFocus]="false" dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" appendTo="body"></p-calendar>
+          <label for="detailsEditDateValeur">Date de valeur</label>
+        </span>
+        @if (isEditInvalid('dateValeur')) {
+          <small class="p-error">La date de valeur est obligatoire</small>
+        }
+      </div>
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <p-calendar id="detailsEditDateOperation" formControlName="dateOperation" [showOnFocus]="false" dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" appendTo="body"></p-calendar>
+          <label for="detailsEditDateOperation">Date de l'opération</label>
+        </span>
+        @if (isEditInvalid('dateOperation')) {
+          <small class="p-error">La date de l'opération est obligatoire</small>
+        }
+      </div>
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <textarea id="detailsEditLibelle" pInputTextarea formControlName="libelle" rows="3"></textarea>
+          <label for="detailsEditLibelle">Libellé</label>
+        </span>
+        @if (isEditInvalid('libelle')) {
+          <small class="p-error">Le libellé est obligatoire</small>
+        }
+      </div>
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <textarea id="detailsEditObservation" pInputTextarea formControlName="observation" rows="3"></textarea>
+          <label for="detailsEditObservation">Observation</label>
+        </span>
+        @if (isEditInvalid('observation')) {
+          <small class="p-error">Observation est obligatoire</small>
+        }
+      </div>
     </div>
   </form>
 
+  <p-divider></p-divider>
   <ng-template pTemplate="footer">
     <p-button label="Annuler" severity="secondary" (click)="closeEditDialog()"></p-button>
     <p-button label="Enregistrer" severity="success" (click)="updateTransaction()" [disabled]="editDateForm.invalid"></p-button>

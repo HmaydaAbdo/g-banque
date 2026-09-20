@@ -107,7 +107,7 @@ public class RestitutionValidationService implements IRestitutionValidationServi
 
     @Override
     @Transactional
-    public void syncRestitutionFromTransaction(Long restitutionId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncRestitutionFromTransaction(Long restitutionId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation restitution depuis transaction — id: {}", restitutionId);
 
         Restitution restitution = restitutionRepository.findById(restitutionId)
@@ -118,6 +118,8 @@ public class RestitutionValidationService implements IRestitutionValidationServi
 
         restitution.setDateValeur(dateValeur);
         restitution.setDateOperation(dateOperation);
+        restitution.setLibelle(libelle);
+        restitution.setObservation(observation);
         restitutionRepository.save(restitution);
 
         log.info("Restitution id: {} synchronisée depuis transaction", restitutionId);

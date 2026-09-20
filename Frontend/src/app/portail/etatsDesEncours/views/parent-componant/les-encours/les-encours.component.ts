@@ -1,6 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterOutlet, NavigationEnd } from "@angular/router";
-import { PanelMenuModule } from "primeng/panelmenu";
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Ripple } from "primeng/ripple";
@@ -22,7 +21,6 @@ import { BankStateService } from "../../../../comptes-bancaire/services/bank-sta
   standalone: true,
   imports: [
     RouterOutlet,
-    PanelMenuModule,
     CommonModule,
     Ripple,
     BreadcrumbModule,
@@ -42,6 +40,8 @@ export class LesEncoursComponent implements OnInit {
 
   items: MenuItem[] = [];
   breadcrumbItems: MenuItem[] = [];
+  /** Index de l'onglet actif dans `items` — pilote la position de l'indicateur animé. */
+  activeTabIndex = 0;
   banqueId!: number;
 
   rapprochementId: number | null = null;
@@ -79,7 +79,7 @@ export class LesEncoursComponent implements OnInit {
     this.breadcrumbItems = [
       { icon: 'pi pi-home', route: '/portail/accueil', label: "Accueil" },
       { icon: 'pi pi-list', route: '/portail/etats-des-encours', label: "Suivi des encours" },
-      { icon: 'pi pi-sync', route: '', label: "Rapprochement" }
+      { icon: 'pi pi-chart-bar', route: '', label: "Récapitulatifs" }
     ];
 
     this.route.paramMap.subscribe(params => {
@@ -111,6 +111,7 @@ export class LesEncoursComponent implements OnInit {
       this.natureEcran = LesEncoursComponent.SEGMENTS_REALISES.has(segment)
         ? 'realise'
         : 'previsionnel';
+      this.activeTabIndex = this.items.findIndex(item => item.routerLink?.at(-1) === segment);
       const bc = this.breadcrumbMap[segment];
       if (bc) {
         this.breadcrumbItems[2] = {
@@ -122,31 +123,20 @@ export class LesEncoursComponent implements OnInit {
     }
   }
 
+  /** Onglets de navigation — l'ordre pilote la position de `activeTabIndex`. */
   updateMenuItems() {
     this.items = [
       {
-        label: 'Rapprochement',
-        icon: 'pi pi-sync',
-        routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'rapprochement']
+        label: 'Récapitulatifs',
+        icon: 'pi pi-chart-bar',
+        routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'recapitulatif']
       },
       {
-        label: 'Récapitulatifs',
-        icon: 'pi pi-briefcase',
-        routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'recapitulatif']
+        label: 'Rapprochement en cours',
+        icon: 'pi pi-sync',
+        routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'rapprochement']
       }
     ];
-  }
-
-
-  toggleMenuItem(item: MenuItem): void {
-    if (item.items) {
-      if (item.expanded) {
-        item.expanded = false;
-      } else {
-        this.items.forEach(i => { if (i.items) i.expanded = false; });
-        item.expanded = true;
-      }
-    }
   }
 
   showClotureDialog(): void {

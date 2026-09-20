@@ -16,5 +16,5 @@ public interface IFraisBancaireValidationService {
      * Propage {@code dateValeur}/{@code dateOperation} vers le frais bancaire source après
      * modification de sa transaction (architecture.md, Règle 2).
      */
-    void syncFraisBancaireFromTransaction(Long fraisBancaireId, LocalDate dateValeur, LocalDate dateOperation);
+    void syncFraisBancaireFromTransaction(Long fraisBancaireId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation);
 }

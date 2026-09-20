@@ -114,7 +114,7 @@ public class ImpotEtTaxeValidationService implements IImpotEtTaxeValidationServi
 
     @Override
     @Transactional
-    public void syncImpotEtTaxeFromTransaction(Long impotEtTaxeId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncImpotEtTaxeFromTransaction(Long impotEtTaxeId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation impôt/taxe depuis transaction — id: {}", impotEtTaxeId);
 
         ImpotEtTaxe impotEtTaxe = impotEtTaxeRepository.findById(impotEtTaxeId)
@@ -125,6 +125,8 @@ public class ImpotEtTaxeValidationService implements IImpotEtTaxeValidationServi
 
         impotEtTaxe.setDateValeur(dateValeur);
         impotEtTaxe.setDateOperation(dateOperation);
+        impotEtTaxe.setLibelle(libelle);
+        impotEtTaxe.setObservation(observation);
         impotEtTaxeRepository.save(impotEtTaxe);
 
         log.info("Impôt/taxe id: {} synchronisé depuis transaction", impotEtTaxeId);

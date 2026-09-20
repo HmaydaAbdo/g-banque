@@ -111,7 +111,7 @@ public class VirementValidationService implements IVirementValidationService {
 
     @Override
     @Transactional
-    public void syncVirementFromTransaction(Long virementId, LocalDate dateValeur, LocalDate dateOperation) {
+    public void syncVirementFromTransaction(Long virementId, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation) {
         log.info("Synchronisation virement depuis transaction — id: {}", virementId);
 
         Virement virement = virementRepository.findById(virementId)
@@ -122,6 +122,8 @@ public class VirementValidationService implements IVirementValidationService {
 
         virement.setDateValeur(dateValeur);
         virement.setDateOperation(dateOperation);
+        virement.setLibelle(libelle);
+        virement.setObservation(observation);
         virementRepository.save(virement);
 
         log.info("Virement id: {} synchronisé depuis transaction", virementId);

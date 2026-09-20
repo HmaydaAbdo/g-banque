@@ -51,10 +51,10 @@ public class CmtBatchValidationHandler implements BatchValidationHandler {
                 null,
                 requestDto.dateValeur(),
                 requestDto.dateOperation(),
-                null,
+                requestDto.observation(),
                 requestDto.tauxTva(),
-                null,
-                null,
+                requestDto.montantTva(),
+                requestDto.libelle(),
                 requestDto.rapprochementId());
         CmtTransactionResponseDto r = cmtValidationService.processCmtTransaction(creditMoyenTerme, dto);
         return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
