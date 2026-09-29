@@ -54,9 +54,11 @@ public interface ILigneFonctionnelleService {
     /**
      * @param banque  résolue par le Controller — voir {@link #createLigneFonctionnelle}.
      * @param nature  résolue par le Controller — voir {@link #createLigneFonctionnelle}.
+     * @param sousLigneNatures natures des sous-lignes reçues pour remplacement, résolues par le Controller.
      */
     LigneFonctionnelleResponse updateLigneFonctionnelle(
-            Long id, LigneFonctionnelleRequest request, Banque banque, NatureLigneFonctionnelle nature);
+            Long id, LigneFonctionnelleRequest request, Banque banque, NatureLigneFonctionnelle nature,
+            Map<Long, NatureLigneFonctionnelle> sousLigneNatures);
 
     /**
      * @param sousLigneNatures natures des sous-lignes résolues par le Controller, indexées par

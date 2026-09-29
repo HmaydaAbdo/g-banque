@@ -83,7 +83,7 @@ import java.time.OffsetDateTime;
 
 
         @OneToMany(mappedBy = "ligneMere", cascade = CascadeType.ALL, orphanRemoval = true)
-        private List<LigneFonctionnelle> sousLignes;
+        private List<LigneFonctionnelle> sousLignes = new ArrayList<>();
 
         @OneToMany(mappedBy = "ligneFonctionnelle", cascade = CascadeType.ALL)
         @NotAudited

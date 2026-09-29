@@ -67,7 +67,6 @@ public abstract class LigneFonctionnelleMapper {
     @AfterMapping
     protected void afterToEntity(List<Marche> marches, @MappingTarget LigneFonctionnelle ligneFonctionnelle) {
         ligneFonctionnelle.setMarches(marches != null ? new ArrayList<>(marches) : new ArrayList<>());
-        ligneFonctionnelle.setSousLignes(new ArrayList<>());
     }
 
     // ── toSousLigneEntity ────────────────────────────────────────────────────

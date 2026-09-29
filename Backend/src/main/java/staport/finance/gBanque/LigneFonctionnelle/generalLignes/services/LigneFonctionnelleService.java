@@ -78,6 +78,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
 
     private static final Logger log = LoggerFactory.getLogger(LigneFonctionnelleService.class);
     // Constante de Règle Métier : Seule cette nature peut être une Ligne Mère
+    private static final String CAUTION_ADMINISTRATIVE_CODE = "CAUT_ADMIN";
     private static final String CAUTION_ADMINISTRATIVE_LABEL = "Caution Administrative";
 
     private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
@@ -316,7 +317,8 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
     @Transactional
     @AuditableAction(operation = AuditOperation.UPDATE, entity = LigneFonctionnelle.class)
     public LigneFonctionnelleResponse updateLigneFonctionnelle(
-            Long id, LigneFonctionnelleRequest request, Banque targetBanque, NatureLigneFonctionnelle targetNature) {
+            Long id, LigneFonctionnelleRequest request, Banque targetBanque, NatureLigneFonctionnelle targetNature,
+            Map<Long, NatureLigneFonctionnelle> sousLigneNatures) {
 
         log.info("Updating ligne fonctionnelle ID: {} - New plafond: {}, New taux: {}",
                 id, request.plafond(), request.taux());
@@ -389,6 +391,16 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         // 10. Sauvegarde
         LigneFonctionnelle updatedLigneFonctionnelle = ligneFonctionnelleRepository.save(existingLigneFonctionnelle);
         log.info("Successfully updated ligne fonctionnelle ID: {}", id);
+
+        // Only the supported mother nature manages children. Null means no child edit;
+        // an empty list explicitly removes all children of a supported mother.
+        if (request.sousLignes() != null
+                && supportsSousLignes(targetNature)) {
+            return manageSousLignes(id, request.sousLignes(), sousLigneNatures);
+        }
+        if (request.sousLignes() != null && !request.sousLignes().isEmpty()) {
+            throw new IllegalArgumentException("Cette nature de ligne ne peut pas contenir de sous-lignes.");
+        }
 
         return ligneFonctionnelleMapper.toDto(updatedLigneFonctionnelle);
     }
@@ -637,12 +649,16 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
     }
 
     private void validateNatureForMere(NatureLigneFonctionnelle nature) {
-        if (!CAUTION_ADMINISTRATIVE_LABEL.equals(nature.getLabel())) {
+        if (!supportsSousLignes(nature)) {
             log.warn("Validation de nature échouée: La nature '{}' ne peut pas être une ligne mère.", nature.getLabel());
             throw new IllegalArgumentException(
                     "Seule la nature ayant le label '" + CAUTION_ADMINISTRATIVE_LABEL + "' est autorisée à être une Ligne Mère (contenir des sous-lignes)."
             );
         }
+    }
+
+    private boolean supportsSousLignes(NatureLigneFonctionnelle nature) {
+        return nature != null && CAUTION_ADMINISTRATIVE_CODE.equals(nature.getCode());
     }
 
 

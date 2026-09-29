@@ -19,9 +19,9 @@ import java.util.List;
  * @param taux                          obligatoire, entre 0 et 100.
  * @param dateDepart                    obligatoire.
  * @param dateFin                       obligatoire, ne peut pas être antérieure à {@code dateDepart}.
- * @param sousLignes                    facultatif — fourni uniquement à la création d'une ligne mère
- *                                      (Caution Administrative) ; chaque élément doit avoir un
- *                                      {@code id} null (création en cascade).
+ * @param sousLignes                    facultatif — fourni à la création d'une ligne mère avec des IDs
+ *                                      nuls ; en modification, null conserve les enfants, tandis qu'une
+ *                                      liste (même vide) remplace les enfants d'une nature qui les supporte.
  */
 public record LigneFonctionnelleRequest(
         @NotNull(message = "L'ID de la banque est obligatoire.")

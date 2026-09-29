@@ -115,7 +115,9 @@ public class LigneFonctionnelleController {
             @Valid @RequestBody LigneFonctionnelleRequest request) {
         Banque banque = banqueService.findOrThrow(request.banqueId());
         NatureLigneFonctionnelle nature = natureLigneFonctionnelleService.findOrThrow(request.natureLigneFonctionnelleId());
-        return ResponseEntity.ok(ligneFonctionnelleService.updateLigneFonctionnelle(id, request, banque, nature));
+        Map<Long, NatureLigneFonctionnelle> sousLigneNatures = resolveSousLigneNatures(request.sousLignes());
+        return ResponseEntity.ok(ligneFonctionnelleService.updateLigneFonctionnelle(
+                id, request, banque, nature, sousLigneNatures));
     }
 
     @Operation(summary = "Détail d'une ligne fonctionnelle par ID")
