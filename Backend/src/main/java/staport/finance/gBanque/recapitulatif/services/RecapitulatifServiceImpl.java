@@ -21,6 +21,7 @@ import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.recapitulatif.dtos.request.RecapitulatifSearchDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.AgregatedRecapDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.EncoursFinDeMoisDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifGlobal;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifItem;
 import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
@@ -39,10 +40,7 @@ import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -426,5 +424,29 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
         return allBankIds.stream()
                 .map(id -> getRecapitulatifGlobal(id, periode))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public EncoursFinDeMoisDto getEncoursFinDeMois(Long banqueId) {
+        Map<Type, BigDecimal> sums = new EnumMap<>(Type.class);
+        for (Object[] row : encoursRepository.sumByBanqueAndSensUntil(banqueId, endOfMonth())) {
+            sums.put((Type) row[0], (BigDecimal) row[1]);
+        }
+        return new EncoursFinDeMoisDto(sums.get(Type.ENCAISSEMENT), sums.get(Type.DECAISSEMENT));
+    }
+
+    @Override
+    public Map<Long, EncoursFinDeMoisDto> getEncoursFinDeMoisParBanque() {
+        Map<Long, Map<Type, BigDecimal>> sumsByBanque = new HashMap<>();
+        for (Object[] row : encoursRepository.sumAllBanquesBySensUntil(endOfMonth())) {
+            sumsByBanque
+                    .computeIfAbsent((Long) row[0], k -> new EnumMap<>(Type.class))
+                    .put((Type) row[1], (BigDecimal) row[2]);
+        }
+
+        Map<Long, EncoursFinDeMoisDto> result = new HashMap<>();
+        sumsByBanque.forEach((banqueId, sums) -> result.put(banqueId,
+                new EncoursFinDeMoisDto(sums.get(Type.ENCAISSEMENT), sums.get(Type.DECAISSEMENT))));
+        return result;
     }
 }

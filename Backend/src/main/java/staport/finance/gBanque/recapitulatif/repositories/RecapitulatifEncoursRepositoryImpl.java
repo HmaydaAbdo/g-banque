@@ -44,4 +44,6 @@ public class RecapitulatifEncoursRepositoryImpl implements RecapitulatifEncoursR
         }
         return totaux;
     }
+
+
 }

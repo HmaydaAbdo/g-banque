@@ -23,5 +23,9 @@ public record BankAccueilResponse(
         BigDecimal disponibiliteFC,
         Devise     devise,
         long       lcnsEchusCount,
-        long       virementsEchusCount
+        long       virementsEchusCount,
+        BigDecimal encoursPlus,
+        BigDecimal encoursMoins,
+        BigDecimal soldeFinDeMois,
+        BigDecimal disponibiliteFinDeMois
 ) {}

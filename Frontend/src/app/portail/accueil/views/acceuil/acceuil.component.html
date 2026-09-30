@@ -46,87 +46,118 @@
 
         <div class="bank-card bank-card--anim">
 
-          <!-- Logo -->
-          <div class="bank-card__logo"
-               [routerLink]="['/portail/etats-des-encours', account.banqueId, 'select']">
-            <img [src]="'data:image/png;base64,' + account.logoBase64"
-                 [alt]="'Logo ' + account.nom" class="bank-card__logo-img"/>
-          </div>
+          <!-- En-tête : logo + nom | échus | téléchargement -->
+          <div class="bank-card__header">
 
-          <!-- Contenu cliquable -->
-          <div class="bank-card__body"
-               [routerLink]="['/portail/etats-des-encours', account.banqueId, 'select']">
-
-            <!-- Nom -->
-            <div class="bank-card__name">{{ account.nom }}</div>
-
-            <!-- KPI rows — Solde + FC même style -->
-            <div class="bank-card__kpi-row">
-              <span class="bank-card__kpi-label">
-                <i class="pi pi-chart-line mr-1"></i>Solde actuel
-              </span>
-              <span class="bank-card__kpi-amount"
-                    [class.bank-card__kpi-amount--pos]="account.soldeActuel >= 0"
-                    [class.bank-card__kpi-amount--neg]="account.soldeActuel < 0">
-                {{ account.soldeActuel | number:'1.2-2':'fr-FR' }}
-                <span class="bank-card__devise">{{ account.devise }}</span>
-              </span>
+            <div class="bank-card__ident"
+                 [routerLink]="['/portail/etats-des-encours', account.banqueId, 'select']">
+              <div class="bank-card__logo">
+                <img [src]="'data:image/png;base64,' + account.logoBase64"
+                     [alt]="'Logo ' + account.nom" class="bank-card__logo-img"/>
+              </div>
+              <div class="bank-card__id">
+                <div class="bank-card__name">{{ account.nom }}</div>
+                <div class="bank-card__sub">Montants en {{ account.devise }}</div>
+              </div>
             </div>
 
-            <div class="bank-card__kpi-row">
-              <span class="bank-card__kpi-label">
-                <i class="pi pi-shield mr-1"></i>Facilité de caisse
-              </span>
-              @if (account.plafondFC && account.plafondFC > 0) {
-                <span class="bank-card__kpi-value">{{ account.plafondFC | number:'1.0-0':'fr-FR' }} {{ account.devise }}</span>
-              } @else {
-                <span class="bank-card__kpi-none">Aucune</span>
-              }
-            </div>
-
-            <div class="bank-card__kpi-row">
-              <span class="bank-card__kpi-label">
-                <i class="pi pi-wallet mr-1"></i>Disponibilité FC
-              </span>
-              <span class="bank-card__kpi-amount"
-                    [class.bank-card__kpi-amount--pos]="account.disponibiliteFC >= 0"
-                    [class.bank-card__kpi-amount--neg]="account.disponibiliteFC < 0">
-                {{ account.disponibiliteFC | number:'1.2-2':'fr-FR' }}
-                <span class="bank-card__devise">{{ account.devise }}</span>
-              </span>
-            </div>
-
-            <!-- Échus — pills modernes -->
-            <div class="bank-card__echus">
-              <div class="echus-pill"
-                   [class.echus-pill--alert]="account.lcnsEchusCount > 0"
-                   [class.echus-pill--ok]="account.lcnsEchusCount === 0">
+            <div class="bank-card__echus"
+                 [routerLink]="['/portail/etats-des-encours', account.banqueId, 'select']">
+              <span class="echus-pill"
+                    [class.echus-pill--alert]="account.lcnsEchusCount > 0"
+                    pTooltip="LCN échus" tooltipPosition="bottom">
                 <i class="pi pi-file"></i>
-                <span class="echus-pill__count">{{ account.lcnsEchusCount }}</span>
-                <span class="echus-pill__label">LCN échus</span>
-              </div>
-              <div class="echus-pill"
-                   [class.echus-pill--alert]="account.virementsEchusCount > 0"
-                   [class.echus-pill--ok]="account.virementsEchusCount === 0">
+                <span class="echus-pill__count">{{ account.lcnsEchusCount }}</span>LCN
+              </span>
+              <span class="echus-pill"
+                    [class.echus-pill--alert]="account.virementsEchusCount > 0"
+                    pTooltip="Virements échus" tooltipPosition="bottom">
                 <i class="pi pi-arrow-right-arrow-left"></i>
-                <span class="echus-pill__count">{{ account.virementsEchusCount }}</span>
-                <span class="echus-pill__label">Virements échus</span>
-              </div>
+                <span class="echus-pill__count">{{ account.virementsEchusCount }}</span>Virements
+              </span>
             </div>
 
-          </div>
-
-          <!-- Action -->
-          <div class="bank-card__footer" (click)="$event.stopPropagation()">
             <p-button
-              label="Récap détaillé"
               icon="pi pi-download"
               size="small"
-              styleClass="w-full"
-              [outlined]="true"
+              [rounded]="true"
+              [text]="true"
+              ariaLabel="Télécharger le récap détaillé"
+              pTooltip="Récap détaillé"
+              tooltipPosition="left"
               (onClick)="downloadRecapGeneralDetaillePourBanque(account.banqueId)"
               [loading]="recapDetailleBanqueLoadingMap.get(account.banqueId) ?? false"
               [disabled]="recapDetailleBanqueLoadingMap.get(account.banqueId) ?? false"/>
+          </div>
+
+          <!-- Corps cliquable : deux tuiles -->
+          <div class="bank-card__body"
+               [routerLink]="['/portail/etats-des-encours', account.banqueId, 'select']">
+
+            <!-- Tuile gauche : aujourd'hui -->
+            <div class="bank-card__col">
+              <div class="bank-card__col-title">
+                <i class="pi pi-calendar"></i>Aujourd'hui
+              </div>
+
+              <div class="bank-card__hero-label">Solde actuel</div>
+              <div class="bank-card__hero"
+                   [class.bank-card__hero--pos]="account.soldeActuel >= 0"
+                   [class.bank-card__hero--neg]="account.soldeActuel < 0">
+                {{ account.soldeActuel | number:'1.2-2':'fr-FR' }}
+              </div>
+
+              <div class="bank-card__line">
+                <span class="bank-card__line-label">Solde de début</span>
+                <span class="bank-card__line-value">{{ account.soldeDebut | number:'1.2-2':'fr-FR' }}</span>
+              </div>
+              <div class="bank-card__line">
+                <span class="bank-card__line-label">Facilité caisse</span>
+                @if (account.plafondFC && account.plafondFC > 0) {
+                  <span class="bank-card__line-value">{{ account.plafondFC | number:'1.2-2':'fr-FR' }}</span>
+                } @else {
+                  <span class="bank-card__kpi-none">Aucune</span>
+                }
+              </div>
+              <div class="bank-card__line bank-card__line--total">
+                <span class="bank-card__line-label">Disponibilité</span>
+                <span class="bank-card__line-value"
+                      [class.bank-card__amount--neg]="account.disponibiliteFC < 0">
+                  {{ account.disponibiliteFC | number:'1.2-2':'fr-FR' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Tuile droite : prévision fin de mois -->
+            <div class="bank-card__col bank-card__col--forecast">
+              <div class="bank-card__col-title">
+                <i class="pi pi-forward"></i>Fin de mois (prévision)
+              </div>
+
+              <div class="bank-card__hero-label">Solde prévu</div>
+              <div class="bank-card__hero"
+                   [class.bank-card__hero--pos]="account.soldeFinDeMois >= 0"
+                   [class.bank-card__hero--neg]="account.soldeFinDeMois < 0">
+                {{ account.soldeFinDeMois | number:'1.2-2':'fr-FR' }}
+              </div>
+
+              <div class="bank-card__line">
+                <span class="bank-card__line-label">Encours entrées</span>
+                <span class="bank-card__line-value bank-card__amount--pos">+{{ account.encoursPlus | number:'1.2-2':'fr-FR' }}</span>
+              </div>
+              <div class="bank-card__line">
+                <span class="bank-card__line-label">Encours sorties</span>
+                <span class="bank-card__line-value bank-card__amount--neg">−{{ account.encoursMoins | number:'1.2-2':'fr-FR' }}</span>
+              </div>
+              <div class="bank-card__line bank-card__line--total">
+                <span class="bank-card__line-label">Disponibilité</span>
+                <span class="bank-card__line-value"
+                      [class.bank-card__amount--neg]="account.disponibiliteFinDeMois < 0">
+                  {{ account.disponibiliteFinDeMois | number:'1.2-2':'fr-FR' }}
+                </span>
+              </div>
+            </div>
+
           </div>
 
         </div>

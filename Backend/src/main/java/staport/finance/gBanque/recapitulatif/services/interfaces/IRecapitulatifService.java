@@ -3,10 +3,12 @@ package staport.finance.gBanque.recapitulatif.services.interfaces;
 import org.springframework.data.domain.Pageable;
 import staport.finance.gBanque.recapitulatif.dtos.request.RecapitulatifSearchDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.AgregatedRecapDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.EncoursFinDeMoisDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifGlobal;
 import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Façade publique du module Récapitulatif — vue consolidée des décaissements/encaissements
@@ -42,4 +44,10 @@ public interface IRecapitulatifService {
      * @param periode horizon de calcul (à ce jour, ou jusqu'à fin de mois) — voir {@link PeriodeRecap}.
      */
     List<RecaputilatifGlobal> getAllRecapitulatifsGlobaux(PeriodeRecap periode);
+
+    /** Encours prévisionnels (+/-) d'une banque jusqu'à la fin du mois en cours. */
+    EncoursFinDeMoisDto getEncoursFinDeMois(Long banqueId);
+
+    /** Idem pour toutes les banques en une requête (banques sans encours absentes de la Map). */
+    Map<Long, EncoursFinDeMoisDto> getEncoursFinDeMoisParBanque();
 }

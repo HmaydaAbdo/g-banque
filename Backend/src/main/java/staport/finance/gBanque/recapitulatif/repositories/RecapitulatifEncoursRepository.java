@@ -34,4 +34,12 @@ public interface RecapitulatifEncoursRepository
     @Query("SELECT v.sens, SUM(v.montant) FROM RecapitulatifEncoursView v " +
             "WHERE v.banqueId = :banqueId AND v.dateReference <= :until GROUP BY v.sens")
     List<Object[]> sumByBanqueAndSensUntil(@Param("banqueId") Long banqueId, @Param("until") LocalDate until);
+
+    /**
+     * Somme par (banque, sens) pour TOUTES les banques jusqu'à une date — une seule requête
+     * pour les cartes de l'accueil (évite le N+1).
+     */
+    @Query("SELECT v.banqueId, v.sens, SUM(v.montant) FROM RecapitulatifEncoursView v " +
+            "WHERE v.dateReference <= :until GROUP BY v.banqueId, v.sens")
+    List<Object[]> sumAllBanquesBySensUntil(@Param("until") LocalDate until);
 }

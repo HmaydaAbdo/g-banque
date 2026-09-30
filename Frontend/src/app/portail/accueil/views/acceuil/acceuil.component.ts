@@ -77,6 +77,11 @@ export class AcceuilComponent implements OnInit {
     });
   }
 
+  /** Écart entre la disponibilité de fin de mois et celle d'aujourd'hui. */
+  deltaDisponibilite(account: RecapitulatifCompte): number {
+    return account.disponibiliteFinDeMois - account.disponibiliteFC;
+  }
+
   /**
    * Triggers the payment synchronization process.
    * This method sets a loading state, calls the service, and handles the API response.

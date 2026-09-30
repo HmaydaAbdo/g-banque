@@ -68,13 +68,20 @@ public interface BanqueMapper {
      * la valeur (potentiellement null) exposée dans le champ {@code plafondFC} lui-même.
      */
     default BankAccueilResponse toAccueilDto(Banque banque,
-                                              BigDecimal computedBalance,
-                                              BigDecimal plafondFC,
-                                              BigDecimal soldeDebut,
-                                              long lcnsEchusCount,
-                                              long virementsEchusCount) {
-        BigDecimal soldePourCalcul  = computedBalance != null ? computedBalance : BigDecimal.ZERO;
+                                             BigDecimal computedBalance,
+                                             BigDecimal plafondFC,
+                                             BigDecimal soldeDebut,
+                                             long lcnsEchusCount,
+                                             long virementsEchusCount,
+                                             BigDecimal encoursPlus,
+                                             BigDecimal encoursMoins) {
+        BigDecimal soldePourCalcul   = computedBalance != null ? computedBalance : BigDecimal.ZERO;
         BigDecimal plafondPourCalcul = plafondFC != null ? plafondFC : BigDecimal.ZERO;
+        BigDecimal plus  = encoursPlus  != null ? encoursPlus  : BigDecimal.ZERO;
+        BigDecimal moins = encoursMoins != null ? encoursMoins : BigDecimal.ZERO;
+
+        // soldeFinDeMois = solde + encours+ - encours- ; disponibilité = soldeFinDeMois + plafond FC
+        BigDecimal soldeFinDeMois = soldePourCalcul.add(plus).subtract(moins);
 
         return new BankAccueilResponse(
                 banque.getId(),
@@ -86,7 +93,11 @@ public interface BanqueMapper {
                 soldePourCalcul.add(plafondPourCalcul),
                 banque.getDevise(),
                 lcnsEchusCount,
-                virementsEchusCount
+                virementsEchusCount,
+                plus,
+                moins,
+                soldeFinDeMois,
+                soldeFinDeMois.add(plafondPourCalcul)
         );
     }
 }

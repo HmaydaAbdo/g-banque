@@ -13,6 +13,8 @@ import staport.finance.gBanque.moyensDePaiements.lcn.services.LcnService;
 import staport.finance.gBanque.moyensDePaiements.virements.service.VirementService;
 import staport.finance.gBanque.rapprochement.entities.Rapprochement;
 import staport.finance.gBanque.rapprochement.services.IRapprochementService;
+import staport.finance.gBanque.recapitulatif.dtos.response.EncoursFinDeMoisDto;
+import staport.finance.gBanque.recapitulatif.services.interfaces.IRecapitulatifService;
 import staport.finance.gBanque.transactions.service.ITransactionService;
 
 import java.math.BigDecimal;
@@ -54,6 +56,7 @@ public class BankAccueilAggregatorService {
     private final LcnService lcnService;
     private final VirementService virementService;
     private final BanqueMapper banqueMapper;
+    private final IRecapitulatifService recapitulatifService;
 
     public BankAccueilAggregatorService(IBanqueService bankService,
                                         ITransactionService transactionService,
@@ -62,7 +65,7 @@ public class BankAccueilAggregatorService {
                                         IRapprochementService rapprochementService,
                                         LcnService lcnService,
                                         VirementService virementService,
-                                        BanqueMapper banqueMapper) {
+                                        BanqueMapper banqueMapper, IRecapitulatifService recapitulatifService) {
         this.bankService = bankService;
         this.transactionService = transactionService;
         this.ligneFonctionnelleService = ligneFonctionnelleService;
@@ -71,6 +74,7 @@ public class BankAccueilAggregatorService {
         this.lcnService = lcnService;
         this.virementService = virementService;
         this.banqueMapper = banqueMapper;
+        this.recapitulatifService = recapitulatifService;
     }
 
     /** Cartes récapitulatives accueil pour TOUTES les banques. */
@@ -99,15 +103,20 @@ public class BankAccueilAggregatorService {
         virementService.countEchusGroupedByBanque(today)
                 .forEach(row -> virementCountMap.put((Long) row[0], (Long) row[1]));
 
+        Map<Long, EncoursFinDeMoisDto> encoursMap = recapitulatifService.getEncoursFinDeMoisParBanque();
+
         return banques.stream()
                 .map(b -> {
                     Long bid = b.getId();
+                    EncoursFinDeMoisDto encours = encoursMap.getOrDefault(bid, EncoursFinDeMoisDto.ZERO);
                     return banqueMapper.toAccueilDto(b,
                             balanceMap.get(bid),
                             plafondMap.get(bid),
                             soldeDebutMap.getOrDefault(bid, BigDecimal.ZERO),
                             lcnCountMap.getOrDefault(bid, 0L),
-                            virementCountMap.getOrDefault(bid, 0L));
+                            virementCountMap.getOrDefault(bid, 0L),
+                            encours.encoursPlus(),
+                            encours.encoursMoins());
                 })
                 .collect(Collectors.toList());
     }
@@ -131,6 +140,10 @@ public class BankAccueilAggregatorService {
         long lcnsCount      = lcnService.countEchusByBanqueId(banqueId, today);
         long virementsCount = virementService.countEchusByBanqueId(banqueId, today);
 
-        return banqueMapper.toAccueilDto(banque, balance, plafond, soldeDebut, lcnsCount, virementsCount);
+        EncoursFinDeMoisDto encours = recapitulatifService.getEncoursFinDeMois(banqueId);
+
+
+        return banqueMapper.toAccueilDto(banque, balance, plafond, soldeDebut, lcnsCount, virementsCount,
+                encours.encoursPlus(), encours.encoursMoins());
     }
 }

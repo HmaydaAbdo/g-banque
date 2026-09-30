@@ -12,4 +12,15 @@ export interface RecapitulatifCompte {
   devise:        Devise;
   lcnsEchusCount:      number;
   virementsEchusCount: number;
+
+
+  // ── État prévisionnel de fin de mois (toujours renseignés par le backend) ──
+  /** Total prévisionnel des encaissements jusqu'à fin de mois. */
+  encoursPlus:  number;
+  /** Total prévisionnel des décaissements jusqu'à fin de mois. */
+  encoursMoins: number;
+  /** soldeActuel + encoursPlus − encoursMoins. */
+  soldeFinDeMois: number;
+  /** soldeFinDeMois + plafond FC. */
+  disponibiliteFinDeMois: number;
 }
