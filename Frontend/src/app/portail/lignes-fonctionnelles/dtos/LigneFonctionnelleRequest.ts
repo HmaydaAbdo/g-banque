@@ -9,5 +9,5 @@ export interface LigneFonctionnelleRequest {
   taux: number;
   dateDepart: string;
   dateFin: string;
-  sousLignes: SousLigneRequestDto[];
+  sousLignes?: SousLigneRequestDto[] | null;
 }

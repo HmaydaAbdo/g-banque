@@ -80,6 +80,7 @@ const DEBOUNCE_TIME = 300;
   providers: [MessageService, ConfirmationService]
 })
 export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
+  private sousLignesModified = false;
 
   // ========== REACTIVE STREAMS ==========
   private readonly destroy$ = new Subject<void>();
@@ -372,6 +373,7 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
       });
       this.calculateTotalSousLignesPlafond();
     }
+    this.sousLignesModified = false;
   }
 
   // ========== SOUS-LIGNES MANAGEMENT ==========
@@ -410,6 +412,7 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
     }
 
     const sousLigneValue = this.sousLigneForm.value;
+    this.sousLignesModified = true;
 
     if (this.sousLigneEditMode && this.currentSousLigneIndex !== null) {
       this.sousLignesArray.at(this.currentSousLigneIndex).patchValue(sousLigneValue);
@@ -443,6 +446,7 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
 
   removeSousLigne(index: number): void {
     this.sousLignesArray.removeAt(index);
+    this.sousLignesModified = true;
   }
 
   private createSousLigneFormGroup(sousLigne?: SousLigneResponseDto | SousLigneRequestDto): FormGroup {
@@ -532,9 +536,10 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
   private buildRequest(): LigneFonctionnelleRequest {
     const formValue = this.ligneFonctionnelleForm.value;
 
-    const sousLignes = this.isCautionAdministrativeSelected && formValue.sousLignes.length > 0
-      ? formValue.sousLignes
-      : [];
+    const natureSupportsSousLignes = this.isCautionAdministrativeSelected;
+    const sousLignes = this.isEditMode
+      ? (natureSupportsSousLignes && this.sousLignesModified ? formValue.sousLignes : null)
+      : (natureSupportsSousLignes ? formValue.sousLignes : []);
 
     return {
       banqueId: formValue.banqueId,
@@ -544,7 +549,7 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
       taux: formValue.taux,
       dateDepart: toLocalDateString(formValue.dateDepart)!,
       dateFin: toLocalDateString(formValue.dateFin)!,
-      sousLignes: this.isEditMode ? [] : sousLignes
+      sousLignes
     };
   }
 
