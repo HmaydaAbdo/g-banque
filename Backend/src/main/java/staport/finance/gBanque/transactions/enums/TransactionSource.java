@@ -52,5 +52,5 @@ public enum TransactionSource {
     VIREMENT_INTERNATIONAL,
     IMPAYEE,
     PROVISION,
-    Importation
+
 }

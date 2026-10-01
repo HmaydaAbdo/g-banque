@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.recapitulatif.dtos.request.RecapitulatifSearchDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.AgregatedRecapDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifGlobal;
+import staport.finance.gBanque.recapitulatif.dtos.response.SourceRecapDto;
 import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
 import staport.finance.gBanque.recapitulatif.services.interfaces.IRecapitulatifService;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
@@ -75,6 +76,19 @@ public class RecapitulatifController {
 
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
+
+
+    @Operation(summary = "Indicateurs du récapitulatif par source",
+            description = "Mêmes critères de recherche que GET /recapitulatif/banque/{banqueId} (hors " +
+                    "pagination). Retourne, pour chaque source ayant au moins un encours : nombre " +
+                    "d'opérations, total débit, total crédit et nombre d'encours échus à ce jour.")
+    @GetMapping("/banque/{banqueId}/par-source")
+    public ResponseEntity<List<SourceRecapDto>> getRecapitulatifParSource(
+            @PathVariable Long banqueId, @ModelAttribute RecapitulatifSearchDto searchDto) {
+
+        return ResponseEntity.ok(recapitulatifService.getRecapitulatifParSource(searchDto, banqueId));
+    }
+
 
     @Operation(summary = "Exporter en PDF le récapitulatif des encours prévisionnels du mois",
             description = "Mêmes critères que GET /recapitulatif/banque/{banqueId}, filtre de sens compris — sans pagination")

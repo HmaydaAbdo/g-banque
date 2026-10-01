@@ -2,49 +2,18 @@
 <p-confirmDialog></p-confirmDialog>
 
 <div class="flex flex-column gap-2 w-full route-enter">
+  <div class="flex flex-row justify-content-end">
+    <!-- Ajout d'une opération de n'importe quelle source, sans passer par sa carte -->
+    <button type="button" pButton pRipple label="Ajouter" icon="pi pi-plus"
+            class="p-button-sm p-button-success"
+            pTooltip="Créer une opération — choix de la source dans une liste avec recherche"
+            tooltipPosition="left"
+            (click)="openAjouterModal()"></button>
+  </div>
 
-  <!-- ── Barre de filtres ─────────────────────────────────────────────────────
-       Une seule surface au-dessus du tableau : les totaux et l'export sont
-       passés dans la caption du tableau (ils décrivent le résultat, pas la
-       recherche), et les deux bornes de date sont repliées derrière « Période ».
-       Objectif : rendre de la hauteur au tableau, qui n'était plus visible sans
-       scroller.
 
-       La structure « form > champs en flex-column » est ce qui déclenche la
-       variante .pg-filters:has(form .flex-column) de styles.scss (retour à la
-       ligne + largeurs fluides) ; sans elle, .pg-filters passe en nowrap +
-       overflow-x et les filtres débordent horizontalement. -->
+  <!-- ── Filtres : toujours visibles, appliqués aux cartes ET au tableau ── -->
   <div class="pg-filters">
-    <div class="recap-filters__bar flex align-items-center gap-2 flex-wrap w-full">
-      <button type="button" class="pg-filters__toggle"
-              (click)="toggleFilters()"
-              [attr.aria-expanded]="showFilters"
-              aria-controls="recap-filters-panel">
-        <i class="pi" [ngClass]="showFilters ? 'pi-chevron-down' : 'pi-chevron-right'" aria-hidden="true"></i>
-        <i class="pi pi-sliders-h" aria-hidden="true"></i>
-        <span>Filtres</span>
-        @if (activeFilterCount > 0) {
-          <span class="pg-filters__count">{{ activeFilterCount }}</span>
-        }
-      </button>
-
-      @if (!showFilters && activeFilterChips.length > 0) {
-        <div class="flex align-items-center gap-1 flex-wrap">
-          @for (chip of activeFilterChips; track $index) {
-            <span class="pg-filters__chip">{{ chip }}</span>
-          }
-        </div>
-      }
-
-      <span class="flex-auto"></span>
-
-      @if (activeFilterCount > 0) {
-        <p-button label="Effacer" icon="pi pi-times" severity="secondary" size="small"
-                  (onClick)="clearSearch()" [style]="{'white-space':'nowrap'}"></p-button>
-      }
-    </div>
-
-    @if (showFilters) {
     <form id="recap-filters-panel" [formGroup]="searchForm" class="flex flex-wrap gap-3 align-items-end">
 
       <div class="flex flex-column gap-1" style="min-width:150px;">
@@ -115,12 +84,17 @@
         </div>
       }
 
-      <div class="flex-shrink-0">
+      <div class="flex-shrink-0 flex gap-2">
         <button pButton pRipple type="button"
                 [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
                 icon="pi pi-calendar"
                 [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
                 (click)="toggleDatePanel()"></button>
+
+        @if (activeFilterCount > 0) {
+          <p-button label="Effacer" icon="pi pi-times" severity="secondary" size="small"
+                    (onClick)="clearSearch()" [style]="{'white-space':'nowrap'}"></p-button>
+        }
       </div>
 
       @if (showDatePanel) {
@@ -156,24 +130,155 @@
       }
 
     </form>
+  </div>
+
+  <!-- ── Indicateurs globaux (suivent les filtres) ─────────────────────────── -->
+  <div class="recap-kpis">
+    <div class="recap-kpi">
+      <span class="recap-kpi__label">Total débit prévisionnel</span>
+      <span class="recap-kpi__value recap-kpi__value--debit">
+        {{ (globalView?.debit ?? 0) | number:'1.2-2' }} <small>MAD</small>
+      </span>
+    </div>
+    <div class="recap-kpi">
+      <span class="recap-kpi__label">Total crédit prévisionnel</span>
+      <span class="recap-kpi__value recap-kpi__value--credit">
+        {{ (globalView?.credit ?? 0) | number:'1.2-2' }} <small>MAD</small>
+      </span>
+    </div>
+    <div class="recap-kpi">
+      <span class="recap-kpi__label">Opérations à valider</span>
+      <span class="recap-kpi__value">{{ (globalView?.count ?? 0) | number }}</span>
+    </div>
+    <div class="recap-kpi">
+      <span class="recap-kpi__label">Échues à ce jour</span>
+      <span class="recap-kpi__value" [class.recap-kpi__value--alert]="(globalView?.echues ?? 0) > 0">
+        {{ (globalView?.echues ?? 0) | number }}
+      </span>
+    </div>
+  </div>
+
+  <!-- ── Groupement par source ──────────────────────────────────────────────── -->
+
+
+  @if (cardsView.length === 0 && !cardsLoading) {
+    <div class="src-empty">
+      <i class="pi pi-inbox text-4xl text-400" aria-hidden="true"></i>
+      <div class="text-700 font-semibold">Aucune opération à valider</div>
+      @if (hasActiveFilters()) {
+        <div class="text-500 text-sm">Aucune opération ne correspond aux filtres actifs.</div>
+        <p-button label="Effacer les filtres" icon="pi pi-times" severity="secondary"
+                  size="small" (onClick)="clearSearch()"></p-button>
+      } @else {
+        <div class="text-500 text-sm">Il n'y a aucun encaissement ni décaissement pour le mois en cours.</div>
+      }
+    </div>
+  }
+
+  <div class="src-grid" [class.has-open]="openCard !== null">
+    @for (card of cardsView; track card.key) {
+      <section class="src-card"
+               [class.is-open]="openCard === card.key">
+
+        <div class="src-card__head" role="button" tabindex="0"
+             [attr.aria-expanded]="openCard === card.key"
+             (click)="toggleCard(card.key)"
+             (keydown.enter)="onCardKey($event, card.key)"
+             (keydown.space)="onCardKey($event, card.key)">
+          <span class="src-card__icon"><i [ngClass]="card.icon" aria-hidden="true"></i></span>
+          <span class="src-card__name" [attr.title]="card.label">{{ card.label }}</span>
+
+          @if (card.echues > 0) {
+            <span class="src-card__echues"
+                  [pTooltip]="card.echues + ' opération(s) échue(s) : date de référence atteinte à ce jour'"
+                  tooltipPosition="top">
+              <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+              {{ card.echues | number }}
+            </span>
+          }
+
+          <span class="src-card__count" pTooltip="Opérations à valider" tooltipPosition="top">{{ card.count | number }}</span>
+
+          @if (openCard === card.key) {
+            <button type="button" pButton pRipple icon="pi pi-angle-up" label="Réduire"
+                    class="p-button-text p-button-sm"
+                    (click)="closeCard(); $event.stopPropagation()"></button>
+          } @else {
+            <i class="pi pi-chevron-right src-card__arrow" aria-hidden="true"></i>
+          }
+        </div>
+
+        <div class="src-collapse src-collapse--kpis">
+          <div class="src-collapse__inner">
+            <div class="src-card__kpis">
+              <div class="src-card__line">
+                <span>Débit</span>
+                <b class="is-debit">{{ card.debit | number:'1.2-2' }}</b>
+              </div>
+              <div class="src-card__line">
+                <span>Crédit</span>
+                <b class="is-credit">{{ card.credit | number:'1.2-2' }}</b>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="src-collapse src-collapse--body">
+          <div class="src-collapse__inner">
+            @if (openCard === card.key) {
+              <div class="src-stats">
+                <div class="src-stat">
+                  <span>Débit</span>
+                  <b class="is-debit">{{ card.debit | number:'1.2-2' }}</b>
+                </div>
+                <div class="src-stat">
+                  <span>Crédit</span>
+                  <b class="is-credit">{{ card.credit | number:'1.2-2' }}</b>
+                </div>
+                <div class="src-stat">
+                  <span>Net (crédit − débit)</span>
+                  <b [class.is-debit]="card.credit - card.debit < 0"
+                     [class.is-credit]="card.credit - card.debit >= 0">
+                    {{ card.credit - card.debit | number:'1.2-2' }}
+                  </b>
+                </div>
+                <div class="src-stat">
+                  <span>Échues à ce jour</span>
+                  <b [class.is-debit]="card.echues > 0">{{ card.echues | number }}</b>
+                </div>
+              </div>
+
+              <div class="src-card__table">
+                <ng-container *ngTemplateOutlet="tableTpl"></ng-container>
+              </div>
+            }
+          </div>
+        </div>
+
+      </section>
     }
   </div>
 
-  <!-- ── Barre de sélection multi-lignes — n'apparaît que si au moins une ligne est cochée ── -->
+</div>
+
+
+<!-- ── Tableau + barre de sélection (rendu dans la carte ouverte) ───────────── -->
+<ng-template #tableTpl>
+
+  <!-- Barre de sélection multi-lignes — n'apparaît que si au moins une ligne est cochée -->
   @if (selectedCount > 0) {
-  <div class="flex justify-content-end align-items-center gap-2 mb-2">
+    <div class="flex justify-content-end align-items-center gap-2 mb-2">
     <span class="text-sm text-500 mr-2">
       <strong>{{ selectedCount }}</strong> opération(s) sélectionnée(s) —
       {{ montantTotalSelection | number:'1.2-2' }} MAD
     </span>
-    <button type="button" pButton pRipple icon="pi pi-times" label="Effacer la sélection"
-            class="p-button-text p-button-secondary" (click)="clearSelection()"></button>
-    <button type="button" pButton pRipple icon="pi pi-check-square" label="Valider en lot ({{ selectedCount }})"
-            class="p-button-success" (click)="openLotModal()"></button>
-  </div>
+      <button type="button" pButton pRipple icon="pi pi-times" label="Effacer la sélection"
+              class="p-button-text p-button-secondary" (click)="clearSelection()"></button>
+      <button type="button" pButton pRipple icon="pi pi-check-square" label="Valider en lot ({{ selectedCount }})"
+              class="p-button-success" (click)="openLotModal()"></button>
+    </div>
   }
 
-  <!-- ── Tableau (totaux + export dans sa caption) ─────────────────────────── -->
   <div class="pg-table">
     <p-table
       #dt
@@ -194,22 +299,10 @@
       styleClass="p-datatable-sm text-xs"
       [tableStyle]="{'min-width': '70rem'}">
 
+      <!-- Caption : les totaux sont désormais portés par les indicateurs globaux
+           et par les statistiques de la carte ouverte — il ne reste que le tri et les actions. -->
       <ng-template pTemplate="caption">
         <div class="recap-summary flex align-items-center gap-1 flex-wrap">
-          <div class="stat-chip">
-            <span class="text-xs text-500">Total Débit prévisionnel</span>
-            <span class="amount-badge debit-badge" [class.is-zero]="!totalDebit">{{ totalDebit | number:'1.2-2' }} MAD</span>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-chip">
-            <span class="text-xs text-500">Total Crédit prévisionnel</span>
-            <span class="amount-badge credit-badge" [class.is-zero]="!totalCredit">{{ totalCredit | number:'1.2-2' }} MAD</span>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-chip">
-            <span class="text-xs text-500">Opérations</span>
-            <span class="count-badge">{{ totalRecords | number }}</span>
-          </div>
 
           <span class="flex-auto"></span>
 
@@ -222,11 +315,19 @@
             </span>
           }
 
-          <button type="button" pButton pRipple label="Ajouter" icon="pi pi-plus"
-                  size="small" severity="secondary"
-                  pTooltip="Créer une nouvelle opération — ouvre le formulaire dédié à la source"
-                  tooltipPosition="left"
-                  (click)="openAjouterModal()"></button>
+          @if (canAjouterPour(openCard)) {
+            <button type="button" pButton pRipple label="Ajouter" icon="pi pi-plus"
+                    size="small" severity="success"
+                    pTooltip="Créer une opération pour cette source"
+                    tooltipPosition="left"
+                    (click)="ajouterPour(openCard)"></button>
+          } @else {
+            <button type="button" pButton pRipple label="Ajouter" icon="pi pi-plus"
+                    size="small" severity="secondary"
+                    pTooltip="Créer une nouvelle opération — ouvre la modale de choix de la source"
+                    tooltipPosition="left"
+                    (click)="openAjouterModal()"></button>
+          }
 
           <button type="button" pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf"
                   size="small" severity="secondary"
@@ -242,41 +343,41 @@
           </th>
           <th pSortableColumn="sens" class="text-center white-space-nowrap">
             Sens
-              <p-sortIcon field="sens"></p-sortIcon>
+            <p-sortIcon field="sens"></p-sortIcon>
           </th>
           <th pSortableColumn="dateEmission" class="white-space-nowrap">
             Date d'émission
-              <p-sortIcon field="dateEmission"></p-sortIcon>
+            <p-sortIcon field="dateEmission"></p-sortIcon>
           </th>
           <th pSortableColumn="dateEcheanceAffichage" class="white-space-nowrap">
             Date d'échéance
-              <p-sortIcon field="dateEcheanceAffichage"></p-sortIcon>
+            <p-sortIcon field="dateEcheanceAffichage"></p-sortIcon>
           </th>
           <th pSortableColumn="libelle">
             Libellé
-              <p-sortIcon field="libelle"></p-sortIcon>
+            <p-sortIcon field="libelle"></p-sortIcon>
           </th>
           <th pSortableColumn="observation">
             Observations
-              <p-sortIcon field="observation"></p-sortIcon>
+            <p-sortIcon field="observation"></p-sortIcon>
           </th>
           <th pSortableColumn="id.sourceType" class="white-space-nowrap">
             Source
-              <p-sortIcon field="id.sourceType"></p-sortIcon>
+            <p-sortIcon field="id.sourceType"></p-sortIcon>
           </th>
           <th pSortableColumn="montant" class="text-right white-space-nowrap"
               pTooltip="Tri par montant, tous sens confondus" tooltipPosition="top">
             Débit
-              <p-sortIcon field="montant"></p-sortIcon>
+            <p-sortIcon field="montant"></p-sortIcon>
           </th>
           <th pSortableColumn="montant" class="text-right white-space-nowrap"
               pTooltip="Tri par montant, tous sens confondus" tooltipPosition="top">
             Crédit
-              <p-sortIcon field="montant"></p-sortIcon>
+            <p-sortIcon field="montant"></p-sortIcon>
           </th>
           <th pSortableColumn="id.entityId" class="text-right white-space-nowrap">
             ID source
-              <p-sortIcon field="id.entityId"></p-sortIcon>
+            <p-sortIcon field="id.entityId"></p-sortIcon>
           </th>
           <th style="width: 8rem;">Actions</th>
         </tr>
@@ -363,7 +464,7 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="10" class="text-center p-4">
+          <td colspan="11" class="text-center p-4">
             <div class="flex flex-column align-items-center gap-3">
               <i class="pi pi-inbox text-4xl text-400"></i>
               <div class="text-700 font-semibold">Aucune opération trouvée</div>
@@ -372,7 +473,7 @@
                 <p-button label="Effacer les filtres" icon="pi pi-times" severity="secondary"
                           size="small" (onClick)="clearSearch()"></p-button>
               } @else {
-                <div class="text-500 text-sm">Il n'y a aucun encaissement ni décaissement pour le mois en cours.</div>
+                <div class="text-500 text-sm">Il n'y a aucun encaissement ni décaissement pour les critères sélectionnés.</div>
               }
             </div>
           </td>
@@ -381,7 +482,7 @@
 
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td colspan="10" class="text-center p-4">
+          <td colspan="11" class="text-center p-4">
             <div class="flex flex-column align-items-center gap-3">
               <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
               <div class="text-700 font-semibold">Chargement du récapitulatif...</div>
@@ -393,83 +494,70 @@
     </p-table>
   </div>
 
-</div>
+</ng-template>
 
-<!-- ── Validation en lot (multi-sources) ─────────────────────────────────────
-     Contrairement à app-validation-lot-modal (une seule transactionSource par appel),
-     ce dialogue applique les mêmes champs communs à une sélection pouvant mélanger
-     plusieurs sources/sens : le composant découpe automatiquement la sélection en
-     groupes (source, sens) et enchaîne un appel POST /process/lot par groupe. -->
+
+<!-- ── Validation en lot (multi-sources) ───────────────────────────────────── -->
 <p-dialog header="Validation en lot" [(visible)]="displayLotModal"
           [modal]="true" [style]="{width: '50vw'}"
           [draggable]="false" [resizable]="false" [closable]="!isLotSubmitting">
   @if (lotForm) {
-  <form [formGroup]="lotForm" (ngSubmit)="confirmLotValidation()">
-    <div class="flex align-items-center gap-3 mb-3 p-3 border-round surface-100">
-      <i class="pi pi-check-square text-xl"></i>
-      @if (lotGroups[0]; as group) {
-      <span>
+    <form [formGroup]="lotForm" (ngSubmit)="confirmLotValidation()">
+      <div class="flex align-items-center gap-3 mb-3 p-3 border-round surface-100">
+        <i class="pi pi-check-square text-xl text-primary"></i>
+        @if (lotGroups[0]; as group) {
+          <span>
         <strong>{{ group.ids.length }}</strong> opération(s) de type
-        <strong>{{ labelSource(group.source) }} ({{ group.sens }})</strong> — montant total
+        <strong>{{ sourceLabel(group.source) }} ({{ group.sens }})</strong> — montant total
         <strong>{{ montantTotalSelection | number:'1.2-2' }} MAD</strong>
       </span>
-      }
-    </div>
-
-    <div class="grid p-fluid mt-1">
-      <div class="col-12 md:col-6 mb-3">
-        <app-tva-input formControlName="tva" label="TVA" inputId="recapLotTva"
-                       [autoriserSaisieLibre]="false"></app-tva-input>
-        @if (isLotInvalid('tva')) {
-        <small class="p-error">{{ messageErreurTva(lotForm.get('tva')?.errors) }}</small>
         }
       </div>
-      <div class="col-12 md:col-6 mb-3">
+
+      <div class="grid p-fluid mt-1">
+        <div class="col-12 md:col-6 mb-3">
+          <app-tva-input formControlName="tva" label="TVA" inputId="recapLotTva"
+                         [autoriserSaisieLibre]="false"></app-tva-input>
+          @if (isLotInvalid('tva')) {
+            <small class="p-error">{{ messageErreurTva(lotForm.get('tva')?.errors) }}</small>
+          }
+        </div>
+        <div class="col-12 md:col-6 mb-3">
         <span class="p-float-label">
           <p-calendar id="recapLotDateValeur" formControlName="dateValeur" [showOnFocus]="false"
                       dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" appendTo="body"></p-calendar>
           <label for="recapLotDateValeur">Date de valeur</label>
         </span>
-        @if (isLotInvalid('dateValeur')) {
-        <small class="p-error">La date de valeur est obligatoire</small>
-        }
-      </div>
-      <div class="col-12 md:col-6 mb-3">
+          @if (isLotInvalid('dateValeur')) {
+            <small class="p-error">La date de valeur est obligatoire</small>
+          }
+        </div>
+        <div class="col-12 md:col-6 mb-3">
         <span class="p-float-label">
           <p-calendar id="recapLotDateOperation" formControlName="dateOperation" [showOnFocus]="false"
                       dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" appendTo="body"></p-calendar>
           <label for="recapLotDateOperation">Date de l'opération</label>
         </span>
-        @if (isLotInvalid('dateOperation')) {
-        <small class="p-error">La date de l'opération est obligatoire</small>
-        }
+          @if (isLotInvalid('dateOperation')) {
+            <small class="p-error">La date de l'opération est obligatoire</small>
+          }
+        </div>
       </div>
-    </div>
-    <p class="text-500 text-sm mt-1 mb-3">
-      Le libellé, l'observation et la date d'émission d'origine de chaque opération sont conservés automatiquement.
-    </p>
-    <p-divider></p-divider>
-    <div class="flex justify-content-end gap-2">
-      <p-button label="Annuler" icon="pi pi-times" [outlined]="true" (onClick)="closeLotModal()"></p-button>
-      <p-button label="Valider le lot" icon="pi pi-check" type="submit"
-                [disabled]="lotForm.invalid || isLotSubmitting || selectedCount === 0"
-                [loading]="isLotSubmitting"></p-button>
-    </div>
-  </form>
+      <p class="text-500 text-sm mt-1 mb-3">
+        Le libellé, l'observation et la date d'émission d'origine de chaque opération sont conservés automatiquement.
+      </p>
+      <p-divider></p-divider>
+      <div class="flex justify-content-end gap-2">
+        <p-button label="Annuler" icon="pi pi-times" [outlined]="true" (onClick)="closeLotModal()"></p-button>
+        <p-button label="Valider le lot" icon="pi pi-check" type="submit"
+                  [disabled]="lotForm.invalid || isLotSubmitting || selectedCount === 0"
+                  [loading]="isLotSubmitting"></p-button>
+      </div>
+    </form>
   }
 </p-dialog>
 
-<!-- ── Validation unitaire ────────────────────────────────────────────────────
-     Un seul dialogue générique, piloté par unitValidationConfigs (Map source → config, voir
-     le .ts) : chaque source enregistrée y décrit comment récupérer son détail, construire sa
-     requête backend et sa politique TVA. Ajouter une source ne demande plus qu'une entrée dans
-     cette Map, jamais un nouveau dialogue. Toutes les sources sont désormais câblées (voir
-     canValidateUnitairement()) : Leasing, CMT, Chèque, LCN (décaissement, encaissement et
-     escompte), Virement, Préfinancement, Factoring, Droit constaté, Décomptes, Restitution,
-     Provision, Impayée, Virement international, Mise à disposition, Agios, Commission, Frais
-     bancaire, Prélèvement, Impôt/Taxe et Opération erronée. TVA éditable pour toutes — 20% par
-     défaut pour Leasing, 0% par défaut (libre) pour les autres, comme leurs écrans dédiés
-     respectifs. -->
+<!-- ── Validation unitaire ──────────────────────────────────────────────────── -->
 <p-dialog header="Passage au rapprochement bancaire" [(visible)]="displayUnitValidationModal"
           [modal]="true" [style]="{width: '50vw'}"
           [draggable]="false" [resizable]="false"
@@ -494,7 +582,7 @@
                          inputId="recapUnitTva"
                          [montantMax]="montantMaxTvaUnitValidation"></app-tva-input>
           @if (isUnitValidationInvalid('tva')) {
-          <small class="p-error">{{ messageErreurTva(unitValidationForm.get('tva')?.errors) }}</small>
+            <small class="p-error">{{ messageErreurTva(unitValidationForm.get('tva')?.errors) }}</small>
           }
         </div>
         <div class="col-12 md:col-6 mb-3">
@@ -503,7 +591,7 @@
             <label for="recapUnitDateValeur">Date de valeur</label>
           </span>
           @if (isUnitValidationInvalid('dateValeur')) {
-          <small class="p-error">La date de valeur est obligatoire</small>
+            <small class="p-error">La date de valeur est obligatoire</small>
           }
         </div>
         <div class="col-12 md:col-6 mb-3">
@@ -512,7 +600,7 @@
             <label for="recapUnitDateOperation">Date de l'opération</label>
           </span>
           @if (isUnitValidationInvalid('dateOperation')) {
-          <small class="p-error">La date de l'opération est obligatoire</small>
+            <small class="p-error">La date de l'opération est obligatoire</small>
           }
         </div>
         <div class="col-12 md:col-6 mb-3">
@@ -521,7 +609,7 @@
             <label for="recapUnitLibelle">Libellé</label>
           </span>
           @if (isUnitValidationInvalid('libelle')) {
-          <small class="p-error">Le libellé est obligatoire</small>
+            <small class="p-error">Le libellé est obligatoire</small>
           }
         </div>
         <div class="col-12 md:col-6 mb-3">
@@ -530,7 +618,7 @@
             <label for="recapUnitObservation">Observation</label>
           </span>
           @if (isUnitValidationInvalid('observation')) {
-          <small class="p-error">Observation est obligatoire</small>
+            <small class="p-error">Observation est obligatoire</small>
           }
         </div>
       </div>
@@ -545,7 +633,7 @@
   }
 </p-dialog>
 
-<!-- ============ Ajouter — modale centrée avec recherche ============ -->
+<!-- ============ Modale « Ajouter » — grille centrée avec recherche ============ -->
 <p-dialog header="Ajouter une opération" [(visible)]="displayAjouterModal"
           [modal]="true" [style]="{width: '64vw'}"
           [draggable]="false" [resizable]="false"
@@ -556,16 +644,22 @@
       <i class="pi pi-search"></i>
       <input #ajouterSearchInput type="text" pInputText class="w-full"
              placeholder="Rechercher une source (virement, chèque, factoring…)"
-             [(ngModel)]="ajouterSearchTerm" autocomplete="off">
+             [(ngModel)]="ajouterSearchTerm" autocomplete="off"
+             (keydown.enter)="onAjouterEnter()">
     </span>
 
     <div class="ajouter-grid">
       @for (item of filteredAjouterItems; track item.source) {
         <button type="button" pButton pRipple
                 class="p-button-text ajouter-card"
+                [class.is-unavailable]="!item.route"
+                [disabled]="!item.route"
                 (click)="choisirAjouter(item)">
           <span class="ajouter-card__icon"><i [class]="item.icon"></i></span>
           <span class="ajouter-card__label">{{ item.label }}</span>
+          @if (!item.route) {
+            <span class="ajouter-card__hint">Création indisponible</span>
+          }
         </button>
       } @empty {
         <p class="text-500 text-center py-4 m-0 col-12">Aucune source ne correspond à « {{ ajouterSearchTerm }} ».</p>

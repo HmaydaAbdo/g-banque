@@ -46,48 +46,18 @@
 
         <div class="bank-card bank-card--anim">
 
-          <!-- En-tête : logo + nom | échus | téléchargement -->
+          <!-- En-tête : identification de la banque uniquement (logo + nom) -->
           <div class="bank-card__header">
 
             <div class="bank-card__ident"
                  [routerLink]="['/portail/etats-des-encours', account.banqueId, 'select']">
-              <div class="bank-card__logo">
+              <div class="bank-card__logo"
+                   [attr.title]="account.nom + ' — Montants en ' + account.devise">
                 <img [src]="'data:image/png;base64,' + account.logoBase64"
                      [alt]="'Logo ' + account.nom" class="bank-card__logo-img"/>
               </div>
-              <div class="bank-card__id">
-                <div class="bank-card__name">{{ account.nom }}</div>
-                <div class="bank-card__sub">Montants en {{ account.devise }}</div>
-              </div>
             </div>
 
-            <div class="bank-card__echus"
-                 [routerLink]="['/portail/etats-des-encours', account.banqueId, 'select']">
-              <span class="echus-pill"
-                    [class.echus-pill--alert]="account.lcnsEchusCount > 0"
-                    pTooltip="LCN échus" tooltipPosition="bottom">
-                <i class="pi pi-file"></i>
-                <span class="echus-pill__count">{{ account.lcnsEchusCount }}</span>LCN
-              </span>
-              <span class="echus-pill"
-                    [class.echus-pill--alert]="account.virementsEchusCount > 0"
-                    pTooltip="Virements échus" tooltipPosition="bottom">
-                <i class="pi pi-arrow-right-arrow-left"></i>
-                <span class="echus-pill__count">{{ account.virementsEchusCount }}</span>Virements
-              </span>
-            </div>
-
-            <p-button
-              icon="pi pi-download"
-              size="small"
-              [rounded]="true"
-              [text]="true"
-              ariaLabel="Télécharger le récap détaillé"
-              pTooltip="Récap détaillé"
-              tooltipPosition="left"
-              (onClick)="downloadRecapGeneralDetaillePourBanque(account.banqueId)"
-              [loading]="recapDetailleBanqueLoadingMap.get(account.banqueId) ?? false"
-              [disabled]="recapDetailleBanqueLoadingMap.get(account.banqueId) ?? false"/>
           </div>
 
           <!-- Corps cliquable : deux tuiles -->
@@ -129,7 +99,7 @@
             <!-- Tuile droite : prévision fin de mois -->
             <div class="bank-card__col bank-card__col--forecast">
               <div class="bank-card__col-title">
-                <i class="pi pi-forward"></i>Fin de mois (prévision)
+                <i class="pi pi-forward"></i>Fin de mois
               </div>
 
               <div class="bank-card__hero-label">Solde prévu</div>
@@ -159,6 +129,37 @@
               </div>
             </div>
 
+          </div>
+
+          <!-- Pied : échus (badges) | téléchargement du récap détaillé PDF -->
+          <div class="bank-card__footer">
+            <div class="bank-card__echus"
+                 [routerLink]="['/portail/etats-des-encours', account.banqueId, 'select']">
+              <span class="echus-pill"
+                    [class.echus-pill--alert]="account.lcnsEchusCount > 0"
+                    pTooltip="LCN échus" tooltipPosition="bottom">
+                <i class="pi pi-file"></i>
+                <span class="echus-pill__count">{{ account.lcnsEchusCount }}</span>LCN
+              </span>
+              <span class="echus-pill"
+                    [class.echus-pill--alert]="account.virementsEchusCount > 0"
+                    pTooltip="Virements échus" tooltipPosition="bottom">
+                <i class="pi pi-arrow-right-arrow-left"></i>
+                <span class="echus-pill__count">{{ account.virementsEchusCount }}</span>Virements
+              </span>
+            </div>
+
+            <p-button
+              icon="pi pi-download"
+              size="small"
+              [rounded]="true"
+              [text]="true"
+              ariaLabel="Télécharger le récap détaillé"
+              pTooltip="Récap détaillé"
+              tooltipPosition="left"
+              (onClick)="downloadRecapGeneralDetaillePourBanque(account.banqueId)"
+              [loading]="recapDetailleBanqueLoadingMap.get(account.banqueId) ?? false"
+              [disabled]="recapDetailleBanqueLoadingMap.get(account.banqueId) ?? false"/>
           </div>
 
         </div>

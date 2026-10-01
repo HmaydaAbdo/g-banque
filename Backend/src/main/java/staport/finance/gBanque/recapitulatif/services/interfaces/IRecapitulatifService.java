@@ -5,6 +5,7 @@ import staport.finance.gBanque.recapitulatif.dtos.request.RecapitulatifSearchDto
 import staport.finance.gBanque.recapitulatif.dtos.response.AgregatedRecapDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.EncoursFinDeMoisDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifGlobal;
+import staport.finance.gBanque.recapitulatif.dtos.response.SourceRecapDto;
 import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
 
 import java.util.List;
@@ -50,4 +51,12 @@ public interface IRecapitulatifService {
 
     /** Idem pour toutes les banques en une requête (banques sans encours absentes de la Map). */
     Map<Long, EncoursFinDeMoisDto> getEncoursFinDeMoisParBanque();
+
+    /**
+     * Indicateurs du récapitulatif ventilés par source (nombre d'encours, débit, crédit, échues
+     * à ce jour) pour une banque, avec EXACTEMENT les mêmes critères que
+     * {@link #getRecapitulatifForCurrentMonthForGivenBanque} — les cartes par source de l'écran
+     * suivent donc les filtres actifs. Triées par nombre d'encours décroissant.
+     */
+    List<SourceRecapDto> getRecapitulatifParSource(RecapitulatifSearchDto searchDto, Long banqueId);
 }

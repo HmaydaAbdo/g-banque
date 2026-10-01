@@ -20,10 +20,7 @@ import staport.finance.gBanque.Bank.dtos.response.BanqueResponse;
 import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.recapitulatif.dtos.request.RecapitulatifSearchDto;
-import staport.finance.gBanque.recapitulatif.dtos.response.AgregatedRecapDto;
-import staport.finance.gBanque.recapitulatif.dtos.response.EncoursFinDeMoisDto;
-import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifGlobal;
-import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifItem;
+import staport.finance.gBanque.recapitulatif.dtos.response.*;
 import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
 import staport.finance.gBanque.recapitulatif.entities.RecapitulatifEncoursView;
 import staport.finance.gBanque.recapitulatif.mappers.RecapitulatifEncoursMapper;
@@ -448,5 +445,15 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
         sumsByBanque.forEach((banqueId, sums) -> result.put(banqueId,
                 new EncoursFinDeMoisDto(sums.get(Type.ENCAISSEMENT), sums.get(Type.DECAISSEMENT))));
         return result;
+    }
+
+    @Override
+    public List<SourceRecapDto> getRecapitulatifParSource(RecapitulatifSearchDto searchDto, Long banqueId) {
+        Specification<RecapitulatifEncoursView> spec = buildSearchSpecification(searchDto, banqueId);
+
+        return encoursRepository.aggregateBySource(spec, LocalDate.now()).stream()
+                .sorted(Comparator.comparingLong(SourceRecapDto::operationsCount).reversed()
+                        .thenComparing(s -> s.source().name()))
+                .toList();
     }
 }

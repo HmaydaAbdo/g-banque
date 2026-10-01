@@ -2,9 +2,12 @@ package staport.finance.gBanque.recapitulatif.repositories;
 
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
+import staport.finance.gBanque.recapitulatif.dtos.response.SourceRecapDto;
 import staport.finance.gBanque.recapitulatif.entities.RecapitulatifEncoursView;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,4 +32,11 @@ public interface RecapitulatifEncoursRepositoryCustom {
      * traitement conditionnel dans le Service.</p>
      */
     Map<Type, BigDecimal> sumMontantParSens(Specification<RecapitulatifEncoursView> spec);
+
+    /**
+     * Indicateurs par source pour la {@link Specification} donnée : nombre d'encours, total des
+     * décaissements, total des encaissements et nombre d'encours dont la date de référence est
+     * <= {@code today}. Une seule requête GROUP BY ; les sources sans encours sont absentes.
+     */
+    List<SourceRecapDto> aggregateBySource(Specification<RecapitulatifEncoursView> spec, LocalDate today);
 }

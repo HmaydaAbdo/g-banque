@@ -83,6 +83,7 @@ import { ImpotEtTaxeResponseDto } from "../../../../../../impotEtTaxes/dtos/Impo
 import { OperationErroneService } from "../../../../../../operationErronées/service/operation-errone.service";
 import { OperationErroneResponseDto } from "../../../../../../operationErronées/dtos/OperationErroneResponseDto";
 import { parseLocalDate } from '../../../../../../global/types/date.utils';
+import { RecapSourceDto } from "../../dtos/RecapSourceDto";
 
 /** Options du dropdown de filtre de sens — `null` = « Tous », aucun filtre appliqué. */
 interface SensOption {
@@ -153,6 +154,28 @@ interface UnitValidationConfig<TDetail = any> {
   toRoutingFields: (detail: TDetail) => Pick<BatchValidationRequestDto, 'transactionSource' | 'sens' | 'banqueId'>;
 }
 
+/** Clé d'une carte : une source précise (il n'y a plus de carte « toutes les opérations »). */
+type RecapCardKey = TransactionSource;
+
+/** Données d'affichage d'une carte du groupement par source. */
+interface RecapCardView {
+  key: RecapCardKey;
+  label: string;
+  icon: string;
+  count: number;
+  debit: number;
+  credit: number;
+  echues: number;
+}
+
+/** Totaux tous sources confondues — alimentent uniquement les indicateurs globaux de la page. */
+interface RecapGlobalView {
+  count: number;
+  debit: number;
+  credit: number;
+  echues: number;
+}
+
 @Component({
   selector: 'app-recapitulatif',
   standalone: true,
@@ -183,6 +206,37 @@ interface UnitValidationConfig<TDetail = any> {
   providers: [MessageService, ConfirmationService, DecimalPipe]
 })
 export class RecapitulatifComponent implements OnInit, OnDestroy {
+  @ViewChild('dt') dt: Table | undefined;
+
+  // ── Groupement par source (cartes) ───────────────────────────────────
+  cardsView: RecapCardView[] = [];
+  cardsLoading = true;
+  /** Carte ouverte : une source précise, ou null (aucune). */
+  openCard: RecapCardKey | null = null;
+  /** Totaux de toutes les sources — portent les indicateurs globaux de la page (plus de carte dédiée). */
+  globalView?: RecapGlobalView;
+  /** Icônes des sources absentes de AJOUTER_ICON — purement visuel. */
+  private static readonly CARD_ICON: Partial<Record<TransactionSource, string>> = {
+    [TransactionSource.LEASING]: 'pi pi-car',
+    [TransactionSource.CMT]: 'pi pi-building',
+    [TransactionSource.MiseADisposition]: 'pi pi-send',
+    [TransactionSource.LCN]: 'pi pi-file',
+    [TransactionSource.LCN_DECAISSEMENT]: 'pi pi-file',
+    [TransactionSource.LCN_ESCOMPTE]: 'pi pi-file',
+    [TransactionSource.AGIOS]: 'pi pi-percentage',
+    [TransactionSource.CAUTION]: 'pi pi-lock',
+  };
+
+  sourceLabel(source: TransactionSource): string {
+    return TransactionSourceLabels[source] ?? source;
+  }
+
+  sourceIcon(source: TransactionSource): string {
+    return RecapitulatifComponent.CARD_ICON[source]
+      ?? RecapitulatifComponent.AJOUTER_ICON[source]
+      ?? 'pi pi-folder';
+  }
+
   // Table data state properties
   totalDebit!: number;
   totalCredit!: number;
@@ -232,13 +286,8 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
    */
   sortParDefaut = true;
 
-  /** Barre de filtres repliee par defaut : le tableau prend toute la hauteur au chargement. */
-  showFilters = false;
-
   /** Panneau des bornes de date, replie par defaut pour laisser la place au tableau. */
   showDatePanel = false;
-
-  @ViewChild('dt') dt: Table | undefined;
 
   private subscriptions: Subscription[] = [];
 
@@ -464,21 +513,97 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     );
   }
 
-  // ==================== Validation unitaire ====================
-  // Un seul dialogue générique (voir UnitValidationConfig plus haut), piloté par la Map
-  // ci-dessous : les 22 sources y sont câblées. Décision du 14/09/2026 (remplace les deux
-  // dialogues Leasing/CMT distincts du pilote initial) : la quasi-totalité du formulaire (dates,
-  // libellé, observation, TVA) est identique d'une source à l'autre ; seules la forme du DTO de
-  // détail et le routage (source/sens/banqueId) varient — capturés ici plutôt que dupliqués dans
-  // un dialogue par source. Depuis la fusion du 19/09/2026 de la validation unitaire dans
-  // BatchValidationRequestDto (architecture.md, Règle 1), chaque config ne construit même plus sa
-  // propre requête : `toRoutingFields` ne fournit que le routage, `submitUnitValidation`
-  // construit la requête complète une seule fois pour toutes les sources.
+  // ==================== Méthodes des cartes (groupement par source) ====================
 
-  /**
-   * Une config par source câblée. `any` assumé au niveau de la Map (voir UnitValidationConfig) —
-   * chaque entrée reste fortement typée sur son propre DTO de détail.
-   */
+  /** Charge les indicateurs par source avec les filtres du formulaire (sans restriction de source). */
+  loadSourceCards(): void {
+    if (!this.banqueIdFromRoute) {
+      return;
+    }
+    this.cardsLoading = true;
+    this.subscriptions.push(
+      this.recapService.getRecapitulatifParSource(this.banqueIdFromRoute, this.buildFilterDto())
+        .subscribe({
+          next: (cards: RecapSourceDto[]) => {
+            const total = cards.reduce(
+              (acc, c) => ({
+                count: acc.count + c.operationsCount,
+                debit: acc.debit + c.totalDebit,
+                credit: acc.credit + c.totalCredit,
+                echues: acc.echues + c.echuesCount,
+              }),
+              { count: 0, debit: 0, credit: 0, echues: 0 });
+            this.globalView = cards.length === 0 ? undefined : total;
+            this.cardsView = cards.map((c): RecapCardView => ({
+              key: c.source,
+              label: this.sourceLabel(c.source),
+              icon: this.sourceIcon(c.source),
+              count: c.operationsCount,
+              debit: c.totalDebit,
+              credit: c.totalCredit,
+              echues: c.echuesCount,
+            }));
+            this.cardsLoading = false;
+            // La source ouverte n'a plus d'encours (tout validé, ou filtres) : on referme la carte.
+            if (this.openCard && !this.cardsView.some(c => c.key === this.openCard)) {
+              this.closeCard();
+            }
+          },
+          error: () => {
+            this.cardsLoading = false;
+            this.globalView = undefined;
+          }
+        })
+    );
+  }
+
+  /** Ouvre une carte : le tableau existant s'y affiche, restreint à sa source. */
+  toggleCard(key: RecapCardKey): void {
+    if (this.openCard === key) {
+      return;
+    }
+    this.selectionState.clear();
+    this.recapItems = [];
+    this.totalRecords = 0;
+    this.totalDebit = 0;
+    this.totalCredit = 0;
+    this.loading = true;
+    this.sortParDefaut = false;
+    this.openCard = key;
+  }
+
+  closeCard(): void {
+    this.selectionState.clear();
+    this.openCard = null;
+  }
+
+  /** Ouverture au clavier (Entrée / Espace) uniquement quand le focus est sur l'en-tête lui-même. */
+  onCardKey(event: Event, key: RecapCardKey): void {
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+    event.preventDefault();
+    this.toggleCard(key);
+  }
+
+  /** Vrai si la source de la carte ouverte a un formulaire de création dédié. */
+  canAjouterPour(key: RecapCardKey | null): boolean {
+    return !!key && !!RecapitulatifComponent.CREATE_ROUTE[key];
+  }
+
+  /** Bouton « Ajouter » propre à la carte ouverte — ouvre le formulaire de CETTE source. */
+  ajouterPour(key: RecapCardKey | null): void {
+    if (!key) {
+      return;
+    }
+    const route = RecapitulatifComponent.CREATE_ROUTE[key];
+    if (route) {
+      this.router.navigate(route);
+    }
+  }
+
+  // ==================== Validation unitaire ====================
+
   private readonly unitValidationConfigs: Map<TransactionSource, UnitValidationConfig<any>> = new Map([
     [TransactionSource.LEASING, {
       fetchDetail: (id: number) => this.echeanceLeasingService.getEcheanceLeasingById(id),
@@ -490,9 +615,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
         recapLabel: 'Contrat N°',
         recapValue: d.numeroContrat,
       }),
-      // TVA éditable : 20% par défaut, mais l'utilisateur peut choisir « aucun » (0%) ou saisir
-      // un montant libre via le dropdown TAUX_TVA (décision HMAYDA du 14/09/2026, qui remplace
-      // le verrouillage à 20% du pilote initial).
       tvaInitialValue: { tauxTva: 20, montantTva: null },
       tvaLocked: false,
       confirmHeader: 'Confirmation de Rapprochement',
@@ -510,7 +632,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
         recapLabel: 'Désignation du crédit',
         recapValue: d.credit.designation,
       }),
-      // TVA libre/optionnelle, comme sur l'ancien écran dédié CMT (défaut 0%, taux OU montant).
       tvaInitialValue: saisieTvaParDefaut(),
       tvaLocked: false,
       confirmHeader: 'Confirmation de Rapprochement CMT',
@@ -528,23 +649,16 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
         recapLabel: 'N° Chèque',
         recapValue: d.numero,
       }),
-      // TVA libre/optionnelle, comme sur les 2 écrans dédiés Chèque actuels (défaut 0%, taux OU montant).
       tvaInitialValue: saisieTvaParDefaut(),
       tvaLocked: false,
       confirmHeader: 'Confirmation de Rapprochement Chèque',
       successDetail: 'Chèque rapproché avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de ce chèque.',
-      // `sens` reste obligatoire côté backend (homogénéité de la sélection en lot), même si le
-      // handler ne le consomme plus depuis la fusion du 19/09/2026 — lu sur `d.type`.
       toRoutingFields: (d: ChequeResponseDto) => ({
         transactionSource: TransactionSource.CHEQUE,
         sens: d.type as unknown as SensOperation,
       }),
     }],
-    // LCN : contrairement à Cheque/Virement, le sens (et la nature encaissement/escompte) est déjà
-    // porté par la source elle-même (LCN_DECAISSEMENT / LCN_ENCAISSEMENT / LCN_ESCOMPTE, voir
-    // v_recapitulatif_encours) — pas de champ `sens` à transmettre, chaque entrée route
-    // directement vers son propre TransactionSource.
     [TransactionSource.LCN_DECAISSEMENT, {
       fetchDetail: (id: number) => this.lcnService.getLcnById(id),
       toCommonDetail: (d: LcnResponseDTO): UnitValidationDetail => ({
@@ -555,7 +669,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
         recapLabel: 'N° LCN',
         recapValue: d.numero,
       }),
-      // TVA libre/optionnelle, comme sur les 2 écrans dédiés LCN actuels (défaut 0%, taux OU montant).
       tvaInitialValue: saisieTvaParDefaut(),
       tvaLocked: false,
       confirmHeader: 'Confirmation de Rapprochement LCN',
@@ -563,7 +676,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       fetchErrorDetail: 'Impossible de récupérer le détail de ce LCN.',
       toRoutingFields: () => ({ transactionSource: TransactionSource.LCN_DECAISSEMENT }),
     }],
-    // LCN_ENCAISSEMENT et LCN_ESCOMPTE partagent la même configuration, à la source près.
     [TransactionSource.LCN_ENCAISSEMENT, {
       fetchDetail: (id: number) => this.lcnService.getLcnById(id),
       toCommonDetail: (d: LcnResponseDTO): UnitValidationDetail => ({
@@ -608,24 +720,16 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
         recapLabel: 'N° Virement',
         recapValue: d.numero,
       }),
-      // TVA libre/optionnelle, comme sur les 2 écrans dédiés Virement actuels (défaut 0%, taux OU montant).
       tvaInitialValue: saisieTvaParDefaut(),
       tvaLocked: false,
       confirmHeader: 'Confirmation de Rapprochement Virement',
       successDetail: 'Virement rapproché avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de ce virement.',
-      // `sens` reste obligatoire côté backend (homogénéité de la sélection en lot) — lu sur `d.type`.
       toRoutingFields: (d: VirementResponseDto) => ({
         transactionSource: TransactionSource.Virement,
         sens: d.type as unknown as SensOperation,
       }),
     }],
-    // Préfinancement/Factoring/Droit constaté/Décomptes : sens (remboursement/déblocage) porté par
-    // l'entité elle-même (champ `type`, ou fixe pour Décomptes), jamais un choix fait à la
-    // validation — aucun `sens` à transmettre ici (contrairement à Cheque/Virement). `banqueId`
-    // vient du détail lui-même (`d.banqueId` / `d.banqueEncaissementId` pour Décomptes) : c'est la
-    // banque du marché (Préfinancement/Factoring), celle propre à l'entité (Droit constaté) ou la
-    // banque d'encaissement (Décomptes), déjà résolue côté backend dans le DTO de détail.
     [TransactionSource.PREFINANCEMENT, {
       fetchDetail: (id: number) => this.prefinancementService.getPrefinancementById(id),
       toCommonDetail: (d: PrefinancementResponseDTO): UnitValidationDetail => ({
@@ -706,12 +810,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
         banqueId: d.banqueEncaissementId,
       }),
     }],
-    // Restitution/Provision/Impayée : même principe que Préfinancement & co (sens porté par
-    // l'entité, aucun `sens`/`banqueId` à transmettre) — la banque est résolue côté backend
-    // depuis l'entité elle-même (`Restitution.banque`/`Provision.banque`/`Impayee.banque`), jamais
-    // transmise par l'appelant. Pas de numéro de pièce naturel pour Restitution/Provision
-    // (contrairement aux sources marché) : recapLabel/recapValue retombent sur l'ID, comme
-    // l'affichent déjà leurs écrans dédiés respectifs. Impayée a un `numero`.
     [TransactionSource.RESTITUTION, {
       fetchDetail: (id: number) => this.restitutionService.getById(id),
       toCommonDetail: (d: RestitutionResponseDto): UnitValidationDetail => ({
@@ -773,13 +871,11 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
         recapLabel: 'Bénéficiaire',
         recapValue: d.beneficiaire,
       }),
-      // TVA libre/optionnelle, comme sur les 2 écrans dédiés Virement international actuels (défaut 0%, taux OU montant).
       tvaInitialValue: saisieTvaParDefaut(),
       tvaLocked: false,
       confirmHeader: 'Confirmation de Rapprochement Virement international',
       successDetail: 'Virement international rapproché avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de ce virement international.',
-      // `sens` reste obligatoire côté backend (homogénéité de la sélection en lot) — lu sur `d.type`.
       toRoutingFields: (d: VirementInternationalResponseDto) => ({
         transactionSource: TransactionSource.VIREMENT_INTERNATIONAL,
         sens: d.type as unknown as SensOperation,
@@ -787,8 +883,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     }],
     [TransactionSource.MiseADisposition, {
       fetchDetail: (id: number) => this.miseADispositionService.getMiseAdispositionById(id),
-      // Identifiant métier différent selon le sens, comme les 2 écrans dédiés actuels : le
-      // décaissement affiche le n° d'opération, l'encaissement l'émetteur.
       toCommonDetail: (d: MiseADispositionResponseDto): UnitValidationDetail => ({
         dateEcheance: d.dateEmission,
         observation: d.observation,
@@ -797,24 +891,16 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
         recapLabel: d.type === SensType.DECAISSEMENT ? 'N° Opération' : 'Émetteur',
         recapValue: d.type === SensType.DECAISSEMENT ? d.numero : d.emetteur,
       }),
-      // TVA libre/optionnelle, comme sur les 2 écrans dédiés Mise à disposition actuels (défaut 0%, taux OU montant).
       tvaInitialValue: saisieTvaParDefaut(),
       tvaLocked: false,
       confirmHeader: 'Confirmation de Rapprochement Mise à disposition',
       successDetail: 'Mise à disposition rapprochée avec succès.',
       fetchErrorDetail: 'Impossible de récupérer le détail de cette mise à disposition.',
-      // `sens` reste obligatoire côté backend (homogénéité de la sélection en lot) — lu sur `d.type`
-      // (le même champ sert aussi à choisir le libellé d'affichage ci-dessus, à but différent).
       toRoutingFields: (d: MiseADispositionResponseDto) => ({
         transactionSource: TransactionSource.MiseADisposition,
         sens: d.type as unknown as SensOperation,
       }),
     }],
-    // Agios/Commission/Frais bancaire/Prélèvement/Impôt-Taxe/Opération erronée : toujours un
-    // décaissement (sens fixe), aucun `sens`/`banqueId` à transmettre — même principe que
-    // Restitution/Provision/Impayée. Aucune de ces 6 sources n'a d'identifiant métier naturel
-    // distinct de son id (comme leurs écrans dédiés actuels, dont la boîte de confirmation
-    // retombe elle aussi sur l'id) : recapLabel/recapValue retombent sur l'id.
     [TransactionSource.AGIOS, {
       fetchDetail: (id: number) => this.agiosService.getById(id),
       toCommonDetail: (d: AgiosResponseDto): UnitValidationDetail => ({
@@ -925,7 +1011,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
   isUnitValidationLoading = false;
   isUnitValidationSubmitting = false;
 
-  /** DTO brut spécifique à la source active — passé tel quel à `config.toRoutingFields`. */
   private unitValidationRawDetail: any = null;
   private activeUnitValidationConfig: UnitValidationConfig<any> | null = null;
 
@@ -933,34 +1018,12 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     return this.unitValidationDetail?.montantTTC ?? null;
   }
 
-  /** Vrai si la source de cette ligne a une config enregistrée — pilote le bouton « Valider ». */
   canValidateUnitairement(item: RecaputilatifItem): boolean {
     return this.unitValidationConfigs.has(item.source);
   }
 
-  // ==================== Ajouter / Éditer (matrice HMAYDA du 20/09/2026) ====================
-  // Avant la migration vers ce récap unifié, Ajouter/Éditer vivaient dans les anciens écrans
-  // dédiés par (source, sens) et redirigeaient déjà vers une page de formulaire séparée (jamais
-  // une modale, sauf Leasing/CMT dont l'édition d'échéance est un dialogue sur l'écran de tableau
-  // d'amortissement — hors périmètre ici, ces deux sources ne sont pas éligibles). On réutilise
-  // ces mêmes pages telles quelles : ce récap ne fait que router vers elles, jamais reconstruire
-  // un formulaire. Le retour au récap après un Ajouter/Éditer réussi n'est pas géré ici non plus —
-  // chaque formulaire appelle déjà `Location.back()` en cas de succès (pattern préexistant sur
-  // ~20 des 21 formulaires), donc pousser une entrée d'historique via `router.navigate` suffit.
-  //
-  // Seules les sources listées ci-dessous sont éligibles à Ajouter/Éditer depuis le récap ('always'
-  // = les deux sens, 'encaissement-only' = seul l'encaissement l'est) ; toute source absente de
-  // cette table (MiseADisposition, Agios, LCN_DECAISSEMENT, etc.) n'affiche ni Ajouter ni Éditer,
-  // exactement comme dans les anciens écrans — Exporter et Valider restent disponibles pour toutes
-  // les sources, la matrice ne les restreint jamais.
-  // LCN_ESCOMPTE réutilise exactement le même formulaire/id-space que LCN_ENCAISSEMENT
-  // (LcnFormComponent, un seul contrôle `natureLcn` Encaissement/Escompte) : aucune restriction
-  // de sens n'a de sens ici, donc 'always'.
-  // Leasing/CMT (21/09/2026, demande HMAYDA) : Éditer seulement, pas Ajouter (aucun endpoint de
-  // création d'une échéance seule n'existe — l'échéancier n'est généré qu'à la création du contrat
-  // entier) — ces deux sources ne sont donc volontairement PAS ajoutées à `CREATE_ROUTE` plus bas.
-  // L'édition elle-même reste réservée aux administrateurs système (voir `canEditFromRecap`), comme
-  // l'était l'ancien dialogue sur l'écran de tableau d'amortissement.
+  // ==================== Ajouter / Éditer ====================
+
   private static readonly CREATE_EDIT_ELIGIBILITY: Partial<Record<TransactionSource, 'always' | 'encaissement-only'>> = {
     [TransactionSource.Virement]: 'encaissement-only',
     [TransactionSource.CHEQUE]: 'encaissement-only',
@@ -983,15 +1046,11 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     [TransactionSource.CMT]: 'always',
   };
 
-  /** Sources dont l'édition est réservée aux administrateurs système, en plus de la matrice
-   * ci-dessus — reprend exactement la restriction déjà posée par le backend (`PUT
-   * /echeances-leasing|cmt/{id}` est `ADMIN_ONLY`) et par l'ancien dialogue d'édition. */
   private static readonly EDIT_REQUIRES_SYSTEM_ADMIN: Partial<Record<TransactionSource, true>> = {
     [TransactionSource.LEASING]: true,
     [TransactionSource.CMT]: true,
   };
 
-  /** Route d'édition (avec id) par source — mêmes pages que les anciens écrans dédiés. */
   private static readonly EDIT_ROUTE: Partial<Record<TransactionSource, (id: number) => any[]>> = {
     [TransactionSource.Virement]: id => ['/portail/Virements/edit', id],
     [TransactionSource.CHEQUE]: id => ['/portail/Cheques/edit', id],
@@ -1014,15 +1073,14 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     [TransactionSource.IMPOT_TAXE]: id => ['/portail/impots-taxes/edit', id],
   };
 
-  /** Route de création (sans id) par source — le sens, quand il est un choix, se fait dans le formulaire.
-   * LCN_ESCOMPTE n'a volontairement pas sa propre entrée : elle pointerait vers exactement la même
-   * route que LCN_ENCAISSEMENT (`LcnFormComponent`, contrôle `natureLcn`) — une seule carte « LCN »
-   * dans la modale Ajouter suffit, la nature se choisissant dans le formulaire (demande HMAYDA,
-   * 21/09/2026 : « both lcn point to same route so let's just have one card »). */
   private static readonly CREATE_ROUTE: Partial<Record<TransactionSource, any[]>> = {
     [TransactionSource.Virement]: ['/portail/Virements/new'],
     [TransactionSource.CHEQUE]: ['/portail/Cheques/new'],
     [TransactionSource.LCN_ENCAISSEMENT]: ['/portail/LCN/new'],
+    // Même écran LCN que l'encaissement (cf. EDIT_ROUTE qui partage '/portail/LCN/edit').
+    [TransactionSource.LCN]: ['/portail/LCN/new'],
+    [TransactionSource.LCN_DECAISSEMENT]: ['/portail/LCN/new'],
+    [TransactionSource.LCN_ESCOMPTE]: ['/portail/LCN/new'],
     [TransactionSource.VIREMENT_INTERNATIONAL]: ['/portail/virements-internationaux/new'],
     [TransactionSource.PREFINANCEMENT]: ['/portail/préfinancements/new'],
     [TransactionSource.DROIT_CONSTATE]: ['/portail/droits-constate/new'],
@@ -1036,9 +1094,10 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     [TransactionSource.FRAIS_BANCAIRE]: ['/portail/frais-bancaire/new'],
     [TransactionSource.OPERATION_ERRONE]: ['/portail/operations/errones/new'],
     [TransactionSource.IMPOT_TAXE]: ['/portail/impots-taxes/new'],
+    // TODO: route supposée — à vérifier dans le routing de l'application.
+    [TransactionSource.AGIOS]: ['/portail/agios/new'],
   };
 
-  /** Vrai si cette ligne peut être éditée depuis le récap — pilote le bouton « Éditer ». */
   canEditFromRecap(item: RecaputilatifItem): boolean {
     const regle = RecapitulatifComponent.CREATE_EDIT_ELIGIBILITY[item.source];
     if (!regle) return false;
@@ -1048,15 +1107,12 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     return regle === 'always' || item.sens === SensOperation.ENCAISSEMENT;
   }
 
-  /** Redirige vers la page d'édition dédiée de la source — le retour au récap est géré par le
-   * `Location.back()` déjà appelé par ce formulaire en cas de succès. */
   editerItem(item: RecaputilatifItem): void {
     const buildRoute = RecapitulatifComponent.EDIT_ROUTE[item.source];
     if (!buildRoute) return;
     this.router.navigate(buildRoute(item.id));
   }
 
-/** Icône par source pour la modale « Ajouter » — purement visuel, aucune valeur métier. */
   private static readonly AJOUTER_ICON: Partial<Record<TransactionSource, string>> = {
     [TransactionSource.Virement]: 'pi pi-sync',
     [TransactionSource.CHEQUE]: 'pi pi-money-bill',
@@ -1076,36 +1132,53 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     [TransactionSource.IMPOT_TAXE]: 'pi pi-book',
   };
 
-  /**
-   * Libellés raccourcis pour la modale « Ajouter » uniquement — le libellé complet
-   * (`TransactionSourceLabels`) reste utilisé partout ailleurs (tableau, badges, filtres) où il
-   * distingue Encaissement/Décaissement/Escompte. LCN Encaissement est raccourci en "LCN" ici : sa
-   * carte est la seule entrée LCN de la modale (couvre aussi la création d'un LCN Escompte, la
-   * nature se choisissant dans le formulaire), donc pas d'ambiguïté possible.
-   */
-  private static readonly AJOUTER_LABEL_OVERRIDE: Partial<Record<TransactionSource, string>> = {
-    [TransactionSource.LCN_ENCAISSEMENT]: 'LCN',
-  };
+  /** Sources masquées dans la modale « Ajouter » (pas de création depuis le récapitulatif). */
+  private static readonly AJOUTER_EXCLUDED: ReadonlySet<TransactionSource> = new Set<TransactionSource>([
+    TransactionSource.LEASING,
+    TransactionSource.CMT,
+    TransactionSource.MiseADisposition,
+    TransactionSource.CAUTION,
+  ]);
 
-  /** Une entrée « Ajouter » par source éligible — liste fixe, calculée une seule fois. */
-  readonly ajouterItems: { source: TransactionSource; label: string; icon: string; route: any[] }[] =
-    (Object.keys(RecapitulatifComponent.CREATE_ROUTE) as TransactionSource[]).map(source => ({
-      source,
-      label: RecapitulatifComponent.AJOUTER_LABEL_OVERRIDE[source] ?? TransactionSourceLabels[source] ?? source,
-      icon: RecapitulatifComponent.AJOUTER_ICON[source] ?? 'pi pi-plus-circle',
-      route: RecapitulatifComponent.CREATE_ROUTE[source]!,
-    }));
+  /** Minuscules + sans accents : « Chèque » se trouve en tapant « cheque ». */
+  private static normalize(text: string): string {
+    return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+
+  /**
+   * Modale « Ajouter » : TOUTES les sources de l'énumération, pas seulement celles qui ont une route
+   * de création. Une source sans entrée dans CREATE_ROUTE reste visible mais non cliquable
+   * (`route: null`) — il suffit d'ajouter sa route dans CREATE_ROUTE pour l'activer, sans toucher ici.
+   */
+  readonly ajouterItems: {
+    source: TransactionSource;
+    label: string;
+    icon: string;
+    route: any[] | null;
+    searchText: string;
+  }[] = (Object.values(TransactionSource) as TransactionSource[])
+    .filter(source => !RecapitulatifComponent.AJOUTER_EXCLUDED.has(source))
+    .map(source => {
+      const label = TransactionSourceLabels[source] ?? source;
+      return {
+        source,
+        label,
+        icon: this.sourceIcon(source),
+        route: RecapitulatifComponent.CREATE_ROUTE[source] ?? null,
+        searchText: RecapitulatifComponent.normalize(`${label} ${source}`),
+      };
+    })
+    .sort((a, b) => a.label.localeCompare(b.label, 'fr'));
 
   displayAjouterModal = false;
   ajouterSearchTerm = '';
 
   @ViewChild('ajouterSearchInput') private ajouterSearchInputRef?: ElementRef<HTMLInputElement>;
 
-  /** Filtre insensible à la casse sur le libellé — pour retrouver vite une source parmi les 16 éligibles. */
   get filteredAjouterItems() {
-    const terme = this.ajouterSearchTerm.trim().toLowerCase();
+    const terme = RecapitulatifComponent.normalize(this.ajouterSearchTerm.trim());
     if (!terme) return this.ajouterItems;
-    return this.ajouterItems.filter(item => item.label.toLowerCase().includes(terme));
+    return this.ajouterItems.filter(item => item.searchText.includes(terme));
   }
 
   openAjouterModal(): void {
@@ -1117,14 +1190,24 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     this.displayAjouterModal = false;
   }
 
-  /** Focus le champ de recherche dès l'ouverture — modale pensée pour aller vite au clavier. */
   onAjouterModalShow(): void {
     this.ajouterSearchInputRef?.nativeElement.focus();
   }
 
-  choisirAjouter(item: { route: any[] }): void {
+  choisirAjouter(item: { route: any[] | null }): void {
+    if (!item.route) {
+      return;
+    }
     this.closeAjouterModal();
     this.router.navigate(item.route);
+  }
+
+  /** Entrée dans le champ de recherche : ouvre la première source créable de la liste filtrée. */
+  onAjouterEnter(): void {
+    const premiere = this.filteredAjouterItems.find(item => item.route);
+    if (premiere) {
+      this.choisirAjouter(premiere);
+    }
   }
 
   openUnitValidation(item: RecaputilatifItem): void {
@@ -1239,10 +1322,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     const config = this.activeUnitValidationConfig;
     const saisieTva: SaisieTva = formValue.tva;
 
-    // BatchValidationRequestDto avec ids à un seul élément — voir architecture.md, Règle 1 :
-    // valider une opération n'est qu'un cas particulier de valider un lot de taille 1. dateEmission
-    // n'est volontairement pas transmise : elle est verrouillée sur l'entité (voir son control
-    // `disabled` dans openUnitValidation), le fallback backend sur l'entité produit déjà le même résultat.
     const request: BatchValidationRequestDto = {
       ...config.toRoutingFields(this.unitValidationRawDetail),
       ids: [this.unitValidationRawDetail.id],
@@ -1278,7 +1357,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     );
   }
 
-  // ==================== Chargement / filtres (inchangé) ====================
+  // ==================== Lifecycle & Filtres ====================
 
   ngOnInit(): void {
     this.initSearchForm();
@@ -1289,10 +1368,8 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
         const id = params.get('banqueId');
         if (id) {
           this.banqueIdFromRoute = +id;
-          if (this.dt) {
-            this.dt.first = 0;
-            this.loadRecapitulatif(this.dt.createLazyLoadMetadata());
-          }
+          this.closeCard();
+          this.loadSourceCards();
         }
       })
     );
@@ -1327,21 +1404,18 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       .sort((a, b) => a.label.localeCompare(b.label, 'fr'));
   }
 
-  /** Vrai quand COMMISSION fait partie des sources sélectionnées — pilote l'affichage du
-   * filtre « Motif Commission » (21/09/2026, restaure le filtre de l'ancien écran dédié). */
   get showCommissionMotifFilter(): boolean {
     const sources: TransactionSource[] = this.searchForm?.get('transactionSources')?.value ?? [];
     return sources.includes(TransactionSource.COMMISSION);
   }
 
-  /** Vrai quand IMPOT_TAXE fait partie des sources sélectionnées — pilote l'affichage du
-   * filtre « Motif Impôt/Taxe » (21/09/2026, restaure le filtre de l'ancien écran dédié). */
   get showImpotTaxeMotifFilter(): boolean {
     const sources: TransactionSource[] = this.searchForm?.get('transactionSources')?.value ?? [];
     return sources.includes(TransactionSource.IMPOT_TAXE);
   }
 
   onFilterChange(): void {
+    this.loadSourceCards();
     if (this.dt) {
       this.dt.first = 0;
       this.loadRecapitulatif(this.dt.createLazyLoadMetadata());
@@ -1368,8 +1442,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       this.recapService.getRecapitulatif(this.banqueIdFromRoute, searchDto, page, size, sort)
         .subscribe({
           next: (response: AgregatedRecapDto) => {
-            // `compositeKey` (source:id) calculée ici, jamais renvoyée par le backend — voir
-            // Javadoc du champ dans RecaputilatifItem.ts pour la raison (dataKey PrimeNG stable).
             this.recapItems = response.page.content.map(item => ({
               ...item,
               compositeKey: `${item.source}:${item.id}`,
@@ -1379,7 +1451,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
             this.totalCredit = response.totalCredit;
             this.totalDebit = response.totalDebit;
           },
-          error: (error) => {
+          error: () => {
             this.loading = false;
           }
         })
@@ -1409,7 +1481,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Remet tous les critères à leur valeur neutre et recharge la première page. */
   clearSearch(): void {
     this.searchForm.reset({
       transactionSources: [],
@@ -1424,10 +1495,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Vrai dès qu'un critère est renseigné — pilote l'état du bouton « Effacer » et
-   * le message affiché quand le tableau est vide (aucun résultat vs aucune donnée).
-   */
   hasActiveFilters(): boolean {
     if (!this.searchForm) {
       return false;
@@ -1439,15 +1506,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       || (value.transactionSources && value.transactionSources.length > 0));
   }
 
-  /** Ouvre / referme la barre de filtres. */
-  toggleFilters(): void {
-    this.showFilters = !this.showFilters;
-  }
-
-  /**
-   * Résumé des critères actifs, affiché en pastilles quand la barre est repliée —
-   * pour qu'un filtre en vigueur reste visible sans avoir à déplier.
-   */
   get activeFilterChips(): string[] {
     if (!this.searchForm) {
       return [];
@@ -1462,7 +1520,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     if (value.transactionSources && value.transactionSources.length > 0) {
       chips.push(value.transactionSources.length === 1
         ? 'Type : ' + (TransactionSourceLabels[value.transactionSources[0] as TransactionSource]
-                       ?? value.transactionSources[0])
+        ?? value.transactionSources[0])
         : 'Types : ' + value.transactionSources.length);
     }
     if (value.libelleOuObservation) {
@@ -1489,17 +1547,14 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     return chips;
   }
 
-  /** Nombre de critères actifs — badge du bouton « Filtres ». */
   get activeFilterCount(): number {
     return this.activeFilterChips.length;
   }
 
-  /** Bascule le panneau des bornes de date de référence. */
   toggleDatePanel(): void {
     this.showDatePanel = !this.showDatePanel;
   }
 
-  /** Nombre de bornes de date renseignées — affiché sur le bouton « Période ». */
   get activeDateFilterCount(): number {
     if (!this.searchForm) {
       return 0;
@@ -1508,8 +1563,8 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     return (value.dateReferenceDepuis ? 1 : 0) + (value.dateReferenceJusqua ? 1 : 0);
   }
 
-  /** Construit le DTO de recherche à partir du formulaire — partagé entre chargement et export. */
-  private buildSearchDto(): RecapitulatifSearchDto {
+  /** Critères du formulaire seuls — alimentent les cartes (aucune restriction de source). */
+  private buildFilterDto(): RecapitulatifSearchDto {
     return {
       transactionSources: this.searchForm.get('transactionSources')?.value,
       libelleOuObservation: this.searchForm.get('libelleOuObservation')?.value,
@@ -1521,6 +1576,18 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       commissionOperation: this.searchForm.get('commissionOperation')?.value,
       impotEtTaxeMotif: this.searchForm.get('impotEtTaxeMotif')?.value
     };
+  }
+
+  /**
+   * Critères du tableau et de l'export : ceux du formulaire, restreints à la source de la carte
+   * ouverte. Partagé entre chargement et export — l'export PDF reflète donc la carte ouverte.
+   */
+  private buildSearchDto(): RecapitulatifSearchDto {
+    const dto = this.buildFilterDto();
+    if (this.openCard) {
+      return { ...dto, transactionSources: [this.openCard] };
+    }
+    return dto;
   }
 
   ngOnDestroy(): void {

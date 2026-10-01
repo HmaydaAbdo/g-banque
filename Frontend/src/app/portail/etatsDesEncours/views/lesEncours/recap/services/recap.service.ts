@@ -5,6 +5,7 @@ import {Observable} from "rxjs";
 import {RecapitulatifSearchDto} from "../dtos/RecapitulatifSearchDto";
 import {AgregatedRecapDto} from "../dtos/AgregatedRecapDto";
 import {PeriodeRecap} from "../dtos/PeriodeRecap";
+import {RecapSourceDto} from "../dtos/RecapSourceDto";
 
 @Injectable({
   providedIn: 'root'
@@ -44,6 +45,15 @@ export class RecapService {
     const url = `${this.baseUrl}/banque/${banqueId}`;
 
     return this.http.get<AgregatedRecapDto>(url, { params });
+  }
+
+  /**
+   * Indicateurs par source (cartes de l'écran Récapitulatif) — mêmes critères que
+   * {@link getRecapitulatif}, sans pagination.
+   */
+  getRecapitulatifParSource(banqueId: number, searchDto: RecapitulatifSearchDto): Observable<RecapSourceDto[]> {
+    const params = this.appendSearchParams(new HttpParams(), searchDto);
+    return this.http.get<RecapSourceDto[]>(`${this.baseUrl}/banque/${banqueId}/par-source`, { params });
   }
 
   /**
