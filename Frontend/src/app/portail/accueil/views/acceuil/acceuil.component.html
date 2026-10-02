@@ -1,5 +1,8 @@
 <p-toast></p-toast>
 
+<!-- Montant au format comptable : 1 234,00 ou (1 234,00) -->
+<ng-template #montant let-v>{{ v < 0 ?  (0 - v | number:'1.2-2':'fr-FR')  : (v | number:'1.2-2':'fr-FR') }}</ng-template>
+
 <div class="dash-page w-full h-full overflow-y-scroll">
 
   <!-- ── HEADER ──────────────────────────────────────────────────────────── -->
@@ -74,24 +77,33 @@
               <div class="bank-card__hero"
                    [class.bank-card__hero--pos]="account.soldeActuel >= 0"
                    [class.bank-card__hero--neg]="account.soldeActuel < 0">
-                {{ account.soldeActuel | number:'1.2-2':'fr-FR' }}
+                <ng-container [ngTemplateOutlet]="montant"
+                              [ngTemplateOutletContext]="{ $implicit: account.soldeActuel }"/>
               </div>
 
               <div class="bank-card__line">
                 <span class="bank-card__line-label">Facilité caisse</span>
                 @if (account.plafondFC && account.plafondFC > 0) {
-                  <span class="bank-card__line-value">{{ account.plafondFC | number:'1.2-2':'fr-FR' }}</span>
+                  <span class="bank-card__line-value">
+                    <ng-container [ngTemplateOutlet]="montant"
+                                  [ngTemplateOutletContext]="{ $implicit: account.plafondFC }"/>
+                  </span>
                 } @else {
                   <span class="bank-card__kpi-none">Aucune</span>
                 }
               </div>
 
               <div class="bank-card__line bank-card__line--total">
-                <span class="bank-card__line-label">Disponibilité</span>
+                <span class="bank-card__line-label"
+                      [class.bank-card__label--pos]="account.disponibiliteFC >= 0"
+                      [class.bank-card__label--neg]="account.disponibiliteFC < 0">
+                  {{ account.disponibiliteFC < 0 ? 'Besoin' : 'Disponibilité' }}
+                </span>
                 <span class="bank-card__line-value"
                       [class.bank-card__amount--pos]="account.disponibiliteFC >= 0"
                       [class.bank-card__amount--neg]="account.disponibiliteFC < 0">
-                  {{ account.disponibiliteFC | number:'1.2-2':'fr-FR' }}
+                  <ng-container [ngTemplateOutlet]="montant"
+                                [ngTemplateOutletContext]="{ $implicit: account.disponibiliteFC }"/>
                 </span>
               </div>
             </div>
@@ -106,25 +118,35 @@
               <div class="bank-card__hero"
                    [class.bank-card__hero--pos]="account.soldeFinDeMois >= 0"
                    [class.bank-card__hero--neg]="account.soldeFinDeMois < 0">
-                {{ account.soldeFinDeMois | number:'1.2-2':'fr-FR' }}
+                <ng-container [ngTemplateOutlet]="montant"
+                              [ngTemplateOutletContext]="{ $implicit: account.soldeFinDeMois }"/>
               </div>
 
               <div class="bank-card__line">
                 <span class="bank-card__line-label">Encours entrées</span>
-                <span class="bank-card__line-value bank-card__amount--pos">+{{ account.encoursPlus | number:'1.2-2':'fr-FR' }}</span>
+                <span class="bank-card__line-value bank-card__amount--pos">
+                  <ng-container [ngTemplateOutlet]="montant"
+                                [ngTemplateOutletContext]="{ $implicit: account.encoursPlus }"/>
+                </span>
               </div>
               <div class="bank-card__line">
                 <span class="bank-card__line-label">Encours sorties</span>
-                <span class="bank-card__line-value bank-card__amount--neg">−{{ account.encoursMoins | number:'1.2-2':'fr-FR' }}</span>
+                <span class="bank-card__line-value bank-card__amount--neg">
+                  <ng-container [ngTemplateOutlet]="montant"
+                                [ngTemplateOutletContext]="{ $implicit: 0 - account.encoursMoins }"/>
+                </span>
               </div>
               <div class="bank-card__line bank-card__line--total">
-                <span class="bank-card__line-label" [class.bank-card__label--neg]="account.disponibiliteFinDeMois < 0">
+                <span class="bank-card__line-label"
+                      [class.bank-card__label--pos]="account.disponibiliteFinDeMois >= 0"
+                      [class.bank-card__label--neg]="account.disponibiliteFinDeMois < 0">
                   {{ account.disponibiliteFinDeMois < 0 ? 'Besoin' : 'Disponibilité' }}
                 </span>
                 <span class="bank-card__line-value"
                       [class.bank-card__amount--pos]="account.disponibiliteFinDeMois >= 0"
                       [class.bank-card__amount--neg]="account.disponibiliteFinDeMois < 0">
-                  {{ account.disponibiliteFinDeMois | number:'1.2-2':'fr-FR' }}
+                  <ng-container [ngTemplateOutlet]="montant"
+                                [ngTemplateOutletContext]="{ $implicit: account.disponibiliteFinDeMois }"/>
                 </span>
               </div>
             </div>

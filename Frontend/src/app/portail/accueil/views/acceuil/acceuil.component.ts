@@ -92,18 +92,18 @@ export class AcceuilComponent implements OnInit {
     this.funPaymentService.synchronizePayments().pipe(
       finalize(()=>this.isLoading=false))
       .subscribe({
-      next: (response) => {
-        // Handle success
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Succès',
-          detail: "La synchronisation des paiements depuis l’application FunPayment s’est déroulée avec succès. ",
-          life: 5000
-        });
+        next: (response) => {
+          // Handle success
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: "La synchronisation des paiements depuis l’application FunPayment s’est déroulée avec succès. ",
+            life: 5000
+          });
 
-      },
-      error: () => {}
-    });
+        },
+        error: () => {}
+      });
   }
 
 

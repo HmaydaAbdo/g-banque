@@ -270,6 +270,12 @@
   white-space: nowrap;
 }
 
+// Libellé « Disponibilité » (vert) / « Besoin » (rouge)
+// Déclarés APRÈS .bank-card__line-label pour l'emporter sur sa couleur.
+.bank-card__label--pos {
+  color: var(--color-success);
+}
+
 .bank-card__label--neg {
   color: var(--color-danger);
 }
