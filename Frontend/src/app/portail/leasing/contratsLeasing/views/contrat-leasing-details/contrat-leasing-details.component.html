@@ -37,8 +37,8 @@
         <td>{{ contratDetails.periodeEnMois }} mois</td>
       </tr>
       <tr>
-        <td><b>Plafond (contrat cadre à la signature):</b></td>
-        <td><span class="num">{{ contratDetails.plafond | number:'1.2-2' }}</span></td>
+        <td><b>Plafond en cours (contrat cadre actif):</b></td>
+        <td><span class="num">{{ contratDetails.plafond != null ? (contratDetails.plafond | number:'1.2-2') : '—' }}</span></td>
       </tr>
       @if (contratDetails.typeContrat === 'LINEAIRE' && contratDetails.valeurResiduelle !== undefined) {
         <tr>

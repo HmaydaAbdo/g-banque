@@ -16,7 +16,7 @@ import {ToolbarModule} from 'primeng/toolbar';
 import {ConfirmationService, MenuItem, MessageService, SelectItem} from 'primeng/api';
 import {ConfirmDialogModule} from 'primeng/confirmdialog';
 import {DropdownModule} from 'primeng/dropdown';
-import {InputSwitchModule} from "primeng/inputswitch";
+import {InputSwitch, InputSwitchModule} from "primeng/inputswitch";
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import {RouterLinkActive} from "@angular/router";
 import {CalendarModule} from "primeng/calendar";
@@ -226,7 +226,9 @@ export class VirementDecaissementListComponent implements OnInit, OnDestroy {
     }
   }
 
-  confirmToggleStatus(virement: VirementResponseDto): void {
+  confirmToggleStatus(virement: VirementResponseDto, sw: InputSwitch): void {
+    // Le switch bascule visuellement au clic : on le recale sur le statut réel si l'opération n'aboutit pas.
+    const resync = () => sw.writeValue(virement.statut === StatutMoyenPaiement.ENCOURS);
     const toRegle = virement.statut === StatutMoyenPaiement.ENCOURS;
     this.confirmationService.confirm({
       message: `Êtes-vous sûr de vouloir ${toRegle ? 'régler' : 'remettre en cours'} le virement ID ${virement.id} ?`,
@@ -236,11 +238,12 @@ export class VirementDecaissementListComponent implements OnInit, OnDestroy {
       rejectLabel: 'Non',
       acceptButtonStyleClass: toRegle ? 'p-button-warning' : 'p-button-success',
       rejectButtonStyleClass: 'p-button-text',
-      accept: () => this.toggleVirementStatus(virement.id)
+      accept: () => this.toggleVirementStatus(virement.id, resync),
+      reject: resync
     });
   }
 
-  toggleVirementStatus(id: number): void {
+  toggleVirementStatus(id: number, onError: () => void): void {
     this.virementService.toggleVirementStatus(id).subscribe({
       next: (updated) => {
         this.messageService.add({
@@ -252,6 +255,7 @@ export class VirementDecaissementListComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Erreur lors de la mise à jour du virement:', err);
+        onError();
       }
     });
   }

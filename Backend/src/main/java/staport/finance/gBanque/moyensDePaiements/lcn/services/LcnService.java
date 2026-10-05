@@ -31,13 +31,12 @@ import com.lowagie.text.pdf.*;
 
 import java.awt.Color;
 import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 import static staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.NatureLigneFonctionnelleService.ESC_COM_CODE;
 
@@ -268,20 +267,18 @@ public class LcnService {
     public Page<LcnResponseDTO> getEncaissements(LcnSearchDTO searchDto, Pageable pageable) {
         log.debug("Recherche des LCN d'encaissement avec les filtres={} et pagination={}", searchDto, pageable);
 
-        Specification<Lcn> spec = Specification.where(LcnSpecification.hasType(Type.ENCAISSEMENT))
-                .and(LcnSpecification.byDateEmissionRange(searchDto.dateEmissionFrom(), searchDto.dateEmissionTo()))
-                .and(LcnSpecification.byDateEcheanceRange(searchDto.dateEcheanceFrom(), searchDto.dateEcheanceTo()))
-                .and(LcnSpecification.byDateOperationRange(searchDto.dateOperationFrom(), searchDto.dateOperationTo()))
-                .and(LcnSpecification.byDateValeurRange(searchDto.dateValeurFrom(), searchDto.dateValeurTo()))
-                .and(LcnSpecification.hasEmetteur(searchDto.emetteur()))
-                .and(LcnSpecification.hasMontant(searchDto.montant()))
-                .and(LcnSpecification.hasBeneficiaire(searchDto.beneficiaire()))
-                .and(LcnSpecification.hasBanqueNom(searchDto.nomBanque()))
-                .and(LcnSpecification.hasStatut(searchDto.statut()))
-                .and(LcnSpecification.hasNumero(searchDto.numero()));
-
-        Page<Lcn> lcnPage = lcnRepository.findAll(spec, stablePageable(pageable));
+        Page<Lcn> lcnPage = lcnRepository.findAll(encaissementSpec(searchDto), stablePageable(pageable));
         log.debug("{} LCN d'encaissement trouvé(s)", lcnPage.getTotalElements());
+
+        return lcnPage.map(this::toDto);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<LcnResponseDTO> getEscomptes(LcnSearchDTO searchDto, Pageable pageable) {
+        log.debug("Recherche des LCN d'escompte avec les filtres={} et pagination={}", searchDto, pageable);
+
+        Page<Lcn> lcnPage = lcnRepository.findAll(escompteSpec(searchDto), stablePageable(pageable));
+        log.debug("{} LCN d'escompte trouvé(s)", lcnPage.getTotalElements());
 
         return lcnPage.map(this::toDto);
     }
@@ -333,23 +330,12 @@ public class LcnService {
 
     @Transactional(readOnly = true)
     public byte[] exportEncaissementsPdf(LcnSearchDTO searchDto) {
-        Specification<Lcn> spec = Specification.where(LcnSpecification.hasType(Type.ENCAISSEMENT))
-                .and(LcnSpecification.byDateEmissionRange(searchDto.dateEmissionFrom(), searchDto.dateEmissionTo()))
-                .and(LcnSpecification.byDateEcheanceRange(searchDto.dateEcheanceFrom(), searchDto.dateEcheanceTo()))
-                .and(LcnSpecification.byDateOperationRange(searchDto.dateOperationFrom(), searchDto.dateOperationTo()))
-                .and(LcnSpecification.byDateValeurRange(searchDto.dateValeurFrom(), searchDto.dateValeurTo()))
-                .and(LcnSpecification.hasEmetteur(searchDto.emetteur()))
-                .and(LcnSpecification.hasMontant(searchDto.montant()))
-                .and(LcnSpecification.hasBeneficiaire(searchDto.beneficiaire()))
-                .and(LcnSpecification.hasBanqueNom(searchDto.nomBanque()))
-                .and(LcnSpecification.hasStatut(searchDto.statut()))
-                .and(LcnSpecification.hasNumero(searchDto.numero()));
+        return exportPdf("État des LCN d'Encaissement", encaissementSpec(searchDto), searchDto);
+    }
 
-        List<Lcn> lcns = lcnRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "dateEmission"));
-        BigDecimal total = sumMontant(spec);
-        List<String> filterLines = buildFilterSummary(searchDto);
-
-        return generateLcnPdf("État des LCN d'Encaissement", lcns, total, filterLines);
+    @Transactional(readOnly = true)
+    public byte[] exportEscomptesPdf(LcnSearchDTO searchDto) {
+        return exportPdf("État des LCN d'Escompte", escompteSpec(searchDto), searchDto);
     }
 
     @Transactional(readOnly = true)
@@ -364,11 +350,15 @@ public class LcnService {
                 .and(LcnSpecification.byDateValeurRange(searchDto.dateValeurFrom(), searchDto.dateValeurTo()))
                 .and(LcnSpecification.hasType(Type.DECAISSEMENT));
 
+        return exportPdf("État des LCN de Décaissement", spec, searchDto);
+    }
+
+    private byte[] exportPdf(String title, Specification<Lcn> spec, LcnSearchDTO searchDto) {
         List<Lcn> lcns = lcnRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "dateEmission"));
         BigDecimal total = sumMontant(spec);
         List<String> filterLines = buildFilterSummary(searchDto);
 
-        return generateLcnPdf("État des LCN de Décaissement", lcns, total, filterLines);
+        return generateLcnPdf(title, lcns, total, filterLines);
     }
 
     private BigDecimal sumMontant(Specification<Lcn> spec) {
@@ -441,7 +431,7 @@ public class LcnService {
                                 addPdfCell(table, l.getBanque() != null ? l.getBanque().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                                 addPdfCell(table, l.getEmetteur(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                                 addPdfCell(table, l.getBeneficiaire(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
-                                addPdfCell(table, formatMontantPdf(l.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                                addPdfCell(table, MontantFormatter.format(l.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
                                 addPdfCell(table, l.getDateEmission() != null ? l.getDateEmission().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
                                 addPdfCell(table, l.getDateEcheance() != null ? l.getDateEcheance().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
                                 addPdfCell(table, l.getNatureLcn() != null ? l.getNatureLcn().toString() : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
@@ -467,7 +457,7 @@ public class LcnService {
                             totalLabel.setBorderColor(medBlue);
                             table.addCell(totalLabel);
 
-                            PdfPCell totalVal = new PdfPCell(new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                            PdfPCell totalVal = new PdfPCell(new Phrase(MontantFormatter.format(totalMontant) + " MAD", totalFont));
                             totalVal.setBackgroundColor(lightBlue);
                             totalVal.setPadding(5f);
                             totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -503,14 +493,6 @@ public class LcnService {
         table.addCell(cell);
     }
 
-    private String formatMontantPdf(BigDecimal montant) {
-        if (montant == null) return "—";
-        NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
-        nf.setMinimumFractionDigits(2);
-        nf.setMaximumFractionDigits(2);
-        return nf.format(montant);
-    }
-
     private List<String> buildFilterSummary(LcnSearchDTO dto) {
         List<String> lines = new ArrayList<>();
         if (dto == null) return lines;
@@ -525,7 +507,7 @@ public class LcnService {
         if (dto.statut() != null)
             lines.add("Statut : " + dto.statut());
         if (dto.montant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
+            lines.add("Montant : " + MontantFormatter.format(dto.montant()) + " MAD");
         if (dto.dateEmissionFrom() != null || dto.dateEmissionTo() != null) {
             String from = dto.dateEmissionFrom() != null ? dto.dateEmissionFrom().format(DATE_FMT) : "…";
             String to   = dto.dateEmissionTo()   != null ? dto.dateEmissionTo().format(DATE_FMT)   : "…";
@@ -550,6 +532,33 @@ public class LcnService {
     }
 
     // ── Helpers internes ──────────────────────────────────────────────────────
+
+    /** LCN d'encaissement simples : type ENCAISSEMENT, hors nature ESCOMPTE (nature nulle incluse). */
+    private Specification<Lcn> encaissementSpec(LcnSearchDTO searchDto) {
+        return Specification.where(LcnSpecification.hasType(Type.ENCAISSEMENT))
+                .and(LcnSpecification.isNotEscompte())
+                .and(encaissementSearchFilters(searchDto));
+    }
+
+    /** LCN d'escompte : type ENCAISSEMENT et nature ESCOMPTE. */
+    private Specification<Lcn> escompteSpec(LcnSearchDTO searchDto) {
+        return Specification.where(LcnSpecification.hasType(Type.ENCAISSEMENT))
+                .and(LcnSpecification.hasNatureLcn(NatureLcn.ESCOMPTE))
+                .and(encaissementSearchFilters(searchDto));
+    }
+
+    private Specification<Lcn> encaissementSearchFilters(LcnSearchDTO searchDto) {
+        return Specification.where(LcnSpecification.byDateEmissionRange(searchDto.dateEmissionFrom(), searchDto.dateEmissionTo()))
+                .and(LcnSpecification.byDateEcheanceRange(searchDto.dateEcheanceFrom(), searchDto.dateEcheanceTo()))
+                .and(LcnSpecification.byDateOperationRange(searchDto.dateOperationFrom(), searchDto.dateOperationTo()))
+                .and(LcnSpecification.byDateValeurRange(searchDto.dateValeurFrom(), searchDto.dateValeurTo()))
+                .and(LcnSpecification.hasEmetteur(searchDto.emetteur()))
+                .and(LcnSpecification.hasMontant(searchDto.montant()))
+                .and(LcnSpecification.hasBeneficiaire(searchDto.beneficiaire()))
+                .and(LcnSpecification.hasBanqueNom(searchDto.nomBanque()))
+                .and(LcnSpecification.hasStatut(searchDto.statut()))
+                .and(LcnSpecification.hasNumero(searchDto.numero()));
+    }
 
     private void validateEscompteBusinessRule(Type type, NatureLcn nature) {
         if (nature == NatureLcn.ESCOMPTE && type != Type.ENCAISSEMENT) {

@@ -106,8 +106,8 @@ export class LcnEscompteByLineComponent implements OnInit {
       { icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' },
       {
         icon: 'pi pi-list',
-        route: '/portail/LCN/encaissements',
-        label: 'LCN Encaissements'
+        route: '/portail/LCN/escomptes',
+        label: 'LCN Escompte'
       },
       {
         icon: 'pi pi-chart-line',

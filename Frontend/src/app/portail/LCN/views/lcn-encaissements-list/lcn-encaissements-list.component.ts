@@ -1,15 +1,15 @@
-import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {Component, inject, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import {Button} from "primeng/button";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {DatePipe, DecimalPipe, NgClass, NgIf} from "@angular/common";
 import {DropdownModule} from "primeng/dropdown";
-import {InputSwitchModule} from "primeng/inputswitch";
+import {InputSwitch, InputSwitchModule} from "primeng/inputswitch";
 import {InputTextModule} from "primeng/inputtext";
 import {PaginatorModule} from "primeng/paginator";
 import {ConfirmationService, MenuItem, MessageService, PrimeTemplate, SelectItem} from "primeng/api";
 import {FormBuilder, FormGroup, ReactiveFormsModule} from "@angular/forms";
-import {RouterLink, RouterLinkActive} from "@angular/router";
+import {ActivatedRoute, RouterLink, RouterLinkActive} from "@angular/router";
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
 import {TagModule} from "primeng/tag";
 import {ToastModule} from "primeng/toast";
@@ -25,6 +25,7 @@ import {Ripple} from "primeng/ripple";
 import {CalendarModule} from "primeng/calendar";
 import {FormsModule} from "@angular/forms";
 import {StatutMoyenPaiement} from "../../../global/enums/StatutMoyenPaiement";
+import {NatureLcn} from "../../dtos/NatureLcn";
 
 @Component({
   selector: 'app-lcn-encaissements-list',
@@ -55,9 +56,21 @@ import {StatutMoyenPaiement} from "../../../global/enums/StatutMoyenPaiement";
   templateUrl: './lcn-encaissements-list.component.html',
   styleUrl: './lcn-encaissements-list.component.scss'
 })
+/**
+ * Liste des LCN d'encaissement, partagée par deux routes : `LCN/encaissements` (LCN simples) et
+ * `LCN/escomptes` (LCN d'escompte, route portant `data: {nature: ESCOMPTE}`).
+ */
 export class LcnEncaissementsListComponent implements OnInit, OnDestroy {
 
   protected readonly StatutMoyenPaiement = StatutMoyenPaiement;
+
+  private readonly route = inject(ActivatedRoute);
+
+  /** Vrai sur la route `LCN/escomptes`. */
+  readonly isEscompte: boolean = this.route.snapshot.data['nature'] === NatureLcn.ESCOMPTE;
+  readonly listPath: string = this.isEscompte ? 'escomptes' : 'encaissements';
+  readonly listLabel: string = this.isEscompte ? 'LCN (escompte)' : 'LCN (encaissements)';
+  readonly bankColumnLabel: string = this.isEscompte ? "Banque d'escompte" : "Banque d'encaissement";
 
   lcns: LcnResponseDTO[] = [];
   totalRecords: number = 0;
@@ -102,7 +115,7 @@ export class LcnEncaissementsListComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.items = [
       {icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil'},
-      {icon: 'pi pi-list', route: '/portail/LCN/encaissements', label: 'LCN (encaissements)'},
+      {icon: 'pi pi-list', route: `/portail/LCN/${this.listPath}`, label: this.listLabel},
     ];
     this.isAdmin = this.authService.isSystemAdmin();
     this.initSearchForm();
@@ -163,7 +176,11 @@ export class LcnEncaissementsListComponent implements OnInit, OnDestroy {
 
     const searchCriteria: LcnSearchDTO = this.searchForm.getRawValue();
 
-    this.lcnService.getEncaissementLcns(searchCriteria, currentPage, pageSize, sort).subscribe({
+    const load$ = this.isEscompte
+      ? this.lcnService.getEscompteLcns(searchCriteria, currentPage, pageSize, sort)
+      : this.lcnService.getEncaissementLcns(searchCriteria, currentPage, pageSize, sort);
+
+    load$.subscribe({
       next: (page: PageResponse<LcnResponseDTO>) => {
         this.lcns = page.content;
         this.totalRecords = page.page.totalElements;
@@ -226,7 +243,9 @@ export class LcnEncaissementsListComponent implements OnInit, OnDestroy {
     }
   }
 
-  confirmToggleStatus(lcn: LcnResponseDTO): void {
+  confirmToggleStatus(lcn: LcnResponseDTO, sw: InputSwitch): void {
+    // Le switch bascule visuellement au clic : on le recale sur le statut réel si l'opération n'aboutit pas.
+    const resync = () => sw.writeValue(lcn.statut === StatutMoyenPaiement.ENCOURS);
     const toRegle = lcn.statut === StatutMoyenPaiement.ENCOURS;
     this.confirmationService.confirm({
       message: `Êtes-vous sûr de vouloir ${toRegle ? 'régler' : 'remettre en cours'} le LCN ID ${lcn.id} ?`,
@@ -236,11 +255,12 @@ export class LcnEncaissementsListComponent implements OnInit, OnDestroy {
       rejectLabel: 'Non',
       acceptButtonStyleClass: toRegle ? 'p-button-warning' : 'p-button-success',
       rejectButtonStyleClass: 'p-button-text',
-      accept: () => this.toggleLcnStatus(lcn.id)
+      accept: () => this.toggleLcnStatus(lcn.id, resync),
+      reject: resync
     });
   }
 
-  toggleLcnStatus(id: number): void {
+  toggleLcnStatus(id: number, onError: () => void): void {
     this.lcnService.toggleLcnStatus(id).subscribe({
       next: (updated) => {
         this.messageService.add({
@@ -252,6 +272,7 @@ export class LcnEncaissementsListComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Erreur lors de la mise à jour du LCN:', err);
+        onError();
       }
     });
   }
@@ -259,12 +280,16 @@ export class LcnEncaissementsListComponent implements OnInit, OnDestroy {
   exportPdf(): void {
     this.exporting = true;
     const searchCriteria: LcnSearchDTO = this.searchForm.getRawValue();
-    this.lcnService.exportEncaissementsPdf(searchCriteria).subscribe({
+    const export$ = this.isEscompte
+      ? this.lcnService.exportEscomptesPdf(searchCriteria)
+      : this.lcnService.exportEncaissementsPdf(searchCriteria);
+
+    export$.subscribe({
       next: (blob: Blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `lcn_encaissements_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.download = `lcn_${this.listPath}_${new Date().toISOString().slice(0, 10)}.pdf`;
         a.click();
         window.URL.revokeObjectURL(url);
         this.exporting = false;

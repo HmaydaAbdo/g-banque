@@ -5,7 +5,11 @@ import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.EcheanceLeasingResponseDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.EcheanceLeasingSearchDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.EcheanceLeasingUpdateRequestDTO;
+import staport.finance.gBanque.leasing.echeancesLeasing.dto.MontantsContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.TableauAmortissementDTO;
+
+import java.util.Collection;
+import java.util.Map;
 
 public interface IEcheanceLeasingService {
 
@@ -50,6 +54,12 @@ public interface IEcheanceLeasingService {
     EcheanceLeasingResponseDTO getEcheanceLeasingById(Long id);
 
     boolean hasPaidEcheances(Long contratId);
+
+    /**
+     * Endettement et déjà payé de chaque contrat demandé, en une seule requête (utilisé par les exports).
+     * Un contrat sans échéance est absent de la map.
+     */
+    Map<Long, MontantsContratLeasing> getMontantsByContratIds(Collection<Long> contratIds);
 
     void deleteEcheancesAndCommissionByContrat(ContratLeasing contrat);
 }

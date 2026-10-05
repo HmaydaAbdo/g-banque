@@ -5,7 +5,7 @@ import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {DatePipe, DecimalPipe, NgClass, NgIf} from "@angular/common";
 import {DropdownModule} from "primeng/dropdown";
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
-import {InputSwitchModule} from "primeng/inputswitch";
+import {InputSwitch, InputSwitchModule} from "primeng/inputswitch";
 import {InputTextModule} from "primeng/inputtext";
 import {ConfirmationService, MenuItem, MessageService, PrimeTemplate, SelectItem} from "primeng/api";
 import {Ripple} from "primeng/ripple";
@@ -221,7 +221,9 @@ export class VirementEncaissementListComponent implements OnInit, OnDestroy {
     }
   }
 
-  confirmToggleStatus(virement: VirementResponseDto): void {
+  confirmToggleStatus(virement: VirementResponseDto, sw: InputSwitch): void {
+    // Le switch bascule visuellement au clic : on le recale sur le statut réel si l'opération n'aboutit pas.
+    const resync = () => sw.writeValue(virement.statut === StatutMoyenPaiement.ENCOURS);
     const toRegle = virement.statut === StatutMoyenPaiement.ENCOURS;
     this.confirmationService.confirm({
       message: `Êtes-vous sûr de vouloir ${toRegle ? 'régler' : 'remettre en cours'} le virement ID ${virement.id} ?`,
@@ -231,11 +233,12 @@ export class VirementEncaissementListComponent implements OnInit, OnDestroy {
       rejectLabel: 'Non',
       acceptButtonStyleClass: toRegle ? 'p-button-warning' : 'p-button-success',
       rejectButtonStyleClass: 'p-button-text',
-      accept: () => this.toggleVirementStatus(virement.id)
+      accept: () => this.toggleVirementStatus(virement.id, resync),
+      reject: resync
     });
   }
 
-  toggleVirementStatus(id: number): void {
+  toggleVirementStatus(id: number, onError: () => void): void {
     this.virementService.toggleVirementStatus(id).subscribe({
       next: (updated) => {
         this.messageService.add({
@@ -247,6 +250,7 @@ export class VirementEncaissementListComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Erreur lors de la mise à jour du virement:', err);
+        onError();
       }
     });
   }

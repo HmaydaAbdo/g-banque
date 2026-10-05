@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import staport.finance.gBanque.leasing.contratCadre.entities.ContratCadre;
 import staport.finance.gBanque.leasing.contratCadre.enums.StatutContratCadre;
 
+import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,6 +15,10 @@ public interface ContratCadreRepository extends JpaRepository<ContratCadre, Long
 
     /** Retourne le contrat cadre actif d'un organisme, s'il existe. */
     Optional<ContratCadre> findByOrganisme_IdAndStatut(Long organismeId, StatutContratCadre statut);
+
+    /** Contrats cadres ACTIFS non échus (dateFin >= date donnée) des organismes fournis — un seul par organisme. */
+    List<ContratCadre> findByOrganisme_IdInAndStatutAndDateFinGreaterThanEqual(
+            Collection<Long> organismeIds, StatutContratCadre statut, LocalDate date);
 
     /** Vérifie l'existence d'un contrat cadre actif pour un organisme. */
     boolean existsByOrganisme_IdAndStatut(Long organismeId, StatutContratCadre statut);

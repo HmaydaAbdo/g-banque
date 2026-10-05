@@ -179,7 +179,7 @@
               @if (authService.isAdmin()) {
                 <p-inputSwitch [ngModel]="dc.status === Status.PAYE"
                                (onChange)="confirmToggleStatus(dc)"
-                               pTooltip="Changer statut"></p-inputSwitch>
+                               [pTooltip]="dc.status === Status.PAYE ? 'Marquer comme prévu' : 'Marquer comme payé'"></p-inputSwitch>
               }
 
               <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary"

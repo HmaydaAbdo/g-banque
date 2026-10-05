@@ -42,6 +42,7 @@ import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
@@ -49,12 +50,10 @@ import com.lowagie.text.pdf.*;
 import java.awt.Color;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
 
@@ -286,8 +285,8 @@ public class CommissionService implements ICommissionService {
                             addPdfCell(table, c.getBanque() != null ? c.getBanque().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                             addPdfCell(table, (c.getCaution() != null && c.getCaution().getNature() != null)
                                     ? c.getCaution().getNature().getLabel() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
-                            addPdfCell(table, formatMontantPdf(c.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
-                            addPdfCell(table, c.getCaution() != null ? formatMontantPdf(c.getCaution().getMontant()) : "—", cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                            addPdfCell(table, MontantFormatter.format(c.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                            addPdfCell(table, c.getCaution() != null ? MontantFormatter.format(c.getCaution().getMontant()) : "—", cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
                             addPdfCell(table, c.getDateEmission() != null ? c.getDateEmission().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
 
                             boolean paye = c.getStatus() == Status.PAYE;
@@ -313,7 +312,7 @@ public class CommissionService implements ICommissionService {
                         table.addCell(totalLabel);
 
                         PdfPCell totalVal = new PdfPCell(
-                                new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                                new Phrase(MontantFormatter.format(totalMontant) + " MAD", totalFont));
                         totalVal.setBackgroundColor(lightBlue);
                         totalVal.setPadding(5f);
                         totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -350,14 +349,6 @@ public class CommissionService implements ICommissionService {
         table.addCell(cell);
     }
 
-    private String formatMontantPdf(BigDecimal montant) {
-        if (montant == null) return "—";
-        NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
-        nf.setMinimumFractionDigits(2);
-        nf.setMaximumFractionDigits(2);
-        return nf.format(montant);
-    }
-
     private List<String> buildFilterSummary(CommissionSearchDto dto) {
         List<String> lines = new ArrayList<>();
         if (dto == null) return lines;
@@ -374,7 +365,7 @@ public class CommissionService implements ICommissionService {
         if (dto.operation() != null)
             lines.add("Opération : " + dto.operation());
         if (dto.montant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
+            lines.add("Montant : " + MontantFormatter.format(dto.montant()) + " MAD");
         if (dto.status() != null)
             lines.add("Statut : " + (dto.status() == Status.PAYE ? "Payée" : "Prévue"));
         if (dto.natureId() != null) {

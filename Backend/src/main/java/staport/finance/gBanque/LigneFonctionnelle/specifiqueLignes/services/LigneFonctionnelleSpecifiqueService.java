@@ -54,16 +54,14 @@ import staport.finance.gBanque.prefinancement.enums.Type;
 import staport.finance.gBanque.prefinancement.mapper.PrefinancementMapper;
 import staport.finance.gBanque.prefinancement.services.PrefinancementReader;
 import staport.finance.gBanque.prefinancement.spec.PrefinancementSpecification;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 import java.awt.Color;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -668,10 +666,10 @@ public class LigneFonctionnelleSpecifiqueService implements ILigneFonctionnelleS
                         addPdfCell(table, l.banqueNom(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                         addPdfCell(table, l.natureLigneFonctionnelleLabel(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                         addPdfCell(table, l.marcheNumero(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
-                        addPdfCell(table, formatMontantPdf(l.plafond()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
-                        addPdfCell(table, formatMontantPdf(l.encours()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
-                        addPdfCell(table, formatMontantPdf(l.solde()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
-                        addPdfCell(table, formatMontantPdf(l.taux()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                        addPdfCell(table, MontantFormatter.format(l.plafond()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                        addPdfCell(table, MontantFormatter.format(l.encours()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                        addPdfCell(table, MontantFormatter.format(l.solde()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                        addPdfCell(table, MontantFormatter.format(l.taux()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
                         addPdfCell(table, l.dateDepart() != null ? l.dateDepart().format(dateFmt) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
                         addPdfCell(table, l.dateFin() != null ? l.dateFin().format(dateFmt) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
 
@@ -697,7 +695,7 @@ public class LigneFonctionnelleSpecifiqueService implements ILigneFonctionnelleS
                     table.addCell(totalLabel);
 
                     PdfPCell totalVal = new PdfPCell(
-                            new Phrase(formatMontantPdf(totalPlafond), totalFont));
+                            new Phrase(MontantFormatter.format(totalPlafond), totalFont));
                     totalVal.setBackgroundColor(lightBlue);
                     totalVal.setPadding(5f);
                     totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -734,14 +732,5 @@ public class LigneFonctionnelleSpecifiqueService implements ILigneFonctionnelleS
         cell.setBorderColor(border);
         cell.setBorderWidth(0.5f);
         table.addCell(cell);
-    }
-
-    private String formatMontantPdf(BigDecimal montant) {
-        if (montant == null) return "—";
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.FRANCE);
-        symbols.setGroupingSeparator(' ');
-        symbols.setDecimalSeparator(',');
-        DecimalFormat formatter = new DecimalFormat("#,##0.00", symbols);
-        return formatter.format(montant);
     }
 }

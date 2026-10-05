@@ -62,7 +62,7 @@
     </div>
 
     <div class="flex flex-column gap-2 flex-1" style="min-width: 170px;">
-      <label for="nomBanque">Banque d'encaissement</label>
+      <label for="nomBanque">{{ bankColumnLabel }}</label>
       <p-dropdown id="nomBanque" [options]="banqueOptions" formControlName="nomBanque"
                   optionLabel="label" optionValue="value"
                   placeholder="Toutes les banques"
@@ -170,9 +170,8 @@
           <th pSortableColumn="dateEcheance">Date d'Échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
           <th pSortableColumn="beneficiaire">Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon></th>
           <th pSortableColumn="emetteur">Émetteur <p-sortIcon field="emetteur"></p-sortIcon></th>
-          <th pSortableColumn="banque.nom">Banque d'encaissement <p-sortIcon field="banque.nom"></p-sortIcon></th>
+          <th pSortableColumn="banque.nom">{{ bankColumnLabel }} <p-sortIcon field="banque.nom"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
-          <th pSortableColumn="natureLcn">Nature <p-sortIcon field="natureLcn"></p-sortIcon></th>
           <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
           <th pSortableColumn="observation">Observation <p-sortIcon field="observation"></p-sortIcon></th>
           <th pSortableColumn="statut">Statut <p-sortIcon field="statut"></p-sortIcon></th>
@@ -189,7 +188,6 @@
           <td>{{ lcn.emetteur }}</td>
           <td>{{ lcn.banqueName }}</td>
           <td>{{ lcn.montant | number:'1.2-2' }}</td>
-          <td>{{ lcn.natureLcn }}</td>
           <td>{{ lcn.libelle }}</td>
           <td>{{ lcn.observation }}</td>
           <td>
@@ -204,11 +202,11 @@
                     [routerLink]="['/portail/LCN/edit', lcn.id]">
             </button>
             @if (isAdmin) {
-              <p-inputSwitch
+              <p-inputSwitch #sw
                 [ngModel]="lcn.statut === StatutMoyenPaiement.ENCOURS"
                 [disabled]="lcn.statut === StatutMoyenPaiement.ANNULE"
                 class="p-2"
-                (onChange)="confirmToggleStatus(lcn)">
+                (onChange)="confirmToggleStatus(lcn, sw)">
               </p-inputSwitch>
               <button pButton pRipple icon="pi pi-trash"
                       class="p-button-rounded p-button-outlined p-button-danger"
@@ -221,10 +219,10 @@
       </ng-template>
 
       <ng-template pTemplate="emptyMessage">
-        <tr><td colspan="12">Aucun LCN trouvé.</td></tr>
+        <tr><td colspan="11">Aucun LCN trouvé.</td></tr>
       </ng-template>
       <ng-template pTemplate="loadingbody">
-        <tr><td colspan="12">Chargement des LCNs. Veuillez patienter...</td></tr>
+        <tr><td colspan="11">Chargement des LCNs. Veuillez patienter...</td></tr>
       </ng-template>
 
     </p-table>

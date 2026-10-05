@@ -159,6 +159,10 @@ export class LcnFormComponent implements OnInit {
       }
     });
   }
+  cancel(): void {
+    this.location.back();
+  }
+
   loadBanques(event: any) {
 
     const page = event.first / event.rows || 0;

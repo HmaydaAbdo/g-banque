@@ -11,6 +11,7 @@ import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeas
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -76,5 +77,23 @@ public interface EcheanceLeasingRepository extends JpaRepository<EcheanceLeasing
            "WHERE e.contratLeasing.id = :contratId AND e.statutPaiement = :statut")
     BigDecimal sumMontantTTCByContratLeasingIdAndStatutPaiement(
             @Param("contratId") Long contratId,
+            @Param("statut") StatutEcheanceLeasing statut);
+
+    /**
+     * Total TTC des échéances, groupé par contrat — une ligne {@code [contratId, total]} par contrat
+     * ayant au moins une échéance. Évite une requête par contrat lors des exports.
+     */
+    @Query("SELECT e.contratLeasing.id, SUM(e.montantTTC) FROM EcheanceLeasing e " +
+           "WHERE e.contratLeasing.id IN :contratIds GROUP BY e.contratLeasing.id")
+    List<Object[]> sumMontantTTCGroupedByContrat(@Param("contratIds") Collection<Long> contratIds);
+
+    /**
+     * Total TTC des échéances au statut donné, groupé par contrat — une ligne {@code [contratId, total]}
+     * par contrat ayant au moins une échéance à ce statut.
+     */
+    @Query("SELECT e.contratLeasing.id, SUM(e.montantTTC) FROM EcheanceLeasing e " +
+           "WHERE e.contratLeasing.id IN :contratIds AND e.statutPaiement = :statut GROUP BY e.contratLeasing.id")
+    List<Object[]> sumMontantTTCGroupedByContratAndStatut(
+            @Param("contratIds") Collection<Long> contratIds,
             @Param("statut") StatutEcheanceLeasing statut);
 }

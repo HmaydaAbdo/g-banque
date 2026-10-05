@@ -33,16 +33,16 @@ import staport.finance.gBanque.leasing.contratCadre.specifications.ContratCadreS
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.entities.OrganismeLeasing;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.services.interfaces.OrganismeLeasingService;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 import java.awt.Color;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
 
 @Service
 public class ContratCadreServiceImpl implements IContratCadreService {
@@ -165,6 +165,18 @@ public class ContratCadreServiceImpl implements IContratCadreService {
         return cadre;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, BigDecimal> findPlafondsEnCours(Collection<Long> organismeIds) {
+        if (organismeIds == null || organismeIds.isEmpty()) {
+            return Map.of();
+        }
+        return repository
+                .findByOrganisme_IdInAndStatutAndDateFinGreaterThanEqual(organismeIds, StatutContratCadre.ACTIF, LocalDate.now())
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(c -> c.getOrganisme().getId(), ContratCadre::getPlafond));
+    }
+
     // --- Méthode interne ---
     private ContratCadre findOrThrow(Long id) {
         return repository.findById(id)
@@ -239,7 +251,7 @@ public class ContratCadreServiceImpl implements IContratCadreService {
                         Color rowBg = i % 2 == 0 ? Color.WHITE : ROW_ALT;
 
                         addPdfCell(table, c.getOrganisme() != null ? c.getOrganisme().getNom() : "—", cellFont, rowBg, BORDER_GRAY, Element.ALIGN_LEFT);
-                        addPdfCell(table, formatMontantPdf(c.getPlafond()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_RIGHT);
+                        addPdfCell(table, MontantFormatter.format(c.getPlafond()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_RIGHT);
                         addPdfCell(table, c.getDateDebut() != null ? c.getDateDebut().format(DATE_FMT) : "—", cellFont, rowBg, BORDER_GRAY, Element.ALIGN_CENTER);
                         addPdfCell(table, c.getDateFin() != null ? c.getDateFin().format(DATE_FMT) : "—", cellFont, rowBg, BORDER_GRAY, Element.ALIGN_CENTER);
 
@@ -268,7 +280,7 @@ public class ContratCadreServiceImpl implements IContratCadreService {
                     table.addCell(totalLabel);
 
                     PdfPCell totalVal = new PdfPCell(
-                            new Phrase(formatMontantPdf(totalPlafond) + " MAD", totalFont));
+                            new Phrase(MontantFormatter.format(totalPlafond) + " MAD", totalFont));
                     totalVal.setBackgroundColor(LIGHT_BLUE);
                     totalVal.setPadding(5f);
                     totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -316,14 +328,5 @@ public class ContratCadreServiceImpl implements IContratCadreService {
         cell.setBorderColor(border);
         cell.setBorderWidth(0.5f);
         table.addCell(cell);
-    }
-
-    private String formatMontantPdf(BigDecimal montant) {
-        if (montant == null) return "—";
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.FRANCE);
-        symbols.setGroupingSeparator(' ');
-        symbols.setDecimalSeparator(',');
-        DecimalFormat formatter = new DecimalFormat("#,##0.00", symbols);
-        return formatter.format(montant);
     }
 }

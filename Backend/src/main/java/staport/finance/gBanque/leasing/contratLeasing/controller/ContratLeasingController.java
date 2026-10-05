@@ -16,6 +16,7 @@ import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingSearchDT
 import staport.finance.gBanque.leasing.contratLeasing.service.ContratLeasingService;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Tag(name = "Contrats de leasing", description = "Gestion des contrats de leasing et de leurs échéances")
 @SecurityRequirement(name = "bearerAuth")
@@ -110,30 +111,57 @@ public class ContratLeasingController {
     }
 
     @Operation(summary = "Exporter en PDF les contrats actifs",
-            description = "Mêmes critères que GET /contratsLeasing/actifs — sans pagination")
+            description = "Mêmes critères que GET /contratsLeasing/actifs — sans pagination. `colonnes` (optionnel, répétable) : numeroContrat, banque, organisme, immobilisation, type, montantAchatTTC, plafond, echeances, dateDebut, dateFin, duree, statut, endettement, resteAPayer, dejaPaye — absent, vide ou sans valeur reconnue : toutes les colonnes.")
     @PreAuthorize(FINANCE_OR_ADMIN)
     @GetMapping("/actifs/export/pdf")
-    public ResponseEntity<byte[]> exportActiveContratsPdf(@ModelAttribute ContratLeasingSearchDTO searchDTO) {
-        byte[] pdf = contratLeasingService.exportActiveContratsPdf(searchDTO);
-        return pdfResponse(pdf, "contrats_leasing_actifs");
+    public ResponseEntity<byte[]> exportActiveContratsPdf(@ModelAttribute ContratLeasingSearchDTO searchDTO,
+                                         @RequestParam(required = false) List<String> colonnes) {
+        return pdfResponse(contratLeasingService.exportActiveContratsPdf(searchDTO, colonnes), "contrats_leasing_actifs");
+    }
+
+    @Operation(summary = "Exporter en Excel les contrats actifs",
+            description = "Mêmes critères et même paramètre `colonnes` que /actifs/export/pdf.")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @GetMapping("/actifs/export/excel")
+    public ResponseEntity<byte[]> exportActiveContratsExcel(@ModelAttribute ContratLeasingSearchDTO searchDTO,
+                                           @RequestParam(required = false) List<String> colonnes) {
+        return excelResponse(contratLeasingService.exportActiveContratsExcel(searchDTO, colonnes), "contrats_leasing_actifs");
     }
 
     @Operation(summary = "Exporter en PDF les contrats en attente de main levée",
-            description = "Mêmes critères que GET /contratsLeasing/en-attente-main-levee — sans pagination")
+            description = "Mêmes critères que GET /contratsLeasing/en-attente-main-levee — sans pagination. `colonnes` (optionnel, répétable) : numeroContrat, banque, organisme, immobilisation, type, montantAchatTTC, plafond, echeances, dateDebut, dateFin, duree, statut, endettement, resteAPayer, dejaPaye — absent, vide ou sans valeur reconnue : toutes les colonnes.")
     @PreAuthorize(FINANCE_OR_ADMIN)
     @GetMapping("/en-attente-main-levee/export/pdf")
-    public ResponseEntity<byte[]> exportPendingLienReleaseContratsPdf(@ModelAttribute ContratLeasingSearchDTO searchDTO) {
-        byte[] pdf = contratLeasingService.exportPendingLienReleaseContratsPdf(searchDTO);
-        return pdfResponse(pdf, "contrats_leasing_en_attente_de_main_levee");
+    public ResponseEntity<byte[]> exportPendingLienReleaseContratsPdf(@ModelAttribute ContratLeasingSearchDTO searchDTO,
+                                         @RequestParam(required = false) List<String> colonnes) {
+        return pdfResponse(contratLeasingService.exportPendingLienReleaseContratsPdf(searchDTO, colonnes), "contrats_leasing_en_attente_de_main_levee");
+    }
+
+    @Operation(summary = "Exporter en Excel les contrats en attente de main levée",
+            description = "Mêmes critères et même paramètre `colonnes` que /en-attente-main-levee/export/pdf.")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @GetMapping("/en-attente-main-levee/export/excel")
+    public ResponseEntity<byte[]> exportPendingLienReleaseContratsExcel(@ModelAttribute ContratLeasingSearchDTO searchDTO,
+                                           @RequestParam(required = false) List<String> colonnes) {
+        return excelResponse(contratLeasingService.exportPendingLienReleaseContratsExcel(searchDTO, colonnes), "contrats_leasing_en_attente_de_main_levee");
     }
 
     @Operation(summary = "Exporter en PDF les contrats clôturés (inactifs)",
-            description = "Mêmes critères que GET /contratsLeasing/inactifs — sans pagination")
+            description = "Mêmes critères que GET /contratsLeasing/inactifs — sans pagination. `colonnes` (optionnel, répétable) : numeroContrat, banque, organisme, immobilisation, type, montantAchatTTC, plafond, echeances, dateDebut, dateFin, duree, statut, endettement, resteAPayer, dejaPaye — absent, vide ou sans valeur reconnue : toutes les colonnes.")
     @PreAuthorize(FINANCE_OR_ADMIN)
     @GetMapping("/inactifs/export/pdf")
-    public ResponseEntity<byte[]> exportInactiveContratsPdf(@ModelAttribute ContratLeasingSearchDTO searchDTO) {
-        byte[] pdf = contratLeasingService.exportInactiveContratsPdf(searchDTO);
-        return pdfResponse(pdf, "contrats_leasing_archives");
+    public ResponseEntity<byte[]> exportInactiveContratsPdf(@ModelAttribute ContratLeasingSearchDTO searchDTO,
+                                         @RequestParam(required = false) List<String> colonnes) {
+        return pdfResponse(contratLeasingService.exportInactiveContratsPdf(searchDTO, colonnes), "contrats_leasing_archives");
+    }
+
+    @Operation(summary = "Exporter en Excel les contrats clôturés (inactifs)",
+            description = "Mêmes critères et même paramètre `colonnes` que /inactifs/export/pdf.")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @GetMapping("/inactifs/export/excel")
+    public ResponseEntity<byte[]> exportInactiveContratsExcel(@ModelAttribute ContratLeasingSearchDTO searchDTO,
+                                           @RequestParam(required = false) List<String> colonnes) {
+        return excelResponse(contratLeasingService.exportInactiveContratsExcel(searchDTO, colonnes), "contrats_leasing_archives");
     }
 
     private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {
@@ -142,5 +170,13 @@ public class ContratLeasingController {
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDispositionFormData("attachment", filename);
         return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+    }
+
+    private ResponseEntity<byte[]> excelResponse(byte[] excel, String filenamePrefix) {
+        String filename = filenamePrefix + "_" + LocalDate.now() + ".xlsx";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(excel, headers, HttpStatus.OK);
     }
 }

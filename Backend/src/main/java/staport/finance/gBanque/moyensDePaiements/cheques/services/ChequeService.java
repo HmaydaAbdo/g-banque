@@ -24,18 +24,17 @@ import staport.finance.gBanque.moyensDePaiements.cheques.specs.ChequeSpec;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
 
 import java.awt.Color;
 import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Service métier du module Chèque.
@@ -334,7 +333,7 @@ public class ChequeService {
                                 addPdfCell(table, c.getBanque() != null ? c.getBanque().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                                 addPdfCell(table, c.getEmetteur(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                                 addPdfCell(table, c.getBeneficiaire(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
-                                addPdfCell(table, formatMontantPdf(c.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                                addPdfCell(table, MontantFormatter.format(c.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
                                 addPdfCell(table, c.getDateEmission() != null ? c.getDateEmission().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
                                 addPdfCell(table, c.getDateEcheance() != null ? c.getDateEcheance().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
 
@@ -359,7 +358,7 @@ public class ChequeService {
                             totalLabel.setBorderColor(medBlue);
                             table.addCell(totalLabel);
 
-                            PdfPCell totalVal = new PdfPCell(new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                            PdfPCell totalVal = new PdfPCell(new Phrase(MontantFormatter.format(totalMontant) + " MAD", totalFont));
                             totalVal.setBackgroundColor(lightBlue);
                             totalVal.setPadding(5f);
                             totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -395,14 +394,6 @@ public class ChequeService {
         table.addCell(cell);
     }
 
-    private String formatMontantPdf(BigDecimal montant) {
-        if (montant == null) return "—";
-        NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
-        nf.setMinimumFractionDigits(2);
-        nf.setMaximumFractionDigits(2);
-        return nf.format(montant);
-    }
-
     private List<String> buildFilterSummary(ChequeSearchDto dto) {
         List<String> lines = new ArrayList<>();
         if (dto == null) return lines;
@@ -417,7 +408,7 @@ public class ChequeService {
         if (dto.statut() != null)
             lines.add("Statut : " + dto.statut());
         if (dto.montant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
+            lines.add("Montant : " + MontantFormatter.format(dto.montant()) + " MAD");
         if (dto.dateEmissionFrom() != null || dto.dateEmissionTo() != null) {
             String from = dto.dateEmissionFrom() != null ? dto.dateEmissionFrom().format(DATE_FMT) : "…";
             String to   = dto.dateEmissionTo()   != null ? dto.dateEmissionTo().format(DATE_FMT)   : "…";

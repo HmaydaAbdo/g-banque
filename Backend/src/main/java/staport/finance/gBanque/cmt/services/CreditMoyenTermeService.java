@@ -33,17 +33,15 @@ import staport.finance.gBanque.cmt.specifications.CreditMoyenTermeSpecification;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 import java.awt.Color;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Service pour la gestion des crédits à moyen terme (CMT).
@@ -320,10 +318,10 @@ public class CreditMoyenTermeService {
 
                         addPdfCell(table, c.getDesignation(), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_LEFT);
                         addPdfCell(table, c.getBanque() != null ? c.getBanque().getNom() : "—", cellFont, rowBg, BORDER_GRAY, Element.ALIGN_LEFT);
-                        addPdfCell(table, formatMontantPdf(c.getNominal()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_RIGHT);
-                        addPdfCell(table, formatMontantPdf(c.getTaux()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_RIGHT);
+                        addPdfCell(table, MontantFormatter.format(c.getNominal()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_RIGHT);
+                        addPdfCell(table, MontantFormatter.format(c.getTaux()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_RIGHT);
                         addPdfCell(table, String.valueOf(c.getDuree()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_CENTER);
-                        addPdfCell(table, formatMontantPdf(c.getEcheance()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_RIGHT);
+                        addPdfCell(table, MontantFormatter.format(c.getEcheance()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_RIGHT);
                         addPdfCell(table, c.getDateDebut() != null ? c.getDateDebut().format(DATE_FMT) : "—", cellFont, rowBg, BORDER_GRAY, Element.ALIGN_CENTER);
 
                         boolean termine = c.isCompleted();
@@ -348,7 +346,7 @@ public class CreditMoyenTermeService {
                     table.addCell(totalLabel);
 
                     PdfPCell totalVal = new PdfPCell(
-                            new Phrase(formatMontantPdf(totalNominal) + " MAD", totalFont));
+                            new Phrase(MontantFormatter.format(totalNominal) + " MAD", totalFont));
                     totalVal.setBackgroundColor(LIGHT_BLUE);
                     totalVal.setPadding(5f);
                     totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -403,14 +401,5 @@ public class CreditMoyenTermeService {
         cell.setBorderColor(border);
         cell.setBorderWidth(0.5f);
         table.addCell(cell);
-    }
-
-    private String formatMontantPdf(BigDecimal montant) {
-        if (montant == null) return "—";
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.FRANCE);
-        symbols.setGroupingSeparator(' ');
-        symbols.setDecimalSeparator(',');
-        DecimalFormat formatter = new DecimalFormat("#,##0.00", symbols);
-        return formatter.format(montant);
     }
 }

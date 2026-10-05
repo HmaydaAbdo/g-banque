@@ -258,9 +258,11 @@ export class PrefinancementsListComponent implements OnInit {
           next: () => {
             this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Statut mis à jour.' });
             this.table.reset();
-          }
+          },
+          error: () => this.table.reset()
         });
-      }
+      },
+      reject: () => this.table.reset()
     });
   }
 

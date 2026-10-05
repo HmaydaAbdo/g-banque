@@ -14,6 +14,7 @@ import staport.finance.gBanque.marches.mapper.MarcheMapper;
 import staport.finance.gBanque.marches.repositories.MarcheRepository;
 import staport.finance.gBanque.marches.specs.MarcheSpecification;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -29,12 +30,10 @@ import com.lowagie.text.pdf.*;
 
 import java.awt.Color;
 import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Façade publique du module Marches (architecture.md, "Encapsulation des domaines").
@@ -323,7 +322,7 @@ public class MarcheService implements IMarcheService {
                                 addPdfCell(table, m.getNom(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                                 addPdfCell(table, m.getMaitreDouvrage(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                                 addPdfCell(table, m.getBanque() != null ? m.getBanque().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
-                                addPdfCell(table, formatMontantPdf(m.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                                addPdfCell(table, MontantFormatter.format(m.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
                                 addPdfCell(table, m.getDateDebutDesTravaux() != null ? m.getDateDebutDesTravaux().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
                                 addPdfCell(table, m.getDateDAchievementDesTravaux() != null ? m.getDateDAchievementDesTravaux().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
 
@@ -350,7 +349,7 @@ public class MarcheService implements IMarcheService {
                             table.addCell(totalLabel);
 
                             PdfPCell totalVal = new PdfPCell(
-                                    new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                                    new Phrase(MontantFormatter.format(totalMontant) + " MAD", totalFont));
                             totalVal.setBackgroundColor(lightBlue);
                             totalVal.setPadding(5f);
                             totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -385,14 +384,6 @@ public class MarcheService implements IMarcheService {
         cell.setBorderColor(border);
         cell.setBorderWidth(0.5f);
         table.addCell(cell);
-    }
-
-    private String formatMontantPdf(BigDecimal montant) {
-        if (montant == null) return "—";
-        NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
-        nf.setMinimumFractionDigits(2);
-        nf.setMaximumFractionDigits(2);
-        return nf.format(montant);
     }
 
     private List<String> buildFilterSummary(MarcheSearchDTO criteria) {

@@ -32,18 +32,16 @@ import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 import java.awt.Color;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 
 /**
@@ -315,9 +313,9 @@ public class EcheanceCMTService implements IEcheanceCMTService {
                     PdfPTable summaryTable = new PdfPTable(3);
                     summaryTable.setWidthPercentage(100f);
                     summaryTable.setSpacingAfter(10f);
-                    addSummaryCell(summaryTable, "Endettement", formatMontantPdf(montantTotalAPayer), totalFont, subFont);
-                    addSummaryCell(summaryTable, "Montant déjà payé", formatMontantPdf(montantTotalDejaPaye), totalFont, subFont);
-                    addSummaryCell(summaryTable, "Montant restant à payer", formatMontantPdf(montantRestantAPayer), totalFont, subFont);
+                    addSummaryCell(summaryTable, "Endettement", MontantFormatter.format(montantTotalAPayer), totalFont, subFont);
+                    addSummaryCell(summaryTable, "Montant déjà payé", MontantFormatter.format(montantTotalDejaPaye), totalFont, subFont);
+                    addSummaryCell(summaryTable, "Montant restant à payer", MontantFormatter.format(montantRestantAPayer), totalFont, subFont);
                     doc.add(summaryTable);
 
                     float[] colWidths = {10f, 15f, 15f, 12f};
@@ -342,7 +340,7 @@ public class EcheanceCMTService implements IEcheanceCMTService {
 
                         addPdfCell(table, String.valueOf(e.getNumeroEcheance()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_CENTER);
                         addPdfCell(table, e.getDateEcheance() != null ? e.getDateEcheance().format(DATE_FMT) : "—", cellFont, rowBg, BORDER_GRAY, Element.ALIGN_CENTER);
-                        addPdfCell(table, formatMontantPdf(e.getMontant()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_RIGHT);
+                        addPdfCell(table, MontantFormatter.format(e.getMontant()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_RIGHT);
 
                         boolean paye = e.getStatutPaiement() == StatutEcheanceCMT.PAYE;
                         PdfPCell statusCell = new PdfPCell(new Phrase(
@@ -401,14 +399,5 @@ public class EcheanceCMTService implements IEcheanceCMTService {
         cell.setBorderColor(border);
         cell.setBorderWidth(0.5f);
         table.addCell(cell);
-    }
-
-    private String formatMontantPdf(BigDecimal montant) {
-        if (montant == null) return "—";
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.FRANCE);
-        symbols.setGroupingSeparator(' ');
-        symbols.setDecimalSeparator(',');
-        DecimalFormat formatter = new DecimalFormat("#,##0.00", symbols);
-        return formatter.format(montant);
     }
 }

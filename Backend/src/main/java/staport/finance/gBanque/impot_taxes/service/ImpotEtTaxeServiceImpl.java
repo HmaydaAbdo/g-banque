@@ -37,18 +37,17 @@ import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
 import staport.finance.gBanque.impot_taxes.specs.ImpotEtTaxeSpecifications;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
 
 import java.awt.Color;
 import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Implémentation du service Impôts et Taxes.
@@ -261,7 +260,7 @@ public class ImpotEtTaxeServiceImpl implements IImpotEtTaxeService {
                             addPdfCell(table, t.getLibelle(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                             addPdfCell(table, t.getBanque() != null ? t.getBanque().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                             addPdfCell(table, t.getMotif() != null ? t.getMotif().getMotif() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
-                            addPdfCell(table, formatMontantPdf(t.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                            addPdfCell(table, MontantFormatter.format(t.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
                             addPdfCell(table, t.getDateEmission() != null ? t.getDateEmission().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
 
                             boolean paye = t.getStatus() == Status.PAYE;
@@ -287,7 +286,7 @@ public class ImpotEtTaxeServiceImpl implements IImpotEtTaxeService {
                         table.addCell(totalLabel);
 
                         PdfPCell totalVal = new PdfPCell(
-                                new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                                new Phrase(MontantFormatter.format(totalMontant) + " MAD", totalFont));
                         totalVal.setBackgroundColor(lightBlue);
                         totalVal.setPadding(5f);
                         totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -324,14 +323,6 @@ public class ImpotEtTaxeServiceImpl implements IImpotEtTaxeService {
         table.addCell(cell);
     }
 
-    private String formatMontantPdf(BigDecimal montant) {
-        if (montant == null) return "—";
-        NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
-        nf.setMinimumFractionDigits(2);
-        nf.setMaximumFractionDigits(2);
-        return nf.format(montant);
-    }
-
     private List<String> buildFilterSummary(ImpotEtTaxeSearchDto dto) {
         List<String> lines = new ArrayList<>();
         if (dto == null) return lines;
@@ -348,7 +339,7 @@ public class ImpotEtTaxeServiceImpl implements IImpotEtTaxeService {
         if (dto.motif() != null)
             lines.add("Motif : " + dto.motif().getMotif());
         if (dto.montant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
+            lines.add("Montant : " + MontantFormatter.format(dto.montant()) + " MAD");
         if (dto.status() != null)
             lines.add("Statut : " + (dto.status() == Status.PAYE ? "Payée" : "Prévue"));
         if (dto.dateEmissionDebut() != null)

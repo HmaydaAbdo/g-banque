@@ -26,18 +26,17 @@ import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.service.IMarcheService;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
 import java.awt.Color;
 
 import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Implémentation du service Décompte.
@@ -307,7 +306,7 @@ public class DecompteServiceImpl implements IDecompteService {
                                 addPdfCell(table, String.valueOf(d.getId()), cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
                                 addPdfCell(table, d.getMarche() != null ? d.getMarche().getNumero() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                                 addPdfCell(table, d.getBanqueEncaissement() != null ? d.getBanqueEncaissement().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
-                                addPdfCell(table, formatMontantPdf(d.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                                addPdfCell(table, MontantFormatter.format(d.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
                                 addPdfCell(table, d.getDateEmission()  != null ? d.getDateEmission().format(DATE_FMT)  : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
                                 addPdfCell(table, d.getDateOperation() != null ? d.getDateOperation().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
                                 addPdfCell(table, d.getDateValeur()    != null ? d.getDateValeur().format(DATE_FMT)    : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
@@ -334,7 +333,7 @@ public class DecompteServiceImpl implements IDecompteService {
                             table.addCell(totalLabel);
 
                             PdfPCell totalVal = new PdfPCell(
-                                    new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                                    new Phrase(MontantFormatter.format(totalMontant) + " MAD", totalFont));
                             totalVal.setBackgroundColor(lightBlue);
                             totalVal.setPadding(5f);
                             totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -369,14 +368,6 @@ public class DecompteServiceImpl implements IDecompteService {
         cell.setBorderColor(border);
         cell.setBorderWidth(0.5f);
         table.addCell(cell);
-    }
-
-    private String formatMontantPdf(BigDecimal montant) {
-        if (montant == null) return "—";
-        NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
-        nf.setMinimumFractionDigits(2);
-        nf.setMaximumFractionDigits(2);
-        return nf.format(montant);
     }
 
     private List<String> buildFilterSummary(DecompteSearchDto dto) {
@@ -416,7 +407,7 @@ public class DecompteServiceImpl implements IDecompteService {
             lines.add("Date valeur : " + from + " → " + to);
         }
         if (dto.montant() != null) {
-            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
+            lines.add("Montant : " + MontantFormatter.format(dto.montant()) + " MAD");
         }
         return lines;
     }

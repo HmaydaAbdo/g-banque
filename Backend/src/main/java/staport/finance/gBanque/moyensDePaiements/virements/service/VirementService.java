@@ -29,13 +29,12 @@ import com.lowagie.text.pdf.*;
 
 import java.awt.Color;
 import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 /**
  * Service métier du module Virement.
@@ -320,7 +319,7 @@ public class VirementService {
                                 addPdfCell(table, banqueBeneficiaireNom(v), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                                 addPdfCell(table, v.getEmetteur(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                                 addPdfCell(table, v.getBeneficiaire(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
-                                addPdfCell(table, formatMontantPdf(v.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                                addPdfCell(table, MontantFormatter.format(v.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
                                 addPdfCell(table, v.getDateEmission() != null ? v.getDateEmission().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
 
                                 boolean regle = v.getStatut() == StatutMoyenPaiement.REGLE;
@@ -344,7 +343,7 @@ public class VirementService {
                             totalLabel.setBorderColor(medBlue);
                             table.addCell(totalLabel);
 
-                            PdfPCell totalVal = new PdfPCell(new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                            PdfPCell totalVal = new PdfPCell(new Phrase(MontantFormatter.format(totalMontant) + " MAD", totalFont));
                             totalVal.setBackgroundColor(lightBlue);
                             totalVal.setPadding(5f);
                             totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -380,14 +379,6 @@ public class VirementService {
         table.addCell(cell);
     }
 
-    private String formatMontantPdf(BigDecimal montant) {
-        if (montant == null) return "—";
-        NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
-        nf.setMinimumFractionDigits(2);
-        nf.setMaximumFractionDigits(2);
-        return nf.format(montant);
-    }
-
     private List<String> buildFilterSummary(VirementSearchDto dto) {
         List<String> lines = new ArrayList<>();
         if (dto == null) return lines;
@@ -406,7 +397,7 @@ public class VirementService {
         if (dto.statut() != null)
             lines.add("Statut : " + dto.statut());
         if (dto.montant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
+            lines.add("Montant : " + MontantFormatter.format(dto.montant()) + " MAD");
         if (dto.dateEmissionFrom() != null || dto.dateEmissionTo() != null) {
             String from = dto.dateEmissionFrom() != null ? dto.dateEmissionFrom().format(DATE_FMT) : "…";
             String to   = dto.dateEmissionTo()   != null ? dto.dateEmissionTo().format(DATE_FMT)   : "…";

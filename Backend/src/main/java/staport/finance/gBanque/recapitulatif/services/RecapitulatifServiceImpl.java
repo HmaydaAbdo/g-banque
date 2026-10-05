@@ -29,11 +29,10 @@ import staport.finance.gBanque.recapitulatif.services.interfaces.IRecapitulatifS
 import staport.finance.gBanque.recapitulatif.specs.RecapitulatifEncoursSpecification;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
 import staport.finance.gBanque.transactions.enums.SensOperation;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 import java.awt.Color;
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
@@ -207,7 +206,7 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
                 filterLines.add("Date de référence jusqu'au : " + searchDto.dateReferenceJusqua().format(DATE_FMT));
             }
             if (searchDto.montant() != null) {
-                filterLines.add("Montant : " + formatMontantRecap(searchDto.montant()) + " MAD");
+                filterLines.add("Montant : " + MontantFormatter.format(searchDto.montant()) + " MAD");
             }
             if (searchDto.commissionOperation() != null) {
                 filterLines.add("Motif Commission : " + searchDto.commissionOperation());
@@ -271,8 +270,8 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
                         addRecapPdfCell(table, it.dateEmission() != null ? it.dateEmission().format(DATE_FMT) : "—", cellFont, rowBg, Element.ALIGN_CENTER);
                         addRecapPdfCell(table, it.dateEcheance() != null ? it.dateEcheance().format(DATE_FMT) : "—", cellFont, rowBg, Element.ALIGN_CENTER);
                         addRecapPdfCell(table, it.libelle(), cellFont, rowBg, Element.ALIGN_LEFT);
-                        addRecapPdfCell(table, formatMontantRecap(it.debit()), cellFont, rowBg, Element.ALIGN_RIGHT);
-                        addRecapPdfCell(table, formatMontantRecap(it.credit()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addRecapPdfCell(table, MontantFormatter.format(it.debit()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addRecapPdfCell(table, MontantFormatter.format(it.credit()), cellFont, rowBg, Element.ALIGN_RIGHT);
                         addRecapPdfCell(table, it.source() != null ? it.source().name() : "—", cellFont, rowBg, Element.ALIGN_CENTER);
                         addRecapPdfCell(table, it.observations(), cellFont, rowBg, Element.ALIGN_LEFT);
                     }
@@ -289,8 +288,8 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
                     totalLabel.setBorderColor(MED_BLUE);
                     table.addCell(totalLabel);
 
-                    addRecapPdfTotalCell(table, formatMontantRecap(totalDebit) + " MAD", totalFont);
-                    addRecapPdfTotalCell(table, formatMontantRecap(totalCredit) + " MAD", totalFont);
+                    addRecapPdfTotalCell(table, MontantFormatter.format(totalDebit) + " MAD", totalFont);
+                    addRecapPdfTotalCell(table, MontantFormatter.format(totalCredit) + " MAD", totalFont);
 
                     PdfPCell trailing = new PdfPCell(new Phrase(""));
                     trailing.setColspan(2);
@@ -356,15 +355,6 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
         cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
         cell.setBorderColor(MED_BLUE);
         table.addCell(cell);
-    }
-
-    private String formatMontantRecap(BigDecimal montant) {
-        if (montant == null) return "—";
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.FRANCE);
-        symbols.setGroupingSeparator(' ');
-        symbols.setDecimalSeparator(',');
-        DecimalFormat formatter = new DecimalFormat("#,##0.00", symbols);
-        return formatter.format(montant);
     }
 
     @Override

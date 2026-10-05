@@ -1,5 +1,7 @@
     package staport.finance.gBanque.leasing.echeancesLeasing.services;
 
+import staport.finance.gBanque.reports.utils.MontantFormatter;
+
     import com.lowagie.text.Chunk;
     import com.lowagie.text.DocumentException;
     import com.lowagie.text.Element;
@@ -41,14 +43,14 @@
     import java.time.LocalDate;
 import java.math.BigDecimal;
     import java.math.RoundingMode;
-    import java.text.DecimalFormat;
-    import java.text.DecimalFormatSymbols;
-    import java.time.format.DateTimeFormatter;
+            import java.time.format.DateTimeFormatter;
     import java.time.temporal.TemporalAdjusters;
     import java.util.ArrayList;
+    import java.util.Collection;
     import java.util.Comparator;
+    import java.util.HashMap;
     import java.util.List;
-    import java.util.Locale;
+        import java.util.Map;
 
 
     /**
@@ -442,6 +444,26 @@ import java.math.BigDecimal;
             return echeanceLeasingMapper.toDto(echeance);
         }
 
+        @Override
+        @Transactional(readOnly = true)
+        public Map<Long, MontantsContratLeasing> getMontantsByContratIds(Collection<Long> contratIds) {
+            if (contratIds == null || contratIds.isEmpty()) {
+                return Map.of();
+            }
+            Map<Long, BigDecimal> payes = new HashMap<>();
+            for (Object[] row : echeanceLeasingRepository.sumMontantTTCGroupedByContratAndStatut(contratIds, StatutEcheanceLeasing.PAYE)) {
+                payes.put((Long) row[0], (BigDecimal) row[1]);
+            }
+            Map<Long, MontantsContratLeasing> montants = new HashMap<>();
+            for (Object[] row : echeanceLeasingRepository.sumMontantTTCGroupedByContrat(contratIds)) {
+                Long contratId = (Long) row[0];
+                montants.put(contratId, new MontantsContratLeasing(
+                        ((BigDecimal) row[1]).setScale(SCALE, RoundingMode.HALF_UP),
+                        payes.getOrDefault(contratId, BigDecimal.ZERO).setScale(SCALE, RoundingMode.HALF_UP)));
+            }
+            return montants;
+        }
+
         @Transactional(readOnly = true)
         public boolean hasPaidEcheances(Long contratId) {
             log.debug("Vérification de l'existence d'échéances payées pour le contrat ID : {}", contratId);
@@ -529,9 +551,9 @@ import java.math.BigDecimal;
                         PdfPTable summaryTable = new PdfPTable(3);
                         summaryTable.setWidthPercentage(100f);
                         summaryTable.setSpacingAfter(10f);
-                        addSummaryCell(summaryTable, "Endettement", formatMontantPdf(montantTotalAPayer), totalFont, subFont);
-                        addSummaryCell(summaryTable, "Montant déjà payé", formatMontantPdf(montantTotalDejaPaye), totalFont, subFont);
-                        addSummaryCell(summaryTable, "Montant restant à payer", formatMontantPdf(montantRestantAPayer), totalFont, subFont);
+                        addSummaryCell(summaryTable, "Endettement", MontantFormatter.format(montantTotalAPayer), totalFont, subFont);
+                        addSummaryCell(summaryTable, "Montant déjà payé", MontantFormatter.format(montantTotalDejaPaye), totalFont, subFont);
+                        addSummaryCell(summaryTable, "Montant restant à payer", MontantFormatter.format(montantRestantAPayer), totalFont, subFont);
                         doc.add(summaryTable);
 
                         float[] colWidths = {10f, 15f, 15f, 12f};
@@ -556,7 +578,7 @@ import java.math.BigDecimal;
 
                             addPdfCell(table, String.valueOf(e.getNumeroEcheance()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_CENTER);
                             addPdfCell(table, e.getDateEcheance() != null ? e.getDateEcheance().format(DATE_FMT) : "—", cellFont, rowBg, BORDER_GRAY, Element.ALIGN_CENTER);
-                            addPdfCell(table, formatMontantPdf(e.getMontantTTC()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_RIGHT);
+                            addPdfCell(table, MontantFormatter.format(e.getMontantTTC()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_RIGHT);
 
                             boolean paye = e.getStatutPaiement() == StatutEcheanceLeasing.PAYE;
                             PdfPCell statusCell = new PdfPCell(new Phrase(
@@ -631,14 +653,5 @@ import java.math.BigDecimal;
             cell.setBorderColor(border);
             cell.setBorderWidth(0.5f);
             table.addCell(cell);
-        }
-
-        private String formatMontantPdf(BigDecimal montant) {
-            if (montant == null) return "—";
-            DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.FRANCE);
-            symbols.setGroupingSeparator(' ');
-            symbols.setDecimalSeparator(',');
-            DecimalFormat formatter = new DecimalFormat("#,##0.00", symbols);
-            return formatter.format(montant);
         }
     }

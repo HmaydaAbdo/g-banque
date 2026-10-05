@@ -234,7 +234,7 @@ export class DecomptesListComponent implements OnInit {
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Statut mis à jour.' });
         this.table.reset();
       },
-      error: () => {}
+      error: () => this.table.reset()
     });
   }
 

@@ -55,12 +55,11 @@ import staport.finance.gBanque.rapprochement.entities.Rapprochement;
 import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 import java.awt.Color;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.YearMonth;
@@ -871,9 +870,9 @@ public class AgiosOrchestrateurService {
                         addOrchPdfCell(table, t.banqueNom(), cellFont, rowBg, Element.ALIGN_LEFT);
                         addOrchPdfCell(table, t.typeAgios() != null ? t.typeAgios().getLibelle() : "—", cellFont, rowBg, Element.ALIGN_LEFT);
                         addOrchPdfCell(table, libellePeriode(t.typeAgios(), t.trimestre(), t.annee()), cellFont, rowBg, Element.ALIGN_CENTER);
-                        addOrchPdfCell(table, formatMontantOrch(t.totalAgiosHT()), cellFont, rowBg, Element.ALIGN_RIGHT);
-                        addOrchPdfCell(table, formatMontantOrch(t.totalTVA()), cellFont, rowBg, Element.ALIGN_RIGHT);
-                        addOrchPdfCell(table, formatMontantOrch(t.totalAgiosTTC()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addOrchPdfCell(table, MontantFormatter.format(t.totalAgiosHT()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addOrchPdfCell(table, MontantFormatter.format(t.totalTVA()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addOrchPdfCell(table, MontantFormatter.format(t.totalAgiosTTC()), cellFont, rowBg, Element.ALIGN_RIGHT);
                         addOrchPdfCell(table, t.nbJoursCalcules() + "/" + t.nbJoursTotal(), cellFont, rowBg, Element.ALIGN_CENTER);
 
                         PdfPCell statusCell = new PdfPCell(new Phrase(
@@ -896,7 +895,7 @@ public class AgiosOrchestrateurService {
                     table.addCell(totalLabel);
 
                     for (BigDecimal val : new BigDecimal[]{totalHT, totalTVA, totalTTC}) {
-                        PdfPCell valCell = new PdfPCell(new Phrase(formatMontantOrch(val), totalFont));
+                        PdfPCell valCell = new PdfPCell(new Phrase(MontantFormatter.format(val), totalFont));
                         valCell.setBackgroundColor(LIGHT_BLUE);
                         valCell.setPadding(5f);
                         valCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -1013,12 +1012,12 @@ public class AgiosOrchestrateurService {
                         if (multiMarche) {
                             addOrchPdfCell(table, j.marcheNumero() != null ? j.marcheNumero() : "—", cellFont, rowBg, Element.ALIGN_LEFT);
                         }
-                        addOrchPdfCell(table, formatMontantOrch(j.soldeJournalier()), cellFont, rowBg, Element.ALIGN_RIGHT);
-                        addOrchPdfCell(table, formatMontantOrch(j.baseCalcul()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addOrchPdfCell(table, MontantFormatter.format(j.soldeJournalier()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addOrchPdfCell(table, MontantFormatter.format(j.baseCalcul()), cellFont, rowBg, Element.ALIGN_RIGHT);
                         addOrchPdfCell(table, j.tauxApplique() != null ? j.tauxApplique().toPlainString() : "—", cellFont, rowBg, Element.ALIGN_RIGHT);
-                        addOrchPdfCell(table, formatMontantOrch(j.agiosHT()), cellFont, rowBg, Element.ALIGN_RIGHT);
-                        addOrchPdfCell(table, formatMontantOrch(j.tva()), cellFont, rowBg, Element.ALIGN_RIGHT);
-                        addOrchPdfCell(table, formatMontantOrch(j.agiosTTC()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addOrchPdfCell(table, MontantFormatter.format(j.agiosHT()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addOrchPdfCell(table, MontantFormatter.format(j.tva()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addOrchPdfCell(table, MontantFormatter.format(j.agiosTTC()), cellFont, rowBg, Element.ALIGN_RIGHT);
                     }
 
                     int labelColspan = multiMarche ? 5 : 4;
@@ -1033,7 +1032,7 @@ public class AgiosOrchestrateurService {
                     table.addCell(totalLabel);
 
                     for (BigDecimal val : new BigDecimal[]{aggregates.totalAgiosHT(), aggregates.totalTVA(), aggregates.totalAgiosTTC()}) {
-                        PdfPCell valCell = new PdfPCell(new Phrase(formatMontantOrch(val), totalFont));
+                        PdfPCell valCell = new PdfPCell(new Phrase(MontantFormatter.format(val), totalFont));
                         valCell.setBackgroundColor(LIGHT_BLUE);
                         valCell.setPadding(5f);
                         valCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -1090,15 +1089,6 @@ public class AgiosOrchestrateurService {
         cell.setBorderColor(BORDER_GRAY);
         cell.setBorderWidth(0.5f);
         table.addCell(cell);
-    }
-
-    private String formatMontantOrch(BigDecimal montant) {
-        if (montant == null) return "—";
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.FRANCE);
-        symbols.setGroupingSeparator(' ');
-        symbols.setDecimalSeparator(',');
-        DecimalFormat formatter = new DecimalFormat("#,##0.00", symbols);
-        return formatter.format(montant);
     }
 
     private static final String[] MOIS_LABELS = {

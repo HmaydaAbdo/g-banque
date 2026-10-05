@@ -212,11 +212,15 @@ export class FactoringListComponent implements OnInit {
       header: `Confirmation`,
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        this.factoringService.toggleStatus(factoring.id).subscribe(() => {
-          this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Statut mis à jour.' });
-          this.table.reset();
+        this.factoringService.toggleStatus(factoring.id).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Statut mis à jour.' });
+            this.table.reset();
+          },
+          error: () => this.table.reset()
         });
-      }
+      },
+      reject: () => this.table.reset()
     });
   }
 

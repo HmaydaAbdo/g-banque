@@ -26,6 +26,10 @@ import { ToastModule } from "primeng/toast";
 import { TooltipModule } from "primeng/tooltip";
 import { InputNumberModule } from "primeng/inputnumber";
 import { CalendarModule } from "primeng/calendar";
+import { OverlayPanel, OverlayPanelModule } from "primeng/overlaypanel";
+import { CheckboxModule } from "primeng/checkbox";
+import { FormsModule } from "@angular/forms";
+import { CONTRAT_LEASING_EXPORT_COLUMNS, ContratLeasingExportFormat } from "../../dtos/contrat-leasing-export-columns";
 
 @Component({
   selector: 'app-contrats-leasing-archives',
@@ -49,7 +53,10 @@ import { CalendarModule } from "primeng/calendar";
     NgClass,
     DecimalPipe,
     InputNumberModule,
-    CalendarModule
+    CalendarModule,
+    FormsModule,
+    OverlayPanelModule,
+    CheckboxModule
   ],
   templateUrl: './contrats-leasing-archives.component.html',
   styleUrl: './contrats-leasing-archives.component.scss'
@@ -235,7 +242,36 @@ export class ContratsLeasingArchivesComponent implements OnInit, OnDestroy {
     }
   }
 
-  exportPdf(): void {
+  @ViewChild('exportColumnsPanel') exportColumnsPanel!: OverlayPanel;
+
+  /** Format sélectionné dans le panneau d'export — PDF par défaut. */
+  exportFormat: ContratLeasingExportFormat = 'pdf';
+
+  /** Colonnes exportables (PDF et Excel) — toutes cochées par défaut. */
+  exportColumns = CONTRAT_LEASING_EXPORT_COLUMNS.map(c => ({ ...c, checked: true }));
+
+  get hasSelectedColumns(): boolean {
+    return this.exportColumns.some(c => c.checked);
+  }
+
+  /** Ouvre/ferme le panneau de sélection du format et des colonnes, ancré au bouton "Exporter". */
+  toggleExportPanel(event: Event): void {
+    this.exportColumnsPanel.toggle(event);
+  }
+
+  toggleAllColumns(checked: boolean): void {
+    this.exportColumns.forEach(c => c.checked = checked);
+  }
+
+  /**
+   * Exporte (PDF ou Excel selon {@link exportFormat}) l'intégralité des contrats correspondant aux
+   * filtres actuellement appliqués — pas seulement la page affichée — en ne retenant que les
+   * colonnes cochées dans le panneau d'export.
+   */
+  confirmExport(): void {
+    if (!this.hasSelectedColumns) return;
+
+    this.exportColumnsPanel.hide();
     this.exporting = true;
     const searchCriteria: ContratLeasingSearchDTO = {
       numeroContrat: this.searchForm.get('numeroContrat')?.value || undefined,
@@ -248,18 +284,21 @@ export class ContratsLeasingArchivesComponent implements OnInit, OnDestroy {
       dateDebutMax: this.searchForm.get('dateDebutMax')?.value ?? undefined
     };
 
-    this.contratLeasingService.exportInactiveContratsPdf(searchCriteria).subscribe({
+    const colonnes = this.exportColumns.filter(c => c.checked).map(c => c.key);
+    const extension = this.exportFormat === 'pdf' ? 'pdf' : 'xlsx';
+
+    this.contratLeasingService.exportInactiveContrats(searchCriteria, this.exportFormat, colonnes).subscribe({
       next: (blob: Blob) => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `contrats_leasing_archives_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.download = `contrats_leasing_archives_${new Date().toISOString().slice(0, 10)}.${extension}`;
         a.click();
         URL.revokeObjectURL(url);
         this.exporting = false;
       },
       error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export." });
         this.exporting = false;
       }
     });

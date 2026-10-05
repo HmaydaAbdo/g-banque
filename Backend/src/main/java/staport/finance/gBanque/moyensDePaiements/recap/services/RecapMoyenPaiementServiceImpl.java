@@ -26,16 +26,14 @@ import staport.finance.gBanque.moyensDePaiements.recap.specs.RecapMoyenPaiementS
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 import java.awt.Color;
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -175,7 +173,7 @@ public class RecapMoyenPaiementServiceImpl implements IRecapMoyenPaiementService
                         addCell(table, it.banqueNom(), cellFont, rowBg, Element.ALIGN_LEFT);
                         addCell(table, it.numero(), cellFont, rowBg, Element.ALIGN_CENTER);
                         addCell(table, tiers, cellFont, rowBg, Element.ALIGN_LEFT);
-                        addCell(table, formatMontant(it.montant()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addCell(table, MontantFormatter.format(it.montant()), cellFont, rowBg, Element.ALIGN_RIGHT);
                         addCell(table, it.dateOperation() != null ? it.dateOperation().format(DATE_FMT) : "—", cellFont, rowBg, Element.ALIGN_CENTER);
                         addCell(table, it.dateValeur() != null ? it.dateValeur().format(DATE_FMT) : "—", cellFont, rowBg, Element.ALIGN_CENTER);
                         addCell(table, it.dateEcheance() != null ? it.dateEcheance().format(DATE_FMT) : "—", cellFont, rowBg, Element.ALIGN_CENTER);
@@ -191,7 +189,7 @@ public class RecapMoyenPaiementServiceImpl implements IRecapMoyenPaiementService
                     totalLabel.setBorderColor(MED_BLUE);
                     table.addCell(totalLabel);
 
-                    PdfPCell totalVal = new PdfPCell(new Phrase(formatMontant(total) + " MAD", totalFont));
+                    PdfPCell totalVal = new PdfPCell(new Phrase(MontantFormatter.format(total) + " MAD", totalFont));
                     totalVal.setBackgroundColor(LIGHT_BLUE);
                     totalVal.setPadding(5f);
                     totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -246,14 +244,5 @@ public class RecapMoyenPaiementServiceImpl implements IRecapMoyenPaiementService
         cell.setBorderColor(BORDER_GRAY);
         cell.setBorderWidth(0.5f);
         table.addCell(cell);
-    }
-
-    private String formatMontant(BigDecimal montant) {
-        if (montant == null) return "—";
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.FRANCE);
-        symbols.setGroupingSeparator(' ');
-        symbols.setDecimalSeparator(',');
-        DecimalFormat formatter = new DecimalFormat("#,##0.00", symbols);
-        return formatter.format(montant);
     }
 }

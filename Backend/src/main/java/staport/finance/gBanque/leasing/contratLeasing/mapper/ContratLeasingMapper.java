@@ -45,7 +45,7 @@ public abstract class ContratLeasingMapper {
     @Mapping(target = "organismeLeasingId",     source = "contratCadre.organisme.id")
     @Mapping(target = "nomOrganismeLeasing",    source = "contratCadre.organisme.nom")
     @Mapping(target = "contratCadreId",         source = "contratCadre.id")
-    @Mapping(target = "plafond",                source = "contratCadre.plafond")
+    @Mapping(target = "plafond",                ignore = true) // plafond en cours : renseigné par le service (ContratLeasingServiceImpl)
     @Mapping(target = "dateFin",
              expression = "java(entity.getDateDebut().plusMonths(entity.getPeriodeEnMois()))")
     public abstract ContratLeasingResponseDTO toDto(ContratLeasing entity);

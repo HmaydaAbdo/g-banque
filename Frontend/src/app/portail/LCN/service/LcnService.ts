@@ -73,16 +73,37 @@ export class LcnService {
     size: number = 10,
     sort: string = 'dateEmission,desc'
   ): Observable<PageResponse<LcnResponseDTO>> {
+    return this.getEncaissementLikeLcns('encaissements', searchDto, page, size, sort);
+  }
 
-    // Initialize HttpParams with pagination and sorting info
-    let params = new HttpParams()
+  getEscompteLcns(
+    searchDto: LcnSearchDTO,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'dateEmission,desc'
+  ): Observable<PageResponse<LcnResponseDTO>> {
+    return this.getEncaissementLikeLcns('escomptes', searchDto, page, size, sort);
+  }
+
+  private getEncaissementLikeLcns(
+    path: 'encaissements' | 'escomptes',
+    searchDto: LcnSearchDTO,
+    page: number,
+    size: number,
+    sort: string
+  ): Observable<PageResponse<LcnResponseDTO>> {
+    const params = this.encaissementFilterParams(searchDto)
       .set('page', page.toString())
       .set('size', size.toString())
       .set('sort', sort);
+    return this.http.get<PageResponse<LcnResponseDTO>>(`${this.apiUrl}/${path}`, {params});
+  }
 
-    // Append search criteria if they are present
-    if(searchDto.numero){
-      params = params.set('numero', searchDto.numero)
+  /** Critères de recherche communs aux LCN d'encaissement et d'escompte. */
+  private encaissementFilterParams(searchDto: LcnSearchDTO): HttpParams {
+    let params = new HttpParams();
+    if (searchDto.numero) {
+      params = params.set('numero', searchDto.numero);
     }
     if (searchDto.emetteur) {
       params = params.set('emetteur', searchDto.emetteur);
@@ -90,7 +111,6 @@ export class LcnService {
     if (searchDto.montant) {
       params = params.set('montant', searchDto.montant.toString());
     }
-
     if (searchDto.beneficiaire) {
       params = params.set('beneficiaire', searchDto.beneficiaire);
     }
@@ -100,9 +120,7 @@ export class LcnService {
     if (searchDto.statut !== undefined && searchDto.statut !== null) {
       params = params.set('statut', searchDto.statut);
     }
-    params = this.appendDateRangeParams(params, searchDto);
-
-    return this.http.get<PageResponse<LcnResponseDTO>>(this.apiUrl+"/encaissements", {params});
+    return this.appendDateRangeParams(params, searchDto);
   }
 
   /** Ajoute les 4 plages de dates (émission, échéance, opération, valeur) si renseignées. */
@@ -134,27 +152,11 @@ export class LcnService {
 
 
   exportEncaissementsPdf(searchDto: LcnSearchDTO): Observable<Blob> {
-    let params = new HttpParams();
-    if (searchDto.numero) {
-      params = params.set('numero', searchDto.numero);
-    }
-    if (searchDto.emetteur) {
-      params = params.set('emetteur', searchDto.emetteur);
-    }
-    if (searchDto.montant) {
-      params = params.set('montant', searchDto.montant.toString());
-    }
-    if (searchDto.beneficiaire) {
-      params = params.set('beneficiaire', searchDto.beneficiaire);
-    }
-    if (searchDto.nomBanque) {
-      params = params.set('nomBanque', searchDto.nomBanque);
-    }
-    if (searchDto.statut !== undefined && searchDto.statut !== null) {
-      params = params.set('statut', searchDto.statut);
-    }
-    params = this.appendDateRangeParams(params, searchDto);
-    return this.http.get(`${this.apiUrl}/encaissements/export/pdf`, {params, responseType: 'blob'});
+    return this.http.get(`${this.apiUrl}/encaissements/export/pdf`, {params: this.encaissementFilterParams(searchDto), responseType: 'blob'});
+  }
+
+  exportEscomptesPdf(searchDto: LcnSearchDTO): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/escomptes/export/pdf`, {params: this.encaissementFilterParams(searchDto), responseType: 'blob'});
   }
 
   exportDecaissementsPdf(searchDto: LcnSearchDTO): Observable<Blob> {

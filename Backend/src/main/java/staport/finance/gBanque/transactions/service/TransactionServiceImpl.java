@@ -36,11 +36,10 @@ import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.transactions.mapper.TransactionMapper;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 import java.awt.Color;
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -271,7 +270,7 @@ public class TransactionServiceImpl implements ITransactionService {
             lines.add("Observation : " + dto.observation());
         }
         if (dto.montant() != null) {
-            lines.add("Montant : " + formatMontantTx(dto.montant()));
+            lines.add("Montant : " + MontantFormatter.format(dto.montant()));
         }
         if (dto.dateEmissionDebut() != null) {
             lines.add("Date émission min : " + dto.dateEmissionDebut().format(DATE_FMT));
@@ -540,10 +539,10 @@ public class TransactionServiceImpl implements ITransactionService {
                         addTxPdfCell(table, t.dateEmission() != null ? t.dateEmission().format(DATE_FMT) : "—", cellFont, rowBg, Element.ALIGN_CENTER);
                         addTxPdfCell(table, t.dateOperations() != null ? t.dateOperations().format(DATE_FMT) : "—", cellFont, rowBg, Element.ALIGN_CENTER);
                         addTxPdfCell(table, t.dateValeur() != null ? t.dateValeur().format(DATE_FMT) : "—", cellFont, rowBg, Element.ALIGN_CENTER);
-                        addTxPdfCell(table, formatMontantTx(t.debit()), cellFont, rowBg, Element.ALIGN_RIGHT);
-                        addTxPdfCell(table, formatMontantTx(t.credit()), cellFont, rowBg, Element.ALIGN_RIGHT);
-                        addTxPdfCell(table, formatMontantTx(t.tvaDeductible()), cellFont, rowBg, Element.ALIGN_RIGHT);
-                        addTxPdfCell(table, formatMontantTx(t.tvaCollectee()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addTxPdfCell(table, MontantFormatter.format(t.debit()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addTxPdfCell(table, MontantFormatter.format(t.credit()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addTxPdfCell(table, MontantFormatter.format(t.tvaDeductible()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addTxPdfCell(table, MontantFormatter.format(t.tvaCollectee()), cellFont, rowBg, Element.ALIGN_RIGHT);
                         addTxPdfCell(table, t.transactionSource() != null ? t.transactionSource().name() : "—", cellFont, rowBg, Element.ALIGN_CENTER);
                         addTxPdfCell(table, t.statutRapprochement() != null ? t.statutRapprochement().name() : "—", cellFont, rowBg, Element.ALIGN_CENTER);
                         addTxPdfCell(table, t.libelle(), cellFont, rowBg, Element.ALIGN_LEFT);
@@ -559,14 +558,14 @@ public class TransactionServiceImpl implements ITransactionService {
                     totalLabel.setBorderColor(MED_BLUE);
                     table.addCell(totalLabel);
 
-                    PdfPCell totalDebitVal = new PdfPCell(new Phrase(formatMontantTx(totalDebit), totalFont));
+                    PdfPCell totalDebitVal = new PdfPCell(new Phrase(MontantFormatter.format(totalDebit), totalFont));
                     totalDebitVal.setBackgroundColor(LIGHT_BLUE);
                     totalDebitVal.setPadding(5f);
                     totalDebitVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
                     totalDebitVal.setBorderColor(MED_BLUE);
                     table.addCell(totalDebitVal);
 
-                    PdfPCell totalCreditVal = new PdfPCell(new Phrase(formatMontantTx(totalCredit), totalFont));
+                    PdfPCell totalCreditVal = new PdfPCell(new Phrase(MontantFormatter.format(totalCredit), totalFont));
                     totalCreditVal.setBackgroundColor(LIGHT_BLUE);
                     totalCreditVal.setPadding(5f);
                     totalCreditVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -621,7 +620,7 @@ public class TransactionServiceImpl implements ITransactionService {
             lines.add("Statut rapprochement : " + dto.statutRapprochement().name());
         }
         if (dto.montant() != null) {
-            lines.add("Montant : " + formatMontantTx(dto.montant()));
+            lines.add("Montant : " + MontantFormatter.format(dto.montant()));
         }
         if (dto.dateEmissionDebut() != null) {
             lines.add("Date émission min : " + dto.dateEmissionDebut().format(DATE_FMT));
@@ -652,14 +651,5 @@ public class TransactionServiceImpl implements ITransactionService {
         cell.setBorderColor(BORDER_GRAY);
         cell.setBorderWidth(0.5f);
         table.addCell(cell);
-    }
-
-    private String formatMontantTx(BigDecimal montant) {
-        if (montant == null) return "—";
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.FRANCE);
-        symbols.setGroupingSeparator(' ');
-        symbols.setDecimalSeparator(',');
-        DecimalFormat formatter = new DecimalFormat("#,##0.00", symbols);
-        return formatter.format(montant);
     }
 }

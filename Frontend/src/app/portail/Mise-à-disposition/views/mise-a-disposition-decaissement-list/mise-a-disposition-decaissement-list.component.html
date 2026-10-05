@@ -194,10 +194,10 @@
                     [routerLink]="['/portail/Mise-a-disposition/edit', mad.id]">
             </button>
             @if (isAdmin) {
-              <p-inputSwitch
+              <p-inputSwitch #sw
                 [ngModel]="mad.statut === StatutMoyenPaiement.ENCOURS"
                 [disabled]="mad.statut === StatutMoyenPaiement.ANNULE"
-                (onChange)="confirmToggleStatus(mad)">
+                (onChange)="confirmToggleStatus(mad, sw)">
               </p-inputSwitch>
               <button pButton pRipple icon="pi pi-trash"
                       class="p-button-rounded p-button-outlined p-button-danger"

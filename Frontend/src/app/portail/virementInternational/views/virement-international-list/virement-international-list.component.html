@@ -253,9 +253,9 @@
               tooltipPosition="top">
             </button>
             @if (isAdmin) {
-              <p-inputSwitch [ngModel]="virement.statut === StatutMoyenPaiement.ENCOURS"
+              <p-inputSwitch #sw [ngModel]="virement.statut === StatutMoyenPaiement.ENCOURS"
                              [disabled]="virement.statut === StatutMoyenPaiement.ANNULE"
-                             (onChange)="confirmToggleStatus(virement)">
+                             (onChange)="confirmToggleStatus(virement, sw)">
               </p-inputSwitch>
               <button pButton
                       pRipple

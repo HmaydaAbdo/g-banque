@@ -24,18 +24,17 @@ import staport.finance.gBanque.prelevements.metrics.PrelevementMetrics;
 import staport.finance.gBanque.prelevements.repository.PrelevementRepository;
 import staport.finance.gBanque.prelevements.spec.PrelevementSpec;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
 
 import java.awt.Color;
 import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 @Service
 public class PrelevementService implements IPrelevementService {
@@ -302,7 +301,7 @@ public class PrelevementService implements IPrelevementService {
 
                                 addPdfCell(table, p.getLibelle(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                                 addPdfCell(table, p.getBanque() != null ? p.getBanque().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
-                                addPdfCell(table, formatMontantPdf(p.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                                addPdfCell(table, MontantFormatter.format(p.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
                                 addPdfCell(table, p.getDateEmission() != null ? p.getDateEmission().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
 
                                 boolean paye = p.getStatus() == Status.PAYE;
@@ -325,7 +324,7 @@ public class PrelevementService implements IPrelevementService {
                             totalLabel.setBorderColor(medBlue);
                             table.addCell(totalLabel);
 
-                            PdfPCell totalVal = new PdfPCell(new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                            PdfPCell totalVal = new PdfPCell(new Phrase(MontantFormatter.format(totalMontant) + " MAD", totalFont));
                             totalVal.setBackgroundColor(lightBlue);
                             totalVal.setPadding(5f);
                             totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -361,14 +360,6 @@ public class PrelevementService implements IPrelevementService {
         table.addCell(cell);
     }
 
-    private String formatMontantPdf(BigDecimal montant) {
-        if (montant == null) return "—";
-        NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
-        nf.setMinimumFractionDigits(2);
-        nf.setMaximumFractionDigits(2);
-        return nf.format(montant);
-    }
-
     private List<String> buildFilterSummary(PrelevementSearchDto dto) {
         List<String> lines = new ArrayList<>();
         if (dto == null) return lines;
@@ -384,7 +375,7 @@ public class PrelevementService implements IPrelevementService {
         if (dto.getStatus() != null)
             lines.add("Statut : " + dto.getStatus());
         if (dto.getMontant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.getMontant()) + " MAD");
+            lines.add("Montant : " + MontantFormatter.format(dto.getMontant()) + " MAD");
         return lines;
     }
 }

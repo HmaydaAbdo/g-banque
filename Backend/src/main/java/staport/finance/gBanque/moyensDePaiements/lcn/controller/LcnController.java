@@ -70,10 +70,17 @@ public class LcnController {
         return ResponseEntity.ok(result);
     }
 
-    @Operation(summary = "Lister les LCN d'encaissement")
+    @Operation(summary = "Lister les LCN d'encaissement (hors escompte)")
     @GetMapping("/encaissements")
     public ResponseEntity<Page<LcnResponseDTO>> getAllEncaissements(LcnSearchDTO searchDto, @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
         Page<LcnResponseDTO> result = lcnService.getEncaissements(searchDto, pageable);
+        return ResponseEntity.ok(result);
+    }
+
+    @Operation(summary = "Lister les LCN d'escompte")
+    @GetMapping("/escomptes")
+    public ResponseEntity<Page<LcnResponseDTO>> getAllEscomptes(LcnSearchDTO searchDto, @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
+        Page<LcnResponseDTO> result = lcnService.getEscomptes(searchDto, pageable);
         return ResponseEntity.ok(result);
     }
 
@@ -90,6 +97,13 @@ public class LcnController {
     @GetMapping("/encaissements/export/pdf")
     public ResponseEntity<byte[]> exportEncaissementsPdf(LcnSearchDTO searchDto) {
         return pdfResponse(lcnService.exportEncaissementsPdf(searchDto), "lcn_encaissements");
+    }
+
+    @Operation(summary = "Exporter les LCN d'escompte en PDF",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/escomptes/export/pdf")
+    public ResponseEntity<byte[]> exportEscomptesPdf(LcnSearchDTO searchDto) {
+        return pdfResponse(lcnService.exportEscomptesPdf(searchDto), "lcn_escomptes");
     }
 
     @Operation(summary = "Exporter les LCN de décaissement en PDF",

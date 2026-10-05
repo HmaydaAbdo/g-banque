@@ -32,18 +32,17 @@ import staport.finance.gBanque.prefinancement.mapper.PrefinancementMapper;
 import staport.finance.gBanque.prefinancement.repository.PrefinancementRepository;
 import staport.finance.gBanque.prefinancement.spec.PrefinancementSpecification;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
 
 import java.awt.Color;
 import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -334,7 +333,7 @@ public class PrefinancementServiceImpl implements IPrefinancementService {
                                 addPdfCell(table, marche != null ? marche.getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                                 addPdfCell(table, marche != null && marche.getBanque() != null ? marche.getBanque().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                                 addPdfCell(table, p.getType() == Type.DEBLOCAGE ? "Déblocage" : "Remboursement", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
-                                addPdfCell(table, formatMontantPdf(p.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                                addPdfCell(table, MontantFormatter.format(p.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
                                 addPdfCell(table, p.getDateEmission() != null ? p.getDateEmission().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
                                 addPdfCell(table, p.getDateValeur() != null ? p.getDateValeur().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
 
@@ -361,7 +360,7 @@ public class PrefinancementServiceImpl implements IPrefinancementService {
                             table.addCell(totalLabel);
 
                             PdfPCell totalVal = new PdfPCell(
-                                    new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                                    new Phrase(MontantFormatter.format(totalMontant) + " MAD", totalFont));
                             totalVal.setBackgroundColor(lightBlue);
                             totalVal.setPadding(5f);
                             totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -396,14 +395,6 @@ public class PrefinancementServiceImpl implements IPrefinancementService {
         cell.setBorderColor(border);
         cell.setBorderWidth(0.5f);
         table.addCell(cell);
-    }
-
-    private String formatMontantPdf(BigDecimal montant) {
-        if (montant == null) return "—";
-        NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
-        nf.setMinimumFractionDigits(2);
-        nf.setMaximumFractionDigits(2);
-        return nf.format(montant);
     }
 
     private List<String> buildFilterSummary(PrefinancementSearchDTO criteria) {

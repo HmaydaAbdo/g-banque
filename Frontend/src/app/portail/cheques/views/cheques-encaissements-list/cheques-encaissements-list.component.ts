@@ -4,7 +4,7 @@ import { Button } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DatePipe, DecimalPipe, NgClass, NgIf } from '@angular/common';
 import { DropdownModule } from 'primeng/dropdown';
-import { InputSwitchModule } from 'primeng/inputswitch';
+import {InputSwitch, InputSwitchModule} from 'primeng/inputswitch';
 import { InputTextModule } from 'primeng/inputtext';
 import { PaginatorModule } from 'primeng/paginator';
 import { ConfirmationService, MenuItem, MessageService, PrimeTemplate, SelectItem } from 'primeng/api';
@@ -225,7 +225,9 @@ export class ChequesEncaissementsListComponent implements OnInit, OnDestroy {
     }
   }
 
-  confirmToggleStatus(cheque: ChequeResponseDto): void {
+  confirmToggleStatus(cheque: ChequeResponseDto, sw: InputSwitch): void {
+    // Le switch bascule visuellement au clic : on le recale sur le statut réel si l'opération n'aboutit pas.
+    const resync = () => sw.writeValue(cheque.statut === StatutMoyenPaiement.ENCOURS);
     const toRegle = cheque.statut === StatutMoyenPaiement.ENCOURS;
     this.confirmationService.confirm({
       message: `Êtes-vous sûr de vouloir ${toRegle ? 'régler' : 'remettre en cours'} le chèque ID ${cheque.id} ?`,
@@ -235,11 +237,12 @@ export class ChequesEncaissementsListComponent implements OnInit, OnDestroy {
       rejectLabel: 'Non',
       acceptButtonStyleClass: toRegle ? 'p-button-warning' : 'p-button-success',
       rejectButtonStyleClass: 'p-button-text',
-      accept: () => this.toggleChequeStatus(cheque.id)
+      accept: () => this.toggleChequeStatus(cheque.id, resync),
+      reject: resync
     });
   }
 
-  toggleChequeStatus(id: number): void {
+  toggleChequeStatus(id: number, onError: () => void): void {
     this.chequeService.toggleChequeStatus(id).subscribe({
       next: (updated) => {
         this.messageService.add({
@@ -251,6 +254,7 @@ export class ChequesEncaissementsListComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Erreur lors de la mise à jour du chèque:', err);
+        onError();
       }
     });
   }

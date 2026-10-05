@@ -58,6 +58,13 @@ public final class LcnSpecification {
         };
     }
 
+    /** Exclut les LCN d'escompte ; les LCN sans nature (données historiques) sont conservés. */
+    public static Specification<Lcn> isNotEscompte() {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.or(
+                criteriaBuilder.isNull(root.get("natureLcn")),
+                criteriaBuilder.notEqual(root.get("natureLcn"), NatureLcn.ESCOMPTE));
+    }
+
     public static Specification<Lcn> hasBeneficiaire(String beneficiaire) {
         return (root, query, criteriaBuilder) -> {
             if (beneficiaire == null || beneficiaire.trim().isEmpty()) {

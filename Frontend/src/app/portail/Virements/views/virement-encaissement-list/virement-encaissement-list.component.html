@@ -195,10 +195,10 @@
                     [routerLink]="['/portail/Virements/edit', virement.id]">
             </button>
             @if (isAdmin) {
-              <p-inputSwitch
+              <p-inputSwitch #sw
                 [ngModel]="virement.statut === StatutMoyenPaiement.ENCOURS"
                 [disabled]="virement.statut === StatutMoyenPaiement.ANNULE"
-                (onChange)="confirmToggleStatus(virement)">
+                (onChange)="confirmToggleStatus(virement, sw)">
               </p-inputSwitch>
               <button pButton pRipple icon="pi pi-trash"
                       class="p-button-rounded p-button-outlined p-button-danger"

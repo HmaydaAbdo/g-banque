@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { departmentGuard } from '../../auth/guards/department.guard';
+import { NatureLcn } from './dtos/NatureLcn';
 
 export const LCN_ROUTES: Routes = [
   {
@@ -11,6 +12,12 @@ export const LCN_ROUTES: Routes = [
     path: 'encaissements',
     loadComponent: () => import('./views/lcn-encaissements-list/lcn-encaissements-list.component').then(m => m.LcnEncaissementsListComponent),
     canActivate: [departmentGuard('Finance')]
+  },
+  {
+    path: 'escomptes',
+    loadComponent: () => import('./views/lcn-encaissements-list/lcn-encaissements-list.component').then(m => m.LcnEncaissementsListComponent),
+    canActivate: [departmentGuard('Finance')],
+    data: {nature: NatureLcn.ESCOMPTE}
   },
   {
     path: 'new',

@@ -22,13 +22,13 @@ import staport.finance.gBanque.operationErrone.specs.OperationErroneSpec;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
 
 import java.awt.Color;
 import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -256,7 +256,7 @@ public class OperationErroneServiceImpl implements IOperationErroneService {
                             addPdfCell(table, o.getLibelle(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                             addPdfCell(table, o.getBanque() != null ? o.getBanque().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                             addPdfCell(table, libelleMotif(o.getMotif()), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
-                            addPdfCell(table, formatMontantPdf(o.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                            addPdfCell(table, MontantFormatter.format(o.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
                             addPdfCell(table, o.getDateEmission() != null ? o.getDateEmission().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
 
                             boolean paye = o.getStatus() == Status.PAYE;
@@ -282,7 +282,7 @@ public class OperationErroneServiceImpl implements IOperationErroneService {
                         table.addCell(totalLabel);
 
                         PdfPCell totalVal = new PdfPCell(
-                                new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                                new Phrase(MontantFormatter.format(totalMontant) + " MAD", totalFont));
                         totalVal.setBackgroundColor(lightBlue);
                         totalVal.setPadding(5f);
                         totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -319,14 +319,6 @@ public class OperationErroneServiceImpl implements IOperationErroneService {
         table.addCell(cell);
     }
 
-    private String formatMontantPdf(BigDecimal montant) {
-        if (montant == null) return "—";
-        NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
-        nf.setMinimumFractionDigits(2);
-        nf.setMaximumFractionDigits(2);
-        return nf.format(montant);
-    }
-
     /** Libellé lisible d'un motif — même règle de formatage que le frontend (`formatMotifLabel`). */
     private String libelleMotif(TransactionSource motif) {
         if (motif == null) return "—";
@@ -354,7 +346,7 @@ public class OperationErroneServiceImpl implements IOperationErroneService {
         if (dto.libelle() != null && !dto.libelle().isBlank())
             lines.add("Libellé : " + dto.libelle());
         if (dto.montant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
+            lines.add("Montant : " + MontantFormatter.format(dto.montant()) + " MAD");
         if (dto.status() != null)
             lines.add("Statut : " + (dto.status() == Status.PAYE ? "Payée" : "Prévue"));
         if (dto.motif() != null)

@@ -208,31 +208,31 @@ export class DroitConstateListComponent implements OnInit {
   // ... (Garder toggleStatus et deleteDroitConstate tels quels)
 
   confirmToggleStatus(dc: DroitConstateResponseDto){
-    const confirmationMessage = `Êtes-vous sûr de vouloir ${dc.status==Status.PAYE ? 'désactiver' : 'activer'} ce droit constaté ?`;
+    const toPrevu = dc.status === Status.PAYE;
     this.confirmationService.confirm({
-      message: confirmationMessage,
-      header: `Confirmation de ${dc.status ? 'désactivation' : 'activation'}`,
+      message: `Êtes-vous sûr de vouloir marquer ce droit constaté comme ${toPrevu ? 'prévu' : 'payé'} ?`,
+      header: 'Confirmation',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Oui',
       rejectLabel: 'Non',
-      acceptButtonStyleClass: dc.status ? 'p-button-danger' : 'p-button-success',
+      acceptButtonStyleClass: toPrevu ? 'p-button-danger' : 'p-button-success',
       rejectButtonStyleClass: 'p-button-text',
       accept: () => {
         this.toggleStatus(dc);
-      }
+      },
+      reject: () => this.loadDroitsConstates(this.table.createLazyLoadMetadata())
     });
   }
 
   toggleStatus(dc: DroitConstateResponseDto) {
-    if (dc.status === Status.PAYE) return;
-      this.droitConstateService.toggleStatus(dc.id).subscribe({
-        next: () => {
-          this.messageService.add({severity: 'success', summary: 'Succès', detail: 'Statut mis à jour.'});
-          this.loadDroitsConstates(this.table.createLazyLoadMetadata());
-        },
-        error: () => {}
-      });
-    }
+    this.droitConstateService.toggleStatus(dc.id).subscribe({
+      next: () => {
+        this.messageService.add({severity: 'success', summary: 'Succès', detail: 'Statut mis à jour.'});
+        this.loadDroitsConstates(this.table.createLazyLoadMetadata());
+      },
+      error: () => this.loadDroitsConstates(this.table.createLazyLoadMetadata())
+    });
+  }
 
   /** Delete a droit constaté */
   deleteDroitConstate(dc: DroitConstateResponseDto) {

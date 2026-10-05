@@ -41,6 +41,7 @@ import staport.finance.gBanque.marches.service.IMarcheService;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
 import staport.finance.gBanque.reports.service.StaportExcelReportService;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
@@ -55,13 +56,11 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import java.awt.Color;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -334,7 +333,7 @@ public class CautionServiceImpl implements ICautionService {
             case "designation" -> c.getDesignation();
             case "dateDePrise" -> c.getDateDePrise() != null ? c.getDateDePrise().format(DATE_FMT) : "—";
             case "dateDeMainLevee" -> c.getDateDeMainLevee() != null ? c.getDateDeMainLevee().format(DATE_FMT) : "—";
-            case "montant" -> formatMontantPdf(c.getMontant());
+            case "montant" -> MontantFormatter.format(c.getMontant());
             case "taux" -> c.getTaux() != null ? c.getTaux().toPlainString() : "—";
             default -> "—";
         };
@@ -459,7 +458,7 @@ public class CautionServiceImpl implements ICautionService {
                                 table.addCell(totalLabel);
 
                                 PdfPCell totalVal = new PdfPCell(
-                                        new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                                        new Phrase(MontantFormatter.format(totalMontant) + " MAD", totalFont));
                                 totalVal.setBackgroundColor(lightBlue);
                                 totalVal.setPadding(5f);
                                 totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -467,7 +466,7 @@ public class CautionServiceImpl implements ICautionService {
                                 table.addCell(totalVal);
                             } else {
                                 PdfPCell totalVal = new PdfPCell(new Phrase(
-                                        totalLabelText + " : " + formatMontantPdf(totalMontant) + " MAD", totalFont));
+                                        totalLabelText + " : " + MontantFormatter.format(totalMontant) + " MAD", totalFont));
                                 totalVal.setBackgroundColor(lightBlue);
                                 totalVal.setPadding(5f);
                                 totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -507,14 +506,6 @@ public class CautionServiceImpl implements ICautionService {
         table.addCell(cell);
     }
 
-    private String formatMontantPdf(BigDecimal montant) {
-        if (montant == null) return "—";
-        NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
-        nf.setMinimumFractionDigits(2);
-        nf.setMaximumFractionDigits(2);
-        return nf.format(montant);
-    }
-
     // ── Export Excel ────────────────────────────────────────────────────────
 
     /**
@@ -541,7 +532,7 @@ public class CautionServiceImpl implements ICautionService {
         boolean montantInclus = colonnes.contains("montant");
 
         return staportExcelReportService.generateReport("Cautions", (workbook, sheet) -> {
-            short montantFormat = workbook.createDataFormat().getFormat("#,##0.00");
+            short montantFormat = workbook.createDataFormat().getFormat(MontantFormatter.EXCEL_FORMAT);
             int lastCol = colonnes.size() - 1;
 
             org.apache.poi.ss.usermodel.Font titleFont = workbook.createFont();
@@ -673,7 +664,7 @@ public class CautionServiceImpl implements ICautionService {
                     }
                     totalRow.getCell(montantIndex).setCellValue(totalMontant.doubleValue());
                 } else {
-                    totalRow.getCell(0).setCellValue(totalLabelText + " : " + formatMontantPdf(totalMontant) + " MAD");
+                    totalRow.getCell(0).setCellValue(totalLabelText + " : " + MontantFormatter.format(totalMontant) + " MAD");
                 }
             }
 
@@ -715,7 +706,7 @@ public class CautionServiceImpl implements ICautionService {
         if (criteres.dateDeMainLeveeFin() != null)
             lines.add("Date main levée max : " + criteres.dateDeMainLeveeFin().format(DATE_FMT));
         if (criteres.montant() != null)
-            lines.add("Montant : " + formatMontantPdf(criteres.montant()) + " MAD");
+            lines.add("Montant : " + MontantFormatter.format(criteres.montant()) + " MAD");
         if (criteres.actif() != null)
             lines.add("Statut : " + (criteres.actif() ? "Active" : "Inactive"));
 

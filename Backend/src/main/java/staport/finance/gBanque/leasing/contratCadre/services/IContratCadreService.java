@@ -8,7 +8,10 @@ import staport.finance.gBanque.leasing.contratCadre.dtos.ContratCadreSearchDTO;
 import staport.finance.gBanque.leasing.contratCadre.dtos.ContratCadreUpdateDTO;
 import staport.finance.gBanque.leasing.contratCadre.entities.ContratCadre;
 
+import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public interface IContratCadreService {
 
@@ -39,6 +42,13 @@ public interface IContratCadreService {
      * Utilisé par ContratLeasingService lors de la création d'un contrat leasing.
      */
     ContratCadre resolveActif(Long organismeId);
+
+    /**
+     * Plafond en cours de chaque organisme : celui de son contrat cadre ACTIF et non échu.
+     * Un organisme sans contrat cadre en cours est absent de la map (pas de plafond).
+     * Une seule requête pour tous les organismes demandés.
+     */
+    Map<Long, BigDecimal> findPlafondsEnCours(Collection<Long> organismeIds);
 
     /**
      * Exporte en PDF l'intégralité des contrats cadres correspondant aux filtres fournis

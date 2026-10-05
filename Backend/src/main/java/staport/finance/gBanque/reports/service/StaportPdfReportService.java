@@ -16,12 +16,9 @@ import staport.finance.gBanque.transactions.enums.TransactionSource;
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -30,6 +27,7 @@ import staport.finance.gBanque.recapitulatif.dtos.response.CategorieAmountDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecapGeneralDetailleAllBanquesDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecapGeneralDetailleDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.ResumeSectionDto;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 @Service
 public class StaportPdfReportService {
@@ -285,12 +283,7 @@ public class StaportPdfReportService {
     }
 
     private String formatCurrency(BigDecimal amount) {
-        if (amount == null) return "-";
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.FRANCE);
-        symbols.setGroupingSeparator(' ');
-        symbols.setDecimalSeparator(',');
-        DecimalFormat formatter = new DecimalFormat("#,##0.00", symbols);
-        return formatter.format(amount);
+        return amount == null ? "-" : MontantFormatter.format(amount);
     }
 
     private PdfPCell createCell(String text, Font font, int alignment) {

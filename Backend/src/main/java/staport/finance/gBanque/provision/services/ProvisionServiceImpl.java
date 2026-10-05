@@ -22,13 +22,13 @@ import staport.finance.gBanque.provision.repositories.ProvisionRepository;
 import staport.finance.gBanque.provision.spec.ProvisionSpecification;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
 import staport.finance.gBanque.transactions.enums.SensOperation;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
 
 import java.awt.Color;
 import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -259,7 +259,7 @@ public class ProvisionServiceImpl implements IProvisionService {
                             addPdfCell(table, p.getBanque() != null ? p.getBanque().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                             addPdfCell(table, libelleEnum(p.getMotif()), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                             addPdfCell(table, p.getSens() == SensOperation.ENCAISSEMENT ? "Encaissement" : "Décaissement", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
-                            addPdfCell(table, formatMontantPdf(p.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                            addPdfCell(table, MontantFormatter.format(p.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
                             addPdfCell(table, p.getDateEmission() != null ? p.getDateEmission().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
 
                             boolean paye = p.getStatus() == Status.PAYE;
@@ -284,7 +284,7 @@ public class ProvisionServiceImpl implements IProvisionService {
                         table.addCell(totalLabel);
 
                         PdfPCell totalVal = new PdfPCell(
-                                new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                                new Phrase(MontantFormatter.format(totalMontant) + " MAD", totalFont));
                         totalVal.setBackgroundColor(lightBlue);
                         totalVal.setPadding(5f);
                         totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -321,14 +321,6 @@ public class ProvisionServiceImpl implements IProvisionService {
         table.addCell(cell);
     }
 
-    private String formatMontantPdf(BigDecimal montant) {
-        if (montant == null) return "—";
-        NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
-        nf.setMinimumFractionDigits(2);
-        nf.setMaximumFractionDigits(2);
-        return nf.format(montant);
-    }
-
     /** Libellé lisible d'une valeur d'enum — même règle de formatage que le frontend (`formatMotifLabel`). */
     private String libelleEnum(Enum<?> value) {
         if (value == null) return "—";
@@ -356,7 +348,7 @@ public class ProvisionServiceImpl implements IProvisionService {
         if (dto.libelle() != null && !dto.libelle().isBlank())
             lines.add("Libellé : " + dto.libelle());
         if (dto.montant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
+            lines.add("Montant : " + MontantFormatter.format(dto.montant()) + " MAD");
         if (dto.status() != null)
             lines.add("Statut : " + (dto.status() == Status.PAYE ? "Payée" : "Prévue"));
         if (dto.motif() != null)

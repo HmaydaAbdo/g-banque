@@ -25,8 +25,8 @@ export interface ContratLeasingResponseDTO {
   nomOrganismeLeasing: string;
   /** ID du contrat cadre actif au moment de la signature. */
   contratCadreId: number;
-  /** Plafond du contrat cadre au moment de la signature. */
-  plafond: number;
+  /** Plafond en cours de l'organisme (contrat cadre actif non échu) ; null si l'organisme n'a aucun contrat cadre en cours. */
+  plafond: number | null;
   immobilisation: string;
   montantAchatTTC: number;
   dateDebut: string;

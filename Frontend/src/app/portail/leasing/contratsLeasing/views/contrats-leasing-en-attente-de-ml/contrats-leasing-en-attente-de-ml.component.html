@@ -18,16 +18,60 @@
         }
       </ng-template>
     </p-breadcrumb>
-    <p-button
-      label="Exporter PDF"
-      icon="pi pi-file-pdf"
-      severity="danger"
-      [outlined]="true"
-      size="small"
-      [loading]="exporting"
-      (onClick)="exportPdf()"
-      class="h-fit"
-    ></p-button>
+    <div class="flex gap-2">
+      <button pButton pRipple label="Exporter" class="p-button-outlined p-button-danger h-fit" size="small" icon="pi pi-download"
+              [loading]="exporting" (click)="toggleExportPanel($event)"></button>
+      <p-overlayPanel #exportColumnsPanel [style]="{ width: '440px', 'max-width': '95vw' }" [showCloseIcon]="true">
+        <div class="flex flex-column gap-3">
+          <div class="flex justify-content-between align-items-center">
+            <span class="text-sm font-semibold">Format d'export</span>
+          </div>
+      
+          <div class="flex gap-2">
+            <button pButton pRipple type="button" label="PDF" icon="pi pi-file-pdf"
+                    class="flex-1 p-button-sm"
+                    [class.p-button-outlined]="exportFormat !== 'pdf'"
+                    (click)="exportFormat = 'pdf'"></button>
+            <button pButton pRipple type="button" label="Excel" icon="pi pi-file-excel"
+                    class="flex-1 p-button-sm"
+                    [class.p-button-outlined]="exportFormat !== 'excel'"
+                    (click)="exportFormat = 'excel'"></button>
+          </div>
+      
+          <div class="flex justify-content-between align-items-center">
+            <span class="text-sm font-semibold">Colonnes à exporter</span>
+          </div>
+      
+          <div class="flex justify-content-between gap-2">
+            <button pButton pRipple type="button" label="Tout" class="p-button-text p-button-sm p-0"
+                    (click)="toggleAllColumns(true)"></button>
+            <button pButton pRipple type="button" label="Aucune" class="p-button-text p-button-sm p-0"
+                    (click)="toggleAllColumns(false)"></button>
+          </div>
+      
+          <div class="grid m-0">
+            @for (col of exportColumns; track col.key) {
+              <div class="col-6 p-1 flex align-items-center gap-2">
+                <p-checkbox [binary]="true" [(ngModel)]="col.checked" [ngModelOptions]="{standalone: true}" [inputId]="'col-' + col.key"></p-checkbox>
+                <label [for]="'col-' + col.key" class="text-sm cursor-pointer">{{ col.label }}</label>
+              </div>
+            }
+          </div>
+      
+          @if (!hasSelectedColumns) {
+            <small class="text-red-500">Sélectionnez au moins une colonne.</small>
+          }
+      
+          <button pButton pRipple type="button"
+                  [label]="exportFormat === 'pdf' ? 'Exporter PDF' : 'Exporter Excel'"
+                  [icon]="exportFormat === 'pdf' ? 'pi pi-file-pdf' : 'pi pi-file-excel'"
+                  [loading]="exporting"
+                  [disabled]="!hasSelectedColumns"
+                  (click)="confirmExport()">
+          </button>
+        </div>
+      </p-overlayPanel>
+    </div>
   </div>
 
   <!-- Formulaire de recherche -->
@@ -168,7 +212,7 @@
           <th pSortableColumn="contratCadre.organisme.nom">Organisme Leasing </th>
           <th pSortableColumn="typeContrat">Type <p-sortIcon field="typeContrat"></p-sortIcon></th>
           <th pSortableColumn="montantAchatTTC">Montant Achat TTC <p-sortIcon field="montantAchatTTC"></p-sortIcon></th>
-          <th pSortableColumn="plafond">Plafond <p-sortIcon field="plafond"></p-sortIcon></th>
+          <th>Plafond organisme</th>
           <th>Échéances</th>
           <th pSortableColumn="dateDebut">Début <p-sortIcon field="dateDebut"></p-sortIcon></th>
           <th pSortableColumn="periodeEnMois">Durée <p-sortIcon field="periodeEnMois"></p-sortIcon></th>
@@ -191,7 +235,7 @@
             </p-tag>
           </td>
           <td><span class="num">{{ contrat.montantAchatTTC | number:'1.2-2' }} MAD</span></td>
-          <td><span class="num">{{ contrat.plafond | number:'1.2-2' }} MAD</span></td>
+          <td><span class="num">{{ contrat.plafond != null ? (contrat.plafond | number:'1.2-2') + ' MAD' : '—' }}</span></td>
           <td>
             <div class="flex align-items-center gap-2">
               <span class="num font-semibold">{{ getEcheancesDisplay(contrat) }}</span>

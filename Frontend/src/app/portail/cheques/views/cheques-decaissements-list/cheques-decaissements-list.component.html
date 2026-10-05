@@ -187,11 +187,11 @@
           </td>
           <td class="flex flex-row gap-2">
             @if (isAdmin) {
-              <p-inputSwitch
+              <p-inputSwitch #sw
                 [ngModel]="cheque.statut === StatutMoyenPaiement.ENCOURS"
                 [disabled]="cheque.statut === StatutMoyenPaiement.ANNULE"
                 class="p-2"
-                (onChange)="confirmToggleStatus(cheque)">
+                (onChange)="confirmToggleStatus(cheque, sw)">
               </p-inputSwitch>
               <button pButton pRipple icon="pi pi-trash"
                       class="p-button-rounded p-button-outlined p-button-danger"

@@ -274,6 +274,7 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.errorMessage = 'Échec de la mise à jour du statut. Veuillez réessayer.';
+        this.loadTableauAmortissement(this.lastLazyLoadEvent);
       }
     });
   }

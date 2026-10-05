@@ -7,6 +7,7 @@ import { PageResponse } from "../../../global/types/PageResponse";
 import { ContratLeasingSearchDTO } from "../dtos/contrat-leasing-search";
 import { environment } from "../../../../../environments/environment";
 import { toLocalDateString } from "../../../global/types/date.utils";
+import { ContratLeasingExportFormat } from "../dtos/contrat-leasing-export-columns";
 
 
 
@@ -114,27 +115,38 @@ export class ContratLeasingService {
   }
 
   /**
-   * Exporte en PDF l'intégralité des contrats actifs correspondant aux filtres fournis
-   * (mêmes critères que {@link getActiveContrats}, sans pagination).
+   * Exporte (PDF ou Excel) l'intégralité des contrats actifs correspondant aux filtres fournis
+   * (mêmes critères que {@link getActiveContrats}, sans pagination), limitée aux colonnes demandées.
    */
-  exportActiveContratsPdf(searchDTO: ContratLeasingSearchDTO): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/actifs/export/pdf`, { params: this.buildFilterParams(searchDTO), responseType: 'blob' });
+  exportActiveContrats(searchDTO: ContratLeasingSearchDTO, format: ContratLeasingExportFormat, colonnes: string[]): Observable<Blob> {
+    return this.export('actifs', format, searchDTO, colonnes);
   }
 
   /**
-   * Exporte en PDF l'intégralité des contrats en attente de main levée correspondant
+   * Exporte (PDF ou Excel) l'intégralité des contrats en attente de main levée correspondant
    * aux filtres fournis (mêmes critères que {@link getPendingLienReleaseContrats}).
    */
-  exportPendingLienReleaseContratsPdf(searchDTO: ContratLeasingSearchDTO): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/en-attente-main-levee/export/pdf`, { params: this.buildFilterParams(searchDTO), responseType: 'blob' });
+  exportPendingLienReleaseContrats(searchDTO: ContratLeasingSearchDTO, format: ContratLeasingExportFormat, colonnes: string[]): Observable<Blob> {
+    return this.export('en-attente-main-levee', format, searchDTO, colonnes);
   }
 
   /**
-   * Exporte en PDF l'intégralité des contrats clôturés correspondant aux filtres fournis
+   * Exporte (PDF ou Excel) l'intégralité des contrats clôturés correspondant aux filtres fournis
    * (mêmes critères que {@link getInactiveContrats}).
    */
-  exportInactiveContratsPdf(searchDTO: ContratLeasingSearchDTO): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/inactifs/export/pdf`, { params: this.buildFilterParams(searchDTO), responseType: 'blob' });
+  exportInactiveContrats(searchDTO: ContratLeasingSearchDTO, format: ContratLeasingExportFormat, colonnes: string[]): Observable<Blob> {
+    return this.export('inactifs', format, searchDTO, colonnes);
+  }
+
+  private export(
+    path: 'actifs' | 'en-attente-main-levee' | 'inactifs',
+    format: ContratLeasingExportFormat,
+    searchDTO: ContratLeasingSearchDTO,
+    colonnes: string[]
+  ): Observable<Blob> {
+    let params = this.buildFilterParams(searchDTO);
+    colonnes.forEach(colonne => params = params.append('colonnes', colonne));
+    return this.http.get(`${this.apiUrl}/${path}/export/${format}`, { params, responseType: 'blob' });
   }
 
   getActiveContrats(

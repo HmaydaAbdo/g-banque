@@ -33,16 +33,14 @@ import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 import java.awt.Color;
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 
 @Service
@@ -255,7 +253,7 @@ public class AgiosService implements IAgiosService {
 
                         addAgiosPdfCell(table, a.libelle(), cellFont, rowBg, Element.ALIGN_LEFT);
                         addAgiosPdfCell(table, a.banqueNom(), cellFont, rowBg, Element.ALIGN_LEFT);
-                        addAgiosPdfCell(table, formatMontantAgios(a.montant()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addAgiosPdfCell(table, MontantFormatter.format(a.montant()), cellFont, rowBg, Element.ALIGN_RIGHT);
                         addAgiosPdfCell(table, a.dateEmission() != null ? a.dateEmission().format(DATE_FMT) : "—", cellFont, rowBg, Element.ALIGN_CENTER);
 
                         PdfPCell statusCell = new PdfPCell(new Phrase(
@@ -281,7 +279,7 @@ public class AgiosService implements IAgiosService {
                     totalLabel.setBorderColor(MED_BLUE);
                     table.addCell(totalLabel);
 
-                    PdfPCell totalVal = new PdfPCell(new Phrase(formatMontantAgios(totalMontant) + " MAD", totalFont));
+                    PdfPCell totalVal = new PdfPCell(new Phrase(MontantFormatter.format(totalMontant) + " MAD", totalFont));
                     totalVal.setBackgroundColor(LIGHT_BLUE);
                     totalVal.setPadding(5f);
                     totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -323,7 +321,7 @@ public class AgiosService implements IAgiosService {
             lines.add("Statut : " + dto.status().name());
         }
         if (dto.montant() != null) {
-            lines.add("Montant : " + formatMontantAgios(dto.montant()));
+            lines.add("Montant : " + MontantFormatter.format(dto.montant()));
         }
         if (dto.dateEmissionDebut() != null) {
             lines.add("Date d'émission min : " + dto.dateEmissionDebut().format(DATE_FMT));
@@ -354,14 +352,5 @@ public class AgiosService implements IAgiosService {
         cell.setBorderColor(BORDER_GRAY);
         cell.setBorderWidth(0.5f);
         table.addCell(cell);
-    }
-
-    private String formatMontantAgios(BigDecimal montant) {
-        if (montant == null) return "—";
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.FRANCE);
-        symbols.setGroupingSeparator(' ');
-        symbols.setDecimalSeparator(',');
-        DecimalFormat formatter = new DecimalFormat("#,##0.00", symbols);
-        return formatter.format(montant);
     }
 }

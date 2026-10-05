@@ -32,16 +32,14 @@ import staport.finance.gBanque.fraisBancaires.repositories.FraisBancaireReposito
 import staport.finance.gBanque.fraisBancaires.spec.FraisBancaireSpecification;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
+import staport.finance.gBanque.reports.utils.MontantFormatter;
 
 import java.awt.Color;
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -263,7 +261,7 @@ public class FraisBancaireServiceImpl implements IFraisBancaireService {
 
                         addFbPdfCell(table, f.libelle(), cellFont, rowBg, Element.ALIGN_LEFT);
                         addFbPdfCell(table, f.banqueNom(), cellFont, rowBg, Element.ALIGN_LEFT);
-                        addFbPdfCell(table, formatMontantFb(f.montant()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addFbPdfCell(table, MontantFormatter.format(f.montant()), cellFont, rowBg, Element.ALIGN_RIGHT);
                         addFbPdfCell(table, f.dateEmission() != null ? f.dateEmission().format(DATE_FMT) : "—", cellFont, rowBg, Element.ALIGN_CENTER);
 
                         PdfPCell statusCell = new PdfPCell(new Phrase(
@@ -286,7 +284,7 @@ public class FraisBancaireServiceImpl implements IFraisBancaireService {
                     totalLabel.setBorderColor(MED_BLUE);
                     table.addCell(totalLabel);
 
-                    PdfPCell totalVal = new PdfPCell(new Phrase(formatMontantFb(totalMontant) + " MAD", totalFont));
+                    PdfPCell totalVal = new PdfPCell(new Phrase(MontantFormatter.format(totalMontant) + " MAD", totalFont));
                     totalVal.setBackgroundColor(LIGHT_BLUE);
                     totalVal.setPadding(5f);
                     totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -328,7 +326,7 @@ public class FraisBancaireServiceImpl implements IFraisBancaireService {
             lines.add("Statut : " + dto.status().name());
         }
         if (dto.montant() != null) {
-            lines.add("Montant : " + formatMontantFb(dto.montant()));
+            lines.add("Montant : " + MontantFormatter.format(dto.montant()));
         }
         if (dto.dateEmissionDebut() != null) {
             lines.add("Date émission min : " + dto.dateEmissionDebut().format(DATE_FMT));
@@ -359,14 +357,5 @@ public class FraisBancaireServiceImpl implements IFraisBancaireService {
         cell.setBorderColor(BORDER_GRAY);
         cell.setBorderWidth(0.5f);
         table.addCell(cell);
-    }
-
-    private String formatMontantFb(BigDecimal montant) {
-        if (montant == null) return "—";
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.FRANCE);
-        symbols.setGroupingSeparator(' ');
-        symbols.setDecimalSeparator(',');
-        DecimalFormat formatter = new DecimalFormat("#,##0.00", symbols);
-        return formatter.format(montant);
     }
 }

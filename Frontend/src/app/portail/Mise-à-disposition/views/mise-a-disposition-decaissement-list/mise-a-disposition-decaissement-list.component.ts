@@ -16,7 +16,7 @@ import {ToolbarModule} from 'primeng/toolbar';
 import {ConfirmationService, MenuItem, MessageService, SelectItem} from 'primeng/api';
 import {ConfirmDialogModule} from 'primeng/confirmdialog';
 import {DropdownModule} from 'primeng/dropdown';
-import {InputSwitchModule} from "primeng/inputswitch";
+import {InputSwitch, InputSwitchModule} from "primeng/inputswitch";
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import {RouterLink, RouterLinkActive} from "@angular/router";
 import {CalendarModule} from "primeng/calendar";
@@ -224,7 +224,9 @@ export class MiseADispositionDecaissementListComponent implements OnInit, OnDest
     }
   }
 
-  confirmToggleStatus(mad: MiseADispositionResponseDto): void {
+  confirmToggleStatus(mad: MiseADispositionResponseDto, sw: InputSwitch): void {
+    // Le switch bascule visuellement au clic : on le recale sur le statut réel si l'opération n'aboutit pas.
+    const resync = () => sw.writeValue(mad.statut === StatutMoyenPaiement.ENCOURS);
     const toRegle = mad.statut === StatutMoyenPaiement.ENCOURS;
     this.confirmationService.confirm({
       message: `Êtes-vous sûr de vouloir ${toRegle ? 'régler' : 'remettre en cours'} la mise à disposition N° ${mad.numero} ?`,
@@ -234,11 +236,12 @@ export class MiseADispositionDecaissementListComponent implements OnInit, OnDest
       rejectLabel: 'Non',
       acceptButtonStyleClass: toRegle ? 'p-button-warning' : 'p-button-success',
       rejectButtonStyleClass: 'p-button-text',
-      accept: () => this.toggleMiseADispositionStatus(mad.id)
+      accept: () => this.toggleMiseADispositionStatus(mad.id, resync),
+      reject: resync
     });
   }
 
-  toggleMiseADispositionStatus(id: number): void {
+  toggleMiseADispositionStatus(id: number, onError: () => void): void {
     this.miseADispositionService.toggleMiseADispositionStatus(id).subscribe({
       next: (updated) => {
         this.messageService.add({
@@ -250,6 +253,7 @@ export class MiseADispositionDecaissementListComponent implements OnInit, OnDest
       },
       error: (err) => {
         console.error('Erreur lors de la mise à jour de la mise à disposition:', err);
+        onError();
       }
     });
   }

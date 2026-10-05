@@ -2,6 +2,7 @@ package staport.finance.gBanque.leasing.contratLeasing.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import java.util.List;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingRequestDTO;
@@ -33,20 +34,41 @@ public interface ContratLeasingService {
     /**
      * Exporte en PDF l'intégralité des contrats actifs correspondant aux filtres fournis
      * (mêmes critères que {@link #getActiveContrats}) — sans pagination.
+     *
+     * @param colonnes clés des colonnes à inclure, dans l'ordre canonique du module (voir
+     *                 {@code ContratLeasingServiceImpl.LEASING_EXPORT_COLUMNS}) ; {@code null}, vide ou sans
+     *                 clé reconnue ⇒ toutes les colonnes
      */
-    byte[] exportActiveContratsPdf(ContratLeasingSearchDTO searchDTO);
+    byte[] exportActiveContratsPdf(ContratLeasingSearchDTO searchDTO, List<String> colonnes);
+
+    /** Idem {@link #exportActiveContratsPdf}, au format Excel (.xlsx). */
+    byte[] exportActiveContratsExcel(ContratLeasingSearchDTO searchDTO, List<String> colonnes);
 
     /**
      * Exporte en PDF l'intégralité des contrats en attente de main levée correspondant
      * aux filtres fournis (mêmes critères que {@link #getPendingLienReleaseContrats}).
+     *
+     * @param colonnes clés des colonnes à inclure, dans l'ordre canonique du module (voir
+     *                 {@code ContratLeasingServiceImpl.LEASING_EXPORT_COLUMNS}) ; {@code null}, vide ou sans
+     *                 clé reconnue ⇒ toutes les colonnes
      */
-    byte[] exportPendingLienReleaseContratsPdf(ContratLeasingSearchDTO searchDTO);
+    byte[] exportPendingLienReleaseContratsPdf(ContratLeasingSearchDTO searchDTO, List<String> colonnes);
+
+    /** Idem {@link #exportPendingLienReleaseContratsPdf}, au format Excel (.xlsx). */
+    byte[] exportPendingLienReleaseContratsExcel(ContratLeasingSearchDTO searchDTO, List<String> colonnes);
 
     /**
      * Exporte en PDF l'intégralité des contrats clôturés correspondant aux filtres fournis
      * (mêmes critères que {@link #getInactiveContrats}).
+     *
+     * @param colonnes clés des colonnes à inclure, dans l'ordre canonique du module (voir
+     *                 {@code ContratLeasingServiceImpl.LEASING_EXPORT_COLUMNS}) ; {@code null}, vide ou sans
+     *                 clé reconnue ⇒ toutes les colonnes
      */
-    byte[] exportInactiveContratsPdf(ContratLeasingSearchDTO searchDTO);
+    byte[] exportInactiveContratsPdf(ContratLeasingSearchDTO searchDTO, List<String> colonnes);
+
+    /** Idem {@link #exportInactiveContratsPdf}, au format Excel (.xlsx). */
+    byte[] exportInactiveContratsExcel(ContratLeasingSearchDTO searchDTO, List<String> colonnes);
 
     /**
      * Retourne l'entité ContratLeasing ou lève ResourceNotFoundException.
