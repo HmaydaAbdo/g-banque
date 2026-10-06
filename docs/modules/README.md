@@ -1545,7 +1545,7 @@ banque :
 
 | Banque | Génération | Date d'émission | Mois facturé | Prorata d'entrée | Prorata de sortie | TVA générée |
 |---|---|---|---|---|---|---|
-| **AWB** | Fin de mois | Dernier jour du mois de référence | Mois courant | Géré par le traitement mensuel (pas à la création) | Oui (jusqu'à la date de main levée) | Non |
+| **AWB** | Fin de mois | Dernier jour du mois de référence | Mois courant | Géré par le traitement mensuel (pas à la création), jour de délivrance non facturé | Oui (jusqu'à la date de main levée) | Non |
 | **BMCI** | Fin de mois | Dernier jour du mois M+1 | Mois suivant (M+1) | Oui, à la création (`dateEmission = dateDePrise`) | Non (mois entier à la clôture) | Oui (10 % du montant HT) |
 | **CDM** | Début de mois | Premier jour du mois de référence | Mois courant | Oui, à la création (`dateEmission = dateDePrise`) | Non (mois entier à la clôture) | Non |
 | **SAHAM BANK** | Fin de mois | Dernier jour du mois de référence | Mois suivant (M+1), sauf 1er mois | Oui, à la création (`dateEmission = dateDePrise`) | Non (mois entier à la clôture) | Non |
@@ -1553,6 +1553,25 @@ banque :
 Cas particulier commun à toutes les banques : si la date de prise et la date de main levée tombent
 dans le même mois calendaire, le nombre de jours facturés à la clôture est calculé entre les deux
 dates exactes (et non sur le mois entier).
+
+**Particularité AWB — jour de délivrance non facturé.** AWB ne facture pas le jour de délivrance
+de la caution (la date de prise). Pour le premier mois d'une caution AWB, le décompte des jours
+commence donc le lendemain de la date de prise et va jusqu'au dernier jour du mois inclus. Il en
+va de même lorsque la date de prise et la date de main levée tombent dans le même mois : le jour
+de prise n'est pas compté, le jour de main levée l'est. Les mois complets et le prorata de sortie
+(du 1er du mois jusqu'à la date de main levée incluse) ne sont pas concernés. Le montant minimum
+de la banque continue de s'appliquer si le résultat lui est inférieur.
+
+Exemples pour une caution AWB de 1 000 000 MAD au taux de 1,5 % (diviseur 36 000) :
+
+| Situation | Jours facturés | Commission |
+|---|---|---|
+| Prise le 19/05, premier mois | du 20/05 au 31/05 = 12 jours | 500,00 MAD |
+| Prise le 10/05, main levée le 20/05 | du 11/05 au 20/05 = 10 jours | 416,67 MAD |
+| Mois complet de juin | 30 jours | 1 250,00 MAD |
+
+Cette règle s'applique aux commissions calculées à partir du 06/10/2026 ; les commissions déjà
+générées auparavant ne sont pas recalculées automatiquement.
 
 ---
 

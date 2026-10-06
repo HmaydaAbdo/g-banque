@@ -359,7 +359,9 @@ mensuelle, et suivi du statut de chaque caution sont pris en charge directement 
   BANK) applique sa propre formule et son propre calendrier de facturation — génération
   automatique chaque fin de mois (AWB, BMCI) ou début de mois (CDM), y compris les cas
   particuliers de prorata (caution ouverte et clôturée dans le même mois, premier mois d'une
-  caution).
+  caution) et les règles propres à chaque banque, comme la non-facturation du jour de délivrance
+  chez AWB — les commissions prévues correspondent ainsi au montant réellement prélevé par la
+  banque.
 - **TVA automatique** : calculée et enregistrée en même temps que la commission pour les banques
   qui l'exigent.
 - **Paramètres administrables** : seuils de commission minimum et mode de calcul du prorata

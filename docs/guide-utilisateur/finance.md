@@ -456,6 +456,12 @@ pour la date de prise (du/au) et la date de main levée (du/au).
 > Si la banque choisie applique un prorata d'entrée (voir guide Administration pour la liste des
 > banques concernées), une commission couvrant les premiers jours du mois est générée
 > automatiquement dès la création.
+>
+> **Cas AWB** : aucune commission n'est générée à la création ; la commission du premier mois
+> est calculée par la génération de fin de mois. AWB ne facturant pas le jour de délivrance, elle
+> couvre les jours allant du **lendemain** de la date de prise jusqu'à la fin du mois (exemple :
+> prise le 19/05 → 12 jours facturés, du 20/05 au 31/05). Le libellé de la commission indique le
+> nombre de jours retenu (ex. « Prorata entrée : 12 j »).
 
 ### Modifier une caution
 
@@ -490,7 +496,9 @@ pour la date de prise (du/au) et la date de main levée (du/au).
 3. Confirmer.
 
 > La clôture génère automatiquement la commission finale due (calculée au prorata jusqu'à la date
-> de main levée) et, selon la banque, la TVA correspondante. La caution passe alors au statut
+> de main levée) et, selon la banque, la TVA correspondante. Pour une caution AWB prise et
+> clôturée dans le même mois, le jour de prise n'est pas facturé et le jour de main levée l'est
+> (exemple : prise le 10/05, main levée le 20/05 → 10 jours facturés). La caution passe alors au statut
 > **clôturée** et n'est plus modifiable.
 >
 > La clôture est bloquée si la caution est déjà clôturée, ou si aucune règle de calcul de

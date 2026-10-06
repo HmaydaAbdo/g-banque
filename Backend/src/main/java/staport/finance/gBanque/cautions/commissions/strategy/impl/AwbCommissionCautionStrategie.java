@@ -35,6 +35,9 @@ import java.time.temporal.ChronoUnit;
  *   <li>TVA non générée séparément (default genererTva = false)</li>
  *   <li>Prorata d'entrée géré par le <strong>batch</strong> (pas à la création) —
  *       {@code supporteProrataEntree() = false}</li>
+ *   <li>Le jour de délivrance ({@code dateDePrise}) n'est <strong>pas facturé</strong> :
+ *       le décompte des jours du premier mois commence le lendemain de la date de prise
+ *       (prorata d'entrée et cas prise/main levée dans le même mois)</li>
  *   <li>Prorata de sortie actif — {@code supporteProrataSortie() = true}</li>
  * </ul>
  */
@@ -72,11 +75,12 @@ public class AwbCommissionCautionStrategie implements CommissionCautionStrategie
         long nombreJours;
         String suffixeLibelle;
 
-        // Prorata entrée : 1er mois de la caution → de dateDePrise à fin de mois
+        // Prorata entrée : 1er mois de la caution → du lendemain de dateDePrise à fin de mois
+        // (AWB ne facture pas le jour de délivrance)
         if (caution.getDateDePrise() != null
                 && YearMonth.from(caution.getDateDePrise()).equals(moisReference)) {
             nombreJours = ChronoUnit.DAYS.between(
-                    caution.getDateDePrise(),
+                    caution.getDateDePrise().plusDays(1),     // jour de délivrance exclu
                     moisReference.atEndOfMonth().plusDays(1) // borne exclusive
             );
             suffixeLibelle = " — Prorata entrée : " + nombreJours + " j";
@@ -97,12 +101,13 @@ public class AwbCommissionCautionStrategie implements CommissionCautionStrategie
         String suffixeLibelle;
 
         // Cas particulier : dateDePrise et dateDeMainLevee dans le même mois
-        // → facturer uniquement les jours entre les deux dates (inclusif des deux bornes)
+        // → facturer uniquement les jours entre les deux dates :
+        //   jour de délivrance exclu (règle AWB), jour de main levée inclus
         if (caution.getDateDePrise() != null
                 && YearMonth.from(caution.getDateDePrise()).equals(moisMainLevee)) {
             nombreJours   = ChronoUnit.DAYS.between(
-                    caution.getDateDePrise(),
-                    dateDeMainLevee.plusDays(1) // borne exclusive
+                    caution.getDateDePrise().plusDays(1), // jour de délivrance exclu
+                    dateDeMainLevee.plusDays(1)          // borne exclusive
             );
             suffixeLibelle = " — Même mois (prise→clôture) : " + nombreJours + " j";
         } else {
