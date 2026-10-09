@@ -175,7 +175,7 @@ jobs:
             context: Frontend
             trivy-exit-code: "1"
     env:
-      DOCKERHUB_NAMESPACE: ${{ vars.DOCKERHUB_USERNAME }}
+      DOCKERHUB_NAMESPACE: ${{ vars.DOCKERHUB_USERNAME || secrets.DOCKERHUB_USERNAME }}
       IMAGE: gbanque-${{ matrix.name }}
     steps:
       - uses: actions/checkout@v4
@@ -206,7 +206,7 @@ jobs:
           exit-code: ${{ matrix.trivy-exit-code }}
 
       # Push uniquement depuis main, et seulement si Docker Hub est configuré
-      # (variable de dépôt DOCKERHUB_USERNAME + secret DOCKERHUB_TOKEN).
+      # (DOCKERHUB_USERNAME en variable ou secret + secret DOCKERHUB_TOKEN).
       - name: Connexion Docker Hub
         id: login
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && env.DOCKERHUB_NAMESPACE != ''
