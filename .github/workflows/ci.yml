@@ -179,7 +179,7 @@ jobs:
       - uses: docker/setup-buildx-action@v3
 
       - name: Build (chargé en local pour scan)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.context }}
           load: true
@@ -208,7 +208,7 @@ jobs:
 
       - name: Push Docker Hub
         if: steps.login.outcome == 'success'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.context }}
           push: true
