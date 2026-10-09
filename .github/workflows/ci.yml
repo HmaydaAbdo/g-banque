@@ -146,16 +146,12 @@ jobs:
 
       # Dépendances (pom.xml, package-lock.json), Dockerfile, IaC. HIGH/CRITICAL corrigeables uniquement.
       - name: Trivy — dépendances et configuration
-        uses: aquasecurity/trivy-action@v0.33.1
-        with:
-          scan-type: fs
-          scan-ref: .
-          scanners: vuln,misconfig
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
-          # Backend : Spring Boot 3.3.1 porte des CVE connues (voir TODO.md, chantier montée de version).
-          # Rapport seul tant que la montée de version n'est pas faite ; repasser à "1" ensuite.
-          exit-code: "0"
+        # Backend : Spring Boot 3.3.1 porte des CVE connues (voir TODO.md, chantier montée de version).
+        # pom.xml exclu : Trivy interroge Maven Central (429 sur les runners partagés) ; les dépendances Java sont
+        # couvertes par le scan de l'image backend (job images).
+        # Rapport seul (--exit-code 0) tant que la montée de version n'est pas faite ; repasser à 1 ensuite.
+        run: |
+          docker run --rm -v "$PWD:/src" -v trivy-cache:/root/.cache aquasec/trivy:0.75.0             fs --skip-files /src/Backend/pom.xml --scanners vuln,misconfig --severity HIGH,CRITICAL --ignore-unfixed --exit-code 0 /src
 
   # ---------------------------------------------------------------------------
   images:
@@ -197,13 +193,8 @@ jobs:
           echo "### Image ${{ matrix.name }} : $((SIZE/1024/1024)) Mo" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Scan Trivy de l'image
-        uses: aquasecurity/trivy-action@v0.33.1
-        with:
-          image-ref: ${{ env.IMAGE }}:ci
-          scanners: vuln
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
-          exit-code: ${{ matrix.trivy-exit-code }}
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-cache:/root/.cache             aquasec/trivy:0.75.0 image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed             --exit-code ${{ matrix.trivy-exit-code }} "$IMAGE:ci"
 
       # Push uniquement depuis main, et seulement si Docker Hub est configuré
       # (DOCKERHUB_USERNAME en variable ou secret + secret DOCKERHUB_TOKEN).
