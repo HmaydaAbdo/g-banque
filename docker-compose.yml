@@ -95,6 +95,8 @@ services:
         condition: service_healthy
     ports:
       - "127.0.0.1:8080:8080"
+    volumes:
+      - backend-logs:/app/logs
     networks:
       - gbanque-network
     healthcheck:
@@ -193,3 +195,7 @@ services:
 networks:
   gbanque-network:
     driver: bridge
+
+volumes:
+  # Logs applicatifs du backend : un fichier par jour, conservés entre les redéploiements
+  backend-logs:

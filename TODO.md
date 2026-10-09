@@ -2,6 +2,111 @@
 
 ## En attente
 
+### Chantier — Agios unifiés : calculé vs facturé, tout calculé (lancé le 09/10/2026)
+
+> **Plan détaillé : `CHANTIER-AGIOS-UNIFIES.md`** (racine du dépôt) — à lire en premier dans la session dédiée.
+
+**Objectif (HMAYDA, 09/10/2026).** Fusionner `agios` (saisie manuelle), `agios_trimestriel` (périodes
+calculées) en un seul objet métier portant un **montant calculé** et un **montant facturé**, pour
+mesurer en permanence l'exactitude du calcul. On **garde** `agios_journalier` (calcul jour par jour).
+Plus aucune création manuelle d'agios « à la main » : tout type d'agios doit être **calculé**, donc
+tout type non couvert aujourd'hui doit être couvert, **cas par cas**. Les agios calculés alimentent
+les encours **en temps réel**. Séance de cadrage avec l'équipe Finance le 10/10/2026.
+
+**Constat de départ (dump du 09/10/2026, schéma d'analyse `gbanque_analysis`).**
+- 77 lignes `agios` (4 992 792,83 MAD) ; 46 sont des « arrêtés de trimestre » dont le type n'est pas
+  lisible dans le libellé ; 10 factoring, 10 intérêts débiteurs, 8 escompte LCN, 3 préfinancement.
+- Calcul qui colle à la banque (± quelques centimes) : facilité de caisse BMCI T1/T2, CIH T1-T3, SAHAM
+  T1-T3, CDM T2 ; préfinancement BMCE T2, CDM T2, SAHAM T3, CIH T3.
+- Calcul qui s'écarte : facilité de caisse AWB (T1 122 647 calculé / 118 207 facturé ; T2 74 392 /
+  71 696) et CDM T1 (20 174 / 19 941) ; BP (une seule ligne « intérêts débiteurs » agrégée, 79 675 en
+  T1 et 106 627 en T2, que le calcul ne reproduit pour aucun type).
+- **Non calculés du tout** : escompte LCN (8 lignes), petits frais fixes (AWB 110,00 ×8, 718,98,
+  678,27 ; SAHAM 6,41 ; CDM 5,34), frais d'engagement factoring (AWB), factoring BMCI hors mars et
+  septembre (10 lignes saisies sur 8 mois), droits constatés (aucun total calculé ne retrouve une ligne
+  bancaire). Périodes non couvertes : T4/2025 ; préfinancement et droits constatés du T1/2026.
+- Les 13 périodes clôturées pointent vers un `agios_definitif_id` qui n'existe plus : les agios
+  générés à la clôture ont été supprimés et remplacés par les lignes réelles de la banque.
+- Factoring BMCI mars : période restée `OUVERT` (211 825,80 calculé / 208 449,22 facturé).
+- **Anomalies de données à corriger avant migration** : la transaction 63 (AWB, 85 784,02, rapprochement 2)
+  référence l'agios 4 (SAHAM) au lieu de l'agios 16 (AWB, « INTERET DEBITEURS », PAYE sans transaction) ;
+  l'agios 4 est donc référencé par deux transactions.
+- Dépendances à traiter : 75 transactions de source `AGIOS` (référent = id de `agios`, à conserver ou
+  remapper), vue `v_recapitulatif_encours` (branche 14), 69 fichiers backend et 34 fichiers frontend
+  mentionnent « agios », validation unifiée (`AgiosValidationService`, handlers), PDF/Excel, docs
+  (4 niveaux + rbac), audit, métriques.
+
+**Plan.**
+
+0. **Séance Finance (10/10)** — décisions à obtenir (voir la liste de questions ci-dessous). Livrable :
+   le catalogue des types d'agios par banque et la règle de calcul de chacun.
+1. **Préparation des données** — typer les 77 lignes (banque, type, période) avec Finance ; produire la
+   matrice banque × type × période (✔ couvert, ◐ écart, ✘ non calculé) : elle sert de jeu de recette.
+   Corriger les deux anomalies ci-dessus (accord explicite avant toute écriture en base).
+2. **Couvrir les types manquants, un par un**, par ordre d'enjeu financier, chacun comme un nouveau
+   calculateur (interface `AgiosCalculateur` existante + `TypeAgios`), avec sa règle validée par Finance :
+   factoring (BMCI mensuel rétroactif + AWB frais d'engagement), intérêts agrégés BP, écart AWB facilité
+   de caisse (taux, date de valeur ?), droits constatés (facturés ou non ?), escompte LCN (nouveau
+   calculateur, formule par remise), frais fixes (paramétrage par banque), rétroactif T4/2025 et T1/2026
+   là où les données le permettent.
+3. **Modèle unifié** — **décision d'architecture attendue avant tout code** (voir options). Script de
+   migration versionné dans `sql/`, conservation des liens avec les transactions, vue des encours,
+   entité/API/frontend, validation unifiée, docs (modules, direction, guide-utilisateur, rbac).
+4. **Temps réel dans les encours** — l'encours d'agios d'une période en cours = le calculé cumulé jusqu'à
+   aujourd'hui, remplacé par le facturé dès qu'il est saisi (à confirmer avec Finance).
+5. **Recette** — comparer calculé/facturé sur tout l'historique migré ; seuil d'écart accepté fixé avec
+   Finance ; retrait de la saisie manuelle une fois tous les types couverts.
+
+**Options du modèle unifié (à trancher).**
+- **A (recommandée)** : une ligne par (banque, type, période[, marché]) avec `montant_calcule`,
+  `montant_facture`, `ecart` ; les débits réellement passés par la banque restent des lignes de
+  facturation rattachées (plusieurs par période, p. ex. CIH T3 en a 4) et c'est chacune qui est validée
+  dans le rapprochement. Deux tables, mais fidèle à la réalité bancaire.
+- **B** : une seule table, une ligne par débit bancaire (type + période renseignés), le calculé étant
+  sommé à la volée depuis `agios_journalier` — un seul objet, mais pas de colonne « calculé » stockée.
+
+**Décisions de HMAYDA (09/10/2026, réponses aux questions de cadrage).**
+- Un montant facturé par type et par période ; certains types sont mensuels (factoring), d'autres
+  trimestriels. Types calculés aujourd'hui : facilité de caisse, factoring, préfinancement, droits
+  constatés ; à ajouter : escompte LCN (règle de calcul à découvrir le 10/10).
+- Écart : on enregistre le **calculé** et le **facturé** ; **à la validation**, on précise le montant
+  exact facturé (le calculé est affiché à l'utilisateur) ; l'**écart** (en MAD et en %) n'est **jamais
+  enregistré**, il est recalculé à l'affichage.
+- Encours : affichent le **cumul calculé à ce jour** ; le **facturé remplace le calculé** dès qu'il est
+  saisi (c'est ce que la banque débite réellement).
+- TVA : on garde l'existant. Petits frais fixes : aucune règle connue à ce jour.
+- Les deux lignes `PREVU` (BMCI 300 000, AWB 23 251,30) : à remplacer par le calcul détaillé, **dernière
+  étape du chantier**.
+- Rétroactif : historique disponible seulement depuis 2026 ; les trimestres antérieurs ne sont pas
+  calculables.
+- Modèle : **option A** retenue, et **le calcul journalier est conservé** partout où il s'applique.
+
+**Points d'alimentation de `agios` repérés dans le code (09/10/2026).** Quatre chemins créent des
+agios, pas deux : (1) la saisie manuelle (`POST` `AgiosController.createAgios`) ; (2) la clôture d'une
+période (`AgiosOrchestrateurService.cloturerTrimestre`) ; (3) **`ChargesFixesScheduler`** (dernier jour du
+mois, 07h00) qui crée une ligne `PREVU` par charge fixe de type `AGIOS` — aujourd'hui une seule
+configuration : BMCI « AGIOS UTILISATION LIGNE ASMN FACTORING », 300 000,00, émission le 1er du mois,
+période ajoutée au libellé (c'est l'origine de la ligne `PREVU` factoring de BMCI) ; (4) les
+services de validation/synchronisation qui modifient le statut et les dates d'une ligne existante.
+Aucune création par import ou script SQL. Le chantier doit donc aussi retirer le type `AGIOS` de la
+configuration des charges fixes (écran « Charges fixes bancaires — Configuration »).
+
+**Questions pour Finance (10/10).**
+1. La banque débite-t-elle un montant par type et par période, ou agrège-t-elle (BP) ? Comment ventiler ?
+2. Quels types existent par banque (facilité de caisse, préfinancement, droits constatés, factoring,
+   escompte LCN, commissions d'engagement, frais fixes, autres) ? Fréquence mensuelle ou trimestrielle ?
+3. Droits constatés : facturés ? dans quelle ligne ? Règle de calcul exacte (base, taux, jours).
+4. Escompte LCN : formule (jours remise → échéance, taux, commission fixe, TVA) et où vit le taux.
+5. Petits frais fixes (110,00 AWB…) : montant, périodicité, par compte ou par banque ?
+6. Écart facturé/calculé : seuil acceptable (MAD ou %) ? Qui l'analyse ? Que fait-on d'un écart durable
+   (corriger le taux, enregistrer l'écart) ?
+7. Encours en temps réel : cumul à ce jour ou projection à la fin de période ? Calculé tant que non
+   facturé, facturé ensuite ?
+8. TVA : le facturé est-il saisi en TTC ? Les 1 502,81 (CIH T2/T3) sont-ils une commission fixe ?
+9. Les deux lignes `PREVU` (300 000 BMCI estimation factoring 09/2026 ; 23 251,30 AWB) : à remplacer
+   par le calculé ?
+10. Rétroactif : jusqu'où recalculer (T4/2025 ? T1/2026) ?
+
 ### Saisie libre du montant de TVA en validation (demandé le 07/09/2026)
 
 Dans le formulaire de validation (rapprochement), pour toutes les sources, permettre à
@@ -128,6 +233,32 @@ Voir `REFACTORING-VALIDATION-UNIFIEE.md` (journal complet, suites 8 à 11) et m�
   `REFACTORING-VALIDATION-UNIFIEE.md` (journal) pour le détail technique. **Rappel déploiement** :
   `sql/v_recapitulatif_encours.sql` doit être ré-exécuté sur la base pour que les 3 nouvelles
   colonnes existent — sans ça le backend échoue au premier appel de l'écran Récapitulatif.
+
+### Bascule du statut d'un virement — garde-fou contre le retour en « en cours » (relevé le 09/10/2026)
+
+**Constat.** Le virement n° 008981 (id 1814, BP, AGNI BTP, 30 000 MAD) est resté « En cours » alors
+que la transaction id 250 du rapprochement n° 5 de BP (janvier 2026) pointe sur lui
+(`referent = 1814`). Cas unique : les 1 584 autres transactions de type Virement pointent toutes
+vers un virement « Réglé ».
+
+**Cause la plus plausible** (non prouvable : l'historique d'audit ne commence que le 21/07/2026).
+`VirementService.toggleVirementStatus` bascule `REGLE` ↔ `ENCOURS` sans vérifier si une transaction
+de rapprochement pointe sur le virement : quelqu'un a pu le repasser en cours à la main. Le chemin
+d'annulation de validation (`VirementReversalHandler`) ne colle pas avec le cas 250 : il remet le
+virement en cours mais la transaction est alors supprimée.
+
+À faire (décisions de HMAYDA attendues avant toute modification) :
+
+1. **Corriger la donnée** du virement 1814 : passer à `REGLE` et reprendre
+   `date_operation` / `date_valeur` de la transaction 250 (19/01/2026). En attente d'accord
+   explicite — consigne antérieure « ne rien toucher en base » pour l'historique.
+2. **Garde-fou métier** : refuser le retour `REGLE` → `ENCOURS` par la bascule lorsqu'une
+   transaction référence le virement, avec un message clair (le retour en cours passe alors par
+   l'annulation de la validation dans le rapprochement). Changement de règle métier : à valider,
+   puis documenter dans `docs/modules`, `docs/guide-utilisateur` et `docs/rbac`
+   (chapitre Virements).
+3. Vérifier si les autres moyens de paiement disposant d'une bascule manuelle
+   (virements internationaux, etc.) ont le même défaut.
 
 ### Refonte visuelle — écrans États des encours (reporté le 20/09/2026)
 

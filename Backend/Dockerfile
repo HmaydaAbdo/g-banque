@@ -35,6 +35,11 @@ WORKDIR /app
 # Copy the built JAR from build stage
 COPY --from=build /app/target/gBanque-0.0.1-SNAPSHOT.jar app.jar
 
+# Répertoire des logs (un fichier par jour) — monté en volume nommé par docker-compose ;
+# créé ici pour que le volume hérite du propriétaire "spring" (utilisateur non-root).
+RUN mkdir -p /app/logs
+ENV LOG_DIR=/app/logs
+
 # Change ownership to non-root user
 RUN chown -R spring:spring /app
 

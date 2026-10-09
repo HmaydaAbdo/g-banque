@@ -72,7 +72,7 @@ Exemples :
 
 Utiliser uniquement pour le diagnostic technique.
 
-* Désactivé en production.
+* Désactivé sur la console de production (stdout, filtré à `INFO`). Écrit dans le fichier de logs en production, niveau réglable via `LOG_LEVEL_APP` (voir « Fichier de logs »).
 * Ne jamais utiliser pour tracer les événements métier.
 
 ---
@@ -155,8 +155,26 @@ Ne jamais logger dans :
 # Production
 
 * Les logs passent par un `AsyncAppender`.
-* Le format est JSON via `logstash-logback-encoder`.
-* Ne jamais écrire directement dans un fichier depuis le code.
+* Sur la console (stdout), le format est JSON via `logstash-logback-encoder`.
+* Ne jamais écrire directement dans un fichier depuis le code : le fichier de logs est géré uniquement par Logback.
+
+---
+
+# Fichier de logs
+
+Dev et prod écrivent, en plus de la console, dans un fichier texte lisible, **un fichier par jour** :
+
+```text
+<LOG_DIR>/gbanque-AAAA-MM-JJ.N.log
+```
+
+* `LOG_DIR` : variable d'environnement, `logs` par défaut (dev, relatif au dossier de lancement du backend), `/app/logs` dans le conteneur.
+* `N` vaut `0` tant que le fichier du jour reste sous 100 Mo, puis `1`, `2`…
+* Conservation : 90 jours, 5 Go maximum au total (les plus anciens sont supprimés).
+* En production, le dossier est le volume Docker nommé `backend-logs` : il survit aux redéploiements. Lecture : `docker exec gbanque-backend tail -f /app/logs/gbanque-$(date +%F).0.log`.
+* Format : `date heure NIVEAU [requestId] [userId] logger — message` (même pattern que la console dev).
+* Niveau du code applicatif (`staport.finance.gBanque`) : `DEBUG` en dev ; en prod `DEBUG` dans le fichier uniquement, la console JSON restant à `INFO`. Variable `LOG_LEVEL_APP` (ex. `INFO`) pour réduire sans rebuild. Les frameworks (Hibernate, Spring) restent à `WARN`.
+* Le dossier `logs/` n'est jamais versionné.
 
 ---
 

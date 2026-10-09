@@ -6,10 +6,43 @@
          Dev  (profil par défaut) : console lisible avec MDC requestId/userId
          Prod (profil "prod")     : async + JSON structuré (logstash-logback-encoder)
                                     → compatible ELK / Grafana Loki / Datadog
+         Les deux profils écrivent aussi dans un fichier par jour (voir FILE).
          MDC keys injectées automatiquement par MdcRequestFilter :
            requestId  — UUID de la requête (ou X-Request-ID header entrant)
            userId     — username du principal authentifié (vide sur routes publiques)
     ══════════════════════════════════════════════════════════════════ -->
+
+    <!-- ── Fichier de logs (dev + prod) ────────────────────────────────────
+         Un fichier par jour : ${LOG_DIR}/gbanque-AAAA-MM-JJ.N.log
+         (N = 0 tant que le fichier du jour reste sous maxFileSize, puis 1, 2…).
+         Format texte lisible (même pattern que la console dev), volontairement
+         distinct du JSON stdout de la prod : ce fichier est fait pour être lu
+         et recherché à la main (grep, tail -f), pas ingéré par un agent.
+         LOG_DIR : variable d'environnement, "logs" (relatif au répertoire de
+         lancement) par défaut ; /app/logs dans le conteneur (volume Docker). -->
+    <property name="LOG_DIR" value="${LOG_DIR:-logs}"/>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{requestId:---------}] [%X{userId:-anon}] %logger{36} — %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/gbanque-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>90</maxHistory>
+            <totalSizeCap>5GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- Async : l'écriture disque ne bloque jamais le thread HTTP -->
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <neverBlock>false</neverBlock>
+        <appender-ref ref="FILE"/>
+    </appender>
 
     <!-- ── Profil DEV (défaut) ─────────────────────────────────────────── -->
     <springProfile name="!prod">
@@ -20,6 +53,7 @@
                 <charset>UTF-8</charset>
             </encoder>
         </appender>
+
 
         <!--
             Racine à INFO, code applicatif à DEBUG.
@@ -38,6 +72,7 @@
         -->
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="ASYNC_FILE"/>
         </root>
 
         <!-- Code applicatif : tout le détail -->
@@ -57,6 +92,10 @@
 
         <!-- JSON structuré sur stdout (capturé par le log agent : Promtail / Filebeat) -->
         <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <!-- stdout reste en INFO minimum : le détail DEBUG va uniquement dans le fichier -->
+            <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                <level>INFO</level>
+            </filter>
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">
                 <!-- Champs MDC propagés automatiquement dans chaque entrée JSON -->
                 <includeMdcKeyName>requestId</includeMdcKeyName>
@@ -86,7 +125,12 @@
 
         <root level="INFO">
             <appender-ref ref="ASYNC_JSON"/>
+            <appender-ref ref="ASYNC_FILE"/>
         </root>
+
+        <!-- Code applicatif : détail DEBUG écrit dans le fichier de logs (la console JSON filtre à INFO).
+             Réglable sans rebuild via la variable d'environnement LOG_LEVEL_APP (INFO pour revenir au résumé). -->
+        <logger name="staport.finance.gBanque" level="${LOG_LEVEL_APP:-DEBUG}"/>
 
         <!-- Silence les frameworks verbeux en prod -->
         <logger name="org.hibernate"            level="WARN"/>
