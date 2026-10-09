@@ -44,6 +44,8 @@ Une tâche n'est terminée que lorsque le code, la documentation et les conventi
 11. conventions/performance.md
 12. conventions/frontend.md
 13. conventions/documentation.md
+14. conventions/testing.md
+15. conventions/ci-cd.md
 
 En cas de conflit entre plusieurs conventions :
 

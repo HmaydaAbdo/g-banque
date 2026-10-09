@@ -1,0 +1,17 @@
+# Configuration gitleaks (CI : job "security"). Étend les règles par défaut.
+title = "G-Banque gitleaks"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Faux positifs et historique déjà traité"
+# Commits historiques : cache graphify (hachages, pas des secrets), exemple curl d'un README,
+# ancien SecurityConfig.java contenant une clé JWT en dur (supprimée du code ; rotation de la clé de production à
+# confirmer, cf. TODO.md "Sécurité des images et dépendances").
+commits = [
+  "f7cb002ec61aa4ab4416ab9b0aad232c05f0314d",
+  "52e0ba7caa286ddbf0f7f0c39a9c08cbda940e2a",
+  "761b21f93dbf0658700636ad15ca0369b1b06607",
+]
+paths = ['''graphify-out/.*''']

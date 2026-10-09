@@ -3,12 +3,12 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
 
 # Testing
 coverage/
 .nyc_output/
 *.spec.ts
+karma.conf.js
 
 # Production
 dist/
@@ -34,3 +34,6 @@ out-tsc/
 
 # OS
 Thumbs.db
+Dockerfile
+.dockerignore
+README.md

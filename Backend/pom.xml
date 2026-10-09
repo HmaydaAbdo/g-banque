@@ -39,6 +39,8 @@
 
 	<properties>
 		<java.version>17</java.version>
+		<!-- Testcontainers >= 1.21.4 : requis pour parler à Docker Engine 29+ (API minimale 1.44) -->
+		<testcontainers.version>1.21.4</testcontainers.version>
 		<mapstruct.version>1.6.3</mapstruct.version>
 	 </properties>
 
@@ -145,6 +147,23 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- Tests d'intégration sur un vrai MySQL 8 jetable (même moteur qu'en prod) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-testcontainers</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>mysql</artifactId>
+			<scope>test</scope>
+		</dependency>
+
 		<!-- Structured JSON logging (prod profile) — logback-spring.xml AsyncAppender -->
 		<dependency>
 			<groupId>net.logstash.logback</groupId>
@@ -186,6 +205,56 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <!-- Variables d'environnement requises par application.yml, valeurs fictives pour les tests
+                 (la base est fournie par Testcontainers via @ServiceConnection). -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <environmentVariables>
+                        <SPRING_PROFILES_ACTIVE>test</SPRING_PROFILES_ACTIVE>
+                        <DB_HOST>localhost</DB_HOST>
+                        <DB_PORT>3306</DB_PORT>
+                        <MYSQL_DATABASE>gbanque_test</MYSQL_DATABASE>
+                        <MYSQL_USER>test</MYSQL_USER>
+                        <MYSQL_PASSWORD>test</MYSQL_PASSWORD>
+                        <SERVER_ADRESSE>127.0.0.1</SERVER_ADRESSE>
+                        <SERVER_PORT>0</SERVER_PORT>
+                        <CONTEXT_PATH>/gbanque/api</CONTEXT_PATH>
+                        <JWT_SECRET>0000000000000000000000000000000000000000000000000000000000000000</JWT_SECRET>
+                        <JWT_EXPIRATION_HOURS>1</JWT_EXPIRATION_HOURS>
+                        <SWAGGER_ENABLED>false</SWAGGER_ENABLED>
+                        <CORS_ALLOWED_ORIGINS>http://localhost</CORS_ALLOWED_ORIGINS>
+                        <LOGIN_MAX_ATTEMPTS>5</LOGIN_MAX_ATTEMPTS>
+                        <LOGIN_LOCKOUT_MINUTES>15</LOGIN_LOCKOUT_MINUTES>
+                        <MAIL_HOST>localhost</MAIL_HOST>
+                        <MAIL_PORT>25</MAIL_PORT>
+                        <MAIL_USERNAME>test</MAIL_USERNAME>
+                        <MAIL_PASSWORD>test</MAIL_PASSWORD>
+                        <MAIL_PROTOCOL>smtp</MAIL_PROTOCOL>
+                        <MAIL_FROM>test@localhost</MAIL_FROM>
+                        <MAIL_NOTIFICATION_RECIPIENTS>test@localhost</MAIL_NOTIFICATION_RECIPIENTS>
+                    </environmentVariables>
+                </configuration>
+            </plugin>
+
+            <!-- Couverture de code : rapport XML/HTML dans target/site/jacoco après "mvn verify" -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.12</version>
+                <executions>
+                    <execution>
+                        <goals><goal>prepare-agent</goal></goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals><goal>report</goal></goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
