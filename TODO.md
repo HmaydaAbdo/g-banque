@@ -2,6 +2,36 @@
 
 ## En attente
 
+### Chantier — Finalisation de la CI et mises à jour de dépendances (relevé le 10/10/2026)
+
+**État.** Pipeline `ci.yml` fusionnée sur `main`. Dernier run sur `main` : backend OK, frontend OK, **sécurité en échec**
+(Docker Hub refuse le téléchargement des images gitleaks/Trivy : `toomanyrequests`, pull anonyme limité), donc les jobs
+d'images n'ont pas tourné. Aucune image publiée sur Docker Hub pour l'instant. Seule la branche `main` est conservée.
+
+**À faire.**
+1. **Corriger le rate limit Docker Hub** : placer `docker/login-action` (identifiants Docker Hub déjà configurés) avant
+   les `docker run` gitleaks et Trivy du job `security`, et avant le build du job `images`. Relancer la CI sur `main`
+   et vérifier le push de `gbanque-backend` / `gbanque-frontend` (`latest` + sha). Confirmer que le secret
+   `DOCKERHUB_TOKEN` existe sous ce nom exact.
+2. **Protection de `main`** : impossible aujourd'hui (le 10/10/2026, l'API renvoie 403 : dépôt privé sur offre gratuite,
+   la protection de branche exige GitHub Pro/Team ou un dépôt public). Fait à la place : suppression automatique des
+   branches fusionnées activée. Règle d'équipe en attendant : jamais de push direct sur `main` hors correctifs de CI, PR
+   obligatoire avec la CI verte. À reprendre si le dépôt passe en offre payante (checks exigés : `Backend`, `Frontend`,
+   `Sécurité`, `Image Docker (backend|frontend)`).
+3. **Mises à jour Dependabot écartées le 10/10/2026** (branches supprimées, PR 5 et 6 à fermer). À reprendre une par
+   une comme chantiers décidés, jamais en fusion automatique :
+   - Angular 17 → 20/22 (`router`, `platform-browser-dynamic` ; toute la famille `@angular/*`, CLI, TypeScript, Node) ;
+   - PrimeFlex 3 → 4 (et PrimeNG en cohérence) ;
+   - Spring Security 7 (impose Spring Boot 4, lié au chantier « Sécurité des images et dépendances backend ») ;
+   - Java 17 → 25 / image Maven Temurin 26 (PR 5 et 6) ;
+   - actions GitHub en version majeure : `checkout` 7, `setup-node` 6, `build-push-action` 7, `login-action` 4,
+     `setup-buildx-action` 4 (faible risque, à valider sur la CI) ;
+   - mises à jour mineures/patch groupées Maven et npm (faible risque).
+   `dependabot.yml` ignore désormais les versions majeures Docker et l'image `maven` ; étendre `ignore` à Maven/npm
+   si l'on veut aussi les couper là.
+4. **Cadence (fait le 10/10/2026)** : `open-pull-requests-limit: 1` par écosystème dans `dependabot.yml` et suppression
+   automatique des branches fusionnées. Règle : on fusionne ou on ferme chaque PR Dependabot avant la suivante.
+
 ### Chantier — Stratégie de tests, tous niveaux, tous modules (demandé le 09/10/2026)
 
 **Constat (09/10/2026).** Backend : 884 classes, **1 seul test** (`GBanqueApplicationTests`, chargement du contexte sur
