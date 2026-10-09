@@ -1044,6 +1044,8 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     [TransactionSource.IMPOT_TAXE]: 'always',
     [TransactionSource.LEASING]: 'always',
     [TransactionSource.CMT]: 'always',
+    [TransactionSource.AGIOS]: 'always',
+
   };
 
   private static readonly EDIT_REQUIRES_SYSTEM_ADMIN: Partial<Record<TransactionSource, true>> = {
