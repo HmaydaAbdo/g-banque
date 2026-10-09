@@ -2,6 +2,50 @@
 
 ## En attente
 
+### Chantier — Stratégie de tests, tous niveaux, tous modules (demandé le 09/10/2026)
+
+**Constat (09/10/2026).** Backend : 884 classes, **1 seul test** (`GBanqueApplicationTests`, chargement du contexte sur
+MySQL Testcontainers) → couverture de lignes 9,7 % (hors tout comportement métier). Frontend : 61 specs, dont **58 en
+échec** (squelettes « should create » générés par le CLI, sans providers) → couverture 9 %. Le job `frontend` de la CI
+les exécute en `continue-on-error` (temporaire).
+
+**À faire.**
+1. Réparer ou remplacer les 58 specs frontend en échec, puis retirer `continue-on-error` du job `frontend` (`ci.yml`).
+2. Écrire les tests **de tous les niveaux pour tous les modules**, backend et frontend, selon `conventions/testing.md`
+   (unitaire, intégration, composant, bout en bout), module par module dans l'ordre du chapitrage de la doc :
+   socle d'accès → comptes bancaires → produits financiers → marchés → moyens de paiement → transactions →
+   charges appliquées → anomalies → rapprochement → états des encours → transverse.
+   Priorité : calculs financiers (agios, commissions, encours), `@PreAuthorize` (allowed/denied), handlers du registre
+   (validation, annulation, synchronisation d'édition).
+3. Introduire le bout en bout (Playwright) sur les parcours critiques ; décision d'outil à valider (architecture).
+4. Relever `DIFF_COVER_MIN` (`ci.yml`) par paliers 0 → 30 → 50 → 70 → 80 %.
+5. Démarrage du contexte de test : ~190 s en local (Docker Desktop, ~100 tables avec Envers). Mesurer sur le runner ;
+   si trop long, envisager un contexte partagé entre tests d'intégration et des tranches (`@DataJpaTest`).
+6. Mettre à jour `conventions/testing.md` au fil des décisions (exemples de fixtures/builders une fois posés).
+
+### Chantier — Sécurité des images et dépendances backend (relevé le 09/10/2026)
+
+**Constat.** Scan Trivy de l'image backend (HIGH/CRITICAL corrigeables) : **67 vulnérabilités, dont 12 critiques**,
+toutes dans les dépendances Java (Tomcat embarqué 21, Netty, Jackson, Spring Framework 6.1.10 avec RCE/XSS/DoS, …).
+Cause : Spring Boot **3.3.1** (hors support). L'OS de l'image est propre ; l'image frontend est propre (0).
+
+**À faire.**
+- Décision d'architecture à valider : montée de version Spring Boot (3.3.x le plus récent → 3.5.x), impact sur
+  `spring-boot-starter-oauth2-authorization-server`, Hibernate/Envers, springdoc, MapStruct. Vérifier aussi pourquoi
+  `spring-webflux` et Netty sont dans le classpath.
+- Ensuite, passer le scan Trivy backend en bloquant (`trivy-exit-code: "1"` dans `images` et `exit-code: "1"` dans `security`).
+- Épingler les images de `docker-compose.yml` encore en `:latest` (prometheus, grafana, phpmyadmin, mysql-cron-backup)
+  sur les versions réellement déployées (à relever sur le serveur) ; sinon un `pull` change la version sans prévenir.
+- Évaluer un JRE réduit (`jlink`) pour l'image backend (293 Mo aujourd'hui) — gain ~100 Mo, à tester.
+- **Clé JWT** : un ancien commit (`f7cb002e`, `SecurityConfig.java`) contient une clé JWT en dur, identique à celle de `env.dev`.
+  Vérifier qu'elle n'est pas celle de la production ; sinon la renouveler (invalide les sessions en cours). Le commit est mis en liste d'autorisation dans `.gitleaks.toml`.
+- Cadrer une CSP nginx compatible PrimeNG (en-têtes de base déjà posés).
+
+### Chantier — Déploiement continu par SSH (en attente de l'accès SSH au serveur)
+
+Cf. `docs/infra/ci-cd.md` § « Passage au déploiement continu ». Préalables : secrets Docker Hub configurés, protection de
+`main`, `docker-compose` de production basé sur `image:` (Docker Hub). Workflow `cd.yml` à écrire quand l'accès est disponible.
+
 ### Chantier — Agios unifiés : calculé vs facturé, tout calculé (lancé le 09/10/2026)
 
 > **Plan détaillé : `CHANTIER-AGIOS-UNIFIES.md`** (racine du dépôt) — à lire en premier dans la session dédiée.

@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { RapprochementServiceService } from './rapprochement-service.service';
+import { RapprochementService } from './rapprochement-service.service';
 
-describe('RapprochementServiceService', () => {
-  let service: RapprochementServiceService;
+describe('RapprochementService', () => {
+  let service: RapprochementService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(RapprochementServiceService);
+    service = TestBed.inject(RapprochementService);
   });
 
   it('should be created', () => {

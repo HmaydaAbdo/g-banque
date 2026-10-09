@@ -12,3 +12,6 @@ target/
 Thumbs.db
 *.swp
 *.bak
+src/test/
+Dockerfile
+.dockerignore
