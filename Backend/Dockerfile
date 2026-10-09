@@ -24,7 +24,7 @@ RUN --mount=type=cache,target=/root/.m2 mvn -B -ntp clean package -DskipTests \
     && java -Djarmode=layertools -jar target/*.jar extract --destination /layers
 
 # ============ STAGE 2: RUNTIME ============
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 
 LABEL org.opencontainers.image.title="g-banque-backend" \
       org.opencontainers.image.description="G-Banque — API Spring Boot" \
