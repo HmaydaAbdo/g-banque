@@ -12,7 +12,7 @@ RUN npm run build -- --configuration production
 
 # ============ STAGE 2: RUNTIME ============
 # alpine-slim : nginx sans modules optionnels (~5x plus léger que nginx:alpine)
-FROM nginx:1.27-alpine-slim
+FROM nginx:1.31-alpine-slim
 
 LABEL org.opencontainers.image.title="g-banque-frontend" \
       org.opencontainers.image.description="G-Banque — Angular servi par nginx" \
