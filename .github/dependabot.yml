@@ -16,9 +16,20 @@ updates:
   - package-ecosystem: docker
     directory: /Backend
     schedule: { interval: weekly }
+    # Les montées de version majeures (Java 17 → 25, Node 20 → 22, …) sont des décisions de projet, pas des PR automatiques
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
+      # Le tag de l'image de build encode la version de Java dans un suffixe (3.9-eclipse-temurin-17-alpine) :
+      # Dependabot y voit une mise à jour mineure. Image de build seulement, mise à jour manuelle avec Java.
+      - dependency-name: "maven"
   - package-ecosystem: docker
     directory: /Frontend
     schedule: { interval: weekly }
+    # Les montées de version majeures (Java 17 → 25, Node 20 → 22, …) sont des décisions de projet, pas des PR automatiques
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
