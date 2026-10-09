@@ -9,7 +9,7 @@
 # ================================
 
 # ============ STAGE 1: BUILD ============
-FROM maven:3.9-eclipse-temurin-17-alpine AS build
+FROM maven:3.9-eclipse-temurin-26-alpine AS build
 
 WORKDIR /app
 
