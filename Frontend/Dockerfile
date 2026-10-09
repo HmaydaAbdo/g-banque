@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # ============ STAGE 1: BUILD ============
-FROM node:20-alpine AS build
+FROM node:25-alpine AS build
 WORKDIR /app
 
 # package-lock.json d'abord : "npm ci" = build reproductible, couche cachée tant que les dépendances ne changent pas
