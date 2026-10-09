@@ -201,7 +201,7 @@ jobs:
       - name: Connexion Docker Hub
         id: login
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && env.DOCKERHUB_NAMESPACE != ''
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ env.DOCKERHUB_NAMESPACE }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
