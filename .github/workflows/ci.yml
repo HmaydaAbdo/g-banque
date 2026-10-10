@@ -170,6 +170,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
+      actions: read          # requis par CodeQL sur un dépôt privé
       contents: read
       security-events: write
     strategy:
