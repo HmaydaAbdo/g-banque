@@ -4,7 +4,7 @@
 
 ### Mise en production — PostgreSQL 18, Flyway, environnement unique, sessions par cookies (en cours, 10/10/2026)
 
-Serveur Windows, dossier `C:ppsG-Banque` (`docker-compose.yml` + `.env`, images Docker Hub `:latest`).
+Serveur Windows, dossier `C:\apps\G-Banque` (`docker-compose.yml` + `.env`, images Docker Hub `:latest`).
 **Fait le 10/10/2026 :** ancienne stack MySQL arrêtée (données MySQL conservées pour retour arrière), base PostgreSQL
 restaurée depuis la sauvegarde locale du 10/10 (export de production de 04h12 migré) : Flyway en version 2,
 5 713 transactions, 5 621 commissions, 3 utilisateurs.
