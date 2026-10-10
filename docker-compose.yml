@@ -19,9 +19,10 @@ services:
     ports:
       - "127.0.0.1:5433:5432"
     volumes:
-      # PostgreSQL 18 : monter /var/lib/postgresql (et non plus .../data). Dossier de l'hôte, transportable tel quel
-      # vers un autre serveur avec docker-compose.yml et .env (cf. docs/infra/migration-postgres.md).
-      - ./docker-data/postgres:/var/lib/postgresql
+      # Volume Docker nommé (et non un dossier de l'hôte) : stockage géré par Docker, sans problème de droits ni
+      # de performances sous Windows. Transfert vers un autre serveur = sauvegarde + restauration
+      # (cf. docs/infra/backup-postgres.md). PostgreSQL 18 : monter /var/lib/postgresql (et non plus .../data).
+      - postgres-data:/var/lib/postgresql
     networks:
       - gbanque-network
     healthcheck:
@@ -63,9 +64,9 @@ services:
   # Spring Boot Backend - Internal host access on 8080 for Outer Nginx
   # ---------------------------------------------------------------------------
   backend:
-    build:
-      context: ./Backend
-      dockerfile: Dockerfile
+    # Image publiée par la CI à chaque commit sur main (tags latest et <sha>). Pour revenir à une version
+    # précise : remplacer latest par le sha du commit voulu.
+    image: hmaydaabdo/gbanque-backend:latest
     container_name: gbanque-backend
     restart: unless-stopped
     environment:
@@ -113,9 +114,7 @@ services:
   # Angular Frontend (Inner Nginx) - Bound to local host port 8081
   # ---------------------------------------------------------------------------
   frontend:
-    build:
-      context: ./Frontend
-      dockerfile: Dockerfile
+    image: hmaydaabdo/gbanque-frontend:latest
     container_name: gbanque-frontend
     restart: unless-stopped
     depends_on:
@@ -151,7 +150,7 @@ services:
     ports:
       - "127.0.0.1:8082:80"
     volumes:
-      - ./docker-data/pgadmin:/var/lib/pgadmin
+      - pgadmin-data:/var/lib/pgadmin
     networks:
       - gbanque-network
 
@@ -159,6 +158,13 @@ networks:
   gbanque-network:
     driver: bridge
 
+# Noms fixes (indépendants du nom du dossier) : mêmes volumes quel que soit l'endroit où le projet est installé.
 volumes:
+  # Base PostgreSQL — NE JAMAIS supprimer sans sauvegarde vérifiée (`docker compose down -v` la détruit)
+  postgres-data:
+    name: gbanque-postgres-data
+  pgadmin-data:
+    name: gbanque-pgadmin-data
   # Logs applicatifs du backend : un fichier par jour, conservés entre les redéploiements
   backend-logs:
+    name: gbanque-backend-logs

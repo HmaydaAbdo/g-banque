@@ -4,7 +4,7 @@ Usage, depuis la racine du dépôt (procédure complète : docs/infra/migration-
 
     docker compose up -d postgres              # base vierge
     python sql/migration-postgres/migrer_vers_postgres.py "C:/chemin/vers/export.sql"
-    docker compose up -d --build                # le backend applique V2 et suivantes sur les données migrées
+    docker compose up -d                        # le backend applique V2 et suivantes sur les données migrées
 
 Étapes :
   0. Crée le schéma en version 1 SEULEMENT (image flyway/flyway, mêmes fichiers db/migration que le backend) : les
@@ -132,7 +132,7 @@ def main():
     finally:
         print('3/3 Suppression du MySQL temporaire.')
         run(['docker', 'rm', '-f', SOURCE])
-    print('Terminé. Démarrer la stack : docker compose up -d --build (le backend applique V2 et suivantes).')
+    print('Terminé. Démarrer la stack : docker compose up -d (le backend applique V2 et suivantes).')
 
 
 if __name__ == '__main__':

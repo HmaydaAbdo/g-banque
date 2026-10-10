@@ -2,29 +2,25 @@
 
 ## En attente
 
-### Déploiement en production — PostgreSQL 18, Flyway, environnement unique, sessions par cookies (préparé le 10/10/2026)
+### Mise en production — PostgreSQL 18, Flyway, environnement unique, sessions par cookies (en cours, 10/10/2026)
 
-Tout est dans `main`. Bascule **en une seule fois** : la production passe de MySQL 8 à PostgreSQL 18 (les sessions en
-cours seront fermées, les utilisateurs se reconnectent). G-Banque reste servi en **HTTP** : `AUTH_COOKIE_SECURE=false`.
-Procédure détaillée et résultats de la répétition : `docs/infra/migration-postgres.md`.
+Serveur Windows, dossier `C:pps\G-Banque` (`docker-compose.yml` + `.env`, images Docker Hub `:latest`).
+**Fait le 10/10/2026 :** ancienne stack MySQL arrêtée (données MySQL conservées pour retour arrière), base PostgreSQL
+restaurée depuis la sauvegarde locale du 10/10 (export de production de 04h12 migré) : Flyway en version 2,
+5 713 transactions, 5 621 commissions, 3 utilisateurs.
 
-1. **Geler les saisies** puis exporter la base MySQL de production (phpMyAdmin, comme l'export du 10/10/2026).
-2. **`.env` du serveur** = le `.env` local mis à jour le 10/10/2026 : variables `POSTGRES_*` et `PGADMIN_*` (mots de
-   passe générés), `DB_HOST=postgres`, `DB_PORT=5432`, `MYSQL_*` et `GRAFANA_*` retirées, nouvelle `JWT_SECRET`.
-   Comparer avec `.env.example` : aucune variable manquante.
-3. Sur le serveur, base PostgreSQL vierge : `docker compose up -d postgres`, puis
-   `python sql/migration-postgres/migrer_vers_postgres.py <export.sql>` (schéma V1 + copie, contrôle des volumes
-   intégré, tout ou rien), puis `docker compose up -d --build` (le backend applique V2 sur les données migrées).
-   Ne pas copier `docker-data/postgres` depuis un poste Windows (droits refusés par PostgreSQL) : migrer depuis l'export,
-   ou restaurer une sauvegarde (`docs/infra/backup-postgres.md`).
-4. Le nginx frontal doit servir le frontend et `/gbanque/api` sur la **même origine** et transmettre `Set-Cookie` /
+**Reste à faire :**
+1. Passer la base du serveur dans le volume nommé `gbanque-postgres-data` (nouveau `docker-compose.yml`) : arrêt,
+   volume vide, nouvelle restauration de `gbanque-init.sql.gz`, contrôle (104 tables, 2 vues, 55 407 lignes),
+   démarrage. Ensuite seulement, supprimer l'ancien dossier `docker-data\postgres` du serveur.
+2. Le nginx frontal doit servir le frontend et `/gbanque/api` sur la **même origine** et transmettre `Set-Cookie` /
    `Cookie` sans les modifier (comportement par défaut de `proxy_pass`).
-5. Vérifier : connexion, rechargement de page (session conservée), Récapitulatif, une recherche par libellé, déconnexion ;
-   `docker logs gbanque-backup` → « SQL backup created successfully ».
-6. Conserver l'ancienne base MySQL (arrêtée, non supprimée) jusqu'à validation complète par l'équipe Finance.
-
-**Répétition faite le 10/10/2026** sur l'export de production du jour : 102 tables / 55 403 lignes migrées, volumes
-identiques, schéma validé, 14/14 contrôles API (dont recherche insensible aux accents), sauvegarde restaurée à l'identique.
+3. Vérifier : connexion, rechargement de page (session conservée), Récapitulatif, une recherche par libellé,
+   déconnexion ; `docker logs gbanque-backup` → « SQL backup created successfully ».
+4. Conserver l'ancienne base MySQL (conteneur `gbanque-mysql` arrêté, dossier `docker-data\mysql`) jusqu'à validation
+   complète par l'équipe Finance, puis la supprimer ; supprimer aussi les copies de `gbanque-init.sql.gz`.
+5. Si des saisies ont été faites dans l'ancienne application après l'export de 04h12 : refaire la migration avec un
+   nouvel export (`docs/infra/migration-postgres.md`).
 
 **À trancher (données) :**
 - 8 lignes `commission` (et leurs révisions d'audit) ont `operation = 'Importation'`, valeur qui n'existe plus dans le

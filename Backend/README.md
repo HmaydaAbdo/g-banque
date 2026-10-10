@@ -17,8 +17,11 @@ Toute la configuration vient du fichier `../.env` (modèle : `../.env.example`) 
 variable manque.
 
 ```bash
-# Depuis la racine du dépôt : toute la stack (PostgreSQL 18, backend, frontend, sauvegarde, monitoring)
-docker compose up -d --build
+# Depuis la racine du dépôt : toute la stack (PostgreSQL 18, backend, frontend, sauvegarde, pgAdmin),
+# avec les images publiées par la CI
+docker compose pull && docker compose up -d
+# Essayer le code local : reconstruire l'image sous le même nom, puis relancer
+docker build -t hmaydaabdo/gbanque-backend:latest . && docker compose up -d backend
 ```
 
 Pour déboguer le backend depuis l'IDE contre la base de la stack : mêmes variables que `.env`, avec

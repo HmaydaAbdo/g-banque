@@ -18,9 +18,11 @@ sidecar qui exécute `pg_dump` sur le réseau Docker interne (PostgreSQL n'est p
 | Contenu | Base complète (schéma, données, historique Flyway, collation `ci_ai`) | `pg_dump` texte compressé, `POSTGRES_EXTRA_OPTS=-Z9` |
 | Destination | `./backups/postgres` (hôte) | `daily/`, `weekly/`, `monthly/`, `last/` ; liens `*-latest.sql.gz` vers le plus récent |
 
-Les données de la base sont dans `./docker-data/postgres` (dossier de l'hôte monté sur `/var/lib/postgresql`,
-emplacement imposé par PostgreSQL 18). `./docker-data/` et `./backups/` survivent à `docker compose down` et aux
-redéploiements ; ils ne sont pas versionnés.
+Les données de la base sont dans le **volume Docker nommé `gbanque-postgres-data`** (monté sur
+`/var/lib/postgresql`, emplacement imposé par PostgreSQL 18). Il survit à `docker compose down` et aux
+redéploiements ; **`docker compose down -v` le supprime** (ne jamais utiliser `-v` en production). Les sauvegardes,
+elles, sont des fichiers de l'hôte (`./backups/postgres`, non versionné) pour pouvoir être copiées ailleurs.
+Voir les volumes : `docker volume ls`.
 
 **Limite assumée (validée avec HMAYDA) :** stockage local, sur le même disque que la base. Protège contre une
 corruption, une mauvaise commande ou un incident applicatif — **pas** contre la perte du disque ou de la machine.
@@ -40,14 +42,19 @@ ls -lh ./backups/postgres/daily
 ## Restaurer une sauvegarde
 
 Toujours dans une base **vierge** (le fichier recrée tout : tables, séquences, vues, collation, historique Flyway).
+Sur une base non vide, la restauration s'arrête dès la première instruction (`collation "ci_ai" already exists`)
+sans rien modifier.
 
 ```bash
-docker compose stop backend backup
-docker compose rm -sf postgres
-# Mettre de côté l'ancien dossier de données (ne pas le supprimer avant d'avoir vérifié la restauration)
-mv docker-data/postgres docker-data/postgres.avant-restauration
-docker compose up -d postgres                  # base vierge (attendre « healthy »)
-gunzip -c backups/postgres/daily/gbanque-AAAAMMJJ.sql.gz | docker exec -i gbanque-postgres psql -U <POSTGRES_USER> -d <POSTGRES_DB> -v ON_ERROR_STOP=1 -q
+# 1. Vérifier que la sauvegarde à restaurer est lisible AVANT de supprimer quoi que ce soit
+gunzip -t backups/postgres/daily/gbanque-AAAAMMJJ.sql.gz
+# 2. Arrêter l'application et repartir d'un volume vide (la base actuelle est DÉTRUITE)
+docker compose down
+docker volume rm gbanque-postgres-data
+docker compose up -d postgres                  # attendre « PostgreSQL init process complete » dans docker logs gbanque-postgres
+# 3. Restaurer (copie dans le conteneur : évite les tubes binaires de PowerShell)
+docker cp backups/postgres/daily/gbanque-AAAAMMJJ.sql.gz gbanque-postgres:/tmp/restore.sql.gz
+docker exec gbanque-postgres sh -c "gunzip -c /tmp/restore.sql.gz | psql -U <POSTGRES_USER> -d <POSTGRES_DB> -v ON_ERROR_STOP=1 -q"
 docker compose up -d
 ```
 
@@ -65,12 +72,14 @@ historique Flyway et recherche insensible aux accents identiques.
 
 ## Installer la base sur un autre serveur (transfert de production)
 
-Ne pas copier `./docker-data/postgres` d'un poste Windows vers un serveur Linux : PostgreSQL refuse un dossier de
-données dont le propriétaire et les droits ne sont pas les siens. Le transfert se fait par une sauvegarde :
+La base vit dans un volume Docker : elle se transfère **par une sauvegarde**, jamais en copiant des fichiers.
 
-1. Sur la machine d'origine : `docker logs gbanque-backup` → copier le dernier `backups/postgres/daily/*.sql.gz`.
-2. Sur le serveur : dépôt (ou `docker-compose.yml` + images), `.env`, puis la procédure « Restaurer une sauvegarde »
-   ci-dessus avec ce fichier.
+1. Sur la machine d'origine : copier le dernier `backups/postgres/daily/*.sql.gz`.
+2. Sur le serveur : `docker-compose.yml` + `.env` (les images viennent de Docker Hub : `docker compose pull`), puis
+   la procédure « Restaurer une sauvegarde » ci-dessus avec ce fichier.
+
+**Fait le 10/10/2026** pour la mise en production (serveur Windows, `C:\apps\G-Banque`) ; contrôle attendu après
+restauration : 104 tables, 2 vues, 55 407 lignes, Flyway en version 2.
 
 ---
 
@@ -86,4 +95,4 @@ trimestre, sur une machine de test (jamais sur la production).
 - **2026-08-05** : mise en place initiale (MySQL, `fradelg/mysql-cron-backup`), suite à une perte de base de données
   sans sauvegarde disponible. Rétention 7 jours choisie par HMAYDA.
 - **2026-10-10** : passage à PostgreSQL 18 ; `postgres-backup-local`, rétention étendue à 7 jours / 4 semaines /
-  6 mois ; restauration testée.
+  6 mois ; restauration testée ; base dans un volume Docker nommé (`gbanque-postgres-data`).

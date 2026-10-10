@@ -23,7 +23,7 @@ Aucun outil n'est à installer : tout tourne dans des conteneurs (Docker requis)
 ```bash
 docker compose up -d postgres              # base vierge
 python sql/migration-postgres/migrer_vers_postgres.py "C:/chemin/vers/export.sql"
-docker compose up -d --build                # le backend applique V2 et suivantes
+docker compose up -d                        # le backend applique V2 et suivantes
 ```
 
 * L'outil refuse de s'exécuter si la base PostgreSQL contient des utilisateurs ou un schéma au-delà de la version 1
