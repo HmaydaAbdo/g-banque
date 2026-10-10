@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { LcnDecaissementsListComponent } from './lcn-decaissements-list.component';
+import { testProviders } from '../../../../../testing/test-providers';
 
 describe('LcnDecaissementsListComponent', () => {
   let component: LcnDecaissementsListComponent;
@@ -8,6 +9,7 @@ describe('LcnDecaissementsListComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: testProviders,
       imports: [LcnDecaissementsListComponent]
     })
     .compileComponents();

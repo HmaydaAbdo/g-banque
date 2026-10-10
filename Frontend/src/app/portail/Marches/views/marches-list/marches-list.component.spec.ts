@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { MarchesListComponent } from './marches-list.component';
+import { testProviders } from '../../../../../testing/test-providers';
 
 describe('MarchesListComponent', () => {
   let component: MarchesListComponent;
@@ -8,6 +9,7 @@ describe('MarchesListComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: testProviders,
       imports: [MarchesListComponent]
     })
     .compileComponents();

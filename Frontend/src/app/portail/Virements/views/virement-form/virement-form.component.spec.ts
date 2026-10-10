@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { VirementFormComponent } from './virement-form.component';
+import { testProviders } from '../../../../../testing/test-providers';
 
 describe('VirementFormComponent', () => {
   let component: VirementFormComponent;
@@ -8,6 +9,7 @@ describe('VirementFormComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: testProviders,
       imports: [VirementFormComponent]
     })
     .compileComponents();

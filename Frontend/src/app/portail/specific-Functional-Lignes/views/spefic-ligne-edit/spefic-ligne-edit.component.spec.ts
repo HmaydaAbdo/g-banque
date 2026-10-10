@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { SpeficLigneEditComponent } from './spefic-ligne-edit.component';
+import { testProviders } from '../../../../../testing/test-providers';
 
 describe('SpeficLigneEditComponent', () => {
   let component: SpeficLigneEditComponent;
@@ -8,6 +9,7 @@ describe('SpeficLigneEditComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: testProviders,
       imports: [SpeficLigneEditComponent]
     })
     .compileComponents();

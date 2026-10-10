@@ -92,19 +92,9 @@ jobs:
         working-directory: Frontend
         run: npm ci --no-audit --no-fund
 
-      # TEMPORAIRE : 58 des 61 specs actuels sont des squelettes générés par le CLI qui échouent
-      # (providers manquants). Non bloquant jusqu'à leur remplacement — voir TODO.md
-      # « Chantier — Stratégie de tests ». Retirer continue-on-error à ce moment-là.
       - name: Tests unitaires + couverture
-        id: ng-test
-        continue-on-error: true
         working-directory: Frontend
         run: npx ng test --watch=false --browsers=ChromeHeadlessCI --code-coverage
-
-      - name: Résumé tests
-        if: always()
-        run: |
-          echo "### Tests frontend - résultat : ${{ steps.ng-test.outcome }} (échec non bloquant temporaire, voir TODO.md)" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Couverture du code modifié (PR)
         if: github.event_name == 'pull_request' && hashFiles('Frontend/coverage/lcov.info') != ''
@@ -154,14 +144,14 @@ jobs:
           docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.21.2 \
             detect --source /repo --redact --no-banner --exit-code 1
 
-      # Dépendances (pom.xml, package-lock.json), Dockerfile, IaC. HIGH/CRITICAL corrigeables uniquement.
+      # Dépendances npm (package-lock.json) et Dockerfiles, HIGH/CRITICAL corrigeables.
+      # pom.xml exclu : Trivy interroge Maven Central (429 sur les runners partagés) ; les dépendances Java sont
+      # couvertes, en bloquant, par le scan de l'image backend (job images).
+      # Rapport seul (--exit-code 0) : 16 CVE HIGH d'Angular 17, corrigées seulement à partir d'Angular 19
+      # (chantier de montée de version, cf. TODO.md). Repasser à 1 après cette montée.
       - name: Trivy — dépendances et configuration
-        # Backend : Spring Boot 3.3.1 porte des CVE connues (voir TODO.md, chantier montée de version).
-        # pom.xml exclu : Trivy interroge Maven Central (429 sur les runners partagés) ; les dépendances Java sont
-        # couvertes par le scan de l'image backend (job images).
-        # Rapport seul (--exit-code 0) tant que la montée de version n'est pas faite ; repasser à 1 ensuite.
         run: |
-          docker run --rm -v "$PWD:/src" -v trivy-cache:/root/.cache aquasec/trivy:0.75.0             fs --skip-files /src/Backend/pom.xml --scanners vuln,misconfig --severity HIGH,CRITICAL --ignore-unfixed --exit-code 0 /src
+          docker run --rm -v "$PWD:/src" -v trivy-cache:/root/.cache aquasec/trivy:0.75.0 fs             --ignorefile /src/.trivyignore --skip-files /src/Backend/pom.xml --scanners vuln,misconfig             --severity HIGH,CRITICAL --ignore-unfixed --exit-code 0 /src
 
   # ---------------------------------------------------------------------------
   images:
@@ -175,11 +165,8 @@ jobs:
         include:
           - name: backend
             context: Backend
-            # Bloquant dès que la montée de version Spring Boot est faite (voir TODO.md)
-            trivy-exit-code: "0"
           - name: frontend
             context: Frontend
-            trivy-exit-code: "1"
     env:
       DOCKERHUB_NAMESPACE: ${{ vars.DOCKERHUB_USERNAME || secrets.DOCKERHUB_USERNAME }}
       IMAGE: gbanque-${{ matrix.name }}
@@ -210,9 +197,12 @@ jobs:
           SIZE=$(docker image inspect "$IMAGE:ci" --format '{{.Size}}')
           echo "### Image ${{ matrix.name }} : $((SIZE/1024/1024)) Mo" >> "$GITHUB_STEP_SUMMARY"
 
+      # Bloquant : HIGH/CRITICAL corrigeables. Exceptions justifiées dans .trivyignore.
       - name: Scan Trivy de l'image
         run: |
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-cache:/root/.cache             aquasec/trivy:0.75.0 image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed             --exit-code ${{ matrix.trivy-exit-code }} "$IMAGE:ci"
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-cache:/root/.cache \
+            -v "$PWD/.trivyignore:/.trivyignore:ro" aquasec/trivy:0.75.0 image --ignorefile /.trivyignore \
+            --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 "$IMAGE:ci"
 
       # Push uniquement depuis main, et seulement si Docker Hub est configuré
       # (DOCKERHUB_USERNAME en variable ou secret + secret DOCKERHUB_TOKEN).

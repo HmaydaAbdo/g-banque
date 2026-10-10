@@ -13,15 +13,7 @@ d'images n'ont pas tourné. Aucune image publiée sur Docker Hub pour l'instant.
    les `docker run` gitleaks et Trivy du job `security`, et avant le build du job `images`. Relancer la CI sur `main`
    et vérifier le push de `gbanque-backend` / `gbanque-frontend` (`latest` + sha). Confirmer que le secret
    `DOCKERHUB_TOKEN` existe sous ce nom exact.
-2. **Fonctions GitHub indisponibles sur l'offre gratuite d'un dépôt privé (constaté le 10/10/2026)** : protection de
-   branche et CodeQL (code scanning). L'analyse statique de sécurité n'est donc pas en place ; à reprendre avec une
-   offre payante, ou avec un outil ne dépendant pas de GitHub (ex. Semgrep CLI dans la CI).
-   **Protection de `main`** : impossible aujourd'hui (le 10/10/2026, l'API renvoie 403 : dépôt privé sur offre gratuite,
-   la protection de branche exige GitHub Pro/Team ou un dépôt public). Fait à la place : suppression automatique des
-   branches fusionnées activée. Règle d'équipe en attendant : jamais de push direct sur `main` hors correctifs de CI, PR
-   obligatoire avec la CI verte. À reprendre si le dépôt passe en offre payante (checks exigés : `Backend`, `Frontend`,
-   `Sécurité`, `Image Docker (backend|frontend)`).
-3. **Mises à jour de dépendances écartées le 10/10/2026** (anciennes PR Dependabot fermées). À reprendre une par
+2. **Mises à jour de dépendances écartées le 10/10/2026** (anciennes PR Dependabot fermées). À reprendre une par
    une comme chantiers décidés, jamais en fusion automatique :
    - Angular 17 → 20/22 (`router`, `platform-browser-dynamic` ; toute la famille `@angular/*`, CLI, TypeScript, Node) ;
    - PrimeFlex 3 → 4 (et PrimeNG en cohérence) ;
@@ -30,7 +22,7 @@ d'images n'ont pas tourné. Aucune image publiée sur Docker Hub pour l'instant.
    - actions GitHub en version majeure : `checkout` 7, `setup-node` 6, `build-push-action` 7, `login-action` 4,
      `setup-buildx-action` 4 (faible risque, à valider sur la CI) ;
    - mises à jour mineures/patch groupées Maven et npm (faible risque).
-4. **Dependabot supprimé (10/10/2026)** : il ouvrait une PR (et 2 workflows CI/CodeQL) par écosystème, trop de bruit pour
+3. **Dependabot supprimé (10/10/2026)** : il ouvrait une PR (et 2 workflows CI/CodeQL) par écosystème, trop de bruit pour
    suivre une seule CI. Mises à jour de dépendances faites à la main, quand on le décide. Si on le réactive : un seul
    écosystème, rythme mensuel. La suppression automatique des branches fusionnées reste activée sur le dépôt.
 
@@ -38,11 +30,16 @@ d'images n'ont pas tourné. Aucune image publiée sur Docker Hub pour l'instant.
 
 **Constat (09/10/2026).** Backend : 884 classes, **1 seul test** (`GBanqueApplicationTests`, chargement du contexte sur
 MySQL Testcontainers) → couverture de lignes 9,7 % (hors tout comportement métier). Frontend : 61 specs, dont **58 en
-échec** (squelettes « should create » générés par le CLI, sans providers) → couverture 9 %. Le job `frontend` de la CI
-les exécute en `continue-on-error` (temporaire).
+échec** (squelettes « should create » générés par le CLI, sans providers) → couverture 9 %.
 
 **À faire.**
-1. Réparer ou remplacer les 58 specs frontend en échec, puis retirer `continue-on-error` du job `frontend` (`ci.yml`).
+1. ~~Réparer les 58 specs frontend en échec~~ — **fait le 10/10/2026** : 60/60 verts (providers communs
+   `src/testing/test-providers.ts`), job `frontend` bloquant, couverture lignes 9 % → 37 %. Reste : ces specs ne testent
+   que la création des composants/services ; les remplacer progressivement par de vrais tests de comportement.
+   **Anomalie relevée** : 5 composants à table PrimeNG lazy lèvent NG0100 (ExpressionChangedAfterItHasBeenChecked, mode
+   dev) au premier cycle — `GeneralLignesByBankComponent`, `LignesFonctionnellesArchivesComponent`, `LogsComponent`,
+   `SpeficLigneArchiveesComponent`, `SpeficLigneEncoursComponent` (`loading` modifié pendant `onLazyLoad`). Leurs specs
+   n'appellent pas `detectChanges` ; corriger les composants puis rétablir l'appel.
 2. Écrire les tests **de tous les niveaux pour tous les modules**, backend et frontend, selon `conventions/testing.md`
    (unitaire, intégration, composant, bout en bout), module par module dans l'ordre du chapitrage de la doc :
    socle d'accès → comptes bancaires → produits financiers → marchés → moyens de paiement → transactions →
@@ -61,11 +58,20 @@ les exécute en `continue-on-error` (temporaire).
 toutes dans les dépendances Java (Tomcat embarqué 21, Netty, Jackson, Spring Framework 6.1.10 avec RCE/XSS/DoS, …).
 Cause : Spring Boot **3.3.1** (hors support). L'OS de l'image est propre ; l'image frontend est propre (0).
 
+**Fait le 10/10/2026.** Spring Boot 3.3.1 → **3.5.16** (même majeure, Java 17) ; versions épinglées à la main alignées
+sur le BOM (`spring-security-messaging`, `mysql-connector-j` retirés ; springdoc 2.1.0 → 2.8.17 ; POI 5.2.5 → 5.5.1) ;
+correctifs en avance sur le BOM : Tomcat 10.1.60, Netty 4.1.139, Jackson 2.21.7 (propriétés du `pom.xml`, à retirer
+quand le BOM les rattrape). Résultat Trivy image backend : **67 → 0** HIGH/CRITICAL hors 3 CVE Spring Framework 6.2
+sans correctif 6.2 public (XsltView, endpoints fonctionnels WebFlux, SSE à fragments de vue), non exploitables ici et
+justifiées dans `.trivyignore`. Scan de l'image backend désormais **bloquant**. Validé : compilation + démarrage du
+contexte sur MySQL 8 ; non validé : recette fonctionnelle écran par écran (à faire en dev avant mise en production).
+
 **À faire.**
-- Décision d'architecture à valider : montée de version Spring Boot (3.3.x le plus récent → 3.5.x), impact sur
-  `spring-boot-starter-oauth2-authorization-server`, Hibernate/Envers, springdoc, MapStruct. Vérifier aussi pourquoi
-  `spring-webflux` et Netty sont dans le classpath.
-- Ensuite, passer le scan Trivy backend en bloquant (`trivy-exit-code: "1"` dans `images` et `exit-code: "1"` dans `security`).
+- Recette fonctionnelle de Spring Boot 3.5 en dev avant déploiement (Hibernate 6.6, springdoc 2.8, POI 5.5 : exports
+  Excel/PDF, Swagger, audit Envers, jobs planifiés).
+- Spring Boot 4 (Spring Framework 7, Jackson 3, Security 7) : chantier à part, décision d'architecture ; retirera les
+  3 exceptions de `.trivyignore`.
+- Angular 17 → 19+ : 16 CVE HIGH dans `package-lock.json` (non bloquant dans le job `security` d'ici là).
 - Épingler les images de `docker-compose.yml` encore en `:latest` (prometheus, grafana, phpmyadmin, mysql-cron-backup)
   sur les versions réellement déployées (à relever sur le serveur) ; sinon un `pull` change la version sans prévenir.
 - Évaluer un JRE réduit (`jlink`) pour l'image backend (293 Mo aujourd'hui) — gain ~100 Mo, à tester.

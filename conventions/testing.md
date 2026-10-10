@@ -54,6 +54,7 @@ Répartition cible : beaucoup d'unitaires, une couche d'intégration ciblée, pe
 
 * Un fichier `*.spec.ts` à côté du fichier testé.
 * **Interdit** de conserver un spec « should create » généré par le CLI sans les providers nécessaires : un spec qui échoue en permanence est supprimé ou réparé dans le même changement.
+* Les dépendances communes (HTTP intercepté, routeur, animations, `DatePipe`, `MessageService`, `ConfirmationService`, dialogue dynamique) sont fournies par `src/testing/test-providers.ts` : `providers: testProviders` (ou `[...testProviders, <surcharges>]`, ex. `ActivatedRoute` d'un écran enfant). Tout service global ajouté à `app.config.ts` y est ajouté aussi.
 * Les services HTTP sont testés avec `provideHttpClientTesting` ; les composants avec leurs dépendances remplacées par des doubles, pas avec le vrai backend.
 * Les guards et conditions d'affichage liées aux droits (`isSystemAdmin()`, `departmentGuard`) sont testés (cf. `docs/rbac/README.md`).
 * Exécution locale : `npx ng test --watch=false --browsers=ChromeHeadlessCI --code-coverage`.

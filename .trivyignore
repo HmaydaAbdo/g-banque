@@ -1,0 +1,16 @@
+# Exceptions Trivy — chaque entrée est justifiée et datée. À revoir à chaque montée de version de Spring Boot.
+# Lu par les scans du job CI "images" et "security" (--ignorefile).
+#
+# Spring Framework 6.2.x : corrigées uniquement en 7.0.9 (Spring Boot 4), pas de correctif 6.2 public.
+# Vérifié le 10/10/2026 sur le code backend : aucune des conditions d'exploitation n'est réunie.
+# À retirer lors du passage à Spring Boot 4 (cf. TODO.md, chantier « Sécurité des images et dépendances backend »).
+
+# XsltView (SSRF/RCE) : aucune utilisation de XsltView dans le code.
+CVE-2026-47884
+
+# Endpoints fonctionnels WebFlux (header predicate bypass) : aucun RouterFunction ; WebFlux sert uniquement de
+# client HTTP (WebClient dans FunPaiementClient).
+CVE-2026-47892
+
+# SSE avec fragments de vue (stream corruption) : aucun SseEmitter ni rendu de fragments de vue.
+CVE-2026-47890

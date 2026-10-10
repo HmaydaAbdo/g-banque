@@ -55,6 +55,6 @@
 
 ## Sécurité
 
-* Scan Trivy de chaque image sur HIGH/CRITICAL corrigeables. Frontend : bloquant. Backend : rapport seul tant que la montée de version Spring Boot n'est pas faite (cf. `TODO.md`), puis bloquant.
+* Scan Trivy de chaque image sur HIGH/CRITICAL corrigeables, bloquant pour les deux images. Toute exception est justifiée et datée dans `.trivyignore`.
 * nginx : `server_tokens off`, en-têtes `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`. La CSP est à cadrer avec PrimeNG avant activation.
 * Ports publiés uniquement sur `127.0.0.1` dans `docker-compose.yml` (le reverse proxy du serveur est le seul point d'entrée).

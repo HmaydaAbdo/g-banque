@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ValidatedPrefiComponent } from './validated-prefi.component';
+import { testProviders } from '../../../../../../../testing/test-providers';
 
 describe('ValidatedPrefiComponent', () => {
   let component: ValidatedPrefiComponent;
@@ -8,6 +9,7 @@ describe('ValidatedPrefiComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: testProviders,
       imports: [ValidatedPrefiComponent]
     })
     .compileComponents();

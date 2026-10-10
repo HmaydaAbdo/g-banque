@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ImpotEtTaxeFormComponent } from './impot-et-taxe-form.component';
+import { testProviders } from '../../../../../testing/test-providers';
 
 describe('ImpotEtTaxeFormComponent', () => {
   let component: ImpotEtTaxeFormComponent;
@@ -8,6 +9,7 @@ describe('ImpotEtTaxeFormComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: testProviders,
       imports: [ImpotEtTaxeFormComponent]
     })
     .compileComponents();

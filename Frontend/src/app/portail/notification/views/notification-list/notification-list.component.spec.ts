@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { NotificationListComponent } from './notification-list.component';
+import { NotificationService } from '../../service/NotificationService';
+import { testProviders } from '../../../../../testing/test-providers';
 
 describe('NotificationListComponent', () => {
   let component: NotificationListComponent;
@@ -8,12 +10,14 @@ describe('NotificationListComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: testProviders,
       imports: [NotificationListComponent]
     })
     .compileComponents();
     
     fixture = TestBed.createComponent(NotificationListComponent);
     component = fixture.componentInstance;
+    component.notificationService = TestBed.inject(NotificationService);
     fixture.detectChanges();
   });
 

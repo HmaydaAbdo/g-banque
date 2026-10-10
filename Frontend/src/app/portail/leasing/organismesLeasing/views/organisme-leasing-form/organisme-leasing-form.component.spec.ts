@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { OrganismeLeasingFormComponent } from './organisme-leasing-form.component';
+import { testProviders } from '../../../../../../testing/test-providers';
 
 describe('OrganismeLeasingFormComponent', () => {
   let component: OrganismeLeasingFormComponent;
@@ -8,6 +9,7 @@ describe('OrganismeLeasingFormComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: testProviders,
       imports: [OrganismeLeasingFormComponent]
     })
     .compileComponents();

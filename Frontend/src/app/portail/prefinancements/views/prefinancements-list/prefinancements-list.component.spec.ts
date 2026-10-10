@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { PrefinancementsListComponent } from './prefinancements-list.component';
+import { testProviders } from '../../../../../testing/test-providers';
 
 describe('PrefinancementsListComponent', () => {
   let component: PrefinancementsListComponent;
@@ -8,6 +9,7 @@ describe('PrefinancementsListComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: testProviders,
       imports: [PrefinancementsListComponent]
     })
     .compileComponents();

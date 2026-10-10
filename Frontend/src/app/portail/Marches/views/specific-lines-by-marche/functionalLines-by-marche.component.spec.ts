@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { FunctionalLinesByMarcheComponent } from './functionalLines-by-marche.component';
+import { testProviders } from '../../../../../testing/test-providers';
 
 describe('FunctionalLinesByMarcheComponent', () => {
   let component: FunctionalLinesByMarcheComponent;
@@ -8,6 +9,7 @@ describe('FunctionalLinesByMarcheComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: testProviders,
       imports: [FunctionalLinesByMarcheComponent]
     })
     .compileComponents();

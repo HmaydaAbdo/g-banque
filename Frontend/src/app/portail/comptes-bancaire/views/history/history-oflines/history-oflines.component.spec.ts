@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { HistoryOflinesComponent } from './history-oflines.component';
+import { testProviders } from '../../../../../../testing/test-providers';
 
 describe('HistoryOflinesComponent', () => {
   let component: HistoryOflinesComponent;
@@ -8,6 +9,7 @@ describe('HistoryOflinesComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: testProviders,
       imports: [HistoryOflinesComponent]
     })
     .compileComponents();

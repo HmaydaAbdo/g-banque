@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { TransactionHistoryComponent } from './transaction-history.component';
+import { testProviders } from '../../../../../testing/test-providers';
 
 describe('TransactionHistoryComponent', () => {
   let component: TransactionHistoryComponent;
@@ -8,6 +9,7 @@ describe('TransactionHistoryComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: testProviders,
       imports: [TransactionHistoryComponent]
     })
     .compileComponents();
