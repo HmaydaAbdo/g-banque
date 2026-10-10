@@ -48,6 +48,8 @@
 		<tomcat.version>10.1.60</tomcat.version>
 		<netty.version>4.1.139.Final</netty.version>
 		<jackson-bom.version>2.21.7</jackson-bom.version>
+		<!-- CVE-2026-54291 (HIGH, SCRAM) corrigée en 42.7.12 ; le BOM Spring Boot 3.5.16 fournit 42.7.11 -->
+		<postgresql.version>42.7.13</postgresql.version>
 		<mapstruct.version>1.6.3</mapstruct.version>
 	 </properties>
 

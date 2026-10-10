@@ -2,19 +2,20 @@
 
 Usage, depuis la racine du dépôt (procédure complète : docs/infra/migration-postgres.md) :
 
-    docker compose up -d postgres
-    docker compose up -d --build backend      # 1er démarrage : Flyway crée le schéma (V1 + vues)
-    docker compose stop backend
+    docker compose up -d postgres              # base vierge
     python sql/migration-postgres/migrer_vers_postgres.py "C:/chemin/vers/export.sql"
-    docker compose up -d
+    docker compose up -d --build                # le backend applique V2 et suivantes sur les données migrées
 
 Étapes :
+  0. Crée le schéma en version 1 SEULEMENT (image flyway/flyway, mêmes fichiers db/migration que le backend) : les
+     données de production entrent dans le schéma V1 ; les migrations suivantes (V2 : correction des données puis
+     colonnes rendues obligatoires…) s'appliquent ensuite au démarrage du backend.
   1. Démarre un MySQL 8 temporaire (gbanque-mysql-source) sur le réseau de la stack et y charge l'export
      (adapté : tables Spring Batch en majuscules, vues retirées).
   2. Lance copier.py dans un conteneur Python éphémère (pymysql + psycopg) : copie transactionnelle de toutes
      les tables vers PostgreSQL, recalage des compteurs, contrôle des volumes.
   3. Supprime le MySQL temporaire.
-Refuse de s'exécuter si la base PostgreSQL contient déjà des données.
+Refuse de s'exécuter si la base PostgreSQL contient déjà des utilisateurs ou un schéma au-delà de la version 1.
 """
 import os
 import re
@@ -28,6 +29,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SOURCE = 'gbanque-mysql-source'
 SOURCE_PASSWORD = 'source-temporaire'
 PYTHON_IMAGE = 'python:3.12-slim'
+FLYWAY_IMAGE = 'flyway/flyway:11.20.3-alpine'   # même version que le backend (pom.xml)
+MIGRATIONS = os.path.join(ROOT, 'Backend', 'src', 'main', 'resources', 'db', 'migration')
 
 
 def run(cmd, **kw):
@@ -72,6 +75,23 @@ def main():
     if not network:
         sys.exit("Conteneur gbanque-postgres introuvable : lancer d'abord `docker compose up -d postgres`.")
 
+    psql = ['docker', 'exec', 'gbanque-postgres', 'psql', '-U', env['POSTGRES_USER'], '-d', env['POSTGRES_DB'], '-tAc']
+    has_history = run(psql + ["SELECT count(*) FROM information_schema.tables WHERE table_name = 'flyway_schema_history'"])
+    if has_history.stdout.strip() == '1':
+        version = run(psql + ['SELECT max(version::int) FROM flyway_schema_history WHERE version IS NOT NULL AND success'])
+        users = run(psql + ['SELECT count(*) FROM users'])
+        if version.stdout.strip() != '1' or users.stdout.strip() != '0':
+            sys.exit(f'Base PostgreSQL non vierge (schéma en version {version.stdout.strip()}, '
+                     f'{users.stdout.strip()} utilisateur(s)) : migration refusée. Repartir d\'une base vide '
+                     '(cf. docs/infra/migration-postgres.md).')
+    else:
+        print('0/3 Création du schéma en version 1 (Flyway)…')
+        flyway = run(['docker', 'run', '--rm', '--network', network, '-v', f'{MIGRATIONS}:/flyway/sql:ro', FLYWAY_IMAGE,
+                      f"-url=jdbc:postgresql://postgres:5432/{env['POSTGRES_DB']}", f"-user={env['POSTGRES_USER']}",
+                      f"-password={env['POSTGRES_PASSWORD']}", '-locations=filesystem:/flyway/sql', '-target=1', 'migrate'])
+        if flyway.returncode != 0:
+            sys.exit('Création du schéma en échec :\n' + flyway.stdout[-2000:] + flyway.stderr[-2000:])
+
     print('1/3 MySQL temporaire et chargement de l\'export…')
     run(['docker', 'rm', '-f', SOURCE])
     started = run(['docker', 'run', '-d', '--name', SOURCE, '--network', network,
@@ -112,7 +132,7 @@ def main():
     finally:
         print('3/3 Suppression du MySQL temporaire.')
         run(['docker', 'rm', '-f', SOURCE])
-    print('Terminé. Démarrer la stack : docker compose up -d')
+    print('Terminé. Démarrer la stack : docker compose up -d --build (le backend applique V2 et suivantes).')
 
 
 if __name__ == '__main__':

@@ -12,9 +12,9 @@ Procédure détaillée et résultats de la répétition : `docs/infra/migration-
 2. **`.env` du serveur** = le `.env` local mis à jour le 10/10/2026 : variables `POSTGRES_*` et `PGADMIN_*` (mots de
    passe générés), `DB_HOST=postgres`, `DB_PORT=5432`, `MYSQL_*` et `GRAFANA_*` retirées, nouvelle `JWT_SECRET`.
    Comparer avec `.env.example` : aucune variable manquante.
-3. Sur le serveur : `docker compose up -d postgres`, `docker compose up -d --build backend` (Flyway crée le schéma),
-   `docker compose stop backend`, puis `python sql/migration-postgres/migrer_vers_postgres.py <export.sql>` (contrôle
-   des volumes intégré, tout ou rien), puis `docker compose up -d`.
+3. Sur le serveur, base PostgreSQL vierge : `docker compose up -d postgres`, puis
+   `python sql/migration-postgres/migrer_vers_postgres.py <export.sql>` (schéma V1 + copie, contrôle des volumes
+   intégré, tout ou rien), puis `docker compose up -d --build` (le backend applique V2 sur les données migrées).
    Ne pas copier `docker-data/postgres` depuis un poste Windows (droits refusés par PostgreSQL) : migrer depuis l'export,
    ou restaurer une sauvegarde (`docs/infra/backup-postgres.md`).
 4. Le nginx frontal doit servir le frontend et `/gbanque/api` sur la **même origine** et transmettre `Set-Cookie` /
@@ -27,10 +27,6 @@ Procédure détaillée et résultats de la répétition : `docs/infra/migration-
 identiques, schéma validé, 14/14 contrôles API (dont recherche insensible aux accents), sauvegarde restaurée à l'identique.
 
 **À trancher (données) :**
-- **Libellé du décompte n° 3** (4 198 674,70 MAD, payé, émis le 06/05/2025, observation « decompte , Marché N° :
-  3/2024/ASB ») : seul NULL réel parmi les 60 colonnes « obligatoires dans le code, facultatives en production » ; aucune
-  transaction liée pour le reprendre. Une fois la valeur décidée : migration `V2` qui la pose puis rend les 60 colonnes
-  `NOT NULL` (les DTO et l'interface les exigent déjà).
 - 8 lignes `commission` (et leurs révisions d'audit) ont `operation = 'Importation'`, valeur qui n'existe plus dans le
   code : **ouvrir l'une d'elles renvoie une erreur 500** (vérifié, commission 17276) ; la liste s'affiche. Décision
   métier, puis migration Flyway dédiée (accord explicite avant toute écriture).

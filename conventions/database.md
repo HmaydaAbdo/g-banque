@@ -93,7 +93,8 @@ majuscules, minuscules **et** accents : sans précaution, une recherche ou une �
 * Les **expressions régulières** (`~`, `regexp_*`) sont refusées par PostgreSQL sur une collation non déterministe :
   écrire `colonne COLLATE "C" ~ '...'` si une requête manuelle en a besoin (l'application n'en utilise pas).
 * `CHECK`, `NOT NULL` et longueurs : la V1 suit les entités, sauf exceptions documentées en tête de V1 (valeur
-  héritée `Importation`, 60 colonnes facultatives en production). Toute nouvelle exception est une décision écrite.
+  héritée `Importation` ; les 60 colonnes laissées facultatives en V1 pour verser les données de production sont
+  obligatoires depuis V2). Toute nouvelle exception est une décision écrite.
 
 ---
 

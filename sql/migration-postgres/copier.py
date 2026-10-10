@@ -54,7 +54,7 @@ def main():
 
     d.execute("SELECT count(*) FROM information_schema.tables WHERE table_name = 'flyway_schema_history'")
     if d.fetchone()[0] != 1:
-        sys.exit("Cible non initialisée : démarrer d'abord le backend une fois (Flyway crée le schéma).")
+        sys.exit("Cible non initialisée : le schéma V1 doit être créé par migrer_vers_postgres.py.")
     d.execute('SELECT count(*) FROM users')
     if d.fetchone()[0] != 0:
         sys.exit('La base cible contient déjà des données : migration refusée (base vide exigée).')
