@@ -22,8 +22,9 @@ import java.util.Optional;
  *   <li>{@value #REFRESH_COOKIE} — jeton de rafraîchissement opaque, envoyé uniquement à
  *       {@code <context-path>/auth} (rafraîchissement et déconnexion).</li>
  * </ul>
- * Tous deux : {@code Secure} (les navigateurs l'acceptent aussi sur {@code http://localhost}),
- * {@code SameSite=Strict} (jamais envoyés depuis un autre site).
+ * Tous deux : {@code SameSite=Strict} (jamais envoyés depuis un autre site) et {@code Secure} selon
+ * {@code AUTH_COOKIE_SECURE} — {@code true} dès que G-Banque est servi en HTTPS ; tant qu'il l'est en
+ * HTTP, {@code false} (un navigateur refuse un cookie {@code Secure} reçu en HTTP, hors localhost).
  */
 @Service
 public class AuthCookieService {
@@ -34,12 +35,15 @@ public class AuthCookieService {
     private final String apiPath;
     private final String authPath;
     private final long accessTokenMinutes;
+    private final boolean secure;
 
     public AuthCookieService(@Value("${server.servlet.context-path}") String contextPath,
-                             @Value("${jwt.access-token-minutes}") long accessTokenMinutes) {
+                             @Value("${jwt.access-token-minutes}") long accessTokenMinutes,
+                             @Value("${auth.cookie.secure}") boolean secure) {
         this.apiPath = contextPath.isBlank() ? "/" : contextPath;
         this.authPath = (contextPath.endsWith("/") ? contextPath : contextPath + "/") + "auth";
         this.accessTokenMinutes = accessTokenMinutes;
+        this.secure = secure;
     }
 
     public void writeSession(HttpServletResponse response, String accessToken, RefreshTokenService.IssuedRefreshToken refreshToken) {
@@ -69,10 +73,10 @@ public class AuthCookieService {
                 .findFirst();
     }
 
-    private static ResponseCookie cookie(String name, String value, String path, Duration maxAge) {
+    private ResponseCookie cookie(String name, String value, String path, Duration maxAge) {
         return ResponseCookie.from(name, value)
                 .httpOnly(true)
-                .secure(true)
+                .secure(secure)
                 .sameSite("Strict")
                 .path(path)
                 .maxAge(maxAge)

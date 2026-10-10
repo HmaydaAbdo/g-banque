@@ -12,7 +12,7 @@
 
 ## Stockage des jetons (navigateur)
 
-* Les jetons voyagent **uniquement** en cookies `HttpOnly`, `Secure`, `SameSite=Strict`, posés par le backend (`AuthCookieService`). Jamais dans `localStorage`/`sessionStorage`, jamais dans le corps d'une réponse, jamais décodés côté frontend.
+* Les jetons voyagent **uniquement** en cookies `HttpOnly`, `SameSite=Strict`, posés par le backend (`AuthCookieService`). L'attribut `Secure` suit `AUTH_COOKIE_SECURE` : `true` obligatoire dès que G-Banque est servi en HTTPS ; `false` tant qu'il l'est en HTTP (un navigateur refuse un cookie `Secure` reçu en HTTP). Jamais dans `localStorage`/`sessionStorage`, jamais dans le corps d'une réponse, jamais décodés côté frontend.
 * Le frontend connaît l'utilisateur par le profil renvoyé par `/auth/login`, `/auth/refresh` et `/auth/profile` (`username`, `authorities`).
 * Refresh Token : opaque, seul son SHA-256 est stocké (`refresh_token`), rotation à chaque usage, réutilisation détectée ⇒ révocation de toute la session. Déconnexion = révocation côté serveur.
 * Frontend et API sont servis sur la **même origine** (prod : nginx ; dev : proxy `ng serve`, `proxy.conf.json`). Ne jamais réintroduire d'URL d'API absolue : les cookies `SameSite=Strict` et l'en-tête CSRF d'Angular ne fonctionnent qu'en même origine.
@@ -30,7 +30,7 @@
 * Appliquer le principe du moindre privilège.
 * Toute nouvelle fonctionnalité doit définir explicitement les rôles ou permissions autorisés.
 * Refuser par défaut tout accès non explicitement autorisé.
-* Chaque module possède un fichier `docs/rbac/<module>.md` qui trace, de façon exhaustive, les accès du module (endpoints + `@PreAuthorize`, guards Angular, visibilité sidebar). Voir `conventions/documentation.md`, section "Documentation RBAC". Toute évolution des autorisations d'un module met à jour ce fichier dans le même changement.
+* La documentation RBAC est centralisée dans `docs/rbac/README.md`, avec un chapitre par module. Chaque chapitre trace de façon exhaustive les accès du module (endpoints + `@PreAuthorize`, guards Angular, visibilité sidebar). Voir `conventions/documentation.md`, section "Documentation RBAC". Toute évolution des autorisations d'un module met à jour le chapitre correspondant dans le même changement.
 
 ---
 
@@ -143,9 +143,8 @@ spring.data.web.pageable.max-page-size
 
 # Base de données
 
-* Hibernate utilise `ddl-auto:update` pour maintenir automatiquement le schéma.
-* Ne jamais modifier manuellement la structure de la base de données en production.
-* Toute évolution de modèle JPA doit être réalisée en modifiant les entités, jamais directement dans la base.
+* Le schéma est géré exclusivement par les migrations Flyway (`db/migration`) ; Hibernate est en `ddl-auto: validate`. Voir `conventions/database.md`.
+* Ne jamais modifier manuellement la structure ou les données de la base de production : toute évolution passe par une migration versionnée, relue et testée.
 
 ---
 

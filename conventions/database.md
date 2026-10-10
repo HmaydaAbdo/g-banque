@@ -1,198 +1,111 @@
-# Base de données — Migrations et cohérence
+# Base de données — Migrations Flyway et cohérence
 
-> La base de données de production est vivante. Toute évolution du schéma ou des données doit être préparée, communiquée et validée avant d'être appliquée.
+> La base de données de production est vivante. Toute évolution du schéma ou des données est écrite comme une migration Flyway versionnée, relue, testée sur une base vierge **et** sur une copie de la production, puis appliquée automatiquement au démarrage du backend.
 
 ---
 
-## Principe fondamental
+## Principes
 
-Le projet utilise `spring.jpa.hibernate.ddl-auto=update`. Hibernate applique automatiquement les changements de schéma au démarrage. Ce mécanisme est limité : il **ajoute** mais ne **renomme pas**, ne **supprime pas** de colonnes et ne **migre pas** les données existantes.
+* **Moteur unique : MySQL 8**, en développement, en test, en CI et en production (`mysql:8.0` du `docker-compose.yml`, Testcontainers `mysql:8.0`). Aucun autre moteur (MariaDB/XAMPP, H2) n'est utilisé pour développer ou tester.
+* **Flyway est la seule source de vérité du schéma.** Hibernate ne crée ni ne modifie jamais rien : `spring.jpa.hibernate.ddl-auto=validate` partout. Au démarrage, Hibernate vérifie que les entités correspondent au schéma et refuse de démarrer sinon.
+* Le backend applique lui-même les migrations en attente au démarrage (`spring.flyway`). Aucun script n'est plus exécuté à la main sur la production.
+* Une base vierge se construit entièrement par les migrations (`V1`, `V2`, … puis `R__`). C'est ainsi que les tests d'intégration construisent leur base : un écart entre une entité et les migrations fait échouer la CI.
 
-Toute évolution qui dépasse ce que Hibernate peut faire automatiquement doit être signalée et traitée manuellement.
+---
+
+## Emplacement et nommage
+
+Dossier unique : `Backend/src/main/resources/db/migration/`.
+
+| Type | Nom | Usage |
+|---|---|---|
+| Versionnée | `V<n>__<description_en_snake_case>.sql` | Toute évolution de schéma ou de données (table, colonne, index, contrainte, enum, correction de données). Exécutée **une seule fois**, dans l'ordre des numéros. |
+| Répétable | `R__<objet>.sql` | Objets recréables sans perte : **vues** (`R__v_recapitulatif_encours.sql`, `R__v_recap_moyens_paiement.sql`). Ré-appliquée automatiquement dès que le fichier change, après toutes les versionnées. |
+
+* Numérotation continue (`V3`, `V4`…), jamais de trou volontaire ni de réutilisation.
+* **Une migration appliquée n'est jamais modifiée** (Flyway refuse de démarrer si son empreinte change). Une erreur se corrige par une nouvelle migration.
+* Une migration = un objectif. En-tête obligatoire : objectif, tables concernées, impact sur les données existantes, requêtes de contrôle.
+* Une vue se modifie en modifiant son fichier `R__` (commencer par `DROP VIEW IF EXISTS` puis `CREATE VIEW`). Les littéraux texte portent un `COLLATE` explicite aligné sur les colonnes (la connexion JDBC n'a pas la même collation que les tables).
+* `V1__schema_initial.sql` est le schéma de la production au 10/10/2026 (adoption de Flyway). Sur la production, elle n'a pas été exécutée : la base y a été marquée « baseline » en version 1 (`baseline-on-migrate`).
 
 ---
 
 ## Checklist obligatoire avant toute modification d'entité
 
-Avant de modifier une entité JPA, répondre aux questions suivantes et signaler chaque point concerné :
+Toute modification d'entité JPA s'accompagne, dans le même changement, de la migration `V<n>` qui fait évoluer le schéma — sinon Hibernate (`validate`) refuse de démarrer.
 
-### 1. Changement de schéma (DDL)
-
-| Question | Action requise si oui |
+| Question | Action requise dans la migration |
 |---|---|
-| Nouvelle table ? | Hibernate la crée automatiquement — vérifier les index |
-| Nouvelle colonne nullable ? | Hibernate l'ajoute — aucune action supplémentaire |
-| Nouvelle colonne NOT NULL sur une table non vide ? | **Bloquer** — nécessite une valeur par défaut ou une migration DML préalable |
-| Colonne renommée ? | **Bloquer** — Hibernate crée une nouvelle colonne, l'ancienne reste (dead column) |
-| Colonne supprimée de l'entité ? | **Bloquer** — Hibernate ne supprime pas la colonne en base (`update` ne fait jamais DROP) |
-| Type de colonne modifié ? | **Bloquer** — Hibernate peut échouer ou corrompre des données |
-| Enum étendu (nouvelle valeur) ? | Hibernate modifie l'enum en base — vérifier que MariaDB accepte la syntaxe |
-| Enum réduit (valeur supprimée) ? | **Bloquer** — les lignes existantes avec cette valeur deviennent invalides |
-| Contrainte UNIQUE ajoutée ? | **Bloquer** si des doublons existent déjà en base |
-| Index ajouté ? | Hibernate l'ajoute — acceptable, mais vérifier l'impact sur les tables volumineuses |
-| Nom de colonne = mot réservé SQL/MariaDB ? | **Bloquer** — utiliser `@Column(name = "...")` avec un nom alternatif |
-
-### 2. Migration de données (DML)
-
-| Situation | Action requise |
-|---|---|
-| Nouvelle colonne NOT NULL avec données existantes | Fournir le script `UPDATE` à exécuter avant le démarrage |
-| Colonne renommée avec données à conserver | Fournir le script `UPDATE … SET nouvelle = ancienne` + DROP ancienne après validation |
-| Données à transformer (ex. format, enum changé) | Fournir le script `UPDATE` avec la logique de transformation |
-| Seed data obligatoire pour le fonctionnement de la fonctionnalité | Fournir le script `INSERT` ou documenter l'insertion via l'UI |
-| Suppression de données liées à une entité supprimée | Fournir le script `DELETE` ou vérifier que les FK avec CASCADE couvrent le cas |
+| Nouvelle table ? | `CREATE TABLE` avec clés, index et contraintes ; table `_aud` si l'entité est `@Audited`. |
+| Nouvelle colonne nullable ? | `ALTER TABLE … ADD COLUMN …` (et sur la table `_aud`). |
+| Nouvelle colonne NOT NULL sur une table non vide ? | Ajouter nullable → `UPDATE` des lignes existantes → `MODIFY … NOT NULL`, dans la même migration ou en deux migrations. |
+| Colonne renommée ? | `ALTER TABLE … RENAME COLUMN` (données conservées) — jamais « nouvelle colonne + ancienne abandonnée ». |
+| Colonne supprimée ? | `DROP COLUMN` explicite, après vérification qu'aucun code ni vue ne la lit. |
+| Type modifié ? | `MODIFY` avec conversion des données ; vérifier les valeurs incompatibles avant. |
+| Enum étendu ? | `MODIFY … ENUM(…)` avec la nouvelle valeur (table et `_aud`). |
+| Enum réduit ? | Migrer d'abord les lignes portant la valeur retirée (`UPDATE`), contrôler, puis `MODIFY`. |
+| Contrainte UNIQUE ajoutée ? | Vérifier l'absence de doublons ; les traiter dans la migration si décision validée. |
+| Index ajouté ? | `CREATE INDEX` ; vérifier l'impact sur les tables volumineuses. |
+| Vue impactée ? | Mettre à jour le fichier `R__` de la vue dans le même changement. |
+| Nom = mot réservé MySQL ? | Choisir un autre nom (`@Column(name = "...")`). |
 
 ---
 
 ## Analyse obligatoire des données existantes
 
-Avant tout changement de schéma, **analyser systématiquement l'impact sur les données déjà en base**. Cette analyse précède l'écriture de tout code.
+Avant tout changement de schéma, **analyser l'impact sur les données déjà en production**. Cette analyse précède l'écriture de la migration.
 
-### Étapes d'analyse
-
-**Étape 1 — Identifier les tables impactées**
-
-Pour chaque entité modifiée, identifier les tables en base concernées (nom de table = `@Table(name = ...)`).
-
-**Étape 2 — Évaluer le volume et l'état des données**
-
-Fournir les requêtes de diagnostic à exécuter sur la prod pour connaître l'état réel avant d'agir :
+1. Identifier les tables impactées (nom de table = `@Table(name = ...)`, plus les tables `_aud`).
+2. Fournir les requêtes de diagnostic à exécuter sur la production (lecture seule) :
 
 ```sql
--- Volume général
 SELECT COUNT(*) FROM nom_table;
-
--- Distribution d'un enum / statut
-SELECT colonne, COUNT(*) FROM nom_table GROUP BY colonne;
-
--- Vérifier les doublons avant ajout d'une contrainte UNIQUE
-SELECT colonne, COUNT(*) FROM nom_table GROUP BY colonne HAVING COUNT(*) > 1;
-
--- Vérifier les valeurs NULL avant ajout d'une contrainte NOT NULL
-SELECT COUNT(*) FROM nom_table WHERE colonne IS NULL;
-
--- Vérifier les lignes portant une valeur d'enum à supprimer
-SELECT COUNT(*) FROM nom_table WHERE colonne = 'VALEUR_A_SUPPRIMER';
+SELECT colonne, COUNT(*) FROM nom_table GROUP BY colonne;                      -- distribution d'un enum
+SELECT colonne, COUNT(*) FROM nom_table GROUP BY colonne HAVING COUNT(*) > 1;  -- doublons avant UNIQUE
+SELECT COUNT(*) FROM nom_table WHERE colonne IS NULL;                          -- avant NOT NULL
 ```
 
-**Étape 3 — Fournir les scripts de migration dans l'ordre**
+3. Écrire la migration en tenant compte des résultats, avec ses requêtes de contrôle en commentaire.
+4. **Tester** : sur une base vierge (tests d'intégration, automatique) **et** sur une copie restaurée de la sauvegarde de production (cf. `docs/infra/backup-mysql.md`), backend démarré contre cette copie.
 
-Les scripts sont fournis dans l'ordre d'exécution strict, numérotés, avec leur objectif :
-
-```sql
--- [1/3] Peupler la nouvelle colonne pour les lignes existantes
-UPDATE nom_table SET nouvelle_colonne = 'VALEUR_PAR_DEFAUT' WHERE nouvelle_colonne IS NULL;
-
--- [2/3] Vérifier que toutes les lignes sont migrées
-SELECT COUNT(*) FROM nom_table WHERE nouvelle_colonne IS NULL; -- doit retourner 0
-
--- [3/3] (après redémarrage) Supprimer l'ancienne colonne si renommage
-ALTER TABLE nom_table DROP COLUMN ancienne_colonne;
-```
-
-**Étape 4 — Définir l'ordre de déploiement**
-
-Certains changements imposent un ordre strict :
-
-| Ordre | Étape |
-|---|---|
-| 1 | Exécuter les scripts DML de pré-migration |
-| 2 | Vérifier les résultats des scripts (requêtes de contrôle) |
-| 3 | Démarrer l'application (Hibernate applique le DDL) |
-| 4 | Vérifier que l'application démarre sans erreur |
-| 5 | Exécuter les scripts DML de post-migration si nécessaire (ex. DROP ancienne colonne) |
+Toute écriture sur des données de production (UPDATE/DELETE dans une migration) exige un accord explicite préalable.
 
 ---
 
 ## Format de signalement
 
-Lorsqu'une modification d'entité déclenche un ou plusieurs points de la checklist, **signaler explicitement avant d'écrire le code**, en respectant ce format :
+Lorsqu'une modification touche le schéma ou des données existantes, **signaler avant d'écrire le code** :
 
 ```
 ⚠️ CHANGEMENT BASE DE DONNÉES DÉTECTÉ
 
-Table(s) concernée(s) : nom_table
+Table(s) concernée(s) : nom_table (+ nom_table_aud)
+Migration prévue      : V<n>__<description>.sql
 
-─── SCHÉMA (DDL) ───────────────────────────────────
-Changement    : [ex. colonne `statut` renommée en `etat`]
-Hibernate     : BLOQUÉ / automatique
-Risque        : [ex. données perdues si Hibernate crée une nouvelle colonne vide]
+─── SCHÉMA ─────────────────────────────────────────
+Changement : [ex. colonne `statut` renommée en `etat`]
+Risque     : [ex. lignes existantes à valeur hors enum]
 
-─── DIAGNOSTIC (à exécuter sur la prod) ────────────
--- Vérifier l'état avant migration
-SELECT COUNT(*) FROM nom_table;
+─── DIAGNOSTIC (lecture seule, sur la prod) ────────
 SELECT statut, COUNT(*) FROM nom_table GROUP BY statut;
 
-─── MIGRATION (DML) ─────────────────────────────────
--- [1/2] Pré-migration — exécuter AVANT le démarrage
-ALTER TABLE nom_table CHANGE statut etat VARCHAR(20) NOT NULL;
-UPDATE nom_table SET etat = statut; -- si applicable
+─── MIGRATION ───────────────────────────────────────
+ALTER TABLE nom_table RENAME COLUMN statut TO etat;
 
--- [2/2] Contrôle — vérifier que la migration est complète
+─── CONTRÔLE ────────────────────────────────────────
 SELECT COUNT(*) FROM nom_table WHERE etat IS NULL; -- doit retourner 0
-
-─── ORDRE DE DÉPLOIEMENT ───────────────────────────
-1. Exécuter les scripts de pré-migration
-2. Vérifier les résultats des requêtes de contrôle
-3. Démarrer l'application
-4. [si post-migration] Exécuter les scripts de nettoyage
 
 ⛔ NE PAS CONTINUER SANS VALIDATION EXPLICITE.
 ```
 
-**Règle absolue** : aucun code Java modifiant le schéma d'une table non vide n'est écrit avant que le signalement soit validé et les scripts confirmés exécutés.
-
 ---
 
-## Cas fréquents et solutions
+## Déploiement
 
-### Nouvelle colonne NOT NULL sur table existante
-
-**Problème :** Hibernate ajoute la colonne mais ne peut pas définir de valeur pour les lignes existantes → erreur au démarrage.
-
-**Solution :**
-1. Ajouter la colonne comme `nullable` dans un premier déploiement.
-2. Exécuter le script DML de migration des données.
-3. Ajouter la contrainte `NOT NULL` dans un second déploiement.
-
-Ou : définir une valeur par défaut temporaire (`@Column(columnDefinition = "... DEFAULT 'VALEUR'")`), migrer, puis retirer le défaut.
-
-### Colonne renommée
-
-**Problème :** Hibernate crée une nouvelle colonne vide — les données de l'ancienne colonne sont perdues.
-
-**Solution :**
-1. Exécuter manuellement : `ALTER TABLE t CHANGE ancien_nom nouveau_nom TYPE;`
-2. Mettre à jour l'entité avec `@Column(name = "nouveau_nom")`.
-
-### Enum — nouvelle valeur
-
-Hibernate génère un `ALTER TABLE … MODIFY COLUMN … ENUM(…)` incluant la nouvelle valeur. Compatible MariaDB si la syntaxe est correcte. Tester en dev avant de pousser en prod.
-
-### Enum — valeur supprimée
-
-**Problème :** les lignes portant la valeur supprimée violent la contrainte de l'enum.
-
-**Solution :**
-1. Identifier et migrer les lignes : `UPDATE t SET colonne = 'VALEUR_VALIDE' WHERE colonne = 'VALEUR_SUPPRIMEE'`.
-2. Valider qu'aucune ligne ne porte plus la valeur.
-3. Supprimer la valeur de l'enum et redémarrer.
-
-### Mot réservé MariaDB comme nom de colonne
-
-**Problème :** Hibernate génère du DDL invalide — erreur SQL au démarrage.
-
-**Solution :** toujours vérifier que le nom de champ Java ne correspond pas à un mot réservé MariaDB. Si c'est le cas, utiliser `@Column(name = "nom_alternatif")`.
-
-Exemples de mots réservés à éviter : `condition`, `status`, `type`, `key`, `value`, `index`, `order`, `group`, `interval`, `schema`, `row`, `select`.
-
----
-
-## Mots réservés MariaDB — liste de vigilance
-
-Vérifier systématiquement les noms de champs d'entité contre cette liste avant tout `git push` :
-
-`ADD`, `ALL`, `ALTER`, `AND`, `AS`, `ASC`, `BETWEEN`, `BY`, `CALL`, `CASE`, `CHECK`, `COLUMN`, `CONDITION`, `CONSTRAINT`, `CREATE`, `CROSS`, `CURRENT_DATE`, `CURRENT_TIME`, `CURRENT_TIMESTAMP`, `CURSOR`, `DATABASE`, `DAY_HOUR`, `DAY_MICROSECOND`, `DAY_MINUTE`, `DAY_SECOND`, `DEC`, `DECIMAL`, `DECLARE`, `DEFAULT`, `DELETE`, `DESC`, `DISTINCT`, `DIV`, `DOUBLE`, `DROP`, `DUAL`, `EACH`, `ELSE`, `ELSEIF`, `ENCLOSED`, `ESCAPED`, `EXISTS`, `EXIT`, `EXPLAIN`, `FETCH`, `FLOAT`, `FOR`, `FORCE`, `FOREIGN`, `FROM`, `FULLTEXT`, `GRANT`, `GROUP`, `HAVING`, `HOUR_MICROSECOND`, `HOUR_MINUTE`, `HOUR_SECOND`, `IF`, `IGNORE`, `IN`, `INDEX`, `INFILE`, `INNER`, `INOUT`, `INSENSITIVE`, `INSERT`, `INT`, `INTEGER`, `INTERVAL`, `INTO`, `IS`, `ITERATE`, `JOIN`, `KEY`, `KEYS`, `KILL`, `LEADING`, `LEAVE`, `LEFT`, `LIKE`, `LIMIT`, `LOAD`, `LOCK`, `LONG`, `LOOP`, `MATCH`, `MAXVALUE`, `MEDIUMINT`, `MINUTE_MICROSECOND`, `MINUTE_SECOND`, `MOD`, `MODIFIES`, `NATURAL`, `NOT`, `NULL`, `ON`, `OPTIMIZE`, `OPTION`, `ORDER`, `OUT`, `OUTER`, `OUTFILE`, `PRECISION`, `PRIMARY`, `PROCEDURE`, `PURGE`, `RANGE`, `READ`, `READS`, `REFERENCES`, `RELEASE`, `RENAME`, `REPEAT`, `REPLACE`, `REQUIRE`, `RESIGNAL`, `RESTRICT`, `RETURN`, `RIGHT`, `SCHEMA`, `SCHEMAS`, `SELECT`, `SENSITIVE`, `SET`, `SHOW`, `SIGNAL`, `SMALLINT`, `SQL`, `STATUS`, `TABLE`, `TERMINATED`, `THEN`, `TO`, `TRAILING`, `TRIGGER`, `TYPE`, `UNDO`, `UNION`, `UNIQUE`, `UNLOCK`, `UNSIGNED`, `UPDATE`, `USAGE`, `USE`, `USING`, `UTC_DATE`, `UTC_TIME`, `UTC_TIMESTAMP`, `VALUE`, `VALUES`, `VARBINARY`, `VARCHAR`, `VARYING`, `WHEN`, `WHERE`, `WHILE`, `WITH`, `WRITE`, `XOR`, `ZEROFILL`
+1. Sauvegarde de la base vérifiée (fichier du jour présent).
+2. Déploiement des images : au démarrage, le backend applique les migrations en attente puis valide le schéma.
+3. Vérifier dans les logs : `Successfully applied N migrations` (ou « Schema … is up to date »), puis démarrage complet.
+4. En cas d'échec d'une migration : le backend ne démarre pas ; restaurer la sauvegarde, corriger par une nouvelle migration (jamais en modifiant celle qui a échoué si elle a été partiellement appliquée sans réparation `flyway repair` documentée).
 
 ---
 
@@ -200,18 +113,16 @@ Vérifier systématiquement les noms de champs d'entité contre cette liste avan
 
 | Qui | Quoi |
 |---|---|
-| Développeur (IA) | Signaler tout changement DDL ou DML avant de modifier le code |
-| Développeur (IA) | Fournir le script SQL si une migration manuelle est nécessaire |
-| Développeur (humain) | Valider le changement et exécuter le script sur la base de production |
-| Développeur (humain) | Confirmer que la base est cohérente avant le redémarrage de l'application |
+| Développeur (IA) | Signaler tout changement de schéma ou de données avant de modifier le code ; écrire la migration et ses contrôles. |
+| Développeur (IA) | Tester la migration sur base vierge et sur copie de la production. |
+| Développeur (humain) | Valider le changement, en particulier toute écriture sur des données existantes. |
+| Développeur (humain) | Vérifier la sauvegarde avant déploiement et les logs Flyway après. |
 
 ---
 
 ## Résumé
 
-* Hibernate `update` ajoute mais ne supprime ni ne renomme jamais.
-* Toute colonne NOT NULL sur table non vide = migration DML obligatoire.
-* Tout renommage = script SQL manuel obligatoire.
-* Tout enum réduit = nettoyage DML obligatoire avant le déploiement.
-* Tout nom de champ = vérifier contre les mots réservés MariaDB.
-* Aucun changement bloquant sans validation humaine explicite.
+* MySQL 8 partout ; Flyway seul maître du schéma ; Hibernate en `validate`.
+* Toute évolution d'entité = une migration `V<n>` dans le même changement ; une vue = son fichier `R__`.
+* Jamais de modification d'une migration appliquée ; jamais de script manuel sur la production.
+* Données existantes analysées avant, contrôlées après ; aucune écriture sans validation explicite.

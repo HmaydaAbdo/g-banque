@@ -216,6 +216,12 @@ lorsqu'un token existe déjà.
 
 Si un token manque, l'ajouter dans `_tokens.scss`.
 
+## Budget de style par composant
+
+* Budget `anyComponentStyle` (`angular.json`) : avertissement à 6 ko, erreur à 10 ko. Le seuil de 6 ko couvre la page vitrine (`landing`, ~5 ko de styles propres, entièrement utilisés).
+* Un composant qui dépasse 6 ko est d'abord allégé : styles morts supprimés, règles communes déplacées dans `styles.scss` ou les tokens. On ne relève le seuil qu'avec une justification écrite ici.
+* Aucun nouvel avertissement de build n'est introduit. Les avertissements existants sont listés dans `TODO.md` jusqu'à leur correction (objectif : build sans avertissement).
+
 ---
 
 # Communication avec le backend

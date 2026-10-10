@@ -54,6 +54,17 @@ Exemples :
 
 ---
 
+## Environnement unique (dev = prod)
+
+* **Aucun profil Spring** (`application-dev.yml`, `application-prod.yml`, `SPRING_PROFILES_ACTIVE` : supprimés le 10/10/2026). Un seul `application.yml`, une seule configuration de logs, un seul `environment.ts` côté Angular.
+* Ce qui diffère d'une machine à l'autre (hôte de base, secrets, Swagger, cookies `Secure`, origines CORS…) est **uniquement une valeur** dans le fichier `.env`, jamais un comportement codé différemment.
+* `.env.example` (versionné) liste toutes les variables, sans secret. Toute nouvelle variable y est ajoutée dans le même changement, ainsi que dans `docker-compose.yml` et dans la configuration `maven-surefire-plugin` (valeur fictive pour les tests).
+* Le développement utilise la **même stack Docker que la production** (`docker compose up -d --build`) : même MySQL 8, mêmes migrations Flyway, mêmes images. Pour déboguer le backend depuis l'IDE contre la base du compose : `DB_HOST=localhost`, `DB_PORT=3307`.
+* Seule exception : le profil `test` (dans `src/test/resources`) coupe les jobs planifiés pendant les tests d'intégration ; il ne change ni le schéma ni la sécurité.
+* Une variable inutilisée est supprimée de `.env.example`, `docker-compose.yml` et `.env` (pas de configuration morte).
+
+---
+
 ## Configuration métier
 
 Toute valeur métier susceptible d'évoluer doit être configurable par un administrateur via l interrface utilisateur .

@@ -20,7 +20,7 @@ Les rapports (JaCoCo, Karma, résumés de taille, couverture du code modifié) s
    * *Variables* → `DOCKERHUB_USERNAME` = identifiant Docker Hub ;
    * *Secrets* → `DOCKERHUB_TOKEN` = le token créé.
    Sans ces deux valeurs, la CI fonctionne mais ne publie rien.
-3. **Protection de `main`** : indisponible sur un dépôt privé en offre gratuite (erreur 403). Règle d'équipe : PR avec CI verte, pas de push direct.
+3. **Protection de `main`** : indisponible sur un dépôt privé en offre gratuite (erreur 403). Règle : un lot cohérent = un commit sur `main` = un run de CI suivi jusqu'au vert (cf. `conventions/ci-cd.md`).
 4. *Settings → Code security* : activer Dependabot alerts, Secret scanning et Push protection.
 
 ## Images publiées

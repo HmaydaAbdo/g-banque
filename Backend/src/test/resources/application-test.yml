@@ -1,13 +1,8 @@
-# Profil TEST — surcharge de application.yml pour les tests d'intégration.
-# Le schéma est créé à la volée sur le MySQL Testcontainers (jamais de ddl-auto hors dev/test).
+# Profil TEST — seule surcharge de la configuration unique (application.yml) pour les tests d'intégration.
+# Le schéma est construit par Flyway (V1, V2, R__) et validé par Hibernate, exactement comme en production :
+# un écart entre les entités et les migrations fait échouer la suite. Seuls les jobs planifiés sont coupés.
 spring:
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-    show-sql: false
   batch:
-    jdbc:
-      initialize-schema: always
     job:
       enabled: false
 functional:

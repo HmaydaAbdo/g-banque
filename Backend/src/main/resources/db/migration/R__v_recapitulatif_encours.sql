@@ -2,6 +2,9 @@
 -- Vue v_recapitulatif_encours
 -- =============================================================================
 --
+-- Migration Flyway RÉPÉTABLE (R__) : ré-appliquée automatiquement au démarrage du backend
+-- dès que ce fichier change. Ne plus l'exécuter à la main. Modifier la vue = modifier ce fichier.
+--
 -- Consolide en une seule requête paginable/triable/agrégeable les 20 sources
 -- d'encours (Leasing, CMT, Cheque, Lcn, Virement, VirementInternational,
 -- MiseADisposition, Prefinancement, Factoring, DroitConstate, Decompte,

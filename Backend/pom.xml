@@ -146,6 +146,16 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- Migrations de schéma (db/migration) : seule source de vérité du schéma, dev = prod = tests -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-mysql</artifactId>
+		</dependency>
+
 		<!-- Tests d'intégration sur un vrai MySQL 8 jetable (même moteur qu'en prod) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -213,7 +223,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <environmentVariables>
-                        <SPRING_PROFILES_ACTIVE>test</SPRING_PROFILES_ACTIVE>
                         <DB_HOST>localhost</DB_HOST>
                         <DB_PORT>3306</DB_PORT>
                         <MYSQL_DATABASE>gbanque_test</MYSQL_DATABASE>
@@ -225,6 +234,7 @@
                         <JWT_SECRET>0000000000000000000000000000000000000000000000000000000000000000</JWT_SECRET>
                         <JWT_ACCESS_TOKEN_MINUTES>15</JWT_ACCESS_TOKEN_MINUTES>
                         <JWT_REFRESH_TOKEN_HOURS>8</JWT_REFRESH_TOKEN_HOURS>
+                        <AUTH_COOKIE_SECURE>true</AUTH_COOKIE_SECURE>
                         <SWAGGER_ENABLED>false</SWAGGER_ENABLED>
                         <CORS_ALLOWED_ORIGINS>http://localhost</CORS_ALLOWED_ORIGINS>
                         <LOGIN_MAX_ATTEMPTS>5</LOGIN_MAX_ATTEMPTS>

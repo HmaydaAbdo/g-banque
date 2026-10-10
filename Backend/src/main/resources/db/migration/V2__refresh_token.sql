@@ -1,18 +1,15 @@
 -- =============================================================================
--- Table refresh_token — sessions par cookies (10/10/2026)
+-- V2 — Table refresh_token : sessions par cookies (10/10/2026)
 -- =============================================================================
 --
 -- Mappée par staport.finance.gBanque.auth.entities.RefreshToken.
+-- Table neuve : aucune donnée existante impactée.
+-- Une ligne par jeton émis (connexion puis un renouvellement toutes les ~15 min par
+-- utilisateur actif) ; purge quotidienne des sessions expirées par le backend
+-- (RefreshTokenService.purgeExpired, 03:15).
 --
--- À exécuter sur la base de production AVANT de déployer la version qui
--- introduit les cookies de session : le profil prod est en ddl-auto=validate,
--- le backend refuse de démarrer si la table manque. En dev (ddl-auto=update),
--- Hibernate la crée seul ; ce script reste valable (idempotent).
---
--- Table neuve : aucune donnée existante impactée, aucune migration de données.
--- Une ligne par jeton émis (connexion puis un renouvellement toutes les ~15 min
--- par utilisateur actif) ; purge quotidienne des sessions expirées par le
--- backend (RefreshTokenService.purgeExpired, 03:15).
+-- IF NOT EXISTS : la table a pu être créée par Hibernate (ancien ddl-auto=update) sur une
+-- base de développement avant le passage à Flyway.
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS refresh_token (
@@ -29,6 +26,3 @@ CREATE TABLE IF NOT EXISTS refresh_token (
     INDEX idx_refresh_token_family (family_id),
     INDEX idx_refresh_token_expires_at (expires_at)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
-
--- Vérification
--- SHOW CREATE TABLE refresh_token;

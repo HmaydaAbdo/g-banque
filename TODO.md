@@ -2,117 +2,87 @@
 
 ## En attente
 
-### Chantier — Finalisation de la CI et mises à jour de dépendances (relevé le 10/10/2026)
+### Déploiement en production — Flyway, environnement unique, sessions par cookies, Spring Boot 3.5 (préparé le 10/10/2026)
 
-**État.** Pipeline `ci.yml` fusionnée sur `main`. Dernier run sur `main` : backend OK, frontend OK, **sécurité en échec**
-(Docker Hub refuse le téléchargement des images gitleaks/Trivy : `toomanyrequests`, pull anonyme limité), donc les jobs
-d'images n'ont pas tourné. Aucune image publiée sur Docker Hub pour l'instant. Seule la branche `main` est conservée.
+Tout est dans `main` ; à déployer **en une seule fois** (les sessions en cours seront fermées, les utilisateurs se
+reconnectent). G-Banque reste servi en **HTTP** pour l'instant (cf. chantier HTTPS ci-dessous) : `AUTH_COOKIE_SECURE=false`.
 
-**À faire.**
-1. **Rate limit Docker Hub (correctif poussé le 10/10/2026, à vérifier sur le run de `main`)** : `docker/login-action` placé `docker/login-action` (identifiants Docker Hub déjà configurés) avant
-   les `docker run` gitleaks et Trivy du job `security`, et avant le build du job `images`. Relancer la CI sur `main`
-   et vérifier le push de `gbanque-backend` / `gbanque-frontend` (`latest` + sha). Confirmer que le secret
-   `DOCKERHUB_TOKEN` existe sous ce nom exact.
-2. **Mises à jour de dépendances écartées le 10/10/2026** (anciennes PR Dependabot fermées). À reprendre une par
-   une comme chantiers décidés, jamais en fusion automatique :
-   - Angular 17 → 20/22 (`router`, `platform-browser-dynamic` ; toute la famille `@angular/*`, CLI, TypeScript, Node) ;
-   - PrimeFlex 3 → 4 (et PrimeNG en cohérence) ;
-   - Spring Security 7 (impose Spring Boot 4, lié au chantier « Sécurité des images et dépendances backend ») ;
-   - Java 17 → 25 / image Maven Temurin 26 (PR 5 et 6) ;
-   - ~~actions GitHub en version majeure~~ — **fait le 10/10/2026** : checkout 7, setup-java 6, setup-node 7,
-     upload-artifact 7, build-push-action 7, login-action 4, setup-buildx-action 4 ;
-   - mises à jour mineures/patch groupées Maven et npm (faible risque).
-3. **Dependabot supprimé (10/10/2026)** : il ouvrait une PR (et 2 workflows CI/CodeQL) par écosystème, trop de bruit pour
-   suivre une seule CI. Mises à jour de dépendances faites à la main, quand on le décide. Si on le réactive : un seul
-   écosystème, rythme mensuel. La suppression automatique des branches fusionnées reste activée sur le dépôt.
+1. **Sauvegarde** de la base de production vérifiée (fichier du jour présent dans `./backups/mysql`).
+2. **Tables Spring Batch** : sur la production (MySQL 8 sous Linux, noms de tables sensibles à la casse), vérifier
+   `SHOW TABLES LIKE 'BATCH%';` → doit lister `BATCH_JOB_INSTANCE`… en MAJUSCULES (l'export passé par XAMPP les
+   montrait en minuscules). Si elles sont en minuscules, me le signaler avant de déployer.
+3. **`.env` du serveur** = le `.env` local mis à jour le 10/10/2026 (profil Spring et `FRONTEND_PORT` retirés ;
+   `JWT_ACCESS_TOKEN_MINUTES=15`, `JWT_REFRESH_TOKEN_HOURS=8`, `AUTH_COOKIE_SECURE=false` ; **nouvelle `JWT_SECRET`** —
+   l'ancienne était compromise). Comparer avec `.env.example` : aucune variable manquante.
+4. Le nginx frontal doit servir le frontend et `/gbanque/api` sur la **même origine** et transmettre `Set-Cookie` /
+   `Cookie` sans les modifier (comportement par défaut de `proxy_pass`).
+5. **Déployer les images.** Au premier démarrage, Flyway marque la base existante en version 1 (baseline, V1 non
+   exécutée), applique `V2__refresh_token`, recrée les 2 vues (`R__`), puis Hibernate valide le schéma. Vérifier dans
+   les logs : `Successfully baselined schema with version: 1`, `Successfully applied 3 migrations`, puis démarrage complet.
+6. Vérifier : connexion, rechargement de page (session conservée), écran Récapitulatif (vue recréée), déconnexion ;
+   le lendemain, un fichier de sauvegarde du jour (mysql-cron-backup 1.15.0, `--skip-ssl`).
+7. Après déploiement : supprimer `env.dev` (remplacé par le `.env` unique) ; développer sur la stack Docker
+   (`docker compose up -d --build`), la base XAMPP locale n'est plus utilisée.
+
+**Répétition faite le 10/10/2026** sur une copie de la production (export du jour importé dans un MySQL 8 jetable) :
+baseline V1, V2 et vues appliquées, **schéma de production validé par Hibernate sans écart**, démarrage en 37 s,
+10/10 contrôles API (connexion, cookies HTTP, Récapitulatif banque + par source, récap moyens de paiement, PDF,
+rafraîchissement, déconnexion). Les vues du dépôt remplacent celles de la production (5 739 et 4 922 lignes).
+
+**À trancher (données) :** 8 lignes `commission` (et leurs révisions d'audit) ont `operation = 'Importation'`, valeur
+qui n'existe plus dans le code : **ouvrir l'une d'elles renvoie une erreur 500** (vérifié sur la copie de production,
+commission 17276) ; la liste s'affiche. Décision métier sur ces lignes, puis migration Flyway dédiée (accord explicite
+avant toute écriture).
+
+**Petit défaut relevé :** une URL d'API inexistante renvoie 500 (« Exception non gérée : No static resource ») au lieu
+de 404 — à traiter dans `GlobalExceptionHandler` (`NoResourceFoundException` → 404).
+
+### Chantier — Passage en HTTPS (demandé le 10/10/2026, après le déploiement ci-dessus)
+
+G-Banque est servi en HTTP. Passer en HTTPS sur le nginx frontal (certificat : Let's Encrypt si le nom
+`staport.dyndns.org` est joignable depuis Internet, sinon certificat interne), redirection HTTP → HTTPS, puis
+`AUTH_COOKIE_SECURE=true` dans `.env` (cookies de session et XSRF marqués `Secure`) et `CORS_ALLOWED_ORIGINS` en `https://`.
+Ensuite seulement : en-tête `Strict-Transport-Security`, et cadrer une CSP nginx compatible PrimeNG.
+
+### Chantier — Montées de version (à décider une par une, jamais automatiques)
+
+- **Angular 17 → 19+** (toute la famille `@angular/*`, CLI, TypeScript, Node) : 16 CVE HIGH dans `package-lock.json`,
+  corrigées seulement à partir d'Angular 19 (scan non bloquant dans le job `security` d'ici là). PrimeNG/PrimeFlex en cohérence.
+- **Spring Boot 4** (Spring Framework 7, Jackson 3, Security 7) : décision d'architecture ; retirera les 3 exceptions de
+  `.trivyignore`. Retirer alors les propriétés `tomcat.version`, `netty.version`, `jackson-bom.version` du `pom.xml`.
+- **Java 17 → 21/25** et image Maven correspondante.
+- Mises à jour mineures/patch Maven et npm, par lot validé par la CI.
+- Évaluer un JRE réduit (`jlink`) pour l'image backend (~290 Mo) — gain ~100 Mo, à tester.
+- Vérifier sur le serveur les versions de Grafana/Prometheus en service : l'épinglage (13.2.3 / v3.15.0) fera une montée
+  de version au prochain `pull` si le serveur tourne plus ancien.
+
+### Avertissements du build de production frontend (relevés le 10/10/2026)
+
+- `recapitulatif.component.scss` : 9,59 ko pour un budget d'avertissement de 6 ko — **à 0,4 ko de l'erreur (10 ko)
+  qui bloquerait le build**. L'alléger (styles morts, règles communes vers `styles.scss`/tokens).
+- Bundle initial : 1,19 Mo pour 1 Mo. Charger les écrans et modules PrimeNG à la demande (lazy loading des routes).
+- (Corrigé le 10/10/2026 : page `landing`, budget composant relevé à 6 ko, cf. `conventions/Frontend.md`.)
 
 ### Chantier — Stratégie de tests, tous niveaux, tous modules (demandé le 09/10/2026)
 
-**Constat (09/10/2026).** Backend : 884 classes, **1 seul test** (`GBanqueApplicationTests`, chargement du contexte sur
-MySQL Testcontainers) → couverture de lignes 9,7 % (hors tout comportement métier). Frontend : 61 specs, dont **58 en
-échec** (squelettes « should create » générés par le CLI, sans providers) → couverture 9 %.
+État au 10/10/2026 : backend 9 tests (contexte + 8 tests de session), frontend 72 tests verts (couverture lignes ~37 %,
+surtout des tests « should create »). Le schéma de test est construit par Flyway et validé par Hibernate.
 
-**À faire.**
-1. ~~Réparer les 58 specs frontend en échec~~ — **fait le 10/10/2026** : 60/60 verts (providers communs
-   `src/testing/test-providers.ts`), job `frontend` bloquant, couverture lignes 9 % → 37 %. Reste : ces specs ne testent
-   que la création des composants/services ; les remplacer progressivement par de vrais tests de comportement.
-   NG0100 sur 5 écrans à table PrimeNG lazy : **corrigé le 10/10/2026** (`loading` initialisé à `true` ; pour
-   `GeneralLignesByBankComponent`, l'erreur venait du test sans id de banque) ; `detectChanges` rétabli dans les specs.
-2. Écrire les tests **de tous les niveaux pour tous les modules**, backend et frontend, selon `conventions/testing.md`
+1. Écrire les tests **de tous les niveaux pour tous les modules**, backend et frontend, selon `conventions/testing.md`
    (unitaire, intégration, composant, bout en bout), module par module dans l'ordre du chapitrage de la doc :
    socle d'accès → comptes bancaires → produits financiers → marchés → moyens de paiement → transactions →
    charges appliquées → anomalies → rapprochement → états des encours → transverse.
    Priorité : calculs financiers (agios, commissions, encours), `@PreAuthorize` (allowed/denied), handlers du registre
    (validation, annulation, synchronisation d'édition).
+2. Remplacer progressivement les specs frontend « should create » par de vrais tests de comportement.
 3. Introduire le bout en bout (Playwright) sur les parcours critiques ; décision d'outil à valider (architecture).
 4. Relever `DIFF_COVER_MIN` (`ci.yml`) par paliers 0 → 30 → 50 → 70 → 80 %.
-5. Démarrage du contexte de test : ~190 s en local (Docker Desktop, ~100 tables avec Envers). Mesurer sur le runner ;
-   si trop long, envisager un contexte partagé entre tests d'intégration et des tranches (`@DataJpaTest`).
-6. Mettre à jour `conventions/testing.md` au fil des décisions (exemples de fixtures/builders une fois posés).
-
-### Chantier — Sécurité des images et dépendances backend (relevé le 09/10/2026)
-
-**Constat.** Scan Trivy de l'image backend (HIGH/CRITICAL corrigeables) : **67 vulnérabilités, dont 12 critiques**,
-toutes dans les dépendances Java (Tomcat embarqué 21, Netty, Jackson, Spring Framework 6.1.10 avec RCE/XSS/DoS, …).
-Cause : Spring Boot **3.3.1** (hors support). L'OS de l'image est propre ; l'image frontend est propre (0).
-
-**Fait le 10/10/2026.** Spring Boot 3.3.1 → **3.5.16** (même majeure, Java 17) ; versions épinglées à la main alignées
-sur le BOM (`spring-security-messaging`, `mysql-connector-j` retirés ; springdoc 2.1.0 → 2.8.17 ; POI 5.2.5 → 5.5.1) ;
-correctifs en avance sur le BOM : Tomcat 10.1.60, Netty 4.1.139, Jackson 2.21.7 (propriétés du `pom.xml`, à retirer
-quand le BOM les rattrape). Résultat Trivy image backend : **67 → 0** HIGH/CRITICAL hors 3 CVE Spring Framework 6.2
-sans correctif 6.2 public (XsltView, endpoints fonctionnels WebFlux, SSE à fragments de vue), non exploitables ici et
-justifiées dans `.trivyignore`. Scan de l'image backend désormais **bloquant**. Validé : compilation + démarrage du
-contexte sur MySQL 8. **Recette en dev faite le 10/10/2026** (nouveau JAR sur la base locale, compte de test
-temporaire supprimé ensuite) : 19/19 contrôles API (connexion, cookies, CSRF, rotation, déconnexion, `/banques`,
-Swagger/springdoc 2.8, actuator, exports PDF cautions + CMT, export Excel cautions, journal d'audit) et parcours
-navigateur (connexion, rechargement avec session conservée, déconnexion). Non couvert : jobs planifiés (cron du dimanche)
-et saisies modifiantes — à observer au premier dimanche après déploiement.
-
-**À faire.**
-- Spring Boot 4 (Spring Framework 7, Jackson 3, Security 7) : chantier à part, décision d'architecture ; retirera les
-  3 exceptions de `.trivyignore`.
-- Angular 17 → 19+ : 16 CVE HIGH dans `package-lock.json` (non bloquant dans le job `security` d'ici là).
-- ~~Épingler les images `:latest` de `docker-compose.yml`~~ — **fait le 10/10/2026** : prometheus v3.15.0, grafana
-  13.2.3, phpmyadmin 5.2.3 (identiques au `latest` du jour), mysql-cron-backup épinglé par empreinte (son `latest` est
-  figé au 08/12/2024). À faire : vérifier sur le serveur les versions effectivement en service avant le prochain
-  `pull` (si le serveur tourne plus ancien, ce `pull` fera une montée de version de Grafana/Prometheus).
-  mysql-cron-backup **1.15.0 testée et adoptée le 10/10/2026** avec `--skip-ssl` obligatoire (sans lui, échec
-  silencieux : aucun fichier produit) — cf. `docs/infra/backup-mysql.md`. Après déploiement, vérifier qu'un fichier
-  du jour existe dans `./backups/mysql`.
-- Évaluer un JRE réduit (`jlink`) pour l'image backend (293 Mo aujourd'hui) — gain ~100 Mo, à tester.
-- **Clé JWT — compromise** (vérifié le 10/10/2026) : la clé de `.env` et `env.dev` = la clé exposée dans le commit
-  `f7cb002e` + 2 caractères (256 essais suffisent). Remplacée localement par deux clés aléatoires distinctes (dev / `.env`).
-  **Reste à faire sur le serveur** : `JWT_SECRET=$(openssl rand -hex 32)` dans le `.env` de production, au même
-  déploiement que les cookies de session (cf. chantier ci-dessous). Le commit reste en liste d'autorisation dans `.gitleaks.toml`.
-- Cadrer une CSP nginx compatible PrimeNG (en-têtes de base déjà posés).
-
-### Déploiement en production — sessions par cookies + Spring Boot 3.5 (préparé le 10/10/2026)
-
-À faire **dans cet ordre**, en une seule fois (les sessions en cours seront fermées, les utilisateurs se reconnectent) :
-1. **Vérifier que G-Banque est servi en HTTPS** en production : les cookies de session sont `Secure`, un navigateur
-   les refuse sur `http://` (hors `localhost`) — sans HTTPS, plus personne ne peut se connecter.
-2. Exécuter `sql/2026_10_10_create_refresh_token.sql` sur la base de production (profil prod en `ddl-auto: validate`).
-3. `.env` du serveur : supprimer `JWT_EXPIRATION_HOURS`, ajouter `JWT_ACCESS_TOKEN_MINUTES=15` et
-   `JWT_REFRESH_TOKEN_HOURS=8`, remplacer `JWT_SECRET` par une nouvelle clé (`openssl rand -hex 32`).
-4. Le nginx frontal doit servir le frontend et `/gbanque/api` sur la **même origine** et transmettre les en-têtes
-   `Set-Cookie` / `Cookie` sans les modifier (comportement par défaut de `proxy_pass`).
-5. Déployer les images, puis vérifier : connexion, rechargement de page (session conservée), déconnexion, un fichier
-   de sauvegarde du jour dans `./backups/mysql`.
-
-**Anomalies relevées pendant la recette (base de dev, 10/10/2026), à traiter à part :**
-- 8 lignes `commission` (et leurs révisions d'audit) ont `operation = 'Importation'`, valeur qui n'existe plus dans le
-  code : Hibernate échoue à mettre à jour la colonne au démarrage en dev, et la lecture de ces lignes par l'application
-  échouera. Vérifier si la production en contient (`SELECT operation, COUNT(*) FROM commission GROUP BY operation;`) ;
-  décision métier sur ces lignes (accord explicite avant toute écriture en base).
-- La base de dev locale est **MariaDB 10.4** (XAMPP) alors que la production est **MySQL 8** : des écarts de
-  comportement sont possibles (types, enums, requêtes natives). Envisager MySQL 8 en dev (le `docker-compose.yml` le fournit).
-- `conventions/security.md` et `conventions/database.md` décrivent `ddl-auto: update`, alors que le profil prod est en
-  `validate` : à harmoniser (toute nouvelle table/colonne exige un script `sql/` pour la production).
+5. Mettre à jour `conventions/testing.md` au fil des décisions (exemples de fixtures/builders une fois posés).
 
 ### Chantier — Déploiement continu par SSH (en attente de l'accès SSH au serveur)
 
-Cf. `docs/infra/ci-cd.md` § « Passage au déploiement continu ». Préalables : secrets Docker Hub configurés, protection de
-`main`, `docker-compose` de production basé sur `image:` (Docker Hub). Workflow `cd.yml` à écrire quand l'accès est disponible.
+Cf. `docs/infra/ci-cd.md` § « Passage au déploiement continu ». Préalables : secrets Docker Hub configurés,
+`docker-compose` de production basé sur `image:` (Docker Hub). Workflow `cd.yml` à écrire quand l'accès est disponible.
 
 ### Chantier — Agios unifiés : calculé vs facturé, tout calculé (lancé le 09/10/2026)
 
@@ -219,83 +189,12 @@ configuration des charges fixes (écran « Charges fixes bancaires — Configura
    par le calculé ?
 10. Rétroactif : jusqu'où recalculer (T4/2025 ? T1/2026) ?
 
-### Saisie libre du montant de TVA en validation (demandé le 07/09/2026)
+### Saisie libre du montant de TVA en validation — recette fonctionnelle (code terminé le 07/09/2026)
 
-Dans le formulaire de validation (rapprochement), pour toutes les sources, permettre à
-l'utilisateur de ne choisir aucun des taux de TVA prédéfinis de la liste déroulante et de saisir
-directement le montant de TVA à la place.
-
-**Architecture arbitrée avec HMAYDA le 07/09/2026.** Le contrat de validation porte désormais deux
-champs mutuellement exclusifs, et la conversion taux → montant reste intégralement serveur.
-
-1. **Contrat API** : sur chaque DTO unitaire, le champ de taux (`tva` / `tvaDeductible`, `Double`,
-   en pourcentage) est renommé **`tauxTva`** et devient nullable ; un champ **`montantTva`**
-   (`BigDecimal`, nullable) est ajouté. Exactement l'un des deux est renseigné — XOR vérifié dès la
-   couche Jakarta par un `@AssertTrue`, puis par `TvaResolver`. Le renommage est fait dans la
-   foulée, source par source : le nom `tvaDeductible` pour un pourcentage disparaît.
-2. **Validation en lot** : la saisie libre y est **interdite** — un montant fixe appliqué à N
-   opérations de montants différents n'a pas de sens comptable. Le lot ne transporte qu'un taux, que
-   le service de chaque module convertit sur le TTC de chaque opération. Conséquence heureuse :
-   **`BatchValidationRequestDto` ne change pas de forme** (`ids: number[]` conservé), et
-   `processOne` se contente d'alimenter `tauxTva` en laissant `montantTva` à `null`.
-3. **Persistance** : inchangée. `Transaction` ne porte que `tvaDeductible` / `tvaCollectee`
-   (`BigDecimal`, des montants) ; le taux n'est persisté nulle part et ne le sera pas.
-   **Aucune migration BDD.** Si un besoin d'audit du taux apparaît, la colonne s'ajoutera plus tard
-   sans rien casser.
-4. **Répartition des responsabilités** : `TvaResolver` (`validation/utils`) porte les règles — XOR,
-   bornes du taux, `0 <= montantTva <= TTC` — et délègue à `TVAUtils` pour l'extraction depuis le
-   TTC. Il est appelé par le **service** de validation de chaque module, qui passe le montant résolu
-   au mapper. Les mappers ne calculent plus rien : ils posent le montant sur `tvaDeductible` ou
-   `tvaCollectee` selon le sens, redevenant conformes à `conventions/architecture.md`
-   (« Mapper : conversion uniquement, jamais de logique métier »).
-5. **Aucun calcul côté client.** Le frontend transmet le taux choisi, jamais un montant qu'il aurait
-   dérivé d'un taux. Ce point n'est pas cosmétique : une transposition TypeScript du calcul
-   `TVA = TTC − TTC/(1+taux/100)` en `number` diverge d'un centime sur **10,6 % des montants au
-   taux 20 %** (mesuré sur 400 000 montants ; 0 écart à 10 % et 14 %), la TVA y valant TTC/6 et
-   tombant sans arrêt sur des demi-centimes exacts. Le serveur garde le calcul, le problème
-   n'existe pas.
-
-**Périmètre.** Backend : 20 mappers + 20 DTO de requête (dont 11 `record` à constructeur positionnel
-— Commission, Agios, FraisBancaire, ImpotEtTaxe, Restitution, OperationErrone, Provision, Decompte,
-Impayee, CMT, Leasing) + les 20 services de validation + `BatchValidationService.processOne`.
-Frontend : 30 écrans unitaires dupliquant le même bloc TVA + le modal de lot partagé. Le backend ne
-compte **qu'un seul fichier de test** : chaque source doit être vérifiée manuellement.
-
-**Terminé le 07/09/2026.** Les 20 sources backend, les ~30 écrans Angular et le modal de lot sont
-tous migrés vers `tauxTva`/`montantTva`. Vérifié par compilation ciblée (`javac`, tous les fichiers
-touchés) et `tsc --noEmit` (frontend entier) — voir mémoire `project_gbanque_tva_saisie_libre` pour
-le détail source par source. **Reste à faire manuellement par HMAYDA**, non automatisable depuis
-cet environnement : un `ng build` réel (pour attraper d'éventuelles erreurs `strictTemplates` que
-`tsc --noEmit` ne détecte pas) et un test fonctionnel bout-en-bout d'au moins une source par
-famille de comportement (XOR strict, TVA optionnelle CMT/Leasing, saisie en lot).
-
-**Migration source par source.** Le renommage `tva`/`tvaDeductible` → `tauxTva` change le JSON de
-l'endpoint unitaire : pour une source donnée, le backend et ses écrans se déploient donc ensemble.
-Les sources sont en revanche indépendantes les unes des autres — une source migrée et une source
-non migrée coexistent sans problème, y compris dans `processOne`.
-
-Pour chaque source : DTO (`tauxTva` + `montantTva` + `@AssertTrue`) → mapper (signature
-`toEntity(..., BigDecimal montantTva)`, plus aucun calcul ; pour les mappers MapStruct — CMT,
-Leasing — passer le montant en `@Context`) → service (appel `TvaResolver.resoudre`) → branche
-`processOne` (`dto::setTauxTva`) → écrans Angular (`<app-tva-input>`, payload, récapitulatif).
-
-**Avancement.**
-
-- [x] `TvaResolver` (`Backend/.../validation/utils/TvaResolver.java`)
-- [x] Composant Angular partagé `<app-tva-input>` + `saisie-tva.model.ts`
-      (`Frontend/.../views/lesEncours/shared/tva-input/`)
-- [x] **Chèque** (décaissement + encaissement) — backend et les 2 écrans
-- [x] Virement, LCN, MiseADisposition, VirementInternational
-- [x] Prélèvement, Commission, Agios, FraisBancaire, ImpotEtTaxe
-- [x] Impayée, Restitution, OpérationErronée, Provision
-- [x] Décompte, DroitConstaté, Factoring, Préfinancement
-- [x] CMT, Leasing (mappers MapStruct — `@Context`)
-- [x] Modal de lot : `autoriserSaisieLibre=false` + renommage `BatchValidationRequestDto.tvaDeductible` → `tauxTva`
-- [x] Suppression des `tvaOptions` résiduels et de la mention `%` dans les récapitulatifs
-- [x] Swagger et `docs/modules` : rien à modifier — Swagger est généré depuis les DTO (aucune
-      annotation `@Schema` ne décrivait l'ancien champ) ; `docs/modules/README.md` décrit un
-      résultat fonctionnel (« calcule la TVA associée ») toujours exact, jamais le mécanisme de
-      saisie (liste déroulante vs montant libre), donc rien n'y est devenu faux.
+Le code (20 sources, ~30 écrans, modal de lot) est terminé et le build de production passe désormais en CI.
+**Reste à faire par HMAYDA :** un test fonctionnel bout-en-bout d'au moins une source par famille de comportement
+(XOR strict taux/montant, TVA optionnelle CMT/Leasing, saisie en lot interdite). Détail : historique git et mémoire
+`project_gbanque_tva_saisie_libre`.
 
 ### Documentation à mettre à jour — validation unifiée (reporté depuis le 19/09/2026)
 
@@ -342,9 +241,9 @@ Voir `REFACTORING-VALIDATION-UNIFIEE.md` (journal complet, suites 8 à 11) et m�
   (Leasing) sont désormais aussi cherchés par le champ « Libellé / Observation » (sans nouveau
   champ visible) ; deux nouveaux filtres déroulants « Motif Commission » et « Motif Impôt/Taxe »
   apparaissent quand la source correspondante est sélectionnée. Voir
-  `REFACTORING-VALIDATION-UNIFIEE.md` (journal) pour le détail technique. **Rappel déploiement** :
-  `sql/v_recapitulatif_encours.sql` doit être ré-exécuté sur la base pour que les 3 nouvelles
-  colonnes existent — sans ça le backend échoue au premier appel de l'écran Récapitulatif.
+  `REFACTORING-VALIDATION-UNIFIEE.md` (journal) pour le détail technique. La vue est désormais
+  appliquée automatiquement par Flyway (`R__v_recapitulatif_encours.sql`) au premier démarrage
+  du backend après déploiement.
 
 ### Bascule du statut d'un virement — garde-fou contre le retour en « en cours » (relevé le 09/10/2026)
 
@@ -390,21 +289,3 @@ KPI au lieu d'une ligne de texte, carte banque réorganisée en blocs, tableau r
 colonnes (dates regroupées, libellé+observation fusionnés, débit+crédit fusionnés avec indicateur
 de sens, TVA déductible+collectée fusionnées). Non implémenté dans le code — HMAYDA a explicitement
 demandé de reporter à une autre session.
-
-Historique complet des sweeps et validations déjà terminés : mémoire `modules_sweep` (et les
-mémoires dédiées `project_gbanque_moyens_paiement_sweep`, `project_gbanque_marches_archivage`,
-`project_gbanque_funpaiement_sync`, `project_gbanque_champs_non_affiches_audit`), ainsi que
-l'historique git.
-
-*Dernier nettoyage : 31/07/2026 — toutes les tâches précédemment listées (sweep de conformité
-100%, États des encours, validations locales, scripts SQL du 31/07) ont été confirmées terminées
-par HMAYDA.*
-
-*Nettoyage du 07/09/2026 — punch-list de la session close par HMAYDA : normalisation des fins
-de ligne (.gitattributes) sur Backend et Frontend ; git init de la racine G-Banque (docs,
-conventions, sql, infra, jusque-là non versionnés) ; sql/v_recap_moyens_paiement.sql reconstruit
-et versionné pour la première fois (branche CHEQUE vérifiée contre Cheque.java, fix préventif
-COLLATE sur source_type) ; javadoc de RecapMoyenPaiementView corrigée (elle affirmait à tort le
-script déjà versionné) ; indicateur de tri par défaut sur Récapitulatifs (numero reste un filtre,
-jamais une colonne affichée). Détail complet dans l'historique git des 3 dépôts et dans
-Claude outputs/email_ecrans_etats_des_encours.md.*

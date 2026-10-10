@@ -191,7 +191,9 @@ Ne jamais :
 - introduire de la dette technique ;
 - dupliquer une logique métier ;
 - laisser du dead code ;
-- laisser une fonctionnalité ou une règle métier non documentée.
+- laisser une fonctionnalité ou une règle métier non documentée ;
+- modifier le schéma ou les données de la base autrement que par une migration Flyway (`conventions/database.md`) ;
+- introduire une différence de comportement entre développement et production (`conventions/configuration.md`).
 
 Toujours privilégier :
 

@@ -1,12 +1,10 @@
 # =============================================================================
-# G-Banque — Configuration commune (tous profils)
-# Le profil actif est contrôlé par SPRING_PROFILES_ACTIVE dans .env
-# Dev : application-dev.yml  |  Prod : application-prod.yml
+# G-Banque — Configuration unique (environnement unique : le dev est identique à la prod)
+# Aucun profil Spring : ce qui diffère d'une machine à l'autre (hôte DB, secrets, Swagger,
+# cookies Secure…) vient exclusivement des variables d'environnement (.env, cf. .env.example).
 # =============================================================================
 
 spring:
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE}
   application:
     name: gBanque
   data:
@@ -28,12 +26,29 @@ spring:
       max-lifetime: 1800000
   jpa:
     open-in-view: true
+    hibernate:
+      # Le schéma est géré exclusivement par Flyway (db/migration) ; Hibernate vérifie seulement
+      # au démarrage que les entités correspondent au schéma, et refuse de démarrer sinon.
+      ddl-auto: validate
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
   batch:
     job:
       enabled: true
+    jdbc:
+      # Tables Spring Batch créées par la migration Flyway V1
+      initialize-schema: never
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    # Base existante sans historique Flyway (production au moment de l'adoption, 10/10/2026) :
+    # Flyway la marque en version 1 sans exécuter V1, puis applique V2 et suivantes.
+    # Sans effet sur une base vide, qui est construite entièrement par V1, V2…
+    baseline-on-migrate: true
+    baseline-version: 1
+    baseline-description: Schema de production au 10/10/2026
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT}
@@ -69,6 +84,9 @@ jwt:
   refresh-token-hours: ${JWT_REFRESH_TOKEN_HOURS}
 
 auth:
+  cookie:
+    # true dès que G-Banque est servi en HTTPS (cookies de session et XSRF marqués Secure)
+    secure: ${AUTH_COOKIE_SECURE}
   refresh-token:
     # Purge quotidienne des jetons de rafraîchissement expirés
     cleanup-cron: "0 15 3 * * *"
@@ -104,7 +122,6 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
-      environment: ${SPRING_PROFILES_ACTIVE}
 
 # =============================================================================
 # Domaine métier — commun aux deux profils

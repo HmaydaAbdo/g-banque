@@ -2,6 +2,9 @@
 -- Vue v_recap_moyens_paiement
 -- =============================================================================
 --
+-- Migration Flyway RÉPÉTABLE (R__) : ré-appliquée automatiquement au démarrage du backend
+-- dès que ce fichier change. Ne plus l'exécuter à la main. Modifier la vue = modifier ce fichier.
+--
 -- Consolide en une seule requête paginable/triable/agrégeable les 5 moyens de
 -- paiement de la section "Les moyens de paiement" (Cheque, Lcn, Virement,
 -- VirementInternational, MiseADisposition) qui composent les écrans "Recap

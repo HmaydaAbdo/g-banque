@@ -46,19 +46,22 @@ public class SecurityConfig {
     private final PasswordEncoder passwordEncoder;
     private final String secretKey;
     private final List<String> allowedOrigins;
+    private final boolean secureCookies;
 
     public SecurityConfig(UserDetailsServiceImpl userDetailsService,
                           JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint,
                           JsonAccessDeniedHandler jsonAccessDeniedHandler,
                           PasswordEncoder passwordEncoder,
                           @Value("${jwt.secret}") String secretKey,
-                          @Value("${cors.allowed-origins}") String allowedOrigins) {
+                          @Value("${cors.allowed-origins}") String allowedOrigins,
+                          @Value("${auth.cookie.secure}") boolean secureCookies) {
         this.userDetailsService = userDetailsService;
         this.jsonAuthenticationEntryPoint = jsonAuthenticationEntryPoint;
         this.jsonAccessDeniedHandler = jsonAccessDeniedHandler;
         this.passwordEncoder = passwordEncoder;
         this.secretKey = secretKey;
         this.allowedOrigins = Arrays.asList(allowedOrigins.split(","));
+        this.secureCookies = secureCookies;
     }
 
     @Bean
@@ -115,7 +118,7 @@ public class SecurityConfig {
     /** Cookie XSRF-TOKEN sur "/" : Angular ne lit que les cookies visibles depuis le chemin de la page. */
     private CookieCsrfTokenRepository csrfTokenRepository() {
         CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
-        repository.setCookieCustomizer(cookie -> cookie.path("/").secure(true).sameSite("Strict"));
+        repository.setCookieCustomizer(cookie -> cookie.path("/").secure(secureCookies).sameSite("Strict"));
         return repository;
     }
 
