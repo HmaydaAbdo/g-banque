@@ -10,7 +10,7 @@ import { DepartmentRoleType } from '../types/DepartmentRoleType';
  * - Avec `minRole: 'DIRECTOR'` : réservé aux DIRECTOR de ce département.
  * - SYSTEM_ADMIN passe toujours (accès transversal).
  *
- * Vérifie la validité du token (expiration comprise) avant le contrôle d'autorité.
+ * Vérifie qu'une session est ouverte avant le contrôle d'autorité.
  *
  * Usage : `canActivate: [departmentGuard('TRESORERIE')]` ou
  * `canActivate: [departmentGuard('TRESORERIE', 'DIRECTOR')]`.
@@ -20,7 +20,7 @@ export function departmentGuard(department: string, minRole?: DepartmentRoleType
     const authService = inject(AuthService);
     const router = inject(Router);
 
-    if (!authService.isTokenValid()) {
+    if (!authService.isAuthenticated()) {
       router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
       return false;
     }

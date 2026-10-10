@@ -125,9 +125,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   logout() {
-    // AuthService.logout() est purement local (suppression du token + navigation,
-    // pas d'appel HTTP) : il n'émet jamais false et n'erreure jamais. Pas de branche
-    // d'erreur ici — un échec HTTP réel serait géré par l'interceptor, pas ce composant.
+    // AuthService.logout() révoque la session côté serveur puis efface la session locale ;
+    // un échec de l'appel n'empêche pas la déconnexion locale : il émet toujours true et
+    // n'erreure jamais. Pas de branche d'erreur ici.
     this.loading = true;
     this.authService.logout().pipe(
       takeUntil(this.destroy$)

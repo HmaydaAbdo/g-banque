@@ -5,14 +5,14 @@ import { Router } from '@angular/router';
 
 /**
  * Réservé au SYSTEM_ADMIN (administrateur système transversal — n'appartient à
- * aucun département). Vérifie la validité du token (expiration comprise) avant
+ * aucun département). Vérifie qu'une session est ouverte avant
  * de contrôler l'authority.
  */
 export const systemAdminGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (!authService.isTokenValid()) {
+  if (!authService.isAuthenticated()) {
     router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
     return false;
   }

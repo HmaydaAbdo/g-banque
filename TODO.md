@@ -62,23 +62,52 @@ correctifs en avance sur le BOM : Tomcat 10.1.60, Netty 4.1.139, Jackson 2.21.7 
 quand le BOM les rattrape). Résultat Trivy image backend : **67 → 0** HIGH/CRITICAL hors 3 CVE Spring Framework 6.2
 sans correctif 6.2 public (XsltView, endpoints fonctionnels WebFlux, SSE à fragments de vue), non exploitables ici et
 justifiées dans `.trivyignore`. Scan de l'image backend désormais **bloquant**. Validé : compilation + démarrage du
-contexte sur MySQL 8 ; non validé : recette fonctionnelle écran par écran (à faire en dev avant mise en production).
+contexte sur MySQL 8. **Recette en dev faite le 10/10/2026** (nouveau JAR sur la base locale, compte de test
+temporaire supprimé ensuite) : 19/19 contrôles API (connexion, cookies, CSRF, rotation, déconnexion, `/banques`,
+Swagger/springdoc 2.8, actuator, exports PDF cautions + CMT, export Excel cautions, journal d'audit) et parcours
+navigateur (connexion, rechargement avec session conservée, déconnexion). Non couvert : jobs planifiés (cron du dimanche)
+et saisies modifiantes — à observer au premier dimanche après déploiement.
 
 **À faire.**
-- Recette fonctionnelle de Spring Boot 3.5 en dev avant déploiement (Hibernate 6.6, springdoc 2.8, POI 5.5 : exports
-  Excel/PDF, Swagger, audit Envers, jobs planifiés).
 - Spring Boot 4 (Spring Framework 7, Jackson 3, Security 7) : chantier à part, décision d'architecture ; retirera les
   3 exceptions de `.trivyignore`.
 - Angular 17 → 19+ : 16 CVE HIGH dans `package-lock.json` (non bloquant dans le job `security` d'ici là).
 - ~~Épingler les images `:latest` de `docker-compose.yml`~~ — **fait le 10/10/2026** : prometheus v3.15.0, grafana
   13.2.3, phpmyadmin 5.2.3 (identiques au `latest` du jour), mysql-cron-backup épinglé par empreinte (son `latest` est
   figé au 08/12/2024). À faire : vérifier sur le serveur les versions effectivement en service avant le prochain
-  `pull` (si le serveur tourne plus ancien, ce `pull` fera une montée de version de Grafana/Prometheus) ; tester
-  mysql-cron-backup 1.15.0 (sauvegarde + restauration) avant de l'adopter.
+  `pull` (si le serveur tourne plus ancien, ce `pull` fera une montée de version de Grafana/Prometheus).
+  mysql-cron-backup **1.15.0 testée et adoptée le 10/10/2026** avec `--skip-ssl` obligatoire (sans lui, échec
+  silencieux : aucun fichier produit) — cf. `docs/infra/backup-mysql.md`. Après déploiement, vérifier qu'un fichier
+  du jour existe dans `./backups/mysql`.
 - Évaluer un JRE réduit (`jlink`) pour l'image backend (293 Mo aujourd'hui) — gain ~100 Mo, à tester.
-- **Clé JWT** : un ancien commit (`f7cb002e`, `SecurityConfig.java`) contient une clé JWT en dur, identique à celle de `env.dev`.
-  Vérifier qu'elle n'est pas celle de la production ; sinon la renouveler (invalide les sessions en cours). Le commit est mis en liste d'autorisation dans `.gitleaks.toml`.
+- **Clé JWT — compromise** (vérifié le 10/10/2026) : la clé de `.env` et `env.dev` = la clé exposée dans le commit
+  `f7cb002e` + 2 caractères (256 essais suffisent). Remplacée localement par deux clés aléatoires distinctes (dev / `.env`).
+  **Reste à faire sur le serveur** : `JWT_SECRET=$(openssl rand -hex 32)` dans le `.env` de production, au même
+  déploiement que les cookies de session (cf. chantier ci-dessous). Le commit reste en liste d'autorisation dans `.gitleaks.toml`.
 - Cadrer une CSP nginx compatible PrimeNG (en-têtes de base déjà posés).
+
+### Déploiement en production — sessions par cookies + Spring Boot 3.5 (préparé le 10/10/2026)
+
+À faire **dans cet ordre**, en une seule fois (les sessions en cours seront fermées, les utilisateurs se reconnectent) :
+1. **Vérifier que G-Banque est servi en HTTPS** en production : les cookies de session sont `Secure`, un navigateur
+   les refuse sur `http://` (hors `localhost`) — sans HTTPS, plus personne ne peut se connecter.
+2. Exécuter `sql/2026_10_10_create_refresh_token.sql` sur la base de production (profil prod en `ddl-auto: validate`).
+3. `.env` du serveur : supprimer `JWT_EXPIRATION_HOURS`, ajouter `JWT_ACCESS_TOKEN_MINUTES=15` et
+   `JWT_REFRESH_TOKEN_HOURS=8`, remplacer `JWT_SECRET` par une nouvelle clé (`openssl rand -hex 32`).
+4. Le nginx frontal doit servir le frontend et `/gbanque/api` sur la **même origine** et transmettre les en-têtes
+   `Set-Cookie` / `Cookie` sans les modifier (comportement par défaut de `proxy_pass`).
+5. Déployer les images, puis vérifier : connexion, rechargement de page (session conservée), déconnexion, un fichier
+   de sauvegarde du jour dans `./backups/mysql`.
+
+**Anomalies relevées pendant la recette (base de dev, 10/10/2026), à traiter à part :**
+- 8 lignes `commission` (et leurs révisions d'audit) ont `operation = 'Importation'`, valeur qui n'existe plus dans le
+  code : Hibernate échoue à mettre à jour la colonne au démarrage en dev, et la lecture de ces lignes par l'application
+  échouera. Vérifier si la production en contient (`SELECT operation, COUNT(*) FROM commission GROUP BY operation;`) ;
+  décision métier sur ces lignes (accord explicite avant toute écriture en base).
+- La base de dev locale est **MariaDB 10.4** (XAMPP) alors que la production est **MySQL 8** : des écarts de
+  comportement sont possibles (types, enums, requêtes natives). Envisager MySQL 8 en dev (le `docker-compose.yml` le fournit).
+- `conventions/security.md` et `conventions/database.md` décrivent `ddl-auto: update`, alors que le profil prod est en
+  `validate` : à harmoniser (toute nouvelle table/colonne exige un script `sql/` pour la production).
 
 ### Chantier — Déploiement continu par SSH (en attente de l'accès SSH au serveur)
 

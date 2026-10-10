@@ -1,19 +1,22 @@
 // src/app/auth/services/auth.service.ts
 
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, tap, of } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Observable, BehaviorSubject, of } from 'rxjs';
+import { catchError, distinctUntilChanged, finalize, map, shareReplay, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
-import { LoginResponse } from "../dto/LoginResponse";
+import { SessionProfile } from "../dto/SessionProfile";
 import { LoginCredentials } from "../dto/LoginCredentials";
-import { jwtDecode } from 'jwt-decode';
-import { DecodedToken } from "../types/DecodedToken";
 import { DepartmentRoleType } from "../types/DepartmentRoleType";
 
 const SYSTEM_ADMIN_AUTHORITY = 'SYSTEM_ADMIN';
 
+/**
+ * Session utilisateur. Les jetons (accès 15 min, rafraîchissement) sont des cookies HttpOnly posés
+ * par le backend : ils ne sont ni lisibles ni stockés ici (aucun localStorage). Le service ne
+ * conserve que le profil (username + authorities) renvoyé par le backend.
+ */
 @Injectable({
   providedIn: 'root'
 })
@@ -21,77 +24,84 @@ export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
 
-  private apiUrl = environment.apiUrl;
-  private authUrl = `${this.apiUrl}auth`;
+  private authUrl = `${environment.apiUrl}auth`;
 
-  private isAuthenticatedSubject = new BehaviorSubject<boolean>(this.hasToken());
-  isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
-
-
-  private hasToken(): boolean {
-    return !!localStorage.getItem("token");
-  }
-
-  login(credentials: LoginCredentials): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.authUrl}/login`, credentials)
-      .pipe(
-        tap((response: LoginResponse) => {
-          if (response.accessToken) {
-            localStorage.setItem("token", response.accessToken);
-            this.isAuthenticatedSubject.next(true);
-          }
-        })
-      );
-  }
-
-  getToken(): string | null {
-    return this.hasToken() ? localStorage.getItem("token") : null;
-  }
-
-  isTokenValid(): boolean {
-    const token = this.getToken();
-    if (token) {
-      try {
-        const decodedToken: DecodedToken = jwtDecode(token);
-        const currentTime = Date.now() / 1000;
-        return decodedToken.exp > currentTime && this.isAuthenticatedSubject.value;
-      } catch {
-        return false;
-      }
-    }
-    return this.isAuthenticatedSubject.value;
-  }
+  /** Profil de la session courante ; null = aucune session. */
+  private profileSubject = new BehaviorSubject<SessionProfile | null>(null);
+  /** Émet à l'ouverture et à la fermeture de session (pas à chaque renouvellement silencieux). */
+  isAuthenticated$: Observable<boolean> = this.profileSubject.pipe(
+    map(profile => profile !== null),
+    distinctUntilChanged()
+  );
+  private refreshInFlight$: Observable<boolean> | null = null;
 
   /**
-   * Logs out the user by removing the token and navigating to the login page.
-   * Returns an Observable<boolean> to indicate success/failure of the logout process.
+   * Au démarrage de l'application : récupère la session portée par les cookies, s'il y en a une.
+   * Ne lève jamais d'erreur — sans session valide, l'utilisateur reste simplement déconnecté.
    */
-  logout(): Observable<boolean> {
-    return of(true).pipe(
-      delay(500),
-      tap(() => {
-        localStorage.removeItem("token");
-        this.isAuthenticatedSubject.next(false);
-        this.router.navigate(['/login']);
-      })
+  restoreSession(): Observable<void> {
+    return this.http.get<SessionProfile>(`${this.authUrl}/profile`).pipe(
+      tap(profile => this.profileSubject.next(profile)),
+      map(() => undefined),
+      catchError(() => of(undefined))
     );
   }
 
-  private decodeToken(): DecodedToken | null {
-    const token = this.getToken();
-    if (token) {
-      try {
-        return jwtDecode<DecodedToken>(token);
-      } catch {
-        return null;
-      }
+  login(credentials: LoginCredentials): Observable<SessionProfile> {
+    return this.http.post<SessionProfile>(`${this.authUrl}/login`, credentials).pipe(
+      tap(profile => this.profileSubject.next(profile))
+    );
+  }
+
+  /**
+   * Renouvelle la session (cookie de rafraîchissement). Un seul appel à la fois : les requêtes
+   * qui échouent en 401 au même moment partagent le même renouvellement.
+   *
+   * @returns true si la session est renouvelée (200, ou 204 = déjà renouvelée par un autre onglet)
+   */
+  refreshSession(): Observable<boolean> {
+    if (!this.refreshInFlight$) {
+      this.refreshInFlight$ = this.http
+        .post<SessionProfile | null>(`${this.authUrl}/refresh`, null, { observe: 'response' })
+        .pipe(
+          tap((response: HttpResponse<SessionProfile | null>) => {
+            if (response.body) {
+              this.profileSubject.next(response.body);
+            }
+          }),
+          map(() => true),
+          catchError(() => of(false)),
+          finalize(() => this.refreshInFlight$ = null),
+          shareReplay(1)
+        );
     }
-    return null;
+    return this.refreshInFlight$;
+  }
+
+  /**
+   * Déconnexion : révoque la session côté serveur puis efface la session locale et redirige vers
+   * la connexion. Émet toujours true : un échec de l'appel n'empêche pas la déconnexion locale.
+   */
+  logout(): Observable<boolean> {
+    return this.http.post<void>(`${this.authUrl}/logout`, null).pipe(
+      catchError(() => of(undefined)),
+      map(() => true),
+      tap(() => this.endSession())
+    );
+  }
+
+  /** Efface la session locale et renvoie vers la connexion (session expirée ou déconnexion). */
+  endSession(): void {
+    this.profileSubject.next(null);
+    this.router.navigate(['/login']);
+  }
+
+  isAuthenticated(): boolean {
+    return this.profileSubject.value !== null;
   }
 
   getUsername(): string | null {
-    const decodedToken = this.decodeToken();
-    return decodedToken ? decodedToken.sub : null;
+    return this.profileSubject.value?.username ?? null;
   }
 
   // ========================================
@@ -99,8 +109,7 @@ export class AuthService {
   // ========================================
 
   getAuthorities(): string[] {
-    const decodedToken = this.decodeToken();
-    return decodedToken?.authorities ?? [];
+    return this.profileSubject.value?.authorities ?? [];
   }
 
   /** Administrateur système — accès transversal, n'appartient à aucun département. */

@@ -93,9 +93,13 @@ Ce module ne gère aucune donnée métier. Il produit les droits d'accès qui co
 
 **Identifiant (username)** : identifiant unique de connexion attribué à chaque collaborateur. Immuable après création.
 
-**Session** : période d'accès actif pour un collaborateur connecté. Dans G-Banque, une session n'est pas maintenue côté serveur — elle est entièrement portée par un jeton numérique (voir ci-dessous).
+**Session** : période d'accès actif pour un collaborateur connecté. Une session commence à la connexion et dure **au maximum 8 heures** (une journée de travail) ; elle se termine plus tôt si le collaborateur se déconnecte ou si son compte est désactivé. G-Banque garde la trace de chaque session ouverte, ce qui permet d'y mettre fin réellement à la déconnexion.
 
-**Jeton d'accès** : titre numérique émis à la connexion, valable 4 heures. Il contient l'identité du collaborateur et ses droits. Une fois expiré, le collaborateur doit se reconnecter. Aucun jeton n'est stocké côté serveur.
+**Jeton d'accès** : titre numérique de courte durée (**15 minutes**) qui accompagne chaque action du collaborateur et porte son identité et ses droits. Il est renouvelé automatiquement et sans interruption tant que la session est en cours : le collaborateur ne s'en aperçoit pas.
+
+**Jeton de renouvellement** : second titre, propre à la session, qui sert uniquement à obtenir un nouveau jeton d'accès. Il change à chaque renouvellement. S'il est présenté une deuxième fois (signe qu'il a pu être copié), la session entière est immédiatement fermée par sécurité.
+
+**Conservation des jetons** : les deux jetons sont conservés par le navigateur dans un espace que les pages elles-mêmes ne peuvent pas lire, et ne sont envoyés qu'à G-Banque. Ils ne sont jamais affichés ni exposés au collaborateur.
 
 **Profil** : ensemble des droits accordés à un collaborateur. Un profil est défini par :
 - son appartenance à un ou plusieurs départements, avec un rôle dans chacun (voir module Département et module Utilisateurs)
@@ -128,7 +132,7 @@ Les droits accordés par un département ne s'appliquent qu'au périmètre de ce
 
 #### Routes publiques
 
-Seule la page de connexion est accessible sans authentification. Toutes les autres pages nécessitent un jeton d'accès valide.
+Seule la page de connexion est accessible sans authentification. Toutes les autres pages nécessitent une session en cours.
 
 ---
 
@@ -144,14 +148,16 @@ Vérification des identifiants
         │
         ├── Compte verrouillé (trop de tentatives) → message de blocage temporaire
         │
-        └── Identifiants corrects → émission d'un jeton d'accès (valable 4 heures)
+        └── Identifiants corrects → ouverture d'une session (8 heures maximum)
                 │
                 ▼
-        Accès aux modules selon les droits portés par le jeton
+        Accès aux modules selon les droits du collaborateur
+        (toutes les 15 minutes : renouvellement automatique et invisible du jeton d'accès,
+         avec relecture des droits du collaborateur)
                 │
-                ▼ (au bout de 4 heures)
-        Jeton expiré → redirection automatique vers la page de connexion
-        Le collaborateur retrouve sa page initiale après reconnexion.
+                ├── Déconnexion volontaire → la session est fermée immédiatement
+                ├── Compte désactivé → la session se ferme au renouvellement suivant (15 minutes au plus)
+                └── Fin des 8 heures → message « Session expirée », retour à la page de connexion
 ```
 
 ---
@@ -172,13 +178,16 @@ Après la période de blocage, le compteur est remis à zéro automatiquement.
 
 ### 6. Règles métier
 
-1. Aucune page de G-Banque n'est accessible sans jeton d'accès valide — sans exception.
-2. Un jeton expiré (après 4 heures) est équivalent à une absence de connexion.
+1. Aucune page de G-Banque n'est accessible sans session en cours — sans exception.
+2. Une session dure au plus 8 heures à partir de la connexion ; au-delà, le collaborateur doit se reconnecter. L'activité ne prolonge pas cette durée.
 3. Un compte désactivé ne peut pas se connecter, même avec les bons identifiants.
 4. Après 5 tentatives échouées sur un même compte, toute nouvelle tentative est bloquée 15 minutes.
 5. Un collaborateur ne peut consulter que son propre profil de connexion — jamais celui d'un autre.
 6. Le mot de passe ne circule jamais en clair, ni dans les réponses du système, ni dans les journaux d'activité.
-7. Les droits d'accès sont recalculés à chaque connexion — un changement de droits ne prend effet qu'à la prochaine connexion.
+7. Les droits d'accès sont relus à chaque renouvellement : un changement de droits (ajout ou retrait d'un département, d'un rôle, du statut d'administrateur) prend effet dans les 15 minutes, sans reconnexion. La désactivation d'un compte ferme sa session dans le même délai.
+8. La déconnexion ferme la session côté G-Banque : le titre de renouvellement de cette session devient inutilisable, même s'il avait été copié.
+9. Un titre de renouvellement présenté une seconde fois ferme toute la session (protection contre le vol). Seule exception : deux onglets du même navigateur qui renouvellent la session au même instant, ce qui est un fonctionnement normal.
+10. Les actions qui modifient des données ne sont acceptées que si elles proviennent de l'application G-Banque elle-même (protection contre les requêtes déclenchées à l'insu du collaborateur depuis un autre site).
 
 ---
 
@@ -298,7 +307,7 @@ Les collaborateurs métier (membres, directeurs) ne voient pas ce module dans l'
 | Module | Nature de la dépendance |
 |--------|------------------------|
 | **Utilisateurs** | Les collaborateurs sont rattachés à des départements via le module Utilisateurs. Un département sans appartenance est vide mais peut être conservé. |
-| **Authentification** | Les droits d'accès portés par le jeton de connexion sont construits à partir des appartenances à des départements. Une modification de rattachement ne prend effet qu'à la prochaine connexion. |
+| **Authentification** | Les droits d'accès du collaborateur sont construits à partir de ses appartenances à des départements. Une modification de rattachement prend effet dans les 15 minutes (renouvellement suivant de la session), sans reconnexion. |
 
 ---
 
@@ -430,7 +439,7 @@ Ce module est **entièrement réservé à l'administrateur système**. Aucun aut
 | Module | Nature de la dépendance |
 |--------|------------------------|
 | **Département** | Les appartenances aux départements référencent les départements créés dans le module Département. La suppression d'un département est bloquée tant qu'il contient des utilisateurs. |
-| **Authentification** | Les droits accordés ici sont intégrés dans le jeton d'accès à la connexion. Un changement de droits ne prend effet qu'à la prochaine connexion du collaborateur concerné. |
+| **Authentification** | Les droits accordés ici sont relus à chaque renouvellement de session. Un changement de droits prend effet dans les 15 minutes pour le collaborateur concerné, sans reconnexion ; une désactivation ferme sa session dans le même délai. |
 
 ---
 

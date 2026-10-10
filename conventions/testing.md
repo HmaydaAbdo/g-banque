@@ -32,13 +32,14 @@ Répartition cible : beaucoup d'unitaires, une couche d'intégration ciblée, pe
 ## Emplacement et nommage
 
 * Miroir de `src/main/java` : `src/test/java/staport/finance/gBanque/<module>/...`.
-* Classe testée `XxxService` → `XxxServiceTest` (unitaire) ou `XxxServiceIT` (intégration, nécessite Docker).
+* Classe testée `XxxService` → `XxxServiceTest` (unitaire) ou `XxxIntegrationTest` (intégration, nécessite Docker ; suffixe reconnu par `maven-surefire-plugin`, contrairement à `IT`).
 * Méthode : `methode_conditions_resultatAttendu` ou description en français via `@DisplayName`.
 
 ## Base de données
 
 * **Jamais H2** : les requêtes natives, types `DECIMAL`, vues (`v_recapitulatif_encours`) et dates doivent se comporter comme en production.
-* MySQL 8 jetable via Testcontainers et `@ServiceConnection` (cf. `GBanqueApplicationTests`). Seul Docker est requis sur le poste.
+* MySQL 8 jetable via Testcontainers et `@ServiceConnection`. Toute classe d'intégration **hérite de `AbstractIntegrationTest`** sans ajouter de configuration (`@MockBean`, `@TestPropertySource`, profil…) : un seul conteneur et un seul contexte Spring pour toute la suite, sinon chaque classe redémarre le contexte (plusieurs minutes). Seul Docker est requis sur le poste.
+* Requêtes HTTP : `MockMvc` (`@AutoConfigureMockMvc` dans la base). Les requêtes modifiantes authentifiées par cookie envoient le cookie `XSRF-TOKEN` et l'en-tête `X-XSRF-TOKEN` (cf. `AuthSessionIntegrationTest`).
 * Profil `test` (`src/test/resources/application-test.yml`) : schéma créé par Hibernate, jobs planifiés désactivés. Les variables d'environnement exigées par `application.yml` reçoivent des valeurs fictives dans la configuration `maven-surefire-plugin` du `pom.xml`.
 * Les données de test sont créées par le test (builders / fixtures dédiés), jamais lues depuis la base de production ni depuis `sql/`.
 

@@ -14,6 +14,8 @@ Après connexion, vous êtes redirigé automatiquement vers le **tableau de bord
 
 > **Compte verrouillé ?** Après 5 tentatives échouées consécutives, l'accès est bloqué 15 minutes. Aucune action n'est nécessaire — le décompte est automatique.
 
+> **Durée de la session.** Une fois connecté, vous restez connecté jusqu'à **8 heures** (une journée de travail), même si vous rechargez la page ou ouvrez G-Banque dans un autre onglet. Au-delà, le message **« Session expirée — Votre session a expiré, veuillez vous reconnecter. »** s'affiche et vous êtes renvoyé vers la page de connexion : reconnectez-vous pour continuer. Le même message apparaît si votre compte a été désactivé entre-temps.
+
 ---
 
 ## Tableau de bord Finance

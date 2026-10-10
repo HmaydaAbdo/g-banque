@@ -90,10 +90,6 @@
 		</dependency>
 
 
-		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-messaging</artifactId>
-		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -227,7 +223,8 @@
                         <SERVER_PORT>0</SERVER_PORT>
                         <CONTEXT_PATH>/gbanque/api</CONTEXT_PATH>
                         <JWT_SECRET>0000000000000000000000000000000000000000000000000000000000000000</JWT_SECRET>
-                        <JWT_EXPIRATION_HOURS>1</JWT_EXPIRATION_HOURS>
+                        <JWT_ACCESS_TOKEN_MINUTES>15</JWT_ACCESS_TOKEN_MINUTES>
+                        <JWT_REFRESH_TOKEN_HOURS>8</JWT_REFRESH_TOKEN_HOURS>
                         <SWAGGER_ENABLED>false</SWAGGER_ENABLED>
                         <CORS_ALLOWED_ORIGINS>http://localhost</CORS_ALLOWED_ORIGINS>
                         <LOGIN_MAX_ATTEMPTS>5</LOGIN_MAX_ATTEMPTS>

@@ -20,6 +20,25 @@ interne, sans exposer MySQL à l'extérieur).
 | Compression | gzip niveau 9 | `GZIP_LEVEL=9` |
 | Destination | `./backups/mysql` (hôte) | Monté dans `/backup` du conteneur — **dossier local**, en dehors de `docker-data/` |
 | Utilisateur DB | `root` | Nécessaire pour un dump complet fiable (cohérent avec le service `phpmyadmin` existant) |
+| Image | `fradelg/mysql-cron-backup:1.15.0` | Version épinglée (jamais `latest`) |
+| Options du dump | `--no-tablespaces --single-transaction --skip-ssl` | `--skip-ssl` **obligatoire** depuis la 1.15.0, voir ci-dessous |
+
+**Point d'attention — échec silencieux (constaté le 10/10/2026).** Depuis la 1.15.0, l'image utilise le
+client `mariadb-dump`, qui refuse le certificat auto-signé de MySQL 8 : sans `--skip-ssl`, le journal du
+conteneur affiche `TLS/SSL error: self-signed certificate` mais le conteneur reste « en marche » et
+annonce « Backup process finished » — **aucun fichier n'est produit**. `--skip-ssl` désactive le
+chiffrement de l'échange, qui reste confiné au réseau Docker interne (MySQL n'est pas exposé).
+Test réalisé avant adoption : sauvegarde par l'ancienne image et par la 1.15.0 d'une base de test
+(décimaux, accents, vue), restauration de chacune dans un MySQL 8 vierge, résultats identiques à la source.
+
+**Vérifier qu'une sauvegarde est réellement produite** (après toute mise à jour de l'image ou de MySQL) :
+
+```bash
+docker logs gbanque-backup 2>&1 | grep -iE "error|symlink"
+ls -lh ./backups/mysql
+```
+
+Le fichier du jour doit exister et le journal ne doit contenir aucune ligne `error`.
 
 **Limite assumée (validée avec HMAYDA) :** le stockage est local uniquement, sur le même disque que
 `docker-data/`. Cela protège contre une corruption de la base, une mauvaise commande, ou un incident

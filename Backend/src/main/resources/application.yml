@@ -64,7 +64,14 @@ server:
 
 jwt:
   secret: ${JWT_SECRET}
-  expiration-hours: ${JWT_EXPIRATION_HOURS}
+  # Jeton d'accès court, renouvelé en silence ; la session dure au plus refresh-token-hours (reconnexion ensuite)
+  access-token-minutes: ${JWT_ACCESS_TOKEN_MINUTES}
+  refresh-token-hours: ${JWT_REFRESH_TOKEN_HOURS}
+
+auth:
+  refresh-token:
+    # Purge quotidienne des jetons de rafraîchissement expirés
+    cleanup-cron: "0 15 3 * * *"
 
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS}

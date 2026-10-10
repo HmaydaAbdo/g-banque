@@ -82,9 +82,15 @@ l'entreprise.
 - **Contrôle d'accès automatique par profil** : chaque collaborateur ne voit que ce que son profil
   autorise  . Périmètre protégé : l'intégralité de
   G-Banque, aucune page accessible sans authentification.
-- **Révocation immédiate** : un accès peut être désactivé en quelques secondes depuis l'interface
-  (départ, changement de poste) — supprime le délai de révocation et le risque de comptes non
-  désactivés après une longue absence.
+- **Révocation effective** : un accès peut être désactivé en quelques secondes depuis l'interface
+  (départ, changement de poste) ; la session encore ouverte du collaborateur se ferme d'elle-même
+  dans les 15 minutes, et un changement de droits s'applique dans le même délai, sans reconnexion.
+- **Sessions protégées contre le vol** : les titres de connexion sont inaccessibles aux pages web
+  (une faille ou un script malveillant ne peut pas les dérober), renouvelés toutes les 15 minutes,
+  et toute tentative de réutilisation d'un titre copié ferme immédiatement la session. Les sessions
+  sont limitées à une journée de travail (8 heures) et la déconnexion les ferme réellement côté
+  serveur — un niveau de protection aligné sur les recommandations de sécurité (OWASP) pour une
+  application financière.
 - **Traçabilité complète** : chaque action réalisée dans G-Banque est associée à un utilisateur
   identifié, consultable à tout moment — élimine l'impossibilité de savoir qui a modifié une donnée
   en cas de litige.

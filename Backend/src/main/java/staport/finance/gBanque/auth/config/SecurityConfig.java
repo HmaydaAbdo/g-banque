@@ -11,7 +11,6 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -23,6 +22,8 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -63,11 +64,21 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
-                .csrf(AbstractHttpConfigurer::disable)
+                // Session par cookie => protection CSRF (en plus de SameSite=Strict) : jeton double-submit,
+                // cookie XSRF-TOKEN lisible par Angular, renvoyé dans l'en-tête X-XSRF-TOKEN.
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(csrfTokenRepository())
+                        .csrfTokenRequestHandler(csrfTokenRequestHandler())
+                        // Connexion : pas encore de session à protéger. Appels avec Authorization: Bearer
+                        // (Swagger, outils) : pas d'authentification par cookie, donc pas de CSRF possible.
+                        .ignoringRequestMatchers("/auth/login")
+                        .ignoringRequestMatchers(request -> request.getHeader("Authorization") != null)
+                )
                 .cors(Customizer.withDefaults())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login", "/ws/**").permitAll()
+                        // Endpoints de session : leur propre contrôle repose sur le cookie de rafraîchissement
+                        .requestMatchers("/auth/login", "/auth/refresh", "/auth/logout").permitAll()
 
                         // Actuator — health et prometheus publics (prometheus requis par le scraper)
                         .requestMatchers(
@@ -91,6 +102,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(jsonAccessDeniedHandler)
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
+                        .bearerTokenResolver(new CookieBearerTokenResolver())
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
                         .authenticationEntryPoint(jsonAuthenticationEntryPoint)
                 )
@@ -98,6 +110,24 @@ public class SecurityConfig {
                 // est déjà peuplé, donc userId peut être lu depuis le principal JWT.
                 .addFilterAfter(new MdcRequestFilter(), BearerTokenAuthenticationFilter.class)
                 .build();
+    }
+
+    /** Cookie XSRF-TOKEN sur "/" : Angular ne lit que les cookies visibles depuis le chemin de la page. */
+    private CookieCsrfTokenRepository csrfTokenRepository() {
+        CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repository.setCookieCustomizer(cookie -> cookie.path("/").secure(true).sameSite("Strict"));
+        return repository;
+    }
+
+    /**
+     * Jeton CSRF en clair (l'en-tête renvoyé par Angular est la valeur brute du cookie) et généré à
+     * chaque requête (attribut null = pas de chargement différé), pour que le cookie existe dès la
+     * première réponse.
+     */
+    private CsrfTokenRequestAttributeHandler csrfTokenRequestHandler() {
+        CsrfTokenRequestAttributeHandler handler = new CsrfTokenRequestAttributeHandler();
+        handler.setCsrfRequestAttributeName(null);
+        return handler;
     }
 
     @Bean

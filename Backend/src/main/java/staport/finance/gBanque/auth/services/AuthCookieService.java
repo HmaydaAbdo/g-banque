@@ -1,0 +1,81 @@
+package staport.finance.gBanque.auth.services;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.Optional;
+
+/**
+ * Pose et efface les cookies de session. Les jetons ne transitent jamais dans le corps des réponses
+ * et ne sont pas lisibles par JavaScript ({@code HttpOnly}) : une faille XSS ne permet pas de les voler.
+ *
+ * <ul>
+ *   <li>{@value #ACCESS_COOKIE} — JWT d'accès, envoyé sur toute l'API ({@code <context-path>}).</li>
+ *   <li>{@value #REFRESH_COOKIE} — jeton de rafraîchissement opaque, envoyé uniquement à
+ *       {@code <context-path>/auth} (rafraîchissement et déconnexion).</li>
+ * </ul>
+ * Tous deux : {@code Secure} (les navigateurs l'acceptent aussi sur {@code http://localhost}),
+ * {@code SameSite=Strict} (jamais envoyés depuis un autre site).
+ */
+@Service
+public class AuthCookieService {
+
+    public static final String ACCESS_COOKIE = "GBANQUE_ACCESS";
+    public static final String REFRESH_COOKIE = "GBANQUE_REFRESH";
+
+    private final String apiPath;
+    private final String authPath;
+    private final long accessTokenMinutes;
+
+    public AuthCookieService(@Value("${server.servlet.context-path}") String contextPath,
+                             @Value("${jwt.access-token-minutes}") long accessTokenMinutes) {
+        this.apiPath = contextPath.isBlank() ? "/" : contextPath;
+        this.authPath = (contextPath.endsWith("/") ? contextPath : contextPath + "/") + "auth";
+        this.accessTokenMinutes = accessTokenMinutes;
+    }
+
+    public void writeSession(HttpServletResponse response, String accessToken, RefreshTokenService.IssuedRefreshToken refreshToken) {
+        writeAccess(response, accessToken);
+        Duration remaining = Duration.between(Instant.now(), refreshToken.expiresAt());
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie(REFRESH_COOKIE, refreshToken.rawToken(), authPath, remaining).toString());
+    }
+
+    public void writeAccess(HttpServletResponse response, String accessToken) {
+        response.addHeader(HttpHeaders.SET_COOKIE,
+                cookie(ACCESS_COOKIE, accessToken, apiPath, Duration.ofMinutes(accessTokenMinutes)).toString());
+    }
+
+    public void clearSession(HttpServletResponse response) {
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie(ACCESS_COOKIE, "", apiPath, Duration.ZERO).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie(REFRESH_COOKIE, "", authPath, Duration.ZERO).toString());
+    }
+
+    public static Optional<String> read(HttpServletRequest request, String name) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return Optional.empty();
+        }
+        return Arrays.stream(cookies)
+                .filter(c -> name.equals(c.getName()) && !c.getValue().isBlank())
+                .map(Cookie::getValue)
+                .findFirst();
+    }
+
+    private static ResponseCookie cookie(String name, String value, String path, Duration maxAge) {
+        return ResponseCookie.from(name, value)
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Strict")
+                .path(path)
+                .maxAge(maxAge)
+                .build();
+    }
+}

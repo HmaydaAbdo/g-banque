@@ -9,14 +9,16 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import staport.finance.gBanque.auth.controller.SecurityController;
 import staport.finance.gBanque.exception.ErrorResponse;
+import staport.finance.gBanque.exception.customExceptions.InvalidRefreshTokenException;
 import staport.finance.gBanque.exception.customExceptions.TooManyAttemptsException;
 
 /**
  * Gestionnaire d'exceptions propre au module Auth — scoped à {@link SecurityController}.
  *
- * <p>Couvre les deux cas d'erreur spécifiques à l'authentification :
+ * <p>Couvre les cas d'erreur spécifiques à l'authentification :
  * <ul>
  *   <li>{@link BadCredentialsException} — identifiants incorrects (HTTP 401) ;</li>
+ *   <li>{@link InvalidRefreshTokenException} — session terminée au rafraîchissement (HTTP 401) ;</li>
  *   <li>{@link TooManyAttemptsException} — compte verrouillé brute-force (HTTP 429).</li>
  * </ul>
  *
@@ -35,6 +37,12 @@ public class SecurityExceptionHandler {
         log.warn("Echec d'authentification : {}", ex.getMessage());
         return build(HttpStatus.UNAUTHORIZED, "Unauthorized",
                 "Identifiant ou mot de passe incorrect.");
+    }
+
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidRefreshToken(InvalidRefreshTokenException ex) {
+        log.info("Rafraîchissement de session refusé : {}", ex.getMessage());
+        return build(HttpStatus.UNAUTHORIZED, "Unauthorized", ex.getMessage());
     }
 
     // ── 429 — Verrouillage brute-force ────────────────────────────────────────

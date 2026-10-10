@@ -32,9 +32,8 @@ services:
   # Backup MySQL
   # ---------------------------------------------------------------------------
   backup:
-    # Tag "latest" figé par l'éditeur depuis le 08/12/2024 (aucune version numérotée équivalente) :
-    # épinglé par empreinte pour garder exactement l'image actuelle. Passage en 1.15.0 à tester (cf. TODO.md).
-    image: fradelg/mysql-cron-backup@sha256:d9b9b1514ef5f879031ea88c656c0b64acb98bb787f401c2fc3f62ed6fafb308
+    # 1.15.0 testée le 10/10/2026 (sauvegarde + restauration sur MySQL 8, cf. docs/infra/backup-mysql.md).
+    image: fradelg/mysql-cron-backup:1.15.0
     container_name: gbanque-backup
     restart: unless-stopped
     environment:
@@ -43,7 +42,9 @@ services:
       MYSQL_USER: root
       MYSQL_PASS: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQLDUMP_OPTS: "--no-tablespaces --single-transaction"
+      # --skip-ssl : depuis la 1.15.0 le client (mariadb-dump) refuse le certificat auto-signé de MySQL 8 et
+      # la sauvegarde échoue SANS erreur visible. Échange limité au réseau Docker interne.
+      MYSQLDUMP_OPTS: "--no-tablespaces --single-transaction --skip-ssl"
       CRON_TIME: "0 2 * * *"
       INIT_BACKUP: 1
       MAX_BACKUPS: 7
@@ -78,7 +79,8 @@ services:
       SERVER_PORT: ${SERVER_PORT}
       CONTEXT_PATH: ${CONTEXT_PATH}
       JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRATION_HOURS: ${JWT_EXPIRATION_HOURS}
+      JWT_ACCESS_TOKEN_MINUTES: ${JWT_ACCESS_TOKEN_MINUTES}
+      JWT_REFRESH_TOKEN_HOURS: ${JWT_REFRESH_TOKEN_HOURS}
       SWAGGER_ENABLED: ${SWAGGER_ENABLED}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
       LOGIN_MAX_ATTEMPTS: ${LOGIN_MAX_ATTEMPTS}

@@ -7,8 +7,20 @@
 ## JWT
 
 * Authentification par JWT.
-* Les Access Tokens ont une durée de vie courte.
-* Une session plus longue doit utiliser un Refresh Token, jamais un Access Token plus long.
+* Les Access Tokens ont une durée de vie courte (`JWT_ACCESS_TOKEN_MINUTES`, 15 min).
+* Une session plus longue doit utiliser un Refresh Token, jamais un Access Token plus long (`JWT_REFRESH_TOKEN_HOURS`, 8 h, durée maximale de session non prolongeable).
+
+## Stockage des jetons (navigateur)
+
+* Les jetons voyagent **uniquement** en cookies `HttpOnly`, `Secure`, `SameSite=Strict`, posés par le backend (`AuthCookieService`). Jamais dans `localStorage`/`sessionStorage`, jamais dans le corps d'une réponse, jamais décodés côté frontend.
+* Le frontend connaît l'utilisateur par le profil renvoyé par `/auth/login`, `/auth/refresh` et `/auth/profile` (`username`, `authorities`).
+* Refresh Token : opaque, seul son SHA-256 est stocké (`refresh_token`), rotation à chaque usage, réutilisation détectée ⇒ révocation de toute la session. Déconnexion = révocation côté serveur.
+* Frontend et API sont servis sur la **même origine** (prod : nginx ; dev : proxy `ng serve`, `proxy.conf.json`). Ne jamais réintroduire d'URL d'API absolue : les cookies `SameSite=Strict` et l'en-tête CSRF d'Angular ne fonctionnent qu'en même origine.
+
+## CSRF
+
+* Protection CSRF active (authentification par cookie) : jeton double-submit `XSRF-TOKEN` / `X-XSRF-TOKEN`, géré nativement par Angular. Ne jamais désactiver `csrf` dans `SecurityConfig`.
+* Seules exemptions : `/auth/login` et les requêtes portant un en-tête `Authorization: Bearer` (secours pour Swagger et outils).
 
 ---
 

@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideZoneChangeDetection, LOCALE_ID } from '@angular/core';
+import { APP_INITIALIZER, ApplicationConfig, inject, provideZoneChangeDetection, LOCALE_ID } from '@angular/core';
 import { provideRouter, withRouterConfig } from '@angular/router';
 import { registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
@@ -9,6 +9,7 @@ import { provideHttpClient, withInterceptors } from "@angular/common/http";
 import { appHttpInterceptorInterceptor } from "./auth/interceptors/app-http-interceptor.interceptor";
 import { DatePipe } from "@angular/common";
 import { MessageService } from "primeng/api";
+import { AuthService } from "./auth/services/auth.service";
 
 // Enregistre la locale française pour Angular (DatePipe, DecimalPipe, etc.)
 registerLocaleData(localeFr);
@@ -21,6 +22,15 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
     MessageService,
     DatePipe,
-    { provide: LOCALE_ID, useValue: 'fr' }
+    { provide: LOCALE_ID, useValue: 'fr' },
+    // Session portée par les cookies HttpOnly : récupérée avant le premier routage (guards).
+    {
+      provide: APP_INITIALIZER,
+      multi: true,
+      useFactory: () => {
+        const authService = inject(AuthService);
+        return () => authService.restoreSession();
+      }
+    }
   ]
 };

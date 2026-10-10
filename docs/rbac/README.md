@@ -12,6 +12,7 @@
 
 ## Sommaire
 
+0. [Authentification — socle d'accès](#chap0)
 1. [Comptes bancaires](#chap1)
 2. [Crédit Moyen Terme](#chap2)
 3. [Lignes Fonctionnelles](#chap3)
@@ -47,11 +48,55 @@
 
 ## Points ouverts
 
-- Il n'existe pas de fiche RBAC dédiée pour les modules transverses `auth`, `department`
-  et `user` (contrairement à `docs/modules/` et `docs/direction/`, qui en possèdent).
-  Aucune fiche `docs/rbac/auth.md`, `docs/rbac/department.md` ou `docs/rbac/user.md`
-  n'a été trouvée dans le dossier source. Ce constat est factuel ; il n'indique pas si
-  cette absence est intentionnelle ou un oubli.
+- Les modules transverses `department` et `user` n'ont pas encore de chapitre RBAC dédié
+  (contrairement à `docs/modules/` et `docs/direction/`, qui en possèdent). Le module `auth`
+  a le sien depuis le 10/10/2026 (chapitre 0).
+
+---
+
+<a id="chap0"></a>
+
+## Chapitre 0 — Authentification (socle d'accès)
+
+Sessions par cookies `HttpOnly` depuis le 10/10/2026 (aucun jeton dans `localStorage` ni dans le corps
+des réponses). Jeton d'accès JWT de `JWT_ACCESS_TOKEN_MINUTES` (15) dans le cookie `GBANQUE_ACCESS`
+(chemin `<context-path>`) ; jeton de rafraîchissement opaque, haché en base (`refresh_token`), dans le
+cookie `GBANQUE_REFRESH` (chemin `<context-path>/auth`), session maximale `JWT_REFRESH_TOKEN_HOURS` (8).
+Cookies `Secure`, `SameSite=Strict`.
+
+### Endpoints (`SecurityController`, base `/auth`)
+
+| Méthode | URL | Protection | CSRF |
+|---|---|---|---|
+| POST | `/auth/login` | `permitAll` (+ `LoginAttemptService`) | exempté (aucune session encore) |
+| POST | `/auth/refresh` | `permitAll` — contrôle par le cookie `GBANQUE_REFRESH` (inconnu, expiré, révoqué ou réutilisé ⇒ 401 et cookies effacés ; compte désactivé ⇒ 401) | exigé |
+| POST | `/auth/logout` | `permitAll` — révoque la session du cookie `GBANQUE_REFRESH` s'il existe, efface les cookies, toujours 204 | exigé |
+| GET | `/auth/profile` | `@PreAuthorize("isAuthenticated()")` | — (lecture) |
+
+### Règles transverses (`SecurityConfig`)
+
+- **Lecture du jeton d'accès** (`CookieBearerTokenResolver`) : en-tête `Authorization: Bearer` s'il est
+  présent, sinon cookie `GBANQUE_ACCESS`. Aucun jeton n'est lu sur `/auth/login`, `/auth/refresh`,
+  `/auth/logout` (un jeton expiré ne doit pas les faire échouer).
+- **CSRF** : jeton double-submit, cookie `XSRF-TOKEN` (non `HttpOnly`, chemin `/`) recopié par Angular
+  dans l'en-tête `X-XSRF-TOKEN` ; exigé sur toute requête modifiante (POST, PUT, PATCH, DELETE) de tous
+  les modules. Exemptions : `/auth/login`, et toute requête portant un en-tête `Authorization` (pas
+  d'authentification par cookie, donc pas de CSRF possible).
+- **Divergence assumée** : l'en-tête `Authorization: Bearer` reste accepté en secours (Swagger, scripts,
+  outils) ; le navigateur n'utilise que les cookies. Justification : garder Swagger utilisable en dev.
+- Les droits (`authorities`) sont relus en base à chaque rafraîchissement : effet d'un changement de
+  rôle ou d'une désactivation sous 15 minutes.
+
+### Frontend
+
+- Aucun guard sur `/login` (route publique). Les guards `authGuard`, `accueilDispatchGuard`,
+  `systemAdminGuard`, `departmentGuard(...)` vérifient `AuthService.isAuthenticated()` (profil de session
+  chargé au démarrage via `GET /auth/profile`, `APP_INITIALIZER`) avant tout contrôle d'autorité.
+- Les droits affichés (`isSystemAdmin()`, `belongsToDepartment()`, `hasDepartmentRole()`) proviennent
+  du profil renvoyé par le backend, plus du décodage local d'un jeton.
+- Intercepteur : sur 401, un seul `POST /auth/refresh` partagé puis la requête est rejouée une fois ;
+  échec ⇒ message « Session expirée » et retour à `/login`.
+- Bouton de déconnexion (navbar) visible pour tout utilisateur connecté ; appelle `POST /auth/logout`.
 
 ---
 

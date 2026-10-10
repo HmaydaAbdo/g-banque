@@ -16,8 +16,10 @@ import org.springframework.context.annotation.Configuration;
  *
  * <p>UI disponible à {@code /swagger-ui.html} — activée/désactivée via la variable
  * d'environnement {@code SWAGGER_ENABLED} ({@code false} en prod, {@code true} en dev).
- * Les appels effectués depuis l'UI utilisent le bouton "Authorize" pour passer le
- * token JWT ; Spring Security valide ce token exactement comme un appel normal.
+ * Deux façons de s'authentifier depuis l'UI : appeler {@code POST /auth/login} (le navigateur garde
+ * alors les cookies de session, les appels suivants les envoient seuls ; les requêtes modifiantes
+ * exigent en plus l'en-tête {@code X-XSRF-TOKEN}), ou coller un JWT via le bouton "Authorize"
+ * (en-tête Bearer, accepté en secours et dispensé de CSRF).
  */
 @Configuration
 @SecurityScheme(
@@ -25,7 +27,7 @@ import org.springframework.context.annotation.Configuration;
         type        = SecuritySchemeType.HTTP,
         scheme      = "bearer",
         bearerFormat = "JWT",
-        description = "Token JWT obtenu via POST /auth/login — à passer dans le header Authorization: Bearer <token>"
+        description = "JWT d'accès (valeur du cookie GBANQUE_ACCESS posé par POST /auth/login) passé dans le header Authorization: Bearer <token>"
 )
 public class OpenApiConfig {
 

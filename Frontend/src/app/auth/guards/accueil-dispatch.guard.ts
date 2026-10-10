@@ -16,7 +16,7 @@ export const accueilDispatchGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router      = inject(Router);
 
-  if (!authService.isTokenValid()) {
+  if (!authService.isAuthenticated()) {
     router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
     return false;
   }

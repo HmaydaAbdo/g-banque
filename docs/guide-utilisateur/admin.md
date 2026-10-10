@@ -15,6 +15,8 @@ Après connexion, vous êtes redirigé vers le tableau de bord Finance (en tant 
 
 > **Compte verrouillé ?** Après 5 tentatives échouées consécutives, l'accès est bloqué 15 minutes. Aucune action n'est nécessaire — le décompte est automatique.
 
+> **Durée de la session.** Une fois connecté, vous restez connecté jusqu'à **8 heures** (une journée de travail), même si vous rechargez la page ou ouvrez G-Banque dans un autre onglet. Au-delà, le message **« Session expirée — Votre session a expiré, veuillez vous reconnecter. »** s'affiche et vous êtes renvoyé vers la page de connexion : reconnectez-vous pour continuer. Le même message apparaît si votre compte a été désactivé entre-temps.
+
 ---
 
 ## Consulter mes notifications
@@ -408,4 +410,8 @@ journal.
 
 ## Se déconnecter
 
-La session expire automatiquement après **4 heures**. Vous serez redirigé vers la page de connexion et retrouverez votre page initiale après reconnexion.
+Cliquez sur l'icône de déconnexion de la barre supérieure puis confirmez **Oui, Déconnexion** : la session est fermée immédiatement (elle ne peut plus être réutilisée, même depuis un autre onglet) et vous revenez à la page de connexion.
+
+Sans déconnexion, la session se ferme d'elle-même au bout de **8 heures**, avec le message « Session expirée ».
+
+> **Effet de vos modifications de droits.** Quand vous modifiez les départements, les rôles ou le statut administrateur d'un collaborateur, ou que vous désactivez son compte, le changement s'applique à sa session en cours **dans les 15 minutes**, sans qu'il ait à se reconnecter.

@@ -1,5 +1,7 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8080/gbanque/api/'
+  // Relatif, comme en production : `ng serve` relaie /gbanque/api vers le backend (proxy.conf.json).
+  // Même origine => cookies de session SameSite=Strict et en-tête CSRF Angular fonctionnent en dev.
+  apiUrl: '/gbanque/api/'
 };
 
