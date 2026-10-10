@@ -428,8 +428,7 @@ marché, et consultables en encours par banque, avec une traçabilité complète
 - **Recherche par période** : les préfinancements se retrouvent instantanément sur une plage de
   dates d'émission, d'opération ou de valeur, au choix (nouveau, 2026-07-24) — utile pour tout
   rapprochement ou reporting périodique.
-- **Export PDF** : liste et encours (déblocage, remboursement) exportables en un clic, filtres
-  appliqués, pour le reporting ou le partage externe.
+- **Export PDF** : la liste est exportable en un clic, filtres appliqués, pour le reporting ou le partage externe ; les encours (déblocage, remboursement) s'exportent depuis le Récapitulatif des États des encours.
 .
 
 ## Chapitre 12 — Factoring
@@ -454,8 +453,7 @@ marché, et consultables en encours par banque, avec une traçabilité complète
 - **Recherche par période** : les opérations de factoring se retrouvent instantanément sur une
   plage de dates d'émission, d'opération ou de valeur, au choix (nouveau, 2026-07-24) — utile pour
   tout rapprochement ou reporting périodique.
-- **Export PDF** : liste et encours (déblocage, remboursement) exportables en un clic, filtres
-  appliqués, pour le reporting ou le partage externe.
+- **Export PDF** : la liste est exportable en un clic, filtres appliqués, pour le reporting ou le partage externe ; les encours (déblocage, remboursement) s'exportent depuis le Récapitulatif des États des encours.
 
 
 ## Chapitre 13 — Droits Constatés
@@ -483,8 +481,7 @@ marché, et consultables en encours par banque, avec une traçabilité complète
 - **Recherche par période** : les droits constatés se retrouvent instantanément sur une plage de
   dates d'émission, d'opération ou de valeur, au choix (nouveau, 2026-07-24) — utile pour tout
   rapprochement ou reporting périodique.
-- **Export PDF** : liste et encours (déblocage, remboursement) exportables en un clic, filtres
-  appliqués, pour le reporting ou le partage externe.
+- **Export PDF** : la liste est exportable en un clic, filtres appliqués, pour le reporting ou le partage externe ; les encours (déblocage, remboursement) s'exportent depuis le Récapitulatif des États des encours.
 
 
 ---
@@ -517,8 +514,7 @@ G-Banque centralise le suivi des chèques de Staport, qu'ils soient reçus (enca
 - **Recherche par période** : les chèques (encaissements et décaissements) se retrouvent
   instantanément sur une plage de dates d'émission, d'échéance, d'opération ou de valeur, au choix,
   utile pour tout rapprochement ou reporting périodique.
-- **Export PDF** : chaque liste (encaissements, décaissements) et chaque écran d'encours peut être
-  exporté en PDF en un clic, filtres appliqués, prêt à partager ou archiver.
+- **Export PDF** : chaque liste (encaissements, décaissements) peut être exportée en PDF en un clic, filtres appliqués, prête à partager ou archiver ; les encours s'exportent depuis le Récapitulatif des États des encours.
 
 ## Chapitre 15 — LCN
 
@@ -545,8 +541,7 @@ G-Banque centralise le suivi des LCN (lettres de change normalisées) de Staport
 - **Recherche par période** : les LCN (encaissements et décaissements) se retrouvent
   instantanément sur une plage de dates d'émission, d'échéance, d'opération ou de valeur, au choix,
   utile pour tout rapprochement ou reporting périodique.
-- **Export PDF** : chaque liste (encaissements, décaissements) et chaque écran d'encours peut être
-  exporté en PDF en un clic, filtres appliqués, prêt à partager ou archiver.
+- **Export PDF** : chaque liste (encaissements, décaissements) peut être exportée en PDF en un clic, filtres appliqués, prête à partager ou archiver ; les encours s'exportent depuis le Récapitulatif des États des encours.
 
 ## Chapitre 16 — Virements
 
@@ -572,8 +567,7 @@ complète de chaque opération.
 - **Recherche par période** : les virements (encaissements et décaissements) se retrouvent
   instantanément sur une plage de dates d'émission, d'opération ou de valeur, au choix, utile pour
   tout rapprochement ou reporting périodique.
-- **Export PDF** : chaque liste (encaissements, décaissements) et chaque écran d'encours peut être
-  exporté en PDF en un clic, filtres appliqués, prêt à partager ou archiver.
+- **Export PDF** : chaque liste (encaissements, décaissements) peut être exportée en PDF en un clic, filtres appliqués, prête à partager ou archiver ; les encours s'exportent depuis le Récapitulatif des États des encours.
 
 ## Chapitre 17 — Virements Internationaux
 
@@ -596,8 +590,7 @@ G-Banque centralise le suivi des virements internationaux de Staport, reçus com
 - **Recherche par période** : les virements internationaux se retrouvent instantanément sur une
   plage de dates d'émission, d'opération ou de valeur, au choix, utile pour tout rapprochement ou
   reporting périodique.
-- **Export PDF** : la liste (encaissements et décaissements confondus) et chaque écran d'encours
-  peuvent être exportés en PDF en un clic, filtres appliqués, prêt à partager ou archiver.
+- **Export PDF** : la liste (encaissements et décaissements confondus) peut être exportée en PDF en un clic, filtres appliqués, prête à partager ou archiver ; les encours s'exportent depuis le Récapitulatif des États des encours.
 
 ## Chapitre 18 — Mises à Disposition
 
@@ -622,8 +615,7 @@ complète de chaque opération.
 - **Recherche par période** : les mises à disposition de décaissement se retrouvent instantanément
   sur une plage de dates d'émission, d'opération ou de valeur, au choix, utile pour tout
   rapprochement ou reporting périodique.
-- **Export PDF** : la liste des décaissements et son écran d'encours peuvent être exportés en PDF
-  en un clic, filtres appliqués, prêt à partager ou archiver.
+- **Export PDF** : la liste des décaissements peut être exportée en PDF en un clic, filtres appliqués, prête à partager ou archiver ; les encours s'exportent depuis le Récapitulatif des États des encours.
 
 ## Chapitre 19 — Recap Encaissement / Recap Décaissement
 
@@ -665,8 +657,7 @@ permanence et une traçabilité complète de chaque opération.
   rapprochement du mois, sans ressaisie.
 - **Traçabilité complète** : toute création, modification ou suppression est auditée (auteur,
   horodatage).
-- **Export PDF** : la liste des prélèvements et son écran d'encours peuvent être exportés en PDF en
-  un clic, filtres appliqués, prêt à partager ou archiver.
+- **Export PDF** : la liste des prélèvements peut être exportée en PDF en un clic, filtres appliqués, prête à partager ou archiver ; les encours s'exportent depuis le Récapitulatif des États des encours.
 
 ---
 
@@ -816,9 +807,7 @@ une traçabilité complète de chaque opération.
 - **Vue des encours par banque** : montant total non encore réglé consultable instantanément.
 - **Rapprochement bancaire intégré** : la validation rattache directement l'opération au
   rapprochement du mois, sans ressaisie.
-- **Export PDF à la demande** : la liste des impôts et taxes et l'écran d'encours par banque
-  peuvent être exportés en PDF en un clic, filtres appliqués — un document prêt à partager ou
-  archiver sans ressaisie.
+- **Export PDF à la demande** : la liste des impôts et taxes peut être exportée en PDF en un clic, filtres appliqués — un document prêt à partager ou archiver sans ressaisie ; les encours par banque s'exportent depuis le Récapitulatif des États des encours.
 
 ## Chapitre 25 — Commissions bancaires
 
@@ -843,9 +832,7 @@ de ces commissions, en appliquant des règles configurables selon la banque et l
   peut être filtrée indépendamment sur une plage précise.
 - **Configuration sans intervention technique** : montants et règles modifiables depuis
   l'interface d'administration .
-- **Export PDF à la demande** : la liste des commissions et l'écran d'encours par banque peuvent
-  être exportés en PDF en un clic, filtres appliqués — un document prêt à partager ou archiver sans
-  ressaisie.
+- **Export PDF à la demande** : la liste des commissions peut être exportée en PDF en un clic, filtres appliqués — un document prêt à partager ou archiver sans ressaisie ; les encours par banque s'exportent depuis le Récapitulatif des États des encours.
 
 ---
 
@@ -876,9 +863,7 @@ traçabilité complète de chaque régularisation.
 - **Protection contre les erreurs** : une impayée déjà régularisée ne peut plus être supprimée.
 - **Traçabilité complète** : chaque impayée reste reliée au moyen de paiement d'origine qui l'a
   générée ; toute création, modification ou suppression est auditée.
-- **Export PDF à la demande** : la liste des impayées et chacun des deux écrans d'encours
-  (encaissement, décaissement) peuvent être exportés en PDF en un clic, filtres appliqués — un
-  document prêt à partager ou archiver sans ressaisie.
+- **Export PDF à la demande** : la liste des impayées peut être exportée en PDF en un clic, filtres appliqués — un document prêt à partager ou archiver sans ressaisie ; les encours s'exportent depuis le Récapitulatif des États des encours.
 
 ## Chapitre 27 — Opérations Erronées
 
@@ -900,9 +885,7 @@ régularisées, avec un état à jour en permanence et une traçabilité complè
   supprimée.
 - **Traçabilité complète** : chaque opération erronée reste reliée au moyen de paiement d'origine
   concerné ; toute création, modification ou suppression est auditée.
-- **Export PDF à la demande** : la liste des opérations erronées et l'écran d'encours par banque
-  peuvent être exportés en PDF en un clic, filtres appliqués — un document prêt à partager ou
-  archiver sans ressaisie.
+- **Export PDF à la demande** : la liste des opérations erronées peut être exportée en PDF en un clic, filtres appliqués — un document prêt à partager ou archiver sans ressaisie ; les encours par banque s'exportent depuis le Récapitulatif des États des encours.
 
 ## Chapitre 28 — Provision
 
@@ -929,9 +912,7 @@ soit constatée sur le relevé bancaire, avec une traçabilité complète de cha
 - **Protection contre les erreurs** : une provision déjà régularisée ne peut plus être supprimée.
 - **Traçabilité complète** : toute création, modification ou suppression est auditée (auteur,
   horodatage).
-- **Export PDF à la demande** : la liste des provisions et chacun des deux écrans d'encours par
-  banque peuvent être exportés en PDF en un clic, filtres appliqués — un document prêt à partager ou
-  archiver sans ressaisie.
+- **Export PDF à la demande** : la liste des provisions peut être exportée en PDF en un clic, filtres appliqués — un document prêt à partager ou archiver sans ressaisie ; les encours par banque s'exportent depuis le Récapitulatif des États des encours.
 
 ## Chapitre 29 — Restitution
 
@@ -951,9 +932,7 @@ avec un état à jour en permanence et une traçabilité complète de chaque ré
   rapprochement du mois, avec calcul automatique de la TVA associée, sans ressaisie.
 - **Traçabilité complète** : toute création, modification ou suppression est auditée (auteur,
   horodatage).
-- **Export PDF à la demande** : la liste des restitutions et l'écran d'encours par banque peuvent
-  être exportés en PDF en un clic, filtres appliqués — un document prêt à partager ou archiver sans
-  ressaisie.
+- **Export PDF à la demande** : la liste des restitutions peut être exportée en PDF en un clic, filtres appliqués — un document prêt à partager ou archiver sans ressaisie ; les encours par banque s'exportent depuis le Récapitulatif des États des encours.
 
 ---
 
@@ -1017,13 +996,26 @@ opérations en attente d'une banque donnée, quel que soit leur type d'origine.
 
 ### Ce que le système apporte
 
-- **Vue consolidée en un clic** : toutes les opérations en attente d'une banque (une vingtaine de
-  types : crédits leasing et CMT, moyens de paiement, préfinancement, factoring, droits constatés,
+- **Un seul écran pour toutes les opérations en attente** : une vingtaine de types d'opérations
+  (crédits leasing et CMT, moyens de paiement, préfinancement, factoring, droits constatés,
   décomptes, commissions, agios, prélèvements, frais bancaires, impôts et taxes, restitutions,
-  opérations erronées, impayées, provisions) réunies dans un tableau unique, filtrable — plus besoin
-  de consultation écran par écran. Depuis septembre 2026, encaissements et décaissements figurent
-  dans le **même** tableau, le sens devenant un filtre plutôt que deux écrans séparés : la lecture
-  de la position du mois se fait d'un seul coup d'œil, avec les deux totaux côte à côte.
+  opérations erronées, impayées, provisions) regroupés par type sous forme de cartes, avec pour chacune
+  le nombre d'opérations, les totaux débit et crédit et le nombre d'opérations échues. Encaissements
+  et décaissements figurent dans le **même** tableau : la lecture de la position du mois se fait
+  d'un seul coup d'œil, avec les totaux côte à côte.
+- **Les mêmes gestes pour tous les types** : valider une opération, valider un lot, créer une
+  opération, corriger une opération en attente — la démarche et les champs sont identiques quel que
+  soit le type, ce qui réduit le temps de prise en main, les erreurs de saisie et la dépendance à une
+  personne en particulier. Une nouvelle famille d'opérations s'intègre ensuite sans rien changer au
+  parcours des utilisateurs.
+- **Recherche transversale** : un seul champ « Libellé / Observation » (qui couvre aussi émetteur et
+  organisme), le numéro de pièce, le montant, le motif, la période et le sens permettent de retrouver
+  une opération parmi toutes les autres en quelques secondes.
+- **Alerte sur les échéances** : les opérations arrivées à échéance sont signalées directement sur
+  chaque carte et dans les indicateurs globaux, pour qu'aucune échéance ne passe inaperçue.
+- **Corrections maîtrisées après validation** : une transaction validée peut être corrigée ou annulée
+  tant que le mois n'est pas définitivement clôturé ; l'opération d'origine reste toujours cohérente
+  avec la transaction, sans ressaisie.
 - **Prévisionnel et réalisé jamais confondus** : chaque écran indique explicitement s'il présente
   des opérations *attendues* (pas encore passées en banque) ou *réalisées* (déjà passées sur le
   compte). Les totaux de chaque nature sont affichés là où ils sont produits, et nulle part
@@ -1035,10 +1027,9 @@ opérations en attente d'une banque donnée, quel que soit leur type d'origine.
   bonne période de rapprochement de la banque concernée, sans ressaisie ni erreur d'affectation.
 - **Rapports prêts à l'emploi** : récapitulatif global, récapitulatif détaillé par catégorie et
   projection du solde de fin de mois, générés en PDF à la demande, pour une banque donnée ou pour
-  l'ensemble du groupe.
+  l'ensemble du groupe ; export PDF des lignes filtrées depuis le Récapitulatif.
 - **Visibilité en temps réel** : à tout moment, projection du solde de fin de mois de chaque
-  banque, sans attendre la clôture de la période — élimine le risque d'opération oubliée parce que
-  noyée dans un écran dédié à un seul type.
+  banque, sans attendre la clôture de la période — élimine le risque d'opération oubliée.
 
 ---
 

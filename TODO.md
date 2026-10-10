@@ -192,54 +192,16 @@ Le code (20 sources, ~30 écrans, modal de lot) est terminé et le build de prod
 (XOR strict taux/montant, TVA optionnelle CMT/Leasing, saisie en lot interdite). Détail : historique git et mémoire
 `project_gbanque_tva_saisie_libre`.
 
-### Documentation à mettre à jour — validation unifiée (reporté depuis le 19/09/2026)
+### Mise à disposition — type des enregistrements (relevé le 21/09/2026, contradiction constatée le 10/10/2026)
 
-Décision HMAYDA du 19/09/2026 : ne pas mettre à jour `docs/modules`, `docs/direction`,
-`docs/guide-utilisateur` au fil des sources migrées (validation unifiée + annulation + édition
-d'une transaction déjà validée, tous les trois par le même mécanisme de registre de handlers),
-pour éviter un rattrapage partiel/incohérent en cours de refactoring — à faire en une fois, pour
-toutes les sources, une fois le chantier applicatif stabilisé. `docs/rbac/README.md` est déjà à
-jour (mis à jour dans les mêmes changements que le code, comme l'exige CLAUDE.md).
-
-Périmètre du rattrapage :
-- `docs/modules/README.md` — chapitre Validation : décrire le mécanisme actuel (point d'entrée
-  unique `POST /rapprochement/process`, un handler par source) au lieu de l'ancien (endpoints par
-  source)
-- `docs/direction/README.md` — chapitre Validation : mentionner la consolidation comme bénéfice
-  (moins de code, plus simple à faire évoluer)
-- `docs/guide-utilisateur/*.md` — écrans de validation/annulation/édition de transaction déjà
-  validée : décrire le dialogue générique partagé (mêmes champs pour valider et pour modifier)
-
-Voir `REFACTORING-VALIDATION-UNIFIEE.md` (journal complet, suites 8 à 11) et mémoire
-`project-validation-unifiee-recap` pour le détail technique.
-
-**Ajouts au périmètre du rattrapage (21/09/2026)**, à intégrer dans le même passage documentaire :
-- `docs/modules/README.md` — chapitre Leasing et chapitre CMT : décrire la nouvelle possibilité
-  d'éditer une échéance `PREVU` via une page dédiée (`/portail/leasing/echeances/edit/:id` et
-  `/portail/cmt/echeances/edit/:id`, réservée aux administrateurs système), à la place du dialogue
-  historique sur le tableau d'amortissement ; mentionner qu'elle est aussi atteignable depuis le
-  récapitulatif unifié.
-- `docs/guide-utilisateur/admin.md` — même écran : capture/description du nouveau parcours
-  d'édition (avant : dialogue sur place : après : navigation vers une page dédiée, retour en arrière
-  au clic sur Annuler/Enregistrer).
-- `docs/modules/README.md` — chapitre Mise à disposition : le bug (`type` toujours ENCAISSEMENT
-  quel que soit l'écran) est corrigé côté frontend le 21/09/2026, mais **les enregistrements créés
-  avant cette date restent en base avec `type=ENCAISSEMENT`** alors qu'ils sont tous en réalité des
-  décaissements — décision à prendre avec HMAYDA sur une éventuelle correction de données
-  existantes (hors périmètre frontend, nécessite un script/migration côté backend).
-- `docs/modules/README.md` et `docs/guide-utilisateur/*.md` — chapitre Récapitulatif : les filtres
-  « Libellé » et « Observation » du récapitulatif unifié ont été fusionnés en un seul champ
-  « Libellé / Observation » le 21/09/2026 (un seul terme, cherché sur les deux colonnes à la fois,
-  OR insensible à la casse) — à refléter dans la description des filtres de cet écran.
-- `docs/modules/README.md` et `docs/guide-utilisateur/*.md` — chapitre Récapitulatif : critères de
-  recherche restaurés le 21/09/2026 pour retrouver la couverture des anciens écrans séparés :
-  émetteur (Virement, Virement international, Chèque, LCN, Mise à disposition) et organisme
-  (Leasing) sont désormais aussi cherchés par le champ « Libellé / Observation » (sans nouveau
-  champ visible) ; deux nouveaux filtres déroulants « Motif Commission » et « Motif Impôt/Taxe »
-  apparaissent quand la source correspondante est sélectionnée. Voir
-  `REFACTORING-VALIDATION-UNIFIEE.md` (journal) pour le détail technique. La vue est désormais
-  appliquée automatiquement par Flyway (`R__v_recapitulatif_encours.sql`) au premier démarrage
-  du backend après déploiement.
+Le formulaire de saisie crée depuis le 21/09/2026 des mises à disposition de type **décaissement** (avant :
+toujours « encaissement », par erreur). Conséquences à trancher avec HMAYDA (accord explicite avant toute écriture) :
+- les enregistrements créés avant cette date portent le type `ENCAISSEMENT` alors que ce sont des décaissements ;
+- **contradiction de règle** : le backend n'autorise la modification que d'une mise à disposition de type
+  `ENCAISSEMENT` (`MiseADispositionService.editEncaissementMiseAdisposition`) et la documentation (chapitre
+  Mises à disposition, règles 1 et 6) dit que la saisie manuelle ne concerne que les encaissements ; or le formulaire
+  crée maintenant des décaissements, qu'on ne peut donc plus modifier. Décision métier : quels types se saisissent à la
+  main, lesquels se modifient ? Puis code, éventuelle migration Flyway de correction des données, et documentation.
 
 ### Bascule du statut d'un virement — garde-fou contre le retour en « en cours » (relevé le 09/10/2026)
 

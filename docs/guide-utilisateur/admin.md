@@ -367,6 +367,31 @@ eu lieu.
 
 ---
 
+## Modifier une échéance de leasing ou de CMT
+
+*Accès : tableau d'amortissement d'un contrat de leasing ou d'un crédit CMT, ou États des encours →
+Récapitulatifs — réservé à l'administrateur système*
+
+Une échéance encore au statut **Prévu** peut être corrigée à la main (date d'échéance, montant, dates
+d'opération et de valeur, observation, libellé). Une échéance déjà **Payée** ne peut plus être modifiée.
+
+1. Ouvrir l'échéance à modifier de l'une des deux façons suivantes :
+   - **depuis le tableau d'amortissement** du contrat ou du crédit : cliquer sur le bouton crayon de la
+     colonne Actions de la ligne (le bouton n'est proposé que pour une échéance au statut Prévu) ;
+   - **depuis États des encours → Récapitulatifs** : ouvrir la carte **Leasing** ou **Crédit Moyen
+     Terme**, puis cliquer sur le bouton bleu **Éditer** de la ligne.
+2. Une page dédiée s'ouvre (et non plus une fenêtre posée sur le tableau) avec les champs de
+   l'échéance, pré-remplis. Si l'échéance n'est plus au statut Prévu, la page l'indique et ne propose
+   pas de formulaire.
+3. Modifier les champs voulus, puis cliquer sur **Enregistrer**, ou sur **Annuler** pour abandonner.
+4. Dans les deux cas, vous revenez automatiquement à l'écran d'où vous veniez (tableau d'amortissement
+   ou récapitulatif).
+
+> Les autres profils (membre ou directeur Finance) ne voient pas cette action : pour eux, le bouton
+> **Éditer** des échéances de leasing et de CMT est grisé dans le récapitulatif.
+
+---
+
 ## Consulter le journal d'audit
 
 *Accès : sidebar → Paramètres → Les Journaux du portail — réservé à l'administrateur système*

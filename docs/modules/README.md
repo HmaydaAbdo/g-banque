@@ -679,7 +679,7 @@ Ce module couvre l'intégralité du cycle de vie de ces crédits : de la souscri
 5. La clôture (main levée) est bloquée si au moins une échéance est encore PRÉVUE, ou si le crédit est déjà archivé.
 6. La validation d'une échéance (rapprochement) crée la transaction bancaire correspondante et passe l'échéance en PAYÉ — bloquée si l'échéance est déjà PAYÉE, ou si le rapprochement ciblé n'est ni EN_COURS ni CLOTURE_PROVISOIRE.
 7. Une bascule manuelle du statut d'une échéance (PRÉVU ↔ PAYÉ), sans création de transaction bancaire, est possible pour corriger une anomalie — action sensible réservée à l'administrateur système.
-8. La modification manuelle des informations d'une échéance (date d'échéance, montant, dates d'opération et de valeur, observation, libellé) n'est possible que si l'échéance est encore PRÉVUE — bloquée si elle est déjà PAYÉE. Action sensible réservée à l'administrateur système.
+8. La modification manuelle des informations d'une échéance (date d'échéance, montant, dates d'opération et de valeur, observation, libellé) n'est possible que si l'échéance est encore PRÉVUE — bloquée si elle est déjà PAYÉE. Action sensible réservée à l'administrateur système. Elle se fait sur une page dédiée (et non plus dans une fenêtre superposée au tableau d'amortissement), ouverte depuis le tableau d'amortissement du crédit ou depuis le Récapitulatif des États des encours (bouton Éditer, chapitre 31) ; à l'enregistrement ou à l'annulation, l'utilisateur revient à l'écran d'où il vient.
 9. Chaque dimanche, le système détecte automatiquement les crédits dont toutes les échéances sont PAYÉES et envoie une notification pour déclencher la procédure de main levée.
 10. L'encours CMT d'une banque correspond à la somme des échéances encore PRÉVUES jusqu'à la fin du mois en cours.
 11. Chaque écran de liste (crédits encours, en attente de main levée, archives) et le tableau d'amortissement disposent d'un export PDF : le document contient l'intégralité des résultats correspondant aux filtres actuellement appliqués à l'écran, pas seulement la page affichée. Le tableau d'amortissement exporté reprend également les totaux affichés à l'écran (endettement, montant déjà payé, montant restant à payer).
@@ -1142,7 +1142,7 @@ affichée. L'export du tableau d'amortissement reprend également les totaux aff
 
 #### Échéances
 
-14. La modification manuelle d'une échéance est bloquée si elle est au statut PAYÉ.
+14. La modification manuelle d'une échéance est bloquée si elle est au statut PAYÉ ; elle est réservée à l'administrateur système. Elle se fait sur une page dédiée (et non plus dans une fenêtre superposée au tableau d'amortissement), ouverte depuis le tableau d'amortissement du contrat ou depuis le Récapitulatif des États des encours (bouton Éditer, chapitre 31) ; à l'enregistrement ou à l'annulation, l'utilisateur revient à l'écran d'où il vient.
 15. La validation d'une échéance (rapprochement) crée la transaction bancaire correspondante et passe l'échéance en PAYÉ.
 
 #### Commissions
@@ -1679,8 +1679,8 @@ notamment :
 ### 1. Périmètre du module
 
 Un décompte est un règlement de travaux facturé dans le cadre d'un marché, encaissé auprès d'une
-banque désignée. Ce module couvre la saisie, le suivi et le règlement de ces décomptes, ainsi que
-la consultation de leur encours (décomptes non encore réglés) pour une banque donnée.
+banque désignée. Ce module couvre la saisie, le suivi et le règlement de ces décomptes, ainsi que leur suivi, tant qu'ils ne sont pas réglés, dans l'espace États des encours — Récapitulatif
+(chapitre 31).
 
 Contrairement aux modules Préfinancement, Factoring et Droits Constatés, un décompte n'est pas
 rattaché à une ligne fonctionnelle et n'intervient pas dans le calcul automatique des agios.
@@ -1708,7 +1708,7 @@ librement à la saisie et peut différer de la banque associée au marché lui-m
 [1] Créer le décompte
     (marché, banque d'encaissement, montant, date d'émission, libellé)
         ↓
-[2] Le décompte reste "Prévu" tant qu'il apparaît dans l'encours de sa banque d'encaissement
+[2] Le décompte reste "Prévu" tant qu'il n'est pas validé dans le Récapitulatif des États des encours de sa banque d'encaissement
         ↓
 [3] Basculement du statut vers "Payé" (action réservée à l'administrateur système)
 ```
@@ -1723,7 +1723,7 @@ librement à la saisie et peut différer de la banque associée au marché lui-m
 |---|---|
 | Liste des décomptes | Vue principale, filtrable par marché, banque d'encaissement, statut, plage de date d'émission, plage de date d'opération, plage de date valeur, montant exact |
 | Création / modification d'un décompte | Formulaire (marché, banque d'encaissement, montant, date d'émission, libellé) |
-| Encours des décomptes | Consultation, par banque, des décomptes "Prévu" dont la date d'émission est antérieure ou égale à la fin du mois en cours, avec le total correspondant — export PDF disponible (nouveau, 2026-07-22) |
+| Encours des décomptes (États des encours — Récapitulatif) | Les décomptes "Prévu" dont la date d'émission est antérieure ou égale à la fin du mois en cours sont consultés, filtrés, exportés et validés depuis la carte « Décomptes » du Récapitulatif (chapitre 31) |
 | Export PDF | Export de l'intégralité des décomptes filtrés (pas seulement la page affichée) |
 
 #### Actions disponibles
@@ -1733,9 +1733,8 @@ librement à la saisie et peut différer de la banque associée au marché lui-m
 - **Basculer le statut** Prévu/Payé — réservé à l'administrateur système.
 - **Supprimer** définitivement un décompte — réservé à l'administrateur système, refusé si le
   décompte est déjà Payé.
-- **Exporter en PDF** la liste des décomptes ou l'encours d'une banque selon les filtres appliqués
-  à chacun de ces deux écrans.
-- **Consulter l'encours** des décomptes non réglés d'une banque.
+- **Exporter en PDF** la liste des décomptes selon les filtres appliqués.
+- **Valider** un décompte « Prévu » depuis le Récapitulatif des États des encours (chapitre 31).
 
 ---
 
@@ -1745,9 +1744,9 @@ librement à la saisie et peut différer de la banque associée au marché lui-m
 2. Le libellé est un champ de saisie libre obligatoire (contrairement aux modules Préfinancement/
    Factoring/Droits Constatés, où le libellé est généré automatiquement).
 3. Un décompte est créé au statut "Prévu" par défaut.
-4. L'encours d'une banque ne montre que les décomptes "Prévu" dont la date d'émission est
-   antérieure ou égale à la fin du mois calendaire en cours ; le tri par défaut de la liste comme
-   de l'encours place les décomptes sans date valeur en dernier.
+4. Seuls les décomptes "Prévu" dont la date d'émission est antérieure ou égale à la fin du mois
+   calendaire en cours sont proposés à la validation dans le Récapitulatif des États des encours ; le
+   tri par défaut de la liste place les décomptes sans date valeur en dernier.
 5. Un décompte ne peut être supprimé que s'il est encore au statut "Prévu". Toute tentative de
    suppression d'un décompte déjà Payé est rejetée.
 
@@ -1770,7 +1769,7 @@ ultérieurement pour toute vérification :
 
 - création, modification ou suppression d'un décompte.
 
-La consultation seule (liste, export PDF, encours) n'est pas historisée. Le changement de statut
+La consultation seule (liste, export PDF) n'est pas historisée. Le changement de statut
 Prévu/Payé n'est pas historisé (action réversible, sans effet sur les données du décompte
 lui-même).
 
@@ -1781,7 +1780,7 @@ lui-même).
 Les traitements suivants produisent un événement utile au diagnostic :
 
 - création, modification, suppression et changement de statut réussis d'un décompte ;
-- export PDF et consultation de l'encours d'une banque.
+- export PDF de la liste.
 
 Les tentatives portant sur un décompte, un marché ou une banque introuvable sont également
 journalisées comme anomalies gérées.
@@ -1810,8 +1809,7 @@ journalisées comme anomalies gérées.
 
 Un préfinancement est un mouvement de trésorerie lié au financement anticipé d'un marché : soit un
 **déblocage** de fonds par la banque, soit un **remboursement** de ces fonds par Staport. Ce module
-couvre la saisie, le suivi et le règlement de ces mouvements, ainsi que la consultation séparée de
-l'encours de déblocage et de l'encours de remboursement pour une banque donnée.
+couvre la saisie, le suivi et le règlement de ces mouvements, ainsi que leur suivi, tant qu'ils ne sont pas réglés, dans l'espace États des encours — Récapitulatif (chapitre 31).
 
 Contrairement au module Décomptes, chaque préfinancement doit être rattaché à une ligne
 fonctionnelle Préfinancement active (spécifique ou générale) du marché, et intervient dans le
@@ -1854,8 +1852,7 @@ nouveau préfinancement.
 [2] Résolution automatique de la ligne fonctionnelle Préfinancement active du marché
     (priorité : ligne spécifique > ligne générale) — échec si aucune ligne active
         ↓
-[3] Le mouvement reste "Prévu" tant qu'il apparaît dans l'encours de son type (déblocage ou
-    remboursement) pour la banque du marché
+[3] Le mouvement reste \"Prévu\" tant qu'il n'est pas validé dans le Récapitulatif des États des encours de la banque du marché
         ↓
 [4] Basculement du statut vers "Payé" (action réservée à l'administrateur système)
 ```
@@ -1873,8 +1870,7 @@ re-résolue pour le nouveau marché.
 |---|---|
 | Liste des préfinancements | Vue principale, filtrable par marché, banque, type (déblocage/remboursement), statut, plage de date d'émission, plage de date d'opération, plage de date valeur (nouveau, 2026-07-24) |
 | Création / modification d'un préfinancement | Formulaire (marché, montant, date d'émission, type) |
-| Encours de remboursement | Consultation, par banque, des remboursements "Prévu" dont la date d'émission est antérieure ou égale à la fin du mois en cours, avec le total correspondant |
-| Encours de déblocage | Même consultation pour les déblocages "Prévu" |
+| Encours (États des encours — Récapitulatif) | Les remboursements et déblocages "Prévu" dont la date d'émission est antérieure ou égale à la fin du mois en cours sont consultés, filtrés, exportés et validés depuis la carte correspondante du Récapitulatif (chapitre 31) |
 | Suivi de ligne (depuis une ligne fonctionnelle) | Récapitulatif agrégé (total débit, total crédit, reste) et détail des mouvements de préfinancement d'une ligne fonctionnelle générale ou spécifique |
 
 #### Actions disponibles
@@ -1884,10 +1880,9 @@ re-résolue pour le nouveau marché.
 - **Basculer le statut** Prévu/Payé — réservé à l'administrateur système.
 - **Supprimer** définitivement un préfinancement — réservé à l'administrateur système, refusé si le
   préfinancement est déjà Payé.
-- **Consulter l'encours** de remboursement ou de déblocage d'une banque.
+- **Valider** un mouvement « Prévu » depuis le Récapitulatif des États des encours (chapitre 31).
 - **Consulter le suivi** des préfinancements d'une ligne fonctionnelle.
-- **Exporter en PDF** la liste des préfinancements, l'encours de remboursement, ou l'encours de
-  déblocage — chaque export contient l'intégralité des résultats correspondant aux filtres
+- **Exporter en PDF** la liste des préfinancements — l'export contient l'intégralité des résultats correspondant aux filtres
   actuellement appliqués, pas seulement la page affichée à l'écran.
 
 ---
@@ -1903,9 +1898,8 @@ re-résolue pour le nouveau marché.
    création/modification est refusée.
 4. Le libellé est généré automatiquement : "Déblocage préfinancement marché [nom]" ou
    "Remboursement préfinancement marché [nom]" selon le type.
-5. L'encours de remboursement et l'encours de déblocage d'une banque ne montrent que les mouvements
-   "Prévu" du type correspondant, dont la date d'émission est antérieure ou égale à la fin du mois
-   calendaire en cours ; ils sont calculés indépendamment l'un de l'autre.
+5. Seuls les mouvements "Prévu" dont la date d'émission est antérieure ou égale à la fin du mois
+   calendaire en cours sont proposés à la validation dans le Récapitulatif des États des encours.
 6. Le suivi de ligne fonctionnelle agrège tous les préfinancements des marchés couverts par cette
    ligne : total débit (remboursements), total crédit (déblocages), et reste (crédit − débit).
 7. Un préfinancement ne peut être supprimé que s'il est encore au statut "Prévu". Toute tentative de
@@ -1915,12 +1909,12 @@ re-résolue pour le nouveau marché.
 
 ### 6. Sécurité
 
-- Consultation, création, modification, consultation des encours et du suivi de ligne : équipe
+- Consultation, création, modification et consultation du suivi de ligne : équipe
   Finance (membre ou directeur) ou administrateur système.
 - Basculement du statut Prévu/Payé et suppression définitive : administrateur système uniquement.
-- Export PDF (liste, encours de remboursement, encours de déblocage) : même niveau d'autorisation
-  que la consultation correspondante — équipe Finance (membre ou directeur) ou administrateur
-  système.
+- Export PDF de la liste : même niveau d'autorisation que la consultation — équipe Finance (membre ou
+  directeur) ou administrateur système. La validation depuis le Récapitulatif suit les droits du
+  chapitre 31.
 
 Détail technique (endpoints, guards Angular, sidebar) : `docs/rbac/prefinancements.md`.
 
@@ -1933,7 +1927,7 @@ ultérieurement pour toute vérification :
 
 - création, modification ou suppression d'un préfinancement.
 
-La consultation seule (liste, encours, suivi de ligne) n'est pas historisée. Le changement de
+La consultation seule (liste, suivi de ligne) n'est pas historisée. Le changement de
 statut Prévu/Payé n'est pas historisé (action réversible, sans effet sur les données du mouvement
 lui-même).
 
@@ -1943,8 +1937,7 @@ lui-même).
 
 Les traitements suivants produisent un événement utile au diagnostic :
 
-- création, modification, suppression et changement de statut réussis d'un préfinancement ;
-- consultation de l'encours (déblocage ou remboursement) d'une banque.
+- création, modification, suppression et changement de statut réussis d'un préfinancement.
 
 Les tentatives portant sur un préfinancement, un marché ou une ligne fonctionnelle Préfinancement
 introuvable (ou absente/inactive) sont journalisées comme anomalies gérées.
@@ -1974,8 +1967,7 @@ introuvable (ou absente/inactive) sont journalisées comme anomalies gérées.
 
 Un factoring est un mouvement de trésorerie lié à la cession de créances d'un marché à un
 organisme de factoring : soit un **déblocage** de fonds, soit un **remboursement** de ces fonds.
-Ce module couvre la saisie, le suivi et le règlement de ces mouvements, ainsi que la consultation
-séparée de l'encours de déblocage et de l'encours de remboursement pour une banque donnée.
+Ce module couvre la saisie, le suivi et le règlement de ces mouvements, ainsi que leur suivi, tant qu'ils ne sont pas réglés, dans l'espace États des encours — Récapitulatif (chapitre 31).
 
 Comme le module Préfinancement, chaque factoring doit être rattaché à une ligne fonctionnelle
 Factoring active (spécifique ou générale) du marché, et intervient dans le calcul automatique des
@@ -2017,8 +2009,7 @@ rattaché. Un marché sans ligne Factoring active ne peut pas recevoir de nouvea
 [2] Résolution automatique de la ligne fonctionnelle Factoring active du marché
     (priorité : ligne spécifique > ligne générale) — échec si aucune ligne active
         ↓
-[3] Le mouvement reste "Prévu" tant qu'il apparaît dans l'encours de son type (déblocage ou
-    remboursement) pour la banque du marché
+[3] Le mouvement reste \"Prévu\" tant qu'il n'est pas validé dans le Récapitulatif des États des encours de la banque du marché
         ↓
 [4] Basculement du statut vers "Payé" (action réservée à l'administrateur système)
 ```
@@ -2036,8 +2027,7 @@ pour le nouveau marché.
 |---|---|
 | Liste des factorings | Vue principale, filtrable par marché, banque, type (déblocage/remboursement), statut, plage de date d'émission, plage de date d'opération, plage de date valeur (nouveau, 2026-07-24) |
 | Création / modification d'un factoring | Formulaire (marché, montant, date d'émission, type) |
-| Encours de remboursement | Consultation, par banque, des remboursements "Prévu" dont la date d'émission est antérieure ou égale à la fin du mois en cours, avec le total correspondant |
-| Encours de déblocage | Même consultation pour les déblocages "Prévu" |
+| Encours (États des encours — Récapitulatif) | Les remboursements et déblocages "Prévu" dont la date d'émission est antérieure ou égale à la fin du mois en cours sont consultés, filtrés, exportés et validés depuis la carte correspondante du Récapitulatif (chapitre 31) |
 | Suivi de ligne (depuis une ligne fonctionnelle) | Récapitulatif agrégé (total débit, total crédit, reste) et détail des mouvements de factoring d'une ligne fonctionnelle générale ou spécifique |
 
 #### Actions disponibles
@@ -2047,10 +2037,9 @@ pour le nouveau marché.
 - **Basculer le statut** Prévu/Payé — réservé à l'administrateur système.
 - **Supprimer** définitivement un factoring — réservé à l'administrateur système, refusé si le
   factoring est déjà Payé.
-- **Consulter l'encours** de remboursement ou de déblocage d'une banque.
+- **Valider** un mouvement « Prévu » depuis le Récapitulatif des États des encours (chapitre 31).
 - **Consulter le suivi** des factorings d'une ligne fonctionnelle.
-- **Exporter en PDF** la liste des factorings, l'encours de remboursement, ou l'encours de
-  déblocage — chaque export contient l'intégralité des résultats correspondant aux filtres
+- **Exporter en PDF** la liste des factorings — l'export contient l'intégralité des résultats correspondant aux filtres
   actuellement appliqués, pas seulement la page affichée à l'écran.
 
 ---
@@ -2066,9 +2055,8 @@ pour le nouveau marché.
    création/modification est refusée.
 4. Le libellé est généré automatiquement : "Déblocage factoring marché [nom]" ou "Remboursement
    factoring marché [nom]" selon le type.
-5. L'encours de remboursement et l'encours de déblocage d'une banque ne montrent que les
-   mouvements "Prévu" du type correspondant, dont la date d'émission est antérieure ou égale à la
-   fin du mois calendaire en cours ; ils sont calculés indépendamment l'un de l'autre.
+5. Seuls les mouvements "Prévu" dont la date d'émission est antérieure ou égale à la fin du mois
+   calendaire en cours sont proposés à la validation dans le Récapitulatif des États des encours.
 6. Le suivi de ligne fonctionnelle agrège tous les factorings des marchés couverts par cette
    ligne : total débit (remboursements), total crédit (déblocages), et reste (crédit − débit).
 7. Un factoring ne peut être supprimé que s'il est encore au statut "Prévu". Toute tentative de
@@ -2078,12 +2066,12 @@ pour le nouveau marché.
 
 ### 6. Sécurité
 
-- Consultation, création, modification, consultation des encours et du suivi de ligne : équipe
+- Consultation, création, modification et consultation du suivi de ligne : équipe
   Finance (membre ou directeur) ou administrateur système.
 - Basculement du statut Prévu/Payé et suppression définitive : administrateur système uniquement.
-- Export PDF (liste, encours de remboursement, encours de déblocage) : même niveau d'autorisation
-  que la consultation correspondante — équipe Finance (membre ou directeur) ou administrateur
-  système.
+- Export PDF de la liste : même niveau d'autorisation que la consultation — équipe Finance (membre ou
+  directeur) ou administrateur système. La validation depuis le Récapitulatif suit les droits du
+  chapitre 31.
 
 Détail technique (endpoints, guards Angular, sidebar) : `docs/rbac/factoring.md`.
 
@@ -2096,7 +2084,7 @@ ultérieurement pour toute vérification :
 
 - création, modification ou suppression d'un factoring.
 
-La consultation seule (liste, encours, suivi de ligne) n'est pas historisée. Le changement de
+La consultation seule (liste, suivi de ligne) n'est pas historisée. Le changement de
 statut Prévu/Payé n'est pas historisé (action réversible, sans effet sur les données du mouvement
 lui-même).
 
@@ -2106,8 +2094,7 @@ lui-même).
 
 Les traitements suivants produisent un événement utile au diagnostic :
 
-- création, modification, suppression et changement de statut réussis d'un factoring ;
-- consultation de l'encours (déblocage ou remboursement) d'une banque.
+- création, modification, suppression et changement de statut réussis d'un factoring.
 
 Les tentatives portant sur un factoring, un marché ou une ligne fonctionnelle Factoring introuvable
 (ou absente/inactive) sont journalisées comme anomalies gérées.
@@ -2137,8 +2124,7 @@ Les tentatives portant sur un factoring, un marché ou une ligne fonctionnelle F
 
 Un droit constaté est un mouvement de trésorerie lié à un marché : soit un **déblocage** de fonds,
 soit un **remboursement** de ces fonds. Ce module couvre la saisie, le suivi et le règlement de ces
-mouvements, ainsi que la consultation séparée de l'encours de déblocage et de l'encours de
-remboursement pour une banque donnée.
+mouvements, ainsi que leur suivi, tant qu'ils ne sont pas réglés, dans l'espace États des encours — Récapitulatif (chapitre 31).
 
 Particularité par rapport aux modules Préfinancement et Factoring : la banque d'un droit constaté
 n'est **pas** automatiquement celle du marché — c'est un champ propre au mouvement, pré-rempli à
@@ -2191,8 +2177,7 @@ nouveau droit constaté.
 [2] Résolution automatique de la ligne fonctionnelle Droit Constaté active du marché
     (priorité : ligne spécifique > ligne générale) — échec si aucune ligne active
         ↓
-[3] Le mouvement reste "Prévu" tant qu'il apparaît dans l'encours de son type (déblocage ou
-    remboursement) pour la banque du droit constaté
+[3] Le mouvement reste \"Prévu\" tant qu'il n'est pas validé dans le Récapitulatif des États des encours de la banque du droit constaté
         ↓
 [4] Basculement du statut vers "Payé" (action réservée à l'administrateur système)
 ```
@@ -2211,8 +2196,7 @@ choisie sur le formulaire, qu'il y ait ou non changement de marché.
 |---|---|
 | Liste des droits constatés | Vue principale, filtrable par marché, banque, type (déblocage/remboursement), statut, plage de date d'émission, plage de date d'opération, plage de date valeur (nouveau, 2026-07-24) |
 | Création / modification d'un droit constaté | Formulaire (marché, banque, montant, date d'émission, type) — la banque est pré-remplie depuis le marché mais reste modifiable |
-| Encours de remboursement | Consultation, par banque, des remboursements "Prévu" dont la date d'émission est antérieure ou égale à la fin du mois en cours, avec le total correspondant |
-| Encours de déblocage | Même consultation pour les déblocages "Prévu" |
+| Encours (États des encours — Récapitulatif) | Les remboursements et déblocages "Prévu" dont la date d'émission est antérieure ou égale à la fin du mois en cours sont consultés, filtrés, exportés et validés depuis la carte correspondante du Récapitulatif (chapitre 31) |
 | Suivi de ligne (depuis une ligne fonctionnelle) | Récapitulatif agrégé (total débit, total crédit, reste) et détail des mouvements de droit constaté d'une ligne fonctionnelle générale ou spécifique |
 
 #### Actions disponibles
@@ -2222,10 +2206,9 @@ choisie sur le formulaire, qu'il y ait ou non changement de marché.
 - **Basculer le statut** Prévu/Payé — réservé à l'administrateur système.
 - **Supprimer** définitivement un droit constaté — réservé à l'administrateur système, refusé si le
   droit constaté est déjà Payé.
-- **Consulter l'encours** de remboursement ou de déblocage d'une banque.
+- **Valider** un mouvement « Prévu » depuis le Récapitulatif des États des encours (chapitre 31).
 - **Consulter le suivi** des droits constatés d'une ligne fonctionnelle.
-- **Exporter en PDF** la liste des droits constatés, l'encours de remboursement, ou l'encours de
-  déblocage — chaque export contient l'intégralité des résultats correspondant aux filtres
+- **Exporter en PDF** la liste des droits constatés — l'export contient l'intégralité des résultats correspondant aux filtres
   actuellement appliqués, pas seulement la page affichée à l'écran.
 
 ---
@@ -2245,10 +2228,9 @@ choisie sur le formulaire, qu'il y ait ou non changement de marché.
    création.
 5. Le libellé est généré automatiquement : "Déblocage droit constaté marché [nom]" ou
    "Remboursement droit constaté marché [nom]" selon le type.
-6. L'encours de remboursement et l'encours de déblocage d'une banque ne montrent que les mouvements
-   "Prévu" du type correspondant, rattachés à cette banque (la banque propre du droit constaté, pas
-   celle du marché), dont la date d'émission est antérieure ou égale à la fin du mois calendaire en
-   cours ; ils sont calculés indépendamment l'un de l'autre.
+6. Seuls les mouvements "Prévu" dont la date d'émission est antérieure ou égale à la fin du mois
+   calendaire en cours sont proposés à la validation dans le Récapitulatif des États des encours, sous
+   la banque propre du droit constaté (et non celle du marché).
 7. Le suivi de ligne fonctionnelle agrège tous les droits constatés des marchés couverts par cette
    ligne : total débit (remboursements), total crédit (déblocages), et reste (crédit − débit).
 8. Un droit constaté ne peut être supprimé que s'il est encore au statut "Prévu". Toute tentative de
@@ -2258,12 +2240,12 @@ choisie sur le formulaire, qu'il y ait ou non changement de marché.
 
 ### 6. Sécurité
 
-- Consultation, création, modification, consultation des encours et du suivi de ligne : équipe
+- Consultation, création, modification et consultation du suivi de ligne : équipe
   Finance (membre ou directeur) ou administrateur système.
 - Basculement du statut Prévu/Payé et suppression définitive : administrateur système uniquement.
-- Export PDF (liste, encours de remboursement, encours de déblocage) : même niveau d'autorisation
-  que la consultation correspondante — équipe Finance (membre ou directeur) ou administrateur
-  système.
+- Export PDF de la liste : même niveau d'autorisation que la consultation — équipe Finance (membre ou
+  directeur) ou administrateur système. La validation depuis le Récapitulatif suit les droits du
+  chapitre 31.
 
 Détail technique (endpoints, guards Angular, sidebar) : `docs/rbac/droits-constate.md`.
 
@@ -2276,7 +2258,7 @@ ultérieurement pour toute vérification :
 
 - création, modification ou suppression d'un droit constaté.
 
-La consultation seule (liste, encours, suivi de ligne) n'est pas historisée. Le changement de
+La consultation seule (liste, suivi de ligne) n'est pas historisée. Le changement de
 statut Prévu/Payé n'est pas historisé (action réversible, sans effet sur les données du mouvement
 lui-même).
 
@@ -2286,8 +2268,7 @@ lui-même).
 
 Les traitements suivants produisent un événement utile au diagnostic :
 
-- création, modification, suppression et changement de statut réussis d'un droit constaté ;
-- consultation de l'encours (déblocage ou remboursement) d'une banque.
+- création, modification, suppression et changement de statut réussis d'un droit constaté.
 
 Les tentatives portant sur un droit constaté, un marché, une banque ou une ligne fonctionnelle
 Droit Constaté introuvable (ou absente/inactive) sont journalisées comme anomalies gérées.
@@ -2396,9 +2377,9 @@ Un chèque REGLE ne peut plus être modifié, supprimé, ni annulé. Un chèque 
 
 ### 5. Encours
 
-Les écrans d'encours (décaissement et encaissement) affichent, pour une banque donnée, l'ensemble des chèques ENCOURS dont la date d'émission ne dépasse pas la fin du mois en cours, ainsi que le montant total cumulé de ces chèques.
+Les chèques au statut En cours dont la date d'émission ne dépasse pas la fin du mois en cours sont consultés, filtrés, exportés en PDF et validés (un par un ou en lot) depuis l'écran **États des encours — Récapitulatif** (chapitre 31), sous la carte « Chèque ». Il n'existe plus d'écran d'encours propre au module.
 
-Les quatre écrans du module (liste des encaissements, liste des décaissements, encours d'encaissement, encours de décaissement) disposent chacun d'un **export PDF** (nouveau, 22/07/2026) : le document contient l'intégralité des résultats correspondant aux filtres actuellement appliqués à l'écran, pas seulement la page affichée.
+Les deux écrans de liste du module (encaissements, décaissements) disposent chacun d'un **export PDF** (nouveau, 22/07/2026) : le document contient l'intégralité des résultats correspondant aux filtres actuellement appliqués à l'écran, pas seulement la page affichée.
 
 ---
 
@@ -2528,9 +2509,9 @@ Un LCN REGLE ne peut plus être modifié, supprimé, ni annulé. Un LCN ANNULE n
 
 ### 5. Encours
 
-Les écrans d'encours (décaissement et encaissement) affichent, pour une banque donnée, l'ensemble des LCN ENCOURS dont la date de référence ne dépasse pas la fin du mois en cours, ainsi que le montant total cumulé de ces LCN. Pour l'encours d'encaissement, la date de référence utilisée diffère selon la nature du LCN : date d'échéance pour un encaissement standard, date d'émission pour un escompte.
+Les LCN au statut En cours dont la date de référence ne dépasse pas la fin du mois en cours sont consultés, filtrés, exportés en PDF et validés (un par un ou en lot) depuis l'écran **États des encours — Récapitulatif** (chapitre 31), sous les cartes « LCN Décaissement », « LCN Encaissement » et « LCN Escompte ». La date de référence diffère selon la nature du LCN : date d'échéance pour un décaissement ou un encaissement standard, date d'émission pour un escompte. Il n'existe plus d'écran d'encours propre au module.
 
-Les quatre écrans du module (liste des encaissements, liste des décaissements, encours d'encaissement, encours de décaissement) disposent chacun d'un **export PDF** (nouveau, 22/07/2026) : le document contient l'intégralité des résultats correspondant aux filtres actuellement appliqués à l'écran, pas seulement la page affichée.
+Les deux écrans de liste du module (encaissements, décaissements) disposent chacun d'un **export PDF** (nouveau, 22/07/2026) : le document contient l'intégralité des résultats correspondant aux filtres actuellement appliqués à l'écran, pas seulement la page affichée.
 
 ---
 
@@ -2664,9 +2645,9 @@ Un virement REGLE ne peut plus être modifié, supprimé, ni annulé. Un viremen
 
 ### 5. Encours
 
-Les écrans d'encours (décaissement et encaissement) affichent, pour une banque donnée, l'ensemble des virements ENCOURS dont la date d'émission ne dépasse pas la fin du mois en cours, ainsi que le montant total cumulé de ces virements.
+Les virements au statut En cours dont la date d'émission ne dépasse pas la fin du mois en cours sont consultés, filtrés, exportés en PDF et validés (un par un ou en lot) depuis l'écran **États des encours — Récapitulatif** (chapitre 31), sous la carte « Virement ». Il n'existe plus d'écran d'encours propre au module.
 
-Les quatre écrans du module (liste des encaissements, liste des décaissements, encours d'encaissement, encours de décaissement) disposent chacun d'un **export PDF** (nouveau, 22/07/2026) : le document contient l'intégralité des résultats correspondant aux filtres actuellement appliqués à l'écran, pas seulement la page affichée.
+Les deux écrans de liste du module (encaissements, décaissements) disposent chacun d'un **export PDF** (nouveau, 22/07/2026) : le document contient l'intégralité des résultats correspondant aux filtres actuellement appliqués à l'écran, pas seulement la page affichée.
 
 ---
 
@@ -2800,12 +2781,9 @@ Un virement international REGLE ne peut plus être modifié ni supprimé.
 
 ### 5. Encours
 
-Les écrans d'encours (décaissement et encaissement) affichent, pour une banque donnée, l'ensemble
-des virements internationaux ENCOURS dont la date d'émission ne dépasse pas la fin du mois en
-cours, ainsi que le montant total cumulé.
+Les virements internationaux au statut En cours dont la date d'émission ne dépasse pas la fin du mois en cours sont consultés, filtrés, exportés en PDF et validés (un par un ou en lot) depuis l'écran **États des encours — Récapitulatif** (chapitre 31), sous la carte « Virement international ». Il n'existe plus d'écran d'encours propre au module.
 
-La liste combinée (encaissements et décaissements confondus) ainsi que les deux écrans d'encours
-disposent chacun d'un **export PDF** (nouveau, 22/07/2026) : le document contient l'intégralité des
+La liste combinée (encaissements et décaissements confondus) dispose d'un **export PDF** (nouveau, 22/07/2026) : le document contient l'intégralité des
 résultats correspondant aux filtres actuellement appliqués à l'écran, pas seulement la page
 affichée.
 
@@ -2935,10 +2913,9 @@ Une mise à disposition REGLE ne peut plus être modifiée, supprimée, ni annul
 
 ### 5. Encours
 
-Les écrans d'encours (décaissement et encaissement) affichent, pour une banque donnée, l'ensemble des mises à disposition ENCOURS dont la date d'émission ne dépasse pas la fin du mois en cours, ainsi que le montant total cumulé.
+Les mises à disposition au statut En cours dont la date d'émission ne dépasse pas la fin du mois en cours sont consultées, filtrées, exportées en PDF et validées (une par une ou en lot) depuis l'écran **États des encours — Récapitulatif** (chapitre 31), sous la carte « Mise à disposition ». Il n'existe plus d'écran d'encours propre au module.
 
-Les écrans de liste et d'encours, aussi bien pour les **décaissements** (22/07/2026) que pour les
-**encaissements** (23/07/2026), disposent chacun d'un **export PDF** : le document contient
+L'écran de liste, aussi bien pour les **décaissements** (22/07/2026) que pour les **encaissements** (23/07/2026), dispose d'un **export PDF** : le document contient
 l'intégralité des résultats correspondant aux filtres actuellement appliqués à l'écran, pas seulement
 la page affichée.
 
@@ -3005,7 +2982,7 @@ Contrairement au Récapitulatif du module États des encours (qui ne montre que 
 
 ### 3. Origine de la banque affichée pour un Virement
 
-Un Virement national porte deux banques possibles (une banque émettrice et une banque bénéficiaire). Pour rester cohérent avec les écrans d'encours déjà existants pour les virements :
+Un Virement national porte deux banques possibles (une banque émettrice et une banque bénéficiaire). Pour rester cohérent avec la présentation des virements dans le Récapitulatif des États des encours :
 
 - Sur le Recap Décaissement, la banque affichée est la banque émettrice (celle qui paie).
 - Sur le Recap Encaissement, la banque affichée est la banque bénéficiaire (celle qui reçoit).
@@ -3147,10 +3124,9 @@ PREVU
 
 ### 5. Encours
 
-L'écran d'encours affiche, pour une banque donnée, l'ensemble des prélèvements PREVU dont la date
-d'émission ne dépasse pas la fin du mois en cours, ainsi que le montant total cumulé.
+Les prélèvements au statut PREVU dont la date d'émission ne dépasse pas la fin du mois en cours sont consultés, filtrés, exportés en PDF et validés (un par un ou en lot) depuis l'écran **États des encours — Récapitulatif** (chapitre 31), sous la carte « Prélèvement ». Il n'existe plus d'écran d'encours propre au module.
 
-L'écran de liste et l'écran d'encours disposent chacun d'un **export PDF** (nouveau, 22/07/2026) :
+L'écran de liste dispose d'un **export PDF** (nouveau, 22/07/2026) :
 le document contient l'intégralité des résultats correspondant aux filtres actuellement appliqués à
 l'écran, pas seulement la page affichée.
 
@@ -3303,13 +3279,10 @@ produite par la validation d'une opération dans son module source.
 1. Une transaction est toujours rattachée à un rapprochement.
 2. Le débit et le crédit ne sont jamais négatifs ; l'un des deux est nécessairement à zéro.
 3. La modification d'une transaction est interdite si son rapprochement est en clôture définitive.
-4. Toute modification de la date de valeur ou de la date d'opération d'une transaction est
-   répercutée automatiquement sur l'opération source dont elle provient (échéance, moyen de
-   paiement, etc.), afin que les deux restent toujours cohérentes.
+4. Une transaction peut être corrigée avec les mêmes champs que lors de sa validation : date de valeur, date d'opération, libellé, observation et TVA (un taux ou un montant, jamais les deux). Le montant, la banque et la date d'émission ne sont jamais modifiables. Chaque correction est répercutée automatiquement sur l'opération source dont elle provient (échéance, moyen de paiement, etc.), afin que les deux restent toujours cohérentes ; la TVA est recalculée sur le montant, inchangé, de la transaction.
 5. Une transaction sans opération source synchronisable (pas de référent) peut être modifiée sans
    répercussion — seule la transaction elle-même est mise à jour.
-6. L'annulation (suppression) d'une transaction est interdite si son rapprochement est en clôture
-   définitive — c'est le statut du rapprochement, et non le rôle de l'utilisateur, qui protège une
+6. L'annulation (suppression) d'une transaction remet l'opération source dans son statut de départ (elle redevient « à valider ») et efface ses dates de valeur et d'opération ; elle est interdite si son rapprochement est en clôture définitive — c'est le statut du rapprochement, et non le rôle de l'utilisateur, qui protège une
    période définitivement arrêtée. Tant que le rapprochement est en cours ou en clôture
    provisoire, l'équipe Finance peut annuler elle-même une transaction erronée, sans intervention
    d'un administrateur système.
@@ -3341,14 +3314,13 @@ produite par la validation d'une opération dans son module source.
 | Action | Admin système | Directeur Finance | Membre Finance |
 |---|:---:|:---:|:---:|
 | Consulter l'historique et le détail d'une transaction | ✅ | ✅ | ✅ |
-| Modifier une transaction (dates, TVA) | ✅ | ✅ | ✅ |
+| Modifier une transaction (dates, libellé, observation, TVA) | ✅ | ✅ | ✅ |
 
 ---
 
 ### 7. Audit
 
-Toute modification d'une transaction (date de valeur, date d'opération, TVA déductible, TVA
-collectée) est historisée avec l'auteur et la date, et reste consultable ultérieurement. La
+Toute modification d'une transaction (date de valeur, date d'opération, libellé, observation, TVA déductible, TVA collectée) est historisée avec l'auteur et la date, et reste consultable ultérieurement. La
 consultation seule (historique, détail) n'est pas historisée.
 
 ---
@@ -3488,13 +3460,9 @@ Règles de génération :
 
 ### 6. Encours
 
-L'écran d'encours affiche, pour une banque donnée, l'ensemble des frais bancaires PREVU dont la date
-d'émission ne dépasse pas la fin du mois en cours, ainsi que le montant total cumulé.
+Les frais bancaires au statut PREVU dont la date d'émission ne dépasse pas la fin du mois en cours sont consultés, filtrés, exportés en PDF et validés (un par un ou en lot) depuis l'écran **États des encours — Récapitulatif** (chapitre 31), sous la carte « Frais bancaire ». Il n'existe plus d'écran d'encours propre au module.
 
-L'écran de liste principal dispose d'un **export PDF** (nouveau, 22/07/2026) : le document contient
-l'intégralité des résultats correspondant aux filtres actuellement appliqués à l'écran (banque,
-libellé, statut), pas seulement la page affichée, avec le montant total des frais exportés. L'écran
-d'encours dispose du même export (nouveau, 23/07/2026), limité aux frais PREVU du mois en cours.
+L'écran de liste principal dispose d'un **export PDF** (nouveau, 22/07/2026) : le document contient l'intégralité des résultats correspondant aux filtres actuellement appliqués à l'écran (banque, libellé, statut), pas seulement la page affichée, avec le montant total des frais exportés.
 
 ---
 
@@ -3815,9 +3783,9 @@ Calcul quotidien (chaque nuit)
 
 #### Workflow de validation
 
-1. L'utilisateur accède à la vue "Encours Agios" de la banque concernée.
-2. Il sélectionne l'agios à valider et clique sur **Valider**.
-3. Un formulaire s'ouvre : libellé, observation, date d'émission, date de valeur, date d'opération, TVA.
+1. L'utilisateur ouvre l'écran **États des encours — Récapitulatif** (chapitre 31) de la banque concernée, sous la carte « Agios ».
+2. Il clique sur **Valider** à la ligne de l'agios concerné (ou sélectionne plusieurs agios pour une validation en lot).
+3. Une fenêtre s'ouvre : date d'émission (non modifiable), TVA, date de valeur, date d'opération, libellé, observation.
 4. Après confirmation, la transaction bancaire est créée et intégrée au rapprochement mensuel.
 5. L'agios passe au statut **Payé**.
 
@@ -3874,8 +3842,7 @@ seulement la page affichée, ainsi que le ou les totaux pertinents :
 
 - **Liste des agios ponctuels** : libellé, banque, montant, date d'émission et statut de chaque
   agios correspondant aux filtres (banque, statut, libellé), avec le montant total exporté.
-- **Encours Agios** (par banque) : les mêmes colonnes, limitées aux agios à payer de la banque
-  concernée, avec le montant total des encours exportés.
+- **Carte « Agios » du Récapitulatif** (par banque) : l'export du Récapitulatif reprend exactement les lignes filtrées (voir chapitre 31).
 - **Tableau de bord du calcul automatique** (trimestres/périodes) : banque, type d'agios, période,
   totaux HT/TVA/TTC, jours calculés et statut de chaque période correspondant aux filtres (banque,
   type, année, période, statut), avec les totaux HT/TVA/TTC cumulés.
@@ -3934,7 +3901,7 @@ administrables via l'écran Administration → Charges fixes bancaires (voir
 
 #### Encours à payer
 
-20. L'encours visible dans la vue "Encours Agios" inclut uniquement les agios au statut **À payer** dont la date d'émission est antérieure ou égale à la fin du mois courant.
+20. Seuls les agios au statut **À payer** dont la date d'émission est antérieure ou égale à la fin du mois courant sont proposés à la validation dans le Récapitulatif des États des encours.
 
 ---
 
@@ -4091,20 +4058,13 @@ PREVU
 
 ### 5. Encours
 
-L'écran d'encours affiche, pour une banque donnée, l'ensemble des impôts/taxes PREVU dont la date
-d'émission ne dépasse pas la fin du mois en cours, ainsi que le montant total cumulé.
+Les impôts et taxes au statut PREVU dont la date d'émission ne dépasse pas la fin du mois en cours sont consultés, filtrés, exportés en PDF et validés (un par un ou en lot) depuis l'écran **États des encours — Récapitulatif** (chapitre 31), sous la carte « Impôt / Taxe », avec un filtre « Motif Impôt/Taxe ». Il n'existe plus d'écran d'encours propre au module.
 
 ---
 
 ### 5 bis. Export PDF
 
-L'écran **Impôts et Taxes**, l'écran d'**encours** d'une banque, ainsi que l'écran **TVA sur
-cautions** du module Cautions (qui affiche les impôts/taxes de motif "TVA sur commission sur
-caution"), disposent chacun d'un bouton **Exporter PDF** (encours : nouveau, 23/07/2026). Le
-document généré reprend l'intégralité des résultats correspondant aux filtres actuellement
-appliqués à l'écran (banque, libellé, motif, montant, statut pour la liste ; libellé, motif,
-montant pour l'encours — la banque et le statut PREVU sont implicites), pas seulement la page
-affichée, ainsi que le montant total cumulé.
+L'écran **Impôts et Taxes**, ainsi que l'écran **TVA sur cautions** du module Cautions (qui affiche les impôts/taxes de motif "TVA sur commission sur caution"), disposent chacun d'un bouton **Exporter PDF**. Le document généré reprend l'intégralité des résultats correspondant aux filtres actuellement appliqués à l'écran (banque, libellé, motif, montant, statut), pas seulement la page affichée, ainsi que le montant total cumulé.
 
 ---
 
@@ -4324,12 +4284,7 @@ Effet de la fusion (opération atomique) :
 
 ### 9 bis. Export PDF
 
-L'écran **Commissions**, ainsi que l'écran d'**encours** d'une banque (nouveau, 23/07/2026),
-disposent chacun d'un bouton **Exporter PDF**. Le document généré reprend l'intégralité des
-résultats correspondant aux filtres actuellement appliqués à l'écran (banque, libellé, type
-d'opération, montant, statut, nature pour la liste ; libellé, type d'opération, montant pour
-l'encours — la banque et le statut À payer sont implicites), pas seulement la page affichée, ainsi
-que le montant total cumulé.
+L'écran **Commissions** dispose d'un bouton **Exporter PDF**. Le document généré reprend l'intégralité des résultats correspondant aux filtres actuellement appliqués à l'écran (banque, libellé, type d'opération, montant, statut, nature), pas seulement la page affichée, ainsi que le montant total cumulé.
 
 ---
 
@@ -4339,7 +4294,7 @@ que le montant total cumulé.
 |--------|----------------|
 | Consulter / créer / modifier une commission | Équipe Finance (membres et directeur), Administrateur système |
 | Fusionner des commissions sur cautions | Équipe Finance (membres et directeur), Administrateur système |
-| Exporter les commissions en PDF (liste ou encours) | Équipe Finance (membres et directeur), Administrateur système |
+| Exporter les commissions en PDF | Équipe Finance (membres et directeur), Administrateur système |
 | Supprimer une commission | Administrateur système uniquement |
 | Basculer le statut d'une commission (PRÉVU ↔ PAYÉ) | Administrateur système uniquement |
 | Consulter les règles de commission | Administrateur système uniquement |
@@ -4462,21 +4417,13 @@ PREVU
 
 ### 5. Encours
 
-L'écran d'encours affiche, pour une banque et un type (encaissement/décaissement) donnés, l'ensemble
-des impayées PREVU dont la date d'émission ne dépasse pas la fin du mois en cours, ainsi que le
-montant total cumulé.
+Les impayées au statut PREVU dont la date d'émission ne dépasse pas la fin du mois en cours sont consultées, filtrées, exportées en PDF et validées (une par une ou en lot) depuis l'écran **États des encours — Récapitulatif** (chapitre 31), sous la carte « Impayé », dans les deux sens. Il n'existe plus d'écran d'encours propre au module.
 
 ---
 
 ### 5 bis. Export PDF
 
-L'écran **Impayées**, ainsi que les deux écrans d'**encours** (encaissement et décaissement, nouveau,
-23/07/2026), disposent chacun d'un bouton **Exporter PDF** — aucun export n'existait sur ce module
-avant cette date. Le document généré reprend l'intégralité des résultats correspondant aux filtres
-actuellement appliqués à l'écran (banque, libellé, motif, type, montant, statut pour la liste ;
-libellé, motif, montant pour l'encours — la banque, le type et le statut PREVU sont implicites, le
-type étant fixé par l'écran d'encours consulté), pas seulement la page affichée, ainsi que le
-montant total cumulé. Chaque ligne du document inclut désormais la colonne numéro (03/08/2026).
+L'écran **Impayées** dispose d'un bouton **Exporter PDF** (nouveau, 23/07/2026) — aucun export n'existait sur ce module avant cette date. Le document généré reprend l'intégralité des résultats correspondant aux filtres actuellement appliqués à l'écran (banque, libellé, motif, type, montant, statut), pas seulement la page affichée, ainsi que le montant total cumulé. Chaque ligne du document inclut désormais la colonne numéro (03/08/2026).
 
 ---
 
@@ -4592,19 +4539,13 @@ PREVU
 
 ### 5. Encours
 
-L'écran d'encours affiche, pour une banque donnée, l'ensemble des opérations erronées PREVU dont la
-date d'émission ne dépasse pas la fin du mois en cours, ainsi que le montant total cumulé.
+Les opérations erronées au statut PREVU dont la date d'émission ne dépasse pas la fin du mois en cours sont consultées, filtrées, exportées en PDF et validées (une par une ou en lot) depuis l'écran **États des encours — Récapitulatif** (chapitre 31), sous la carte « Opération erronée ». Il n'existe plus d'écran d'encours propre au module.
 
 ---
 
 ### 5 bis. Export PDF
 
-L'écran **Opérations Erronées**, ainsi que l'écran d'**encours** d'une banque (nouveau, 23/07/2026),
-disposent chacun d'un bouton **Exporter PDF** — aucun export n'existait sur ce module avant cette
-date. Le document généré reprend l'intégralité des résultats correspondant aux filtres actuellement
-appliqués à l'écran (banque, libellé, motif, statut pour la liste ; libellé, motif, montant pour
-l'encours — la banque et le statut PREVU sont implicites), pas seulement la page affichée, ainsi que
-le montant total cumulé.
+L'écran **Opérations Erronées** dispose d'un bouton **Exporter PDF** (nouveau, 23/07/2026) — aucun export n'existait sur ce module avant cette date. Le document généré reprend l'intégralité des résultats correspondant aux filtres actuellement appliqués à l'écran (banque, libellé, motif, statut), pas seulement la page affichée, ainsi que le montant total cumulé.
 
 ---
 
@@ -4733,18 +4674,13 @@ PREVU
 
 ### 5. Encours
 
-Deux écrans d'encours distincts affichent, pour une banque donnée, l'ensemble des provisions PREVU
-dont la date d'émission ne dépasse pas la fin du mois en cours, ainsi que le montant total cumulé :
-un écran pour les provisions de sens DECAISSEMENT, un écran pour les provisions de sens
-ENCAISSEMENT — même principe que les modules à double sens existants (Virement, Chèque, LCN, Mise à
-disposition, Virement International).
+Les provisions au statut PREVU dont la date d'émission ne dépasse pas la fin du mois en cours sont consultées, filtrées, exportées en PDF et validées (une par une ou en lot) depuis l'écran **États des encours — Récapitulatif** (chapitre 31), sous la carte « Provision », dans les deux sens (décaissement et encaissement). Il n'existe plus d'écran d'encours propre au module.
 
 ---
 
 ### 6. Export PDF
 
-L'écran **Provisions**, ainsi que chacun des deux écrans d'**encours** (décaissements et
-encaissements) d'une banque, disposent d'un bouton **Exporter PDF**. Le document généré reprend
+L'écran **Provisions** dispose d'un bouton **Exporter PDF**. Le document généré reprend
 l'intégralité des résultats correspondant aux filtres actuellement appliqués à l'écran, pas
 seulement la page affichée, ainsi que le montant total cumulé.
 
@@ -4856,19 +4792,13 @@ PREVU
 
 ### 5. Encours
 
-L'écran d'encours affiche, pour une banque donnée, l'ensemble des restitutions PREVU dont la date
-d'émission ne dépasse pas la fin du mois en cours, ainsi que le montant total cumulé.
+Les restitutions au statut PREVU dont la date d'émission ne dépasse pas la fin du mois en cours sont consultées, filtrées, exportées en PDF et validées (une par une ou en lot) depuis l'écran **États des encours — Récapitulatif** (chapitre 31), sous la carte « Restitution ». Il n'existe plus d'écran d'encours propre au module.
 
 ---
 
 ### 5 bis. Export PDF
 
-L'écran **Restitutions**, ainsi que l'écran d'**encours** d'une banque (nouveau, 23/07/2026),
-disposent chacun d'un bouton **Exporter PDF** — aucun export n'existait sur ce module avant cette
-date. Le document généré reprend l'intégralité des résultats correspondant aux filtres actuellement
-appliqués à l'écran (banque, libellé, statut pour la liste ; libellé, montant pour l'encours — la
-banque et le statut PREVU sont implicites), pas seulement la page affichée, ainsi que le montant
-total cumulé.
+L'écran **Restitutions** dispose d'un bouton **Exporter PDF** (nouveau, 23/07/2026) — aucun export n'existait sur ce module avant cette date. Le document généré reprend l'intégralité des résultats correspondant aux filtres actuellement appliqués à l'écran (banque, libellé, statut), pas seulement la page affichée, ainsi que le montant total cumulé.
 
 ---
 
@@ -5101,74 +5031,95 @@ Le rapprochement organise les transactions déjà validées ; mais avant validat
 
 États des encours est l'espace de travail consolidé qui regroupe, pour une banque et une période de
 rapprochement données, l'ensemble des opérations bancaires encore en attente de validation —
-échéances de crédit, moyens de paiement, préfinancement, factoring, droits constatés, décomptes,
-commissions, agios, prélèvements, frais bancaires, impôts et taxes, restitutions, opérations
-erronées, impayées. Il offre un point d'entrée unique pour consulter ces opérations et les valider,
-individuellement ou en lot.
+échéances de crédit et de leasing, moyens de paiement, préfinancement, factoring, droits constatés,
+décomptes, commissions, agios, prélèvements, frais bancaires, impôts et taxes, restitutions,
+provisions, opérations erronées, impayées. C'est le **point d'entrée unique** pour consulter ces
+opérations, les valider (une par une ou en lot), les créer ou les corriger avant validation, puis,
+une fois validées, les retrouver dans le rapprochement pour les corriger ou les annuler.
 
-Le sous-module Récapitulatif fait partie intégrante de cet espace : il consolide ces mêmes
-opérations en attente dans une vue transversale (tous types confondus) et dans des rapports PDF —
-un récapitulatif simple (liste des opérations) et un récapitulatif général détaillé (situation du
-jour et projection de fin de mois, regroupées par catégorie métier).
+L'espace de travail comporte deux écrans :
+- **Récapitulatifs** : toutes les opérations en attente, tous types confondus, regroupées par type
+  d'opération. C'est l'écran ouvert par défaut ;
+- **Rapprochement** : les transactions déjà validées de la période affichée.
+
+Il n'existe plus d'écran dédié par type d'opération : chaque type d'opération a sa carte dans
+l'écran Récapitulatifs, avec les mêmes fonctions pour tous les types.
+
+Le sous-module Récapitulatif produit aussi des rapports PDF : un récapitulatif simple (liste des
+opérations filtrées) et un récapitulatif général détaillé (situation du jour et projection de fin
+de mois, regroupées par catégorie métier).
 
 ---
 
 ### 2. Définitions métier
 
 **Encours** : une opération bancaire (d'un des types listés en section 1) dont le statut est encore
-« à payer »/« en cours » — `PREVU` pour les échéances et opérations calculées, `ENCOURS` pour les
-moyens de paiement — et dont la date de référence (date d'émission pour la plupart des types, date
-d'échéance pour les LCN en décaissement) est antérieure ou égale à la fin du mois en cours. Une fois
-validé, un encours quitte les écrans « Encours » et devient une transaction rattachée au
-rapprochement.
+« à payer »/« en cours » — « prévu » pour les échéances et opérations calculées, « en cours » pour
+les moyens de paiement — et dont la date de référence est antérieure ou égale à la fin du mois en
+cours. La date de référence est la date d'échéance pour le leasing, le CMT et les LCN (sauf
+escompte), et la date d'émission pour tous les autres types. Une fois validé, un encours quitte
+l'écran Récapitulatifs et devient une transaction rattachée au rapprochement.
 
 **Sens** : chaque encours est soit un **Décaissement** (sortie d'argent), soit un **Encaissement**
-(entrée d'argent).
+(entrée d'argent). Le sens est porté par l'opération elle-même ; l'utilisateur ne le choisit jamais
+au moment de valider.
+
+**Récapitulatif** : vue consolidée, pour une banque, de tous les encours du mois, **les deux sens
+réunis**, présentée sous forme de **cartes, une par type d'opération**. Chaque carte affiche le
+nom du type, le nombre d'opérations à valider, le total débit et le total crédit, et, si des
+opérations sont échues, un repère d'alerte avec leur nombre. Au-dessus des cartes, quatre
+**indicateurs globaux** résument l'ensemble : total débit prévisionnel, total crédit prévisionnel,
+nombre d'opérations à valider, nombre d'opérations échues à ce jour. Les cartes et les indicateurs
+suivent toujours les filtres appliqués.
+
+**Échue à ce jour** : opération dont la date de référence est atteinte (ou dépassée) à la date du jour.
 
 **Validation d'un encours** : action qui transforme un encours en transaction bancaire, en lui
-associant une date de valeur, une date d'opération et, selon le type d'opération, une TVA
-déductible ou collectée. C'est cette action qui fait apparaître l'opération dans le rapprochement de
-la banque (voir `docs/modules/rapprochement.md`).
+associant une date de valeur, une date d'opération, un libellé, une observation et, selon le type
+d'opération, une TVA déductible ou collectée. C'est cette action qui fait apparaître l'opération dans le
+rapprochement de la banque (voir chapitre 30). La date d'émission est reprise de l'opération et
+n'est jamais modifiable à ce moment-là. Le sens de la TVA (déductible ou collectée) découle du sens
+de l'opération.
 
-**Validation en lot** : variante permettant de valider en une seule fois plusieurs encours du même
-type (et du même sens le cas échéant), avec une date de valeur, une date d'opération et un taux de
-TVA communs à tout le lot. Le libellé, l'observation et la date d'émission restent propres à chaque
-opération et ne sont jamais saisis en lot — chaque opération conserve automatiquement les siens.
-Traitement tout-ou-rien : si une opération du lot échoue, aucune n'est validée.
+**Saisie de la TVA** : l'utilisateur indique soit un **taux**, soit un **montant** de TVA, jamais les
+deux. Le montant de TVA ne peut pas dépasser le montant de l'opération. Pour les crédits (CMT) et le
+leasing, la TVA est facultative.
 
-**Récapitulatif** *(écran unique depuis le 06/09/2026 — remplace les deux écrans Récapitulatif
-Décaissements et Récapitulatif Encaissements)* : vue consolidée, pour une banque, de tous les
-encours prévisionnels du mois, toutes catégories confondues et **les deux sens réunis** dans un
-seul tableau paginé, triable et filtrable. Chaque ligne porte une pastille indiquant son sens, et
-les deux totaux — Débit prévisionnel et Crédit prévisionnel — sont affichés côte à côte en en-tête
-du tableau ; lorsqu'un sens est filtré, le total de l'autre vaut zéro.
+**Validation en lot** : variante permettant de valider en une seule fois plusieurs encours **du même
+type et du même sens**, avec une date de valeur, une date d'opération et un **taux** de TVA communs à
+tout le lot (la saisie d'un montant de TVA libre n'est pas offerte en lot, puisqu'un même montant ne
+peut convenir à plusieurs opérations). Le libellé, l'observation et la date d'émission restent propres à
+chaque opération et ne sont jamais saisis en lot — chaque opération conserve automatiquement les
+siens. Traitement tout-ou-rien : si une opération du lot échoue, aucune n'est validée. Une sélection
+qui mélange plusieurs types ou plusieurs sens est refusée, avec un message explicite.
 
-Le **sens** est devenu un critère de recherche optionnel (« Tous » par défaut) au lieu d'être fixé
-par l'écran choisi. Il se combine à tous les autres : catégorie d'origine, libellé, observation,
-numéro de pièce *(nouveau, 07/09/2026)*, montant exact *(nouveau, 06/09/2026)*, et date de
-référence « depuis » *(nouveau, 06/09/2026)* / « jusqu'à » *(31/08/2026)*. La barre de filtres est
-repliable et résume en pastilles les critères actifs lorsqu'elle est fermée, afin qu'un filtre en
-vigueur ne passe jamais inaperçu — les totaux affichés suivent toujours les filtres.
+**Annulation d'une transaction** : depuis l'écran Rapprochement, une transaction validée peut être
+supprimée tant que son rapprochement n'est pas clôturé définitivement. L'opération d'origine
+retrouve alors son statut de départ (elle redevient « à valider ») et ses dates de valeur et
+d'opération sont effacées ; elle réapparaît dans l'écran Récapitulatifs, prête à être validée de
+nouveau. Les soldes du rapprochement concerné sont recalculés.
 
-Le filtre date de référence compare chaque opération à sa propre colonne de référence métier — date
-d'échéance pour le leasing, le CMT et les LCN (sauf escompte) ; date d'émission pour toutes les
-autres sources — sans que l'utilisateur ait à savoir laquelle s'applique ; si aucune borne haute
-n'est choisie, elle reste la fin du mois en cours (comportement historique). L'export PDF reprend
-exactement les lignes filtrées, filtre de sens compris.
+**Modification d'une transaction validée** : depuis l'écran Rapprochement, une transaction validée
+peut être corrigée avec les mêmes champs que lors de la validation — date de valeur, date
+d'opération, libellé, observation, TVA (taux ou montant). Le montant, la banque et la date
+d'émission ne sont jamais modifiables. Chaque correction est répercutée automatiquement sur
+l'opération d'origine, pour que les deux restent cohérentes (voir chapitre 21).
 
-**Récapitulatif global** : version non paginée du même contenu (Décaissements et Encaissements
-réunis), utilisée pour la génération du rapport PDF. Depuis le tableau de bord Finance, l'utilisateur
-choisit la période avant le téléchargement : **à ce jour** (n'inclut que les encours déjà échus/émis)
-ou **jusqu'à fin de mois** (comportement historique, par défaut) *(nouveau, 31/08/2026)* — les
-libellés du rapport (« Solde... », « Disponibilité FC... ») s'adaptent au choix effectué. Dans les
-deux cas, aucune borne basse n'est appliquée : les encours en retard non encore validés, antérieurs
-au mois en cours, sont toujours inclus.
+**Ajouter / Éditer** : depuis le Récapitulatif, l'utilisateur peut créer une nouvelle opération
+(bouton **Ajouter**) ou corriger une opération en attente (bouton **Éditer** de la ligne) sans repasser
+par le menu du module concerné. Ces actions ouvrent l'écran de saisie ou de modification du module
+d'origine ; à l'enregistrement, l'utilisateur revient au Récapitulatif.
 
-**Disponibilité FC fin du mois** (rapport Récapitulatif global, anciennement « Reste fin du mois ») :
-Solde projeté de fin de mois + Plafond FC. Positive : marge résiduelle sous la facilité de caisse à
-fin de mois ; négative : dépassement projeté. Cohérente avec la « Disponibilité » du jour J affichée
-dans le Récapitulatif général détaillé *(formule corrigée le 31/08/2026 — une inversion de signe la
-rendait auparavant opposée à son intitulé)*.
+**Récapitulatif global** : version non paginée du même contenu, utilisée pour la génération du rapport
+PDF. Depuis le tableau de bord Finance, l'utilisateur choisit la période avant le téléchargement :
+**à ce jour** (n'inclut que les encours déjà échus/émis) ou **jusqu'à fin de mois** (par défaut) — les
+libellés du rapport (« Solde... », « Disponibilité FC... ») s'adaptent au choix effectué. Dans les deux
+cas, aucune borne basse n'est appliquée : les encours en retard non encore validés, antérieurs au mois
+en cours, sont toujours inclus.
+
+**Disponibilité FC fin du mois** (rapport Récapitulatif global) : Solde projeté de fin de mois + Plafond
+FC. Positive : marge résiduelle sous la facilité de caisse à fin de mois ; négative : dépassement
+projeté. Cohérente avec la « Disponibilité » du jour J affichée dans le Récapitulatif général détaillé.
 
 **Récapitulatif général détaillé** : rapport distinct combinant, pour une banque (ou pour toutes les
 banques, colonne par colonne) : la situation du jour (solde actuel, plafond de facilité de caisse,
@@ -5176,8 +5127,7 @@ disponibilité, encours arrivant à échéance jusqu'à aujourd'hui inclus, sold
 décaissements/encaissements attendus du reste du mois (du lendemain à la fin du mois), regroupés par
 catégorie métier — par exemple la catégorie « Règlement Frns » regroupe les Chèques, LCN, Virements
 et Mises à disposition d'un même sens. Dans la version consolidée (toutes banques), une catégorie
-n'apparaît dans le tableau que si au moins une banque y porte un montant non nul — une catégorie à
-0,00 pour toutes les banques est omise du rapport *(nouveau, 31/08/2026)*.
+n'apparaît dans le tableau que si au moins une banque y porte un montant non nul.
 
 ---
 
@@ -5191,9 +5141,8 @@ n'apparaît dans le tableau que si au moins une banque y porte un montant non nu
         → une carte « Clôture provisoire » si une période est en cours de contrôle
         ↓ choix de la période à consulter
 [3] Espace de travail « États des encours » (pour la banque et la période choisies)
-        → onglet « Rapprochement » (ouvert par défaut) : transactions déjà validées de la période
-        → onglets « Récapitulatifs » : vue consolidée Décaissements / Encaissements
-        → un écran par type d'opération, sous « Encaissements » ou « Décaissements »
+        → écran « Récapitulatifs » (ouvert par défaut) : encours à valider, par type d'opération
+        → écran « Rapprochement » : transactions déjà validées de la période
 ```
 
 ---
@@ -5212,59 +5161,86 @@ l'espace de travail sur cette période.
 Se compose de :
 - un **en-tête contextuel** rappelant la banque, le statut de la période (En cours / Clôture
   provisoire), le solde de début, le solde de fin (ou actuel), la variation et la facilité de
-  caisse. Les totaux débit/crédit/TVA n'y figurent plus *(07/09/2026)* : ils étaient calculés sur
-  les transactions **réalisées** du rapprochement et voisinaient, sur l'écran Récapitulatifs, des
-  totaux **prévisionnels** de nature différente, sans que rien ne distingue les deux. Chaque écran
-  affiche désormais ses propres totaux au-dessus de son tableau ;
-- une **pastille de nature** *(nouveau, 07/09/2026)* à côté du fil d'Ariane, indiquant si l'écran
-  affiché présente du **Prévisionnel** (opérations attendues, pas encore passées en banque) ou du
-  **Réalisé** (opérations déjà passées sur le compte). Un seul écran du module est de nature
-  réalisée, le Rapprochement ; tous les autres sont des encours ;
+  caisse. Les totaux débit/crédit/TVA n'y figurent pas : chaque écran affiche ses propres totaux au-dessus de
+  son tableau, pour ne pas mélanger des montants réalisés et des montants prévisionnels ;
+- une **pastille de nature** à côté du fil d'Ariane, indiquant si l'écran affiché présente du
+  **Prévisionnel** (opérations attendues, pas encore passées en banque — écran Récapitulatifs) ou du
+  **Réalisé** (opérations déjà passées sur le compte — écran Rapprochement) ;
 - un **bouton de clôture** (Clôture provisoire ou Clôture définitive selon le statut actuel de la
   période affichée) ;
-- une **barre latérale** organisée en catégories : Rapprochement, Récapitulatifs (écran unique
-  depuis le 06/09/2026, les deux sens réunis), Encaissements (un écran par type d'opération),
-  Décaissements (un écran par type d'opération).
+- une **barre latérale** à deux entrées : Récapitulatifs et Rapprochement.
 
-#### Onglet Rapprochement
+#### Écran Récapitulatifs
+
+*Filtres.* Une barre de filtres, toujours visible, s'applique à la fois aux indicateurs, aux cartes et
+au tableau. Critères, tous combinables :
+- **Sens** (Tous par défaut, Encaissement, Décaissement) ;
+- **Type de transaction** (un ou plusieurs types, avec recherche) ;
+- **Libellé / Observation** : un seul champ, qui cherche le terme à la fois dans le libellé et dans
+  l'observation, sans tenir compte des majuscules ni des accents. Il cherche aussi le nom de
+  l'émetteur (virement, virement international, chèque, LCN, mise à disposition) et celui de
+  l'organisme (leasing) ;
+- **N° de pièce** : numéro du chèque, du LCN, du virement, de la mise à disposition, de l'impayé, du
+  marché (préfinancement, factoring, droit constaté, décompte) ou du contrat (leasing) — les autres
+  types n'en ont pas ;
+- **Montant exact** ;
+- **Motif Commission** et **Motif Impôt/Taxe** : listes déroulantes qui n'apparaissent que lorsque le
+  type correspondant fait partie des types sélectionnés ; elles ne restreignent que ce type et laissent les
+  autres types sélectionnés inchangés ;
+- **Période** : bornes « Date de référence — depuis » et « jusqu'au » (la date de référence est
+  l'échéance pour le leasing, le CMT et les LCN, l'émission pour les autres types ; si aucune
+  borne haute n'est choisie, elle reste la fin du mois en cours). Le bouton affiche le nombre de bornes actives.
+
+Le bouton **Effacer** réinitialise tous les filtres. Lorsqu'aucune opération ne correspond, un message
+l'indique et propose d'effacer les filtres.
+
+*Cartes par type.* Une carte par type d'opération présent. Un clic sur une carte l'ouvre (une seule
+carte ouverte à la fois, les autres se compactent) : elle affiche alors ses statistiques (débit,
+crédit, net crédit − débit, nombre d'opérations échues) et le tableau de ses opérations. Le bouton
+**Réduire** referme la carte.
+
+*Tableau d'une carte.* Colonnes : sens (pastille Décaissement/Encaissement), date d'émission, date
+d'échéance (« — » si le type n'en porte pas), libellé, observations, source, débit, crédit,
+identifiant source, actions. Paginé (5, 10, 25 ou 50 lignes, 10 par défaut) et triable ; par défaut,
+trié par date de référence, de la plus récente à la plus ancienne. Le bouton **Exporter PDF** du tableau
+exporte exactement les lignes filtrées.
+
+*Actions sur une ligne.*
+- **Valider** (coche verte) : ouvre la fenêtre « Passage au rapprochement bancaire », qui reprend la
+  date d'émission (non modifiable) et demande la TVA, la date de valeur, la date de l'opération, le
+  libellé et l'observation (tous obligatoires, la TVA pouvant valoir 0). La validation crée la
+  transaction dans le rapprochement affiché et retire l'opération de l'écran.
+- **Éditer** (crayon) : ouvre l'écran de modification du module d'origine ; le bouton est grisé, avec une
+  explication au survol, quand l'édition n'est pas possible depuis le Récapitulatif (voir règle 9).
+
+*Validation en lot.* Cocher une ou plusieurs lignes (la case d'en-tête coche la page) fait
+apparaître une barre indiquant le nombre d'opérations sélectionnées et leur montant total, avec les
+boutons **Effacer la sélection** et **Valider en lot**. La fenêtre de lot demande la TVA (taux), la
+date de valeur et la date de l'opération, rappelle le type, le sens, le nombre d'opérations et le
+montant total, et affiche un récapitulatif à confirmer avant exécution.
+
+*Ajouter.* Le bouton **Ajouter** (en haut de l'écran, et dans la barre du tableau) ouvre, selon le
+cas, directement l'écran de création du type de la carte ouverte, ou une fenêtre de choix : une grille
+de types d'opérations avec un champ de recherche qui ignore majuscules et accents. Les types dont la
+création n'est pas possible depuis cet écran sont affichés grisés (« Création indisponible »).
+
+#### Écran Rapprochement
 
 Liste paginée et filtrable (libellé, source, observation, montant, dates d'opération) des
-transactions déjà validées et rattachées à la période affichée. Depuis cet écran, une transaction
-peut être corrigée (date de valeur, date d'opération, TVA déductible, TVA collectée) ou annulée —
-voir `docs/modules/transactions.md` et `docs/modules/rapprochement.md` pour le détail de ces règles.
-Un bouton **Exporter PDF** (nouveau, 23/07/2026) génère la liste complète des transactions
-correspondant aux filtres actuellement appliqués, sans limite de pagination.
+transactions déjà validées et rattachées à la période affichée, avec ses totaux et un bouton
+**Exporter PDF** (les lignes filtrées, sans limite de pagination). Pour chaque transaction :
+- **Modifier** (crayon) : fenêtre « Modifier une transaction » — date d'émission (non modifiable),
+  TVA, date de valeur, date de l'opération, libellé, observation ;
+- **Supprimer** (corbeille) : annule la transaction (voir section 2). Un message confirme la suppression.
 
-#### Écrans « Encours » par type d'opération
-
-Chacun des types d'opération — une vingtaine depuis l'ajout des provisions — dispose de son propre
-écran (par sens quand les deux existent),
-listant les encours de ce type pour la banque et la période sélectionnées. Depuis chaque écran, un
-ou plusieurs encours peuvent être validés — individuellement (formulaire propre à chaque type,
-pouvant demander des champs additionnels) ou en lot (formulaire commun décrit en section 2). Le
-détail des champs et des règles de validation propres à chaque type d'opération est documenté dans
-le module correspondant (section 9), y compris la disponibilité de l'**export PDF** propre à chacun
-de ces écrans — tous les types d'opération en disposent désormais (23/07/2026).
-
-#### Onglets Récapitulatifs Décaissements / Encaissements
-
-Tableau consolidé, tous types d'opération confondus, des encours d'un même sens pour la banque
-sélectionnée. Paginé et triable (date d'émission, date d'échéance affichée, montant), filtrable par
-catégorie d'origine, libellé, observation, et date de référence « jusqu'à » (nouveau, 31/08/2026) —
-ce dernier filtre compare chaque ligne à sa propre colonne de référence métier (émission, échéance,
-etc. selon la catégorie) et retombe sur la fin du mois en cours si aucune date n'est choisie. Le
-total du sens correspondant est affiché en en-tête, calculé sur l'ensemble des lignes filtrées (pas
-seulement la page affichée). Écran de consultation uniquement — aucune validation ne s'y effectue
-directement. Un bouton **Exporter PDF** (nouveau, 23/07/2026) génère la liste complète correspondant
-aux filtres actuellement appliqués.
+Les règles et leurs limites sont décrites aux chapitres 21 (Transactions) et 30 (Rapprochement).
 
 #### Téléchargements PDF (depuis le tableau de bord Finance)
 
 - **Récap global** (bouton d'en-tête) : rapport consolidé de trésorerie pour l'ensemble des banques.
-  Un choix de période est demandé avant le téléchargement — **à ce jour** ou **jusqu'à fin de mois**
-  (nouveau, 31/08/2026) — voir la définition « Récapitulatif global » en section 2.
+  Un choix de période est demandé avant le téléchargement — **à ce jour** ou **jusqu'à fin de mois**.
 - **Récap détaillé** (bouton d'en-tête) : récapitulatif général détaillé pour l'ensemble des
-  banques. Les catégories à 0,00 pour toutes les banques n'y figurent pas (nouveau, 31/08/2026).
+  banques. Les catégories à 0,00 pour toutes les banques n'y figurent pas.
 - **Récap détaillé** (bouton sur la carte d'une banque) : récapitulatif général détaillé pour cette
   seule banque.
 
@@ -5278,15 +5254,31 @@ aux filtres actuellement appliqués.
 2. Un encours est validé dans le rapprochement de la période affichée à l'écran (En cours ou Clôture
    provisoire selon la période sélectionnée à l'étape 2 du parcours) — jamais sur un rapprochement
    Clôturé définitivement, ce statut n'apparaissant plus dans l'écran de sélection.
-3. Une fois validé, un encours n'apparaît plus dans les écrans « Encours » ni dans les
-   Récapitulatifs — il devient consultable comme transaction dans l'onglet Rapprochement.
-4. La validation en lot applique la même date de valeur, la même date d'opération et le même taux
-   de TVA à toutes les opérations sélectionnées ; elle est tout-ou-rien. Le libellé, l'observation et
-   la date d'émission restent ceux d'origine de chaque opération.
-5. L'écran Récapitulatifs (en ligne comme en PDF) est un écran de consultation — aucune validation
-   ne s'y effectue ; elle se fait depuis l'écran dédié au type d'opération concerné.
-6. Chaque type d'opération conserve ses propres règles de validation (champs additionnels requis,
-   contraintes de statut) — voir le module correspondant pour le détail (section 9).
+3. Une fois validé, un encours n'apparaît plus dans l'écran Récapitulatifs — il devient consultable
+   comme transaction dans l'écran Rapprochement.
+4. Tous les types d'opération se valident de la même façon et avec les mêmes champs (TVA, date de
+   valeur, date de l'opération, libellé, observation) ; chaque type conserve ses propres règles de
+   contrôle (champs additionnels requis, contraintes de statut) — voir le module correspondant
+   (section 9).
+5. La validation en lot applique la même date de valeur, la même date d'opération et le même taux
+   de TVA à toutes les opérations sélectionnées ; elle ne porte que sur un seul type et un seul
+   sens ; elle est tout-ou-rien. Le libellé, l'observation et la date d'émission restent ceux
+   d'origine de chaque opération.
+6. La date d'émission d'une opération n'est jamais modifiable au moment de la validation, ni lors de
+   la correction d'une transaction validée.
+7. Annuler une transaction remet l'opération d'origine dans son statut de départ et efface ses dates
+   de valeur et d'opération ; c'est refusé si le rapprochement est clôturé définitivement.
+8. Corriger une transaction validée met à jour l'opération d'origine (dates, libellé, observation) ;
+   la TVA est recalculée sur le montant de la transaction, qui ne change pas. C'est refusé si le
+   rapprochement est clôturé définitivement.
+9. Édition depuis le Récapitulatif : possible pour tous les types sauf les mises à disposition et
+   les LCN en décaissement, avec deux nuances — pour les virements et les chèques, uniquement pour les
+   encaissements ; pour les échéances de leasing et de CMT, uniquement par un administrateur système, et
+   seulement tant que l'échéance est « prévue ».
+10. Création depuis le Récapitulatif : proposée pour tous les types sauf le leasing, le CMT, les mises à
+    disposition et les cautions, dont les opérations ne se créent pas depuis cet écran.
+11. Un type sans opération à valider n'a pas de carte ; si aucun encours ne correspond aux filtres,
+    l'écran l'indique.
 
 ---
 
@@ -5295,22 +5287,25 @@ aux filtres actuellement appliqués.
 | Action | Admin système | Directeur Finance | Membre Finance |
 |---|:---:|:---:|:---:|
 | Consulter l'écran de sélection du rapprochement actif | ✅ | ✅ | ✅ |
-| Consulter les écrans Encours et l'onglet Rapprochement | ✅ | ✅ | ✅ |
+| Consulter les écrans Récapitulatifs et Rapprochement | ✅ | ✅ | ✅ |
 | Valider un encours (individuel ou en lot) | ✅ | ✅ | ✅ |
-| Consulter les Récapitulatifs Décaissements/Encaissements | ✅ | ✅ | ✅ |
+| Ajouter / Éditer une opération depuis le Récapitulatif | ✅ | ✅ | ✅ |
+| Éditer une échéance de leasing ou de CMT | ✅ | ❌ | ❌ |
+| Modifier ou annuler une transaction validée (rapprochement non clôturé définitivement) | ✅ | ✅ | ✅ |
 | Télécharger un récapitulatif ou un récapitulatif général détaillé (PDF) | ✅ | ✅ | ✅ |
 
-Aucune action de ce module n'est réservée à un rôle en particulier au-delà de l'appartenance au
-département Finance (ou `SYSTEM_ADMIN`, qui a un accès transversal à tous les départements).
+Hors édition des échéances de leasing et de CMT, aucune action de ce module n'est réservée à un rôle en
+particulier au-delà de l'appartenance au département Finance (ou `SYSTEM_ADMIN`, qui a un accès
+transversal à tous les départements).
 
 ---
 
 ### 7. Audit
 
-La validation d'un encours (individuelle ou en lot) et l'annulation d'une transaction depuis
-l'onglet Rapprochement sont historisées avec l'auteur et la date — voir le module source de chaque
-type d'opération pour le détail de ce qui est tracé (`docs/modules/<module>.md`). La consultation
-seule (écrans Encours, Récapitulatifs, téléchargement PDF) n'est pas historisée.
+La validation d'un encours (individuelle ou en lot), la modification d'une transaction et son
+annulation depuis l'écran Rapprochement sont historisées avec l'auteur et la date — voir le module
+source de chaque type d'opération pour le détail de ce qui est tracé. La consultation seule
+(écrans Récapitulatifs et Rapprochement, téléchargement PDF) n'est pas historisée.
 
 ---
 
@@ -5318,8 +5313,8 @@ seule (écrans Encours, Récapitulatifs, téléchargement PDF) n'est pas histori
 
 Les traitements suivants produisent un événement utile au diagnostic :
 - une validation en lot dont au moins une opération échoue (aucune n'est alors validée) ;
-- une tentative de validation ou d'annulation refusée parce que le rapprochement concerné n'est plus
-  dans un statut qui l'autorise.
+- une tentative de validation, de modification ou d'annulation refusée parce que le rapprochement
+  concerné n'est plus dans un statut qui l'autorise.
 
 ---
 
@@ -5327,11 +5322,10 @@ Les traitements suivants produisent un événement utile au diagnostic :
 
 | Module | Nature de la dépendance |
 |---|---|
-| **Rapprochement** | Chaque validation d'encours crée une transaction rattachée à la période affichée ; l'onglet Rapprochement de cet espace de travail est la même donnée que le détail d'un rapprochement. |
-| **Transactions** | Les transactions issues d'une validation sont consultables et corrigibles selon les règles de ce module. |
+| **Rapprochement** | Chaque validation d'encours crée une transaction rattachée à la période affichée ; l'écran Rapprochement de cet espace de travail est la même donnée que le détail d'un rapprochement. |
+| **Transactions** | Les transactions issues d'une validation sont consultables, corrigeables et annulables selon les règles de ce module. |
 | **Comptes bancaires** | Point d'entrée de l'espace de travail (carte d'une banque sur le tableau de bord) ; solde et facilité de caisse affichés dans l'en-tête contextuel et dans le récapitulatif général détaillé. |
-| **Validation** (module transverse, voir `docs/rbac/validation.md`) | Orchestre, pour chaque type d'opération, la création de la transaction correspondante lors d'une validation individuelle ou en lot. |
-| **Leasing, CMT, Chèque, LCN, Virement, Virement international, Mise à disposition, Prélèvement, Préfinancement, Factoring, Droits constatés, Décomptes, Commission, Agios, Frais bancaires, Impôts et taxes, Restitution, Opérations erronées, Impayées** | Chacun produit les encours affichés dans son écran dédié, et porte les règles de validation propres à son type d'opération. |
+| **Leasing, CMT, Chèque, LCN, Virement, Virement international, Mise à disposition, Prélèvement, Préfinancement, Factoring, Droits constatés, Décomptes, Commission, Agios, Frais bancaires, Impôts et taxes, Restitution, Provision, Opérations erronées, Impayées** | Chacun produit les encours affichés sous sa carte, porte les règles de contrôle propres à son type d'opération, et fournit les écrans de création et de modification ouverts par Ajouter / Éditer. |
 
 ---
 

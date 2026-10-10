@@ -136,6 +136,8 @@ Depuis la liste des crédits → cliquer sur l'icône **Tableau d'Amortissement*
 
 > **Basculer le statut d'une échéance** (colonne Actions du tableau d'amortissement) : action réservée à l'administrateur système, pour corriger une anomalie sans passer par le rapprochement.
 
+> **Modifier une échéance** *(réservé à l'administrateur système)* : tant qu'une échéance est au statut **Prévu**, un bouton crayon de la colonne Actions du tableau d'amortissement ouvre une page dédiée de modification (voir « Modifier une échéance de leasing ou de CMT » dans le guide Administrateur). Les mêmes échéances sont aussi modifiables depuis **États des encours → Récapitulatifs** (bouton **Éditer**).
+
 ### Exporter en PDF
 
 Un bouton **Exporter PDF** est disponible sur les écrans **Les Crédits encours**, **Les Crédits en attente de main levées**, **Les Crédits archivés**, ainsi que sur le **Tableau d'amortissement** d'un crédit.
@@ -349,6 +351,8 @@ Sur le **Tableau d'amortissement**, le bouton **Période** ouvre un panneau à t
 ### Consulter le tableau d'amortissement
 
 Depuis la liste des contrats → cliquer sur un contrat → **Tableau d'amortissement**. Affiche toutes les échéances, les montants HT/TVA/TTC, et les totaux (payé, restant). Filtrable par numéro d'échéance, statut, et plages de dates (échéance, opération, valeur) via le bouton **Période**.
+
+> **Modifier une échéance** *(réservé à l'administrateur système)* : tant qu'une échéance est au statut **Prévu**, un bouton crayon de la colonne Actions du tableau d'amortissement ouvre une page dédiée de modification (voir « Modifier une échéance de leasing ou de CMT » dans le guide Administrateur). Les mêmes échéances sont aussi modifiables depuis **États des encours → Récapitulatifs** (bouton **Éditer**).
 
 ### Exporter en PDF
 
@@ -599,21 +603,13 @@ Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur syst
 
 Bouton corbeille — **réservé à l'administrateur système**. Refusé si le décompte est déjà Payé.
 
-### Consulter l'encours de décomptes d'une banque
+### Valider les décomptes en attente
 
-Écran dédié listant les décomptes au statut Prévu dont la date d'émission est antérieure ou égale
-à la fin du mois en cours, pour une banque donnée, avec le total correspondant.
+Les décomptes « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Décomptes** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Exporter en PDF
 
-Bouton **Exporter PDF**, disponible sur la liste des décomptes ainsi que sur l'écran d'encours :
-génère un état complet selon les filtres actuellement appliqués sur l'écran concerné — pas
-seulement la page affichée (nouveau sur l'écran d'encours, 2026-07-22).
-
-### Consulter l'encours des décomptes d'une banque
-
-Écran dédié listant les décomptes au statut Prévu, dont la date d'émission est antérieure ou égale
-à la fin du mois en cours, pour une banque donnée, avec le total correspondant.
+Bouton **Exporter PDF**, disponible sur la liste des décomptes : génère un état complet selon les filtres actuellement appliqués sur l'écran — pas seulement la page affichée. L'export des encours se fait depuis **États des encours → Récapitulatifs** (bouton **Exporter PDF** du tableau).
 
 ---
 
@@ -651,11 +647,9 @@ Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur syst
 
 Bouton corbeille — **réservé à l'administrateur système**. Refusé si le préfinancement est déjà Payé.
 
-### Consulter l'encours de remboursement ou de déblocage d'une banque
+### Valider les mouvements en attente
 
-Deux écrans dédiés, l'un pour les remboursements, l'autre pour les déblocages, listant les
-mouvements au statut Prévu dont la date d'émission est antérieure ou égale à la fin du mois en
-cours, pour une banque donnée, avec le total correspondant.
+Les mouvements « Prévu » (remboursements et déblocages) dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Préfinancement** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Consulter le suivi de ligne fonctionnelle
 
@@ -665,9 +659,7 @@ préfinancement rattachés à cette ligne.
 
 ### Exporter en PDF
 
-Bouton **Exporter PDF**, disponible sur la liste des préfinancements ainsi que sur chacun des deux
-écrans d'encours (remboursement, déblocage) : génère un état complet selon les filtres actuellement
-appliqués sur l'écran concerné — pas seulement la page affichée.
+Bouton **Exporter PDF**, disponible sur la liste des préfinancements : génère un état complet selon les filtres actuellement appliqués sur l'écran — pas seulement la page affichée. L'export des encours se fait depuis **États des encours → Récapitulatifs** (bouton **Exporter PDF** du tableau).
 
 ---
 
@@ -705,11 +697,9 @@ Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur syst
 
 Bouton corbeille — **réservé à l'administrateur système**. Refusé si le factoring est déjà Payé.
 
-### Consulter l'encours de remboursement ou de déblocage d'une banque
+### Valider les mouvements en attente
 
-Deux écrans dédiés, l'un pour les remboursements, l'autre pour les déblocages, listant les
-mouvements au statut Prévu dont la date d'émission est antérieure ou égale à la fin du mois en
-cours, pour une banque donnée, avec le total correspondant.
+Les mouvements « Prévu » (remboursements et déblocages) dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Factoring** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Consulter le suivi de ligne fonctionnelle
 
@@ -719,9 +709,7 @@ factoring rattachés à cette ligne.
 
 ### Exporter en PDF
 
-Bouton **Exporter PDF**, disponible sur la liste des factorings ainsi que sur chacun des deux
-écrans d'encours (remboursement, déblocage) : génère un état complet selon les filtres actuellement
-appliqués sur l'écran concerné — pas seulement la page affichée.
+Bouton **Exporter PDF**, disponible sur la liste des factorings : génère un état complet selon les filtres actuellement appliqués sur l'écran — pas seulement la page affichée. L'export des encours se fait depuis **États des encours → Récapitulatifs** (bouton **Exporter PDF** du tableau).
 
 ---
 
@@ -762,11 +750,9 @@ Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur syst
 
 Bouton corbeille — **réservé à l'administrateur système**. Refusé si le droit constaté est déjà Payé.
 
-### Consulter l'encours de remboursement ou de déblocage d'une banque
+### Valider les mouvements en attente
 
-Deux écrans dédiés, l'un pour les remboursements, l'autre pour les déblocages, listant les
-mouvements au statut Prévu dont la date d'émission est antérieure ou égale à la fin du mois en
-cours, pour une banque donnée, avec le total correspondant.
+Les mouvements « Prévu » (remboursements et déblocages) dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Droit constaté** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Consulter le suivi de ligne fonctionnelle
 
@@ -776,9 +762,7 @@ constaté rattachés à cette ligne.
 
 ### Exporter en PDF
 
-Bouton **Exporter PDF**, disponible sur la liste des droits constatés ainsi que sur chacun des deux
-écrans d'encours (remboursement, déblocage) : génère un état complet selon les filtres actuellement
-appliqués sur l'écran concerné — pas seulement la page affichée.
+Bouton **Exporter PDF**, disponible sur la liste des droits constatés : génère un état complet selon les filtres actuellement appliqués sur l'écran — pas seulement la page affichée. L'export des encours se fait depuis **États des encours → Récapitulatifs** (bouton **Exporter PDF** du tableau).
 
 ---
 
@@ -845,21 +829,13 @@ Bouton corbeille — **réservé à l'administrateur système**. Désactivé si 
 > exécution, et une ligne supprimée est recréée à l'identique le lendemain. **L'annulation, elle,
 > est stable** — une ligne déjà présente n'est jamais recréée ni modifiée par la synchronisation.
 
-### Consulter l'encours des chèques d'une banque
+### Valider les chèques en cours
 
-Deux écrans dédiés (un pour les encaissements, un pour les décaissements), chacun listant les
-chèques au statut En cours, dont la date d'émission est antérieure ou égale à la fin du mois en
-cours, pour une banque donnée. Depuis ces écrans, un chèque peut être validé (rapproché)
-individuellement — la validation demande une date de valeur, une date d'opération, un libellé, une
-observation et un taux de TVA déductible, puis marque le chèque Réglé — ou en lot avec d'autres
-chèques sélectionnés.
+Les chèques « En cours » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Chèque** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Exporter en PDF
 
-Un bouton **Exporter PDF** est disponible sur les listes **Encaissements** et **Décaissements**,
-ainsi que sur leurs deux écrans d'encours respectifs (nouveau, 22/07/2026). Le PDF reprend
-l'intégralité des chèques correspondant aux filtres actuellement appliqués à l'écran — pas
-seulement la page affichée. Le fichier est téléchargé directement dans le navigateur.
+Un bouton **Exporter PDF** est disponible sur les listes **Encaissements** et **Décaissements**. Le PDF reprend l'intégralité des chèques correspondant aux filtres actuellement appliqués à l'écran — pas seulement la page affichée. L'export des encours se fait depuis **États des encours → Récapitulatifs** (bouton **Exporter PDF** du tableau). Le fichier est téléchargé directement dans le navigateur.
 
 ---
 
@@ -920,9 +896,9 @@ Bouton corbeille — **réservé à l'administrateur système**. Désactivé si 
 > exécution, et une ligne supprimée est recréée à l'identique le lendemain. **L'annulation, elle,
 > est stable** — une ligne déjà présente n'est jamais recréée ni modifiée par la synchronisation.
 
-### Consulter l'encours des LCN d'une banque
+### Valider les LCN en cours
 
-Deux écrans dédiés (un pour les encaissements, un pour les décaissements), chacun listant les LCN En cours pour une banque donnée. Pour les encaissements, la date de référence utilisée dépend de la nature : date d'échéance pour un LCN Encaissement standard, date d'émission pour un LCN Escompte. Depuis ces écrans, un LCN peut être validé (rapproché) individuellement — la validation demande une date de valeur, une date d'opération, un libellé, une observation et un taux de TVA déductible, puis marque le LCN Réglé — ou en lot avec d'autres LCN sélectionnés.
+Les LCN « En cours » arrivés à leur date de référence (échéance, ou émission pour un escompte) ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **LCN Décaissement**, **LCN Encaissement** ou **LCN Escompte** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Suivre les LCN Escompte d'une ligne fonctionnelle
 
@@ -930,10 +906,7 @@ Depuis la fiche d'une ligne fonctionnelle d'escompte commercial, un écran de su
 
 ### Exporter en PDF
 
-Un bouton **Exporter PDF** est disponible sur les listes **Encaissements** et **Décaissements**,
-ainsi que sur leurs deux écrans d'encours respectifs (nouveau, 22/07/2026). Le PDF reprend
-l'intégralité des LCN correspondant aux filtres actuellement appliqués à l'écran — pas seulement la
-page affichée. Le fichier est téléchargé directement dans le navigateur.
+Un bouton **Exporter PDF** est disponible sur les listes **Encaissements** et **Décaissements**. Le PDF reprend l'intégralité des LCN correspondant aux filtres actuellement appliqués à l'écran — pas seulement la page affichée. L'export des encours se fait depuis **États des encours → Récapitulatifs** (bouton **Exporter PDF** du tableau). Le fichier est téléchargé directement dans le navigateur.
 
 ---
 
@@ -996,18 +969,15 @@ Bouton corbeille — **réservé à l'administrateur système**. Désactivé si 
 >
 > La suppression d'un virement saisi manuellement est en revanche définitive.
 
-### Consulter l'encours des virements d'une banque
+### Valider les virements en cours
 
-Deux écrans dédiés (encaissements / décaissements), listant les virements En cours dont la date d'émission est antérieure ou égale à la fin du mois en cours, pour une banque donnée, avec le total correspondant. Un virement peut y être validé (rapproché) individuellement — la validation demande une date de valeur, une date d'opération, un libellé, une observation et un taux de TVA déductible — ou en lot.
+Les virements « En cours » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Virement** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 > Si la banque retenue pour la transaction (émettrice pour un décaissement, bénéficiaire pour un encaissement) n'est pas renseignée sur le virement, la validation reste possible mais le recalcul de solde en cascade n'est pas déclenché pour cette opération.
 
 ### Exporter en PDF
 
-Un bouton **Exporter PDF** est disponible sur les listes **Encaissements** et **Décaissements**,
-ainsi que sur leurs deux écrans d'encours respectifs (nouveau, 22/07/2026). Le PDF reprend
-l'intégralité des virements correspondant aux filtres actuellement appliqués à l'écran — pas
-seulement la page affichée. Le fichier est téléchargé directement dans le navigateur.
+Un bouton **Exporter PDF** est disponible sur les listes **Encaissements** et **Décaissements**. Le PDF reprend l'intégralité des virements correspondant aux filtres actuellement appliqués à l'écran — pas seulement la page affichée. L'export des encours se fait depuis **États des encours → Récapitulatifs** (bouton **Exporter PDF** du tableau). Le fichier est téléchargé directement dans le navigateur.
 
 ---
 
@@ -1051,16 +1021,13 @@ Interrupteur En cours/Réglé dans la liste — **réservé à l'administrateur 
 
 Bouton corbeille — **réservé à l'administrateur système**. Désactivé si déjà Réglé.
 
-### Consulter l'encours des virements internationaux d'une banque
+### Valider les virements internationaux en cours
 
-Deux écrans dédiés (encaissements / décaissements), listant les virements internationaux En cours dont la date d'émission est antérieure ou égale à la fin du mois en cours, pour une banque donnée, avec le total correspondant. Validation individuelle ou en lot, avec date de valeur, date d'opération, libellé, observation et taux de TVA déductible.
+Les virements internationaux « En cours » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Virement international** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Exporter en PDF
 
-Un bouton **Exporter PDF** est disponible sur la liste combinée (encaissements et décaissements
-confondus), ainsi que sur les deux écrans d'encours (nouveau, 22/07/2026). Le PDF reprend
-l'intégralité des virements internationaux correspondant aux filtres actuellement appliqués à
-l'écran — pas seulement la page affichée. Le fichier est téléchargé directement dans le navigateur.
+Un bouton **Exporter PDF** est disponible sur la liste combinée (encaissements et décaissements confondus). Le PDF reprend l'intégralité des virements internationaux correspondant aux filtres actuellement appliqués à l'écran — pas seulement la page affichée. L'export des encours se fait depuis **États des encours → Récapitulatifs** (bouton **Exporter PDF** du tableau). Le fichier est téléchargé directement dans le navigateur.
 
 ---
 
@@ -1114,16 +1081,13 @@ Bouton corbeille — **réservé à l'administrateur système**. Désactivé si 
 > **L'annulation, elle, est stable** — une ligne déjà présente n'est jamais recréée ni modifiée par
 > la synchronisation.
 
-### Consulter l'encours des mises à disposition d'une banque
+### Valider les mises à disposition en cours
 
-Deux écrans dédiés (encaissements / décaissements), listant les mises à disposition En cours dont la date d'émission est antérieure ou égale à la fin du mois en cours, pour une banque donnée, avec le total correspondant. Validation individuelle ou en lot, avec date de valeur, date d'opération, libellé, observation et taux de TVA déductible.
+Les mises à disposition « En cours » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Mise à disposition** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Exporter en PDF
 
-Un bouton **Exporter PDF** est disponible sur la liste **Décaissements** ainsi que sur son écran
-d'encours (nouveau, 22/07/2026) — il n'existe pas d'écran dédié aux encaissements pour ce module,
-donc pas d'export sur ce flux. Le PDF reprend l'intégralité des mises à disposition correspondant
-aux filtres actuellement appliqués à l'écran — pas seulement la page affichée. Le fichier est
+Un bouton **Exporter PDF** est disponible sur la liste **Décaissements** — il n'existe pas d'écran dédié aux encaissements pour ce module, donc pas d'export sur ce flux. Le PDF reprend l'intégralité des mises à disposition correspondant aux filtres actuellement appliqués à l'écran — pas seulement la page affichée. L'export des encours se fait depuis **États des encours → Récapitulatifs** (bouton **Exporter PDF** du tableau). Le fichier est
 téléchargé directement dans le navigateur.
 
 ---
@@ -1199,9 +1163,9 @@ Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur syst
 
 Bouton corbeille — **réservé à l'administrateur système**. Désactivé si le prélèvement est déjà Payé.
 
-### Consulter l'encours des prélèvements d'une banque
+### Valider les prélèvements en attente
 
-Écran dédié listant les prélèvements au statut Prévu, dont la date d'émission est antérieure ou égale à la fin du mois en cours, pour une banque donnée, avec le total correspondant. Depuis cet écran, un prélèvement peut être validé (rapproché) : la validation demande une date de valeur, une date d'opération, un libellé, une observation et un taux de TVA déductible, puis marque le prélèvement Payé.
+Les prélèvements « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Prélèvement** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Exporter en PDF
 
@@ -1256,10 +1220,7 @@ sur l'écran).
 
 ### Modifier une transaction
 
-Depuis les écrans de détail d'un rapprochement (module Rapprochement) ou des états des encours, la
-date de valeur, la date d'opération, la TVA déductible et la TVA collectée d'une transaction
-peuvent être corrigées. Cette correction est automatiquement répercutée sur l'opération source
-correspondante — pas d'action supplémentaire requise.
+Depuis l'écran de détail d'un rapprochement (module Rapprochement) ou l'écran **Rapprochement** des États des encours, une transaction peut être corrigée avec les mêmes champs que lors de sa validation : date de valeur, date d'opération, libellé, observation et TVA (un taux ou un montant). La date d'émission, le montant et la banque ne sont pas modifiables. Cette correction est automatiquement répercutée sur l'opération source correspondante — pas d'action supplémentaire requise.
 
 > **Modification impossible** si le rapprochement auquel appartient la transaction est déjà
 > **clôturé définitivement** — le message d'erreur l'indique explicitement.
@@ -1310,12 +1271,9 @@ Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur syst
 Bouton corbeille — **réservé à l'administrateur système**. Refusé si le frais bancaire est déjà Payé :
 un frais bancaire réglé ne peut plus être supprimé.
 
-### Consulter l'encours des frais bancaires d'une banque
+### Valider les frais bancaires en attente
 
-Écran dédié listant les frais bancaires au statut Prévu, dont la date d'émission est antérieure ou
-égale à la fin du mois en cours, pour une banque donnée, avec le total correspondant. Depuis cet
-écran, un frais bancaire peut être validé (rapproché) : la validation demande une date de valeur, une
-date d'opération, un libellé et une observation, puis marque le frais bancaire Payé.
+Les frais bancaires « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Frais bancaire** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ---
 
@@ -1386,39 +1344,25 @@ Il est possible de basculer manuellement un agios entre **À payer** et **Payé*
 1. Cliquer sur l'icône **Supprimer** sur la ligne de l'agios.
 2. Confirmer la suppression dans la fenêtre d'avertissement.
 
-### Valider un agios (Encours Agios)
+### Valider un agios
 
-*Accès : tableau de bord Finance → carte d'une banque → Encours → Agios*
+*Accès : tableau de bord Finance → carte d'une banque → États des encours → Récapitulatifs → carte **Agios***
 
-La vue **Encours Agios** affiche les agios en attente de paiement (statut PREVU) pour la banque sélectionnée, avec le **total des montants à régler** en en-tête.
+Les agios en attente de paiement (statut Prévu) se valident depuis le récapitulatif de la banque, comme
+toute autre opération (voir « Module États des encours » ci-dessous). Pour un agios :
 
-**Filtrer les encours :**
-- **Libellé** : champ texte — la recherche s'applique automatiquement après une courte pause (300ms).
-- **Montant** : filtre exact sur le montant.
+1. Ouvrir la carte **Agios**. Les filtres **Libellé / Observation** et **Montant exact** permettent de
+   retrouver une ligne ; **Exporter PDF** génère un état des lignes filtrées, avec le total.
+2. Cliquer sur le bouton **Valider** de la ligne. La fenêtre « Passage au rapprochement bancaire »
+   s'ouvre : **Date d'émission** (non modifiable), **TVA** (taux ou montant), **Date de valeur**,
+   **Date de l'opération**, **Libellé** et **Observation** (tous obligatoires).
+3. Cliquer sur **Valider**.
 
-**Exporter les encours en PDF :**
+> La validation crée automatiquement une transaction dans le rapprochement affiché et l'agios passe au
+> statut **Payé** ; il n'apparaît plus dans les encours.
 
-Bouton **Exporter PDF** à côté du bouton **Ajouter**. Génère un document PDF reprenant tous les
-agios en attente de paiement de la banque sélectionnée, correspondant aux filtres actuellement
-appliqués (libellé, montant), ainsi que le montant total des encours exportés. Le fichier est
-téléchargé automatiquement.
-
-**Valider un agios :**
-
-1. Cliquer sur le bouton **Valider** sur la ligne de l'agios à rapprocher.
-2. Un formulaire s'ouvre avec les champs pré-remplis depuis l'agios (date d'émission, observation, libellé). Compléter :
-   - **Date d'émission** (obligatoire)
-   - **Date de valeur** (obligatoire) : date à partir de laquelle la charge produit un effet financier
-   - **Date d'opération** (obligatoire) : date de l'opération bancaire
-   - **Libellé de la transaction** (obligatoire)
-   - **Observation** (obligatoire)
-   - **TVA** : sélectionner le taux applicable (0%, 10%, 14% ou 20%)
-3. Cliquer sur **Confirmer le rapprochement**.
-4. Une fenêtre de confirmation s'affiche avec le numéro et le montant de l'agios. Cliquer sur **Confirmer**.
-
-> La validation crée automatiquement une transaction dans le rapprochement mensuel en cours. L'agios passe en statut **Payé (PAYE)** et n'apparaît plus dans les encours.
-
-> **Attention :** la validation n'est possible que si un rapprochement mensuel est ouvert (EN_COURS ou CLOTURE_PROVISOIRE) pour cette banque.
+> **Attention :** la validation n'est possible que si un rapprochement mensuel est ouvert (En cours ou
+> Clôture provisoire) pour cette banque.
 
 ### Agios générés automatiquement
 
@@ -1508,20 +1452,13 @@ Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur syst
 Bouton corbeille — **réservé à l'administrateur système**. **Désactivé si l'impôt/taxe est déjà
 Payé.**
 
-### Consulter l'encours des impôts et taxes d'une banque
+### Valider les impôts et taxes en attente
 
-Écran dédié listant les impôts/taxes au statut Prévu, dont la date d'émission est antérieure ou
-égale à la fin du mois en cours, pour une banque donnée, avec le total correspondant. Depuis cet
-écran, un impôt/taxe peut être validé (rapproché) : la validation demande une date de valeur, une
-date d'opération, un libellé, une observation et un taux de TVA déductible, puis marque
-l'impôt/taxe Payé.
+Les impôts et taxes « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Impôt / Taxe** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA). Un filtre **Motif Impôt/Taxe** est disponible quand ce type est sélectionné.
 
 ### Exporter en PDF
 
-Un bouton **Exporter PDF** est disponible sur l'écran liste des impôts et taxes ainsi que sur
-l'écran d'encours d'une banque. Le PDF reprend l'intégralité des lignes correspondant aux filtres
-actuellement appliqués à l'écran (banque, motif, statut, libellé, plages de dates pour la liste ;
-motif, libellé, montant pour l'encours) — pas seulement la page actuellement affichée. Le fichier
+Un bouton **Exporter PDF** est disponible sur l'écran liste des impôts et taxes. Le PDF reprend l'intégralité des lignes correspondant aux filtres actuellement appliqués à l'écran (banque, motif, statut, libellé, plages de dates) — pas seulement la page actuellement affichée. L'export des encours se fait depuis **États des encours → Récapitulatifs** (bouton **Exporter PDF** du tableau). Le fichier
 est téléchargé directement dans le navigateur.
 
 ### Génération automatique
@@ -1578,13 +1515,9 @@ Bouton corbeille — **réservé à l'administrateur système**. Refusé si la c
 une commission réglée ne peut plus être supprimée. Si la commission supprimée est de type Caution,
 la TVA associée (le cas échéant) est supprimée avec elle.
 
-### Consulter l'encours des commissions d'une banque
+### Valider les commissions en attente
 
-Écran dédié listant les commissions au statut Prévu, dont la date d'émission est antérieure ou
-égale à la fin du mois en cours, pour une banque donnée, avec le total correspondant. Depuis cet
-écran, une commission peut être validée (rapprochée) individuellement — la validation demande une
-date de valeur, une date d'opération, un libellé, une observation et un taux de TVA déductible, puis
-marque la commission Payée — ou en lot avec d'autres opérations sélectionnées.
+Les commissions « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Commission** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA). Un filtre **Motif Commission** est disponible quand ce type est sélectionné.
 
 ### Exporter en PDF
 
@@ -1650,20 +1583,13 @@ Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur syst
 Bouton corbeille — **réservé à l'administrateur système**. Refusé si l'impayée est déjà Payée : une
 impayée régularisée ne peut plus être supprimée.
 
-### Consulter l'encours des impayées d'une banque
+### Valider les impayées en attente
 
-Écran dédié listant les impayées au statut Prévu, dont la date d'émission est antérieure ou égale à
-la fin du mois en cours, pour une banque et un type donnés, avec le total correspondant. Depuis cet
-écran, une impayée peut être validée (rapprochée) : la validation demande une date de valeur, une
-date d'opération, un libellé, une observation et un taux de TVA, puis marque l'impayée Payée.
+Les impayées « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Impayé** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA). Les encaissements et les décaissements se trouvent sous la même carte (filtre **Sens**).
 
 ### Exporter en PDF
 
-Un bouton **Exporter PDF** est disponible sur l'écran liste des impayées ainsi que sur chacun des
-deux écrans d'encours (encaissement, décaissement). Le PDF reprend l'intégralité des lignes
-correspondant aux filtres actuellement appliqués à l'écran (banque, motif, type, statut, libellé,
-plages de dates pour la liste ; motif, libellé, montant pour l'encours) — pas seulement la page
-actuellement affichée. Chaque ligne inclut désormais la colonne **numéro** (2026-08-03). Le fichier
+Un bouton **Exporter PDF** est disponible sur l'écran liste des impayées. Le PDF reprend l'intégralité des lignes correspondant aux filtres actuellement appliqués à l'écran (banque, motif, type, statut, libellé, plages de dates) — pas seulement la page actuellement affichée. L'export des encours se fait depuis **États des encours → Récapitulatifs** (bouton **Exporter PDF** du tableau). Chaque ligne inclut désormais la colonne **numéro** (2026-08-03). Le fichier
 est téléchargé directement dans le navigateur.
 
 ---
@@ -1700,20 +1626,13 @@ Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur syst
 Bouton corbeille — **réservé à l'administrateur système**. Refusé si l'opération erronée est déjà
 Payée : une opération erronée régularisée ne peut plus être supprimée.
 
-### Consulter l'encours des opérations erronées d'une banque
+### Valider les opérations erronées en attente
 
-Écran dédié listant les opérations erronées au statut Prévu, dont la date d'émission est antérieure
-ou égale à la fin du mois en cours, pour une banque donnée, avec le total correspondant. Depuis cet
-écran, une opération erronée peut être validée (rapprochée) : la validation demande une date de
-valeur, une date d'opération, un libellé, une observation et un taux de TVA, puis marque
-l'opération erronée Payée.
+Les opérations erronées « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Opération erronée** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Exporter en PDF
 
-Bouton **Exporter PDF** disponible sur l'écran liste et sur l'écran d'encours. Le fichier généré
-reprend l'intégralité des opérations erronées correspondant aux filtres actuellement appliqués à
-l'écran (banque, statut, motif, libellé, plages de dates pour la liste ; libellé, montant pour
-l'encours) — pas seulement la page affichée. Il inclut le libellé, la banque, le motif, le montant,
+Bouton **Exporter PDF** disponible sur l'écran liste. Le fichier généré reprend l'intégralité des opérations erronées correspondant aux filtres actuellement appliqués à l'écran (banque, statut, motif, libellé, plages de dates) — pas seulement la page affichée. L'export des encours se fait depuis **États des encours → Récapitulatifs** (bouton **Exporter PDF** du tableau). Il inclut le libellé, la banque, le motif, le montant,
 la date d'émission, le statut de chaque ligne, ainsi qu'un total général.
 
 ---
@@ -1751,21 +1670,13 @@ Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur syst
 Bouton corbeille — **réservé à l'administrateur système**. Refusé si la provision est déjà Payée :
 une provision régularisée ne peut plus être supprimée.
 
-### Consulter l'encours des provisions d'une banque
+### Valider les provisions en attente
 
-Deux écrans dédiés — un pour les décaissements, un pour les encaissements — listent chacun les
-provisions au statut Prévu du sens correspondant, dont la date d'émission est antérieure ou égale à
-la fin du mois en cours, pour une banque donnée, avec le total correspondant. Depuis ces écrans, une
-provision peut être validée (rapprochée) : la validation demande une date de valeur, une date
-d'opération, un libellé, une observation et un taux de TVA (déductible pour un décaissement,
-collectée pour un encaissement), puis marque la provision Payée.
+Les provisions « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Provision** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA). Les encaissements et les décaissements se trouvent sous la même carte (filtre **Sens**) ; la TVA est déductible pour un décaissement, collectée pour un encaissement.
 
 ### Exporter en PDF
 
-Bouton **Exporter PDF** disponible sur l'écran liste et sur chacun des deux écrans d'encours. Le
-fichier généré reprend l'intégralité des provisions correspondant aux filtres actuellement appliqués
-à l'écran (banque, statut, motif, sens, libellé, plages de dates pour la liste ; libellé, montant
-pour l'encours) — pas seulement la page affichée. Il inclut le libellé, la banque, le motif, le
+Bouton **Exporter PDF** disponible sur l'écran liste. Le fichier généré reprend l'intégralité des provisions correspondant aux filtres actuellement appliqués à l'écran (banque, statut, motif, sens, libellé, plages de dates) — pas seulement la page affichée. L'export des encours se fait depuis **États des encours → Récapitulatifs** (bouton **Exporter PDF** du tableau). Il inclut le libellé, la banque, le motif, le
 sens, le montant, la date d'émission, le statut de chaque ligne, ainsi qu'un total général.
 
 ---
@@ -1802,20 +1713,13 @@ Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur syst
 Bouton corbeille — **réservé à l'administrateur système**. Refusé si la restitution est déjà Payée :
 une restitution régularisée ne peut plus être supprimée.
 
-### Consulter l'encours des restitutions d'une banque
+### Valider les restitutions en attente
 
-Écran dédié listant les restitutions au statut Prévu, dont la date d'émission est antérieure ou
-égale à la fin du mois en cours, pour une banque donnée, avec le total correspondant. Depuis cet
-écran, une restitution peut être validée (rapprochée) : la validation demande une date de valeur,
-une date d'opération, un libellé, une observation et un taux de TVA, puis marque la restitution
-Payée.
+Les restitutions « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Restitution** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Exporter en PDF
 
-Bouton **Exporter PDF** disponible sur l'écran liste et sur l'écran d'encours. Le fichier généré
-reprend l'intégralité des restitutions correspondant aux filtres actuellement appliqués à l'écran
-(banque, statut, libellé, plages de dates pour la liste ; libellé, montant pour l'encours) — pas
-seulement la page affichée. Il inclut le libellé, la banque, le montant, la date d'émission, le
+Bouton **Exporter PDF** disponible sur l'écran liste. Le fichier généré reprend l'intégralité des restitutions correspondant aux filtres actuellement appliqués à l'écran (banque, statut, libellé, plages de dates) — pas seulement la page affichée. L'export des encours se fait depuis **États des encours → Récapitulatifs** (bouton **Exporter PDF** du tableau). Il inclut le libellé, la banque, le montant, la date d'émission, le
 statut de chaque ligne, ainsi qu'un total général.
 
 ---
@@ -1857,7 +1761,7 @@ et date de valeur (du/au) — même comportement que sur l'écran Historique des
 ### Clôturer provisoirement un rapprochement
 
 Action déclenchée depuis le bouton de clôture en haut de l'espace de travail **États des encours**
-(voir ce module ci-dessus), une fois la période En cours sélectionnée pour la banque concernée.
+(voir « Module États des encours » ci-dessous), une fois la période En cours sélectionnée pour la banque concernée.
 Fige le solde de fin et les totaux de la période En cours, et ouvre automatiquement le mois suivant
 avec le solde de fin qui vient d'être calculé comme solde de départ. Refusée si une clôture
 provisoire existe déjà pour cette banque — un message l'indique.
@@ -1898,10 +1802,14 @@ l'administrateur système — aucune action n'est réservée à un sous-ensemble
 
 ### Comprendre les encours
 
-Un encours est une opération bancaire (échéance de crédit, chèque, virement, LCN, préfinancement,
-agios, impôt, etc.) qui n'a pas encore été validée contre le relevé bancaire réel. Cet espace de
-travail regroupe, pour une banque donnée, l'ensemble des encours en attente et permet de les
-consulter puis de les valider.
+Un encours est une opération bancaire (échéance de crédit ou de leasing, chèque, virement, LCN,
+préfinancement, agios, impôt, etc.) qui n'a pas encore été validée contre le relevé bancaire réel.
+Cet espace de travail regroupe, pour une banque donnée, l'ensemble des encours en attente et permet
+de les consulter, de les valider, d'en créer ou d'en corriger, puis — une fois validés — de corriger
+ou d'annuler les transactions qui en résultent.
+
+C'est le **seul** endroit où l'on valide une opération : aucun module (Chèques, Virements, Agios,
+etc.) n'a plus son propre écran d'encours.
 
 ### Choisir la période à travailler
 
@@ -1912,75 +1820,180 @@ période est en cours de contrôle. Choisir une carte ouvre l'espace de travail 
 ### Naviguer dans l'espace de travail
 
 L'écran affiche en haut le contexte de la banque et de la période (solde de début, solde de fin,
-variation, facilité de caisse), avec le bouton de clôture (voir "Module Rapprochement" ci-dessous).
+variation, facilité de caisse), avec le bouton de clôture (voir « Module Rapprochement » ci-dessus).
 À côté du fil d'Ariane, une pastille indique la nature de l'écran affiché — **Prévisionnel** (des
 opérations attendues, pas encore passées en banque) ou **Réalisé** (des opérations déjà passées sur
-le compte) *(nouveau, 07/09/2026)*. Les totaux ne figurent plus dans ce bandeau : chaque écran
-affiche les siens, au-dessus de son propre tableau, pour qu'un total prévisionnel ne puisse pas être
-lu comme un montant acquis *(07/09/2026)*. Une barre latérale à gauche donne accès à :
+le compte). Chaque écran affiche ses propres totaux, au-dessus de son tableau, pour qu'un total
+prévisionnel ne puisse pas être lu comme un montant acquis. Une barre latérale à gauche donne accès à
+deux écrans :
+- **Récapitulatifs** (ouvert par défaut) : toutes les opérations en attente, regroupées par type.
 - **Rapprochement** : les transactions déjà validées de la période affichée, avec leurs totaux
   réalisés (débit, crédit, TVA déductible, TVA collectée, TVA due).
-- **Récapitulatifs** : vue consolidée des encours, encaissements et décaissements réunis.
-- **Encaissements** / **Décaissements** : un écran par type d'opération (Leasing, CMT, Chèques,
-  LCN, Virements, Virements internationaux, Mise à disposition, Préfinancement, Factoring, Droits
-  Constatés, Décomptes, Commissions, Agios, Prélèvements, Frais Bancaires, Impôts et Taxes,
-  Restitutions, Opérations Erronées, Impayés, Provisions).
 
-### Consulter et corriger le rapprochement en cours
+### Lire l'écran Récapitulatifs
 
-L'écran **Rapprochement** (ouvert par défaut) liste, de façon paginée et filtrable, les transactions
-déjà rattachées à la période affichée — même contenu que "Consulter le détail d'un rapprochement"
-(voir Module Rapprochement ci-dessous). Une transaction peut y être corrigée ou annulée dans les
-mêmes conditions.
+L'écran se lit de haut en bas :
+
+1. **Le bouton Ajouter** (en haut à droite) — voir « Ajouter une opération ».
+2. **La barre de filtres** — voir « Filtrer les opérations ».
+3. **Quatre indicateurs** qui suivent les filtres : **Total débit prévisionnel**, **Total crédit
+   prévisionnel**, **Opérations à valider**, **Échues à ce jour** (en rouge dès qu'au moins une
+   opération est arrivée à échéance).
+4. **Une carte par type d'opération** (Leasing, Crédit Moyen Terme, Chèque, LCN, Virement, Virement
+   international, Mise à disposition, Préfinancement, Factoring, Droit constaté, Décomptes,
+   Commission, Agios, Frais bancaire, Prélèvement, Impôt / Taxe, Restitution, Opération erronée,
+   Impayé, Provision…). Chaque carte indique le nombre d'opérations à valider, le total **Débit** et
+   le total **Crédit**, et — si des opérations sont échues — un repère d'alerte avec leur nombre
+   (survol : « opération(s) échue(s) : date de référence atteinte à ce jour »). Un type sans
+   opération n'a pas de carte.
+
+Quand aucune opération ne correspond, le message **« Aucune opération à valider »** s'affiche ; si
+des filtres sont actifs, il propose **Effacer les filtres**.
+
+**Ouvrir une carte** : cliquer sur son en-tête. La carte s'ouvre en pleine largeur et passe en tête
+de liste ; les autres cartes se compactent (une seule carte est ouverte à la fois). Elle affiche ses
+statistiques — **Débit**, **Crédit**, **Net (crédit − débit)**, **Échues à ce jour** — puis le
+tableau de ses opérations. Le bouton **Réduire** referme la carte.
+
+**Le tableau d'une carte** présente une ligne par opération : **Sens** (pastille Décaissement ou
+Encaissement), **Date d'émission**, **Date d'échéance** (« — » si le type n'en a pas), **Libellé**,
+**Observations**, **Source**, **Débit**, **Crédit**, **ID source** et **Actions**. Il est paginé (5,
+10, 25 ou 50 lignes ; 10 par défaut) et triable en cliquant sur un en-tête. Tant que vous n'avez
+cliqué sur aucun en-tête, il est trié par date de référence, de la plus récente à la plus ancienne
+(la date de référence est l'échéance pour le leasing, le CMT et les LCN, l'émission pour les autres
+types).
+
+### Filtrer les opérations
+
+La barre de filtres est toujours visible. Elle s'applique à la fois aux indicateurs, aux cartes et
+au tableau. Critères, tous combinables :
+
+- **Sens** : Tous (par défaut), Encaissement ou Décaissement. Quand un sens est choisi, le total de
+  l'autre tombe à zéro.
+- **Type de transaction** : un ou plusieurs types (liste avec recherche) ; vide = tous les types.
+- **Libellé / Observation** : un seul champ ; le terme est cherché à la fois dans le libellé et dans
+  l'observation, sans tenir compte des majuscules ni des accents. Il cherche aussi le nom de
+  l'émetteur (virements, virements internationaux, chèques, LCN, mises à disposition) et de
+  l'organisme (leasing).
+- **N° de pièce** : numéro du chèque, du LCN, du virement, de la mise à disposition, de l'impayé, du
+  marché (préfinancement, factoring, droit constaté, décompte) ou du contrat (leasing). Les autres
+  types n'ont pas de numéro. Une bulle d'aide explique ce champ.
+- **Montant exact**.
+- **Motif Commission** et **Motif Impôt/Taxe** : listes déroulantes qui n'apparaissent que si le type
+  correspondant est sélectionné dans « Type de transaction ». Elles ne restreignent que ce type : les
+  autres types sélectionnés restent affichés.
+- **Période** (bouton **Période**, qui affiche le nombre de bornes actives) : **Date de référence —
+  depuis** et **jusqu'au**. Chaque opération est comparée à sa propre date de référence (une bulle
+  d'aide le rappelle) ; si vous ne saisissez pas de borne haute, la fin du mois en cours reste
+  utilisée.
+
+Le bouton **Effacer** (visible dès qu'un filtre est actif) réinitialise tous les filtres.
 
 ### Valider une opération en attente
 
-Depuis l'écran dédié à un type d'opération (par exemple **Décaissements → Chèques**), chaque encours
-listé peut être validé individuellement — un formulaire propre au type d'opération demande une date
-de valeur, une date d'opération et, selon le cas, une TVA — ou en lot en sélectionnant plusieurs
-lignes du même type : un seul formulaire (date de valeur, date d'opération, taux de TVA) s'applique
-alors à toutes les opérations sélectionnées ; le libellé, l'observation et la date d'émission
-restent ceux d'origine de chaque opération. Voir la section de ce guide dédiée au type d'opération
-concerné pour le détail des champs et des cas particuliers.
+1. Ouvrir la carte du type d'opération concerné.
+2. Cliquer sur le bouton rond vert **Valider** (coche) de la ligne. Une fenêtre **« Passage au
+   rapprochement bancaire »** s'ouvre après un bref chargement.
+3. Compléter la fenêtre :
+   - **Date d'émission** : reprise de l'opération, non modifiable ;
+   - **TVA** : soit un **taux**, soit un **montant** de TVA (jamais les deux) ; le montant ne peut
+     pas dépasser le montant de l'opération. Pour le leasing et le CMT, la TVA est facultative ;
+   - **Date de valeur** (obligatoire) ;
+   - **Date de l'opération** (obligatoire) ;
+   - **Libellé** (obligatoire) ;
+   - **Observation** (obligatoire).
+4. Cliquer sur **Valider**. Le bouton reste grisé tant que le formulaire est incomplet ou invalide ;
+   si une erreur subsiste, le message **« Veuillez remplir tous les champs obligatoires et corriger
+   les erreurs. »** s'affiche. **Annuler** referme la fenêtre sans rien enregistrer.
+5. Un message de confirmation s'affiche : l'opération disparaît du récapitulatif, les indicateurs se
+   mettent à jour et la transaction apparaît dans l'écran **Rapprochement** de la période affichée.
 
-### Consulter le récapitulatif
+Le sens de la TVA découle du sens de l'opération (déductible pour un décaissement, collectée pour un
+encaissement). Si une ligne affiche un tiret à la place du bouton **Valider**, cette opération ne
+peut pas être validée depuis le récapitulatif. Voir la section du guide dédiée au type d'opération
+concerné pour ses cas particuliers.
 
-**Récapitulatifs** affiche, dans un seul tableau, tous les encours prévisionnels de la banque et de
-la période sélectionnées, tous types confondus et **les deux sens réunis** *(écran unique depuis le
-06/09/2026 ; il remplace les deux écrans Décaissements et Encaissements séparés)*. Chaque ligne
-porte une pastille indiquant s'il s'agit d'un encaissement ou d'un décaissement, et les deux totaux
-— **Total Débit prévisionnel** et **Total Crédit prévisionnel** — sont affichés côte à côte
-au-dessus du tableau, avec le nombre d'opérations.
+### Valider plusieurs opérations en lot
 
-Le tableau est paginé et triable (sens, date d'émission, date d'échéance, libellé, observation,
-source, montant). Les filtres se replient : fermés, ils résument en pastilles les critères actifs,
-de sorte qu'un filtre en vigueur ne passe jamais inaperçu — les totaux affichés suivent toujours les
-filtres appliqués. Critères disponibles :
+1. Ouvrir la carte du type d'opération concerné.
+2. Cocher les lignes à valider (la case d'en-tête coche toutes les lignes de la page). Une barre
+   apparaît au-dessus du tableau : **« n opération(s) sélectionnée(s) — montant total MAD »**, avec
+   les boutons **Effacer la sélection** et **Valider en lot (n)**.
+3. Cliquer sur **Valider en lot**. La fenêtre **« Validation en lot »** rappelle le type, le sens, le
+   nombre d'opérations et le montant total, et demande :
+   - **TVA** : un **taux** (le montant libre n'est pas offert en lot) ;
+   - **Date de valeur** (obligatoire) ;
+   - **Date de l'opération** (obligatoire).
+   Le libellé, l'observation et la date d'émission de chaque opération sont conservés tels quels.
+4. Cliquer sur **Valider le lot**, puis confirmer dans la fenêtre de confirmation qui rappelle les
+   valeurs saisies.
+5. Le message **« n opération(s) validée(s) avec succès. »** s'affiche. Le traitement est
+   **tout-ou-rien** : si une opération échoue, aucune n'est validée et le message d'erreur le précise.
 
-- **Sens** : Tous (par défaut), Encaissement, ou Décaissement — c'est ce filtre qui remplace les
-  deux anciens écrans ; quand un sens est choisi, le total de l'autre tombe à zéro ;
-- **Type de transaction**, **libellé**, **observation** ;
-- **Numéro de pièce** *(nouveau, 07/09/2026)* : chèque, LCN, virement, mise à disposition, impayé,
-  numéro de marché ou de contrat selon la source — toutes n'en portent pas ;
-- **Montant exact** *(nouveau, 06/09/2026)* ;
-- **Période** : date de référence **depuis** *(nouveau, 06/09/2026)* et **jusqu'au** *(31/08/2026)*,
-  repliées derrière le bouton **Période**.
+> **Sélection hétérogène.** Un lot ne peut porter que sur des opérations **du même type et du même
+> sens**. Si la sélection en mélange plusieurs, le message **« La validation en lot ne peut porter
+> que sur des opérations d'un même type et d'un même sens… »** s'affiche : videz la sélection et
+> recommencez avec une seule combinaison type/sens à la fois.
 
-Le filtre de période compare chaque opération à sa date de référence propre — date d'échéance pour
-le leasing, le CMT et les LCN ; date d'émission pour les autres sources — sans qu'il soit nécessaire
-de savoir laquelle s'applique à quelle ligne ; si aucune borne haute n'est saisie, la fin du mois en
-cours reste utilisée par défaut. Écran de consultation uniquement — la validation se fait depuis
-l'écran du type d'opération concerné.
+### Ajouter une opération
 
-### Exporter un écran en PDF
+Le bouton **Ajouter** existe en haut de l'écran et dans la barre du tableau d'une carte ouverte.
+- Dans la barre du tableau d'une carte dont le type peut être créé depuis le récapitulatif, il ouvre
+  directement l'écran de création de ce type.
+- Sinon (bouton en haut de l'écran, ou carte dont le type ne se crée pas d'ici), il ouvre la fenêtre
+  **« Ajouter une opération »** : une grille de types d'opérations avec un champ de recherche (les
+  majuscules et les accents sont ignorés : « cheque » trouve « Chèque »). Cliquer sur un type ouvre
+  son écran de création ; à l'enregistrement, vous revenez au récapitulatif. Les types dont la
+  création n'est pas possible depuis ici sont grisés, avec la mention « Création indisponible »
+  (c'est le cas du leasing, du CMT, des mises à disposition et des cautions).
 
-Chaque écran de l'espace de travail États des encours — Rapprochement, Récapitulatifs
-et chacun des écrans de type d'opération (Chèques, LCN, Virements,
-Leasing, CMT, Frais Bancaires, Mise à disposition, etc.) — dispose d'un bouton **Exporter PDF** dans
-la barre de filtres. Il génère un PDF de la liste actuellement affichée, en tenant compte des filtres
-en cours (recherche, montant, dates, type d'opération) mais sans limite de pagination : toutes les
-lignes correspondant aux critères sont incluses, avec un total en bas de tableau. Le fichier se
-télécharge directement dans le navigateur.
+### Éditer une opération en attente
+
+Le bouton rond bleu **Éditer** (crayon) de chaque ligne ouvre l'écran de modification de l'opération
+dans son module d'origine ; à l'enregistrement ou à l'annulation, vous revenez au récapitulatif.
+Le bouton est grisé (survol : « Édition non disponible pour cette source depuis le récapitulatif »)
+dans les cas suivants :
+- mises à disposition et LCN en décaissement : jamais éditables depuis le récapitulatif ;
+- virements et chèques : éditables uniquement en encaissement ;
+- échéances de leasing et de CMT : éditables uniquement par l'**administrateur système**, et
+  seulement tant que l'échéance est « prévue ».
+
+### Exporter en PDF
+
+Le bouton **Exporter PDF** de la barre du tableau génère un PDF des lignes correspondant exactement
+aux filtres appliqués, sans limite de pagination. Le fichier se télécharge directement dans le
+navigateur. L'écran **Rapprochement** dispose du même bouton, pour les transactions filtrées de la
+période.
+
+### Corriger ou annuler une transaction validée
+
+Dans l'écran **Rapprochement**, deux boutons existent à la fin de chaque transaction :
+
+- **Modifier** (crayon) : ouvre la fenêtre **« Modifier une transaction »** avec les mêmes champs que
+  lors de la validation — date d'émission (non modifiable), TVA (taux ou montant), date de valeur,
+  date de l'opération, libellé, observation. Le montant et la banque ne peuvent pas être modifiés.
+  Cliquer sur **Enregistrer** : la correction est répercutée automatiquement sur l'opération d'origine.
+- **Supprimer** (corbeille) : annule la transaction. Le message **« Transaction supprimé avec
+  success »** s'affiche ; l'opération d'origine redevient « à valider » (ses dates de valeur et
+  d'opération sont effacées) et réapparaît dans l'écran **Récapitulatifs** ; les soldes du
+  rapprochement sont recalculés.
+
+> **Impossible si le rapprochement est clôturé définitivement** : ni modification ni annulation — un
+> message d'erreur l'indique. Tant que la période est En cours ou en Clôture provisoire, ces deux
+> actions sont possibles.
+
+### Consulter et corriger le rapprochement en cours
+
+L'écran **Rapprochement** liste, de façon paginée et filtrable (libellé, source, observation,
+montant, dates), les transactions déjà rattachées à la période affichée — même contenu que
+« Consulter le détail d'un rapprochement » (voir « Module Rapprochement » ci-dessus).
+
+### Droits requis
+
+Toutes les actions de cet espace (consulter, valider, valider en lot, ajouter, éditer, corriger ou
+annuler une transaction, exporter) sont accessibles à l'équipe Finance (membre ou directeur) et à
+l'administrateur système. Seule exception : l'édition d'une échéance de leasing ou de CMT, réservée à
+l'administrateur système.
 
 ---
 
