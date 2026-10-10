@@ -13,7 +13,7 @@
    * **frontend** : tests Karma + couverture, build de production ;
    * **security** : gitleaks (secrets), Trivy (dépendances, Dockerfile) ;
    * **images** : build des deux images, scan Trivy, taille affichée dans le résumé du job.
-   * CodeQL (`codeql.yml`) analyse le code Java/TypeScript à chaque PR et chaque lundi.
+   * CodeQL (job `codeql` de `ci.yml`) analyse le code Java/TypeScript à chaque PR et chaque push sur `main`.
 4. Revue humaine, puis merge (squash) dans `main`.
 5. Sur `main`, la CI pousse `gbanque-backend` et `gbanque-frontend` sur Docker Hub (`:latest` et `:<sha du commit>`).
 6. Déploiement : manuel pour l'instant (`docker compose pull && docker compose up -d` sur le serveur) ; automatisé par SSH dans un futur `cd.yml`.

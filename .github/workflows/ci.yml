@@ -3,6 +3,7 @@
 #   backend    : compilation + tests d'intégration (Testcontainers MySQL 8) + couverture JaCoCo
 #   frontend   : tests Karma + couverture + build de production
 #   security   : secrets (gitleaks) + dépendances/configuration (Trivy fs)
+#   codeql     : analyse statique (SAST) Java + TypeScript
 #   images     : build des 2 images Docker, scan Trivy, rapport de taille,
 #                push Docker Hub uniquement sur main
 # Le déploiement (CD par SSH) viendra dans un workflow séparé : cd.yml.
@@ -164,10 +165,32 @@ jobs:
           docker run --rm -v "$PWD:/src" -v trivy-cache:/root/.cache aquasec/trivy:0.75.0             fs --skip-files /src/Backend/pom.xml --scanners vuln,misconfig --severity HIGH,CRITICAL --ignore-unfixed --exit-code 0 /src
 
   # ---------------------------------------------------------------------------
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [java-kotlin, javascript-typescript]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:${{ matrix.language }}
+
+  # ---------------------------------------------------------------------------
   images:
     name: Image Docker (${{ matrix.name }})
     runs-on: ubuntu-latest
-    needs: [backend, frontend, security]
+    needs: [backend, frontend, security, codeql]
     timeout-minutes: 20
     strategy:
       fail-fast: false
