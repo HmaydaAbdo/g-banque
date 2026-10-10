@@ -19,8 +19,8 @@ d'images n'ont pas tourné. Aucune image publiée sur Docker Hub pour l'instant.
    - PrimeFlex 3 → 4 (et PrimeNG en cohérence) ;
    - Spring Security 7 (impose Spring Boot 4, lié au chantier « Sécurité des images et dépendances backend ») ;
    - Java 17 → 25 / image Maven Temurin 26 (PR 5 et 6) ;
-   - actions GitHub en version majeure : `checkout` 7, `setup-node` 6, `build-push-action` 7, `login-action` 4,
-     `setup-buildx-action` 4 (faible risque, à valider sur la CI) ;
+   - ~~actions GitHub en version majeure~~ — **fait le 10/10/2026** : checkout 7, setup-java 6, setup-node 7,
+     upload-artifact 7, build-push-action 7, login-action 4, setup-buildx-action 4 ;
    - mises à jour mineures/patch groupées Maven et npm (faible risque).
 3. **Dependabot supprimé (10/10/2026)** : il ouvrait une PR (et 2 workflows CI/CodeQL) par écosystème, trop de bruit pour
    suivre une seule CI. Mises à jour de dépendances faites à la main, quand on le décide. Si on le réactive : un seul
@@ -36,10 +36,8 @@ MySQL Testcontainers) → couverture de lignes 9,7 % (hors tout comportement mé
 1. ~~Réparer les 58 specs frontend en échec~~ — **fait le 10/10/2026** : 60/60 verts (providers communs
    `src/testing/test-providers.ts`), job `frontend` bloquant, couverture lignes 9 % → 37 %. Reste : ces specs ne testent
    que la création des composants/services ; les remplacer progressivement par de vrais tests de comportement.
-   **Anomalie relevée** : 5 composants à table PrimeNG lazy lèvent NG0100 (ExpressionChangedAfterItHasBeenChecked, mode
-   dev) au premier cycle — `GeneralLignesByBankComponent`, `LignesFonctionnellesArchivesComponent`, `LogsComponent`,
-   `SpeficLigneArchiveesComponent`, `SpeficLigneEncoursComponent` (`loading` modifié pendant `onLazyLoad`). Leurs specs
-   n'appellent pas `detectChanges` ; corriger les composants puis rétablir l'appel.
+   NG0100 sur 5 écrans à table PrimeNG lazy : **corrigé le 10/10/2026** (`loading` initialisé à `true` ; pour
+   `GeneralLignesByBankComponent`, l'erreur venait du test sans id de banque) ; `detectChanges` rétabli dans les specs.
 2. Écrire les tests **de tous les niveaux pour tous les modules**, backend et frontend, selon `conventions/testing.md`
    (unitaire, intégration, composant, bout en bout), module par module dans l'ordre du chapitrage de la doc :
    socle d'accès → comptes bancaires → produits financiers → marchés → moyens de paiement → transactions →
@@ -72,8 +70,11 @@ contexte sur MySQL 8 ; non validé : recette fonctionnelle écran par écran (à
 - Spring Boot 4 (Spring Framework 7, Jackson 3, Security 7) : chantier à part, décision d'architecture ; retirera les
   3 exceptions de `.trivyignore`.
 - Angular 17 → 19+ : 16 CVE HIGH dans `package-lock.json` (non bloquant dans le job `security` d'ici là).
-- Épingler les images de `docker-compose.yml` encore en `:latest` (prometheus, grafana, phpmyadmin, mysql-cron-backup)
-  sur les versions réellement déployées (à relever sur le serveur) ; sinon un `pull` change la version sans prévenir.
+- ~~Épingler les images `:latest` de `docker-compose.yml`~~ — **fait le 10/10/2026** : prometheus v3.15.0, grafana
+  13.2.3, phpmyadmin 5.2.3 (identiques au `latest` du jour), mysql-cron-backup épinglé par empreinte (son `latest` est
+  figé au 08/12/2024). À faire : vérifier sur le serveur les versions effectivement en service avant le prochain
+  `pull` (si le serveur tourne plus ancien, ce `pull` fera une montée de version de Grafana/Prometheus) ; tester
+  mysql-cron-backup 1.15.0 (sauvegarde + restauration) avant de l'adopter.
 - Évaluer un JRE réduit (`jlink`) pour l'image backend (293 Mo aujourd'hui) — gain ~100 Mo, à tester.
 - **Clé JWT** : un ancien commit (`f7cb002e`, `SecurityConfig.java`) contient une clé JWT en dur, identique à celle de `env.dev`.
   Vérifier qu'elle n'est pas celle de la production ; sinon la renouveler (invalide les sessions en cours). Le commit est mis en liste d'autorisation dans `.gitleaks.toml`.

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
   # ---------------------------------------------------------------------------
@@ -34,7 +32,9 @@ services:
   # Backup MySQL
   # ---------------------------------------------------------------------------
   backup:
-    image: fradelg/mysql-cron-backup:latest
+    # Tag "latest" figé par l'éditeur depuis le 08/12/2024 (aucune version numérotée équivalente) :
+    # épinglé par empreinte pour garder exactement l'image actuelle. Passage en 1.15.0 à tester (cf. TODO.md).
+    image: fradelg/mysql-cron-backup@sha256:d9b9b1514ef5f879031ea88c656c0b64acb98bb787f401c2fc3f62ed6fafb308
     container_name: gbanque-backup
     restart: unless-stopped
     environment:
@@ -135,7 +135,7 @@ services:
   # Monitoring & Admin Tools
   # ---------------------------------------------------------------------------
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.15.0
     container_name: gbanque-prometheus
     restart: unless-stopped
     volumes:
@@ -154,7 +154,7 @@ services:
       - gbanque-network
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:13.2.3
     container_name: gbanque-grafana
     restart: unless-stopped
     environment:
@@ -174,7 +174,7 @@ services:
       - gbanque-network
 
   phpmyadmin:
-    image: phpmyadmin:latest
+    image: phpmyadmin:5.2.3
     container_name: gbanque-phpmyadmin
     restart: unless-stopped
     environment:

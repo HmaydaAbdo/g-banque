@@ -64,7 +64,9 @@ export class LignesFonctionnellesArchivesComponent implements OnInit, OnDestroy 
   @ViewChild('dt') dt: Table | undefined;
   lignesFonctionnelles: LigneFonctionnelleResponse[] = [];
   totalRecords: number = 0;
-  loading: boolean = false;
+  // true dès le départ : la table lazy déclenche son premier chargement à l'initialisation ;
+  // démarrer à false provoquerait NG0100 (valeur modifiée pendant le premier cycle de détection).
+  loading: boolean = true;
   exporting: boolean = false;
   first: number = 0;
   rows: number = 10;

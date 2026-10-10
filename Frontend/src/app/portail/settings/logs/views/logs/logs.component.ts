@@ -54,7 +54,9 @@ export class LogsComponent implements OnInit {
   operationTypes: string[] = ['CREATE', 'UPDATE', 'DELETE'];
 
   totalRecords: number = 0;
-  loading: boolean = false;
+  // true dès le départ : la table lazy déclenche son premier chargement à l'initialisation ;
+  // démarrer à false provoquerait NG0100 (valeur modifiée pendant le premier cycle de détection).
+  loading: boolean = true;
   searchCriteria: LogSearchCriteria = {};
 
   // Stocke le dernier événement de lazy load pour réappliquer pagination/tri

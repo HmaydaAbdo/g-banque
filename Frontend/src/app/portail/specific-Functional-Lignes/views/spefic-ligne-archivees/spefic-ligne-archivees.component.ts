@@ -59,7 +59,9 @@ export class SpeficLigneArchiveesComponent implements OnInit, OnDestroy {
   // ========== DATA TABLE ==========
   lignesFonctionnellesSpecifiques: LigneFonctionnelleSpecifiqueResponse[] = [];
   totalRecords = 0;
-  loading = false;
+  // true dès le départ : la table lazy déclenche son premier chargement à l'initialisation ;
+  // démarrer à false provoquerait NG0100 (valeur modifiée pendant le premier cycle de détection).
+  loading = true;
   exporting = false;
   first = 0;
   rows = 10;
