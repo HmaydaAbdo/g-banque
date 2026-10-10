@@ -13,7 +13,10 @@ d'images n'ont pas tourné. Aucune image publiée sur Docker Hub pour l'instant.
    les `docker run` gitleaks et Trivy du job `security`, et avant le build du job `images`. Relancer la CI sur `main`
    et vérifier le push de `gbanque-backend` / `gbanque-frontend` (`latest` + sha). Confirmer que le secret
    `DOCKERHUB_TOKEN` existe sous ce nom exact.
-2. **Protection de `main`** : impossible aujourd'hui (le 10/10/2026, l'API renvoie 403 : dépôt privé sur offre gratuite,
+2. **Fonctions GitHub indisponibles sur l'offre gratuite d'un dépôt privé (constaté le 10/10/2026)** : protection de
+   branche et CodeQL (code scanning). L'analyse statique de sécurité n'est donc pas en place ; à reprendre avec une
+   offre payante, ou avec un outil ne dépendant pas de GitHub (ex. Semgrep CLI dans la CI).
+   **Protection de `main`** : impossible aujourd'hui (le 10/10/2026, l'API renvoie 403 : dépôt privé sur offre gratuite,
    la protection de branche exige GitHub Pro/Team ou un dépôt public). Fait à la place : suppression automatique des
    branches fusionnées activée. Règle d'équipe en attendant : jamais de push direct sur `main` hors correctifs de CI, PR
    obligatoire avec la CI verte. À reprendre si le dépôt passe en offre payante (checks exigés : `Backend`, `Frontend`,

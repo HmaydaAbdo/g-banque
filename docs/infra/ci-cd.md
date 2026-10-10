@@ -10,7 +10,6 @@
 | `ci.yml` — job `frontend` | PR, push `main` | Tests Karma + couverture (non bloquant temporairement), build de production |
 | `ci.yml` — job `security` | PR, push `main` | gitleaks (secrets) + Trivy (dépendances, Dockerfile) |
 | `ci.yml` — job `images` | après les trois précédents | Build des images, scan Trivy, taille ; push Docker Hub sur `main` |
-| `ci.yml` — job `codeql` | PR, push `main` | Analyse statique Java / TypeScript |
 
 Les rapports (JaCoCo, Karma, résumés de taille, couverture du code modifié) sont dans le **résumé du run** et dans les artefacts (14 jours).
 
