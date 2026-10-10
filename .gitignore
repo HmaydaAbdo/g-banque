@@ -7,6 +7,8 @@ env.dev
 *.env.local
 
 # ── Données et sauvegardes ───────────────────────────────
+# Exports et sauvegardes de base (données de production) : jamais versionnés
+*.sql.gz
 docker-data/
 backups/
 
