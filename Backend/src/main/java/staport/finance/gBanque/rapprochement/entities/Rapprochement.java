@@ -5,6 +5,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.common.YearMonthDateConverter;
 import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
 import staport.finance.gBanque.transactions.entities.Transaction;
 
@@ -42,6 +43,7 @@ public class Rapprochement {
     @JoinColumn(name = "banque_id", nullable = false)
     private Banque banque;
 
+    @Convert(converter = YearMonthDateConverter.class)
     @Column(name = "date_rapprochement", nullable = false)
     private YearMonth dateRapprochement;
 

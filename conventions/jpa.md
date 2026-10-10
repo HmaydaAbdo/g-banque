@@ -11,6 +11,7 @@
 * Ne jamais exposer une entité directement via une API.
 * Les contraintes de persistance (`nullable`, `length`, `unique`) sont déclarées avec les annotations JPA.
 * Les validations métier sont portées par les DTOs, pas par les entités, sauf lorsqu'elles garantissent l'intégrité des données quel que soit le point d'entrée.
+* Un `YearMonth` se persiste avec `@Convert(converter = YearMonthDateConverter.class)` : colonne `date` (1er jour du mois), lisible en SQL. Jamais la sérialisation binaire que Hibernate applique par défaut (colonne `bytea`, illisible).
 
 ---
 

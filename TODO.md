@@ -26,10 +26,6 @@ contrôle conforme (104 tables, 2 vues, Flyway 2, 55 407 lignes).
   code : **ouvrir l'une d'elles renvoie une erreur 500** (vérifié, commission 17276) ; la liste s'affiche. Décision
   métier, puis migration Flyway dédiée (accord explicite avant toute écriture).
 
-**Petits défauts relevés :**
-- `rapprochement.date_rapprochement` est stockée en binaire (`YearMonth` Java sérialisé, `bytea`) faute de
-  convertisseur : illisible en SQL. Ajouter un `AttributeConverter` vers `date` (1er du mois) + migration de conversion.
-
 ### Monitoring (Prometheus, Grafana) — retiré du compose le 10/10/2026
 
 Retiré à la demande de HMAYDA (configuration absente du dépôt). Le backend expose toujours `/actuator/prometheus`.
