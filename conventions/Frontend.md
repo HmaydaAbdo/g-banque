@@ -134,6 +134,10 @@ Toute nouvelle page utilise :
 
 Ne jamais importer directement une page dans les routes.
 
+Cela vaut aussi pour les pages d'entrée (vitrine, connexion, coquille du portail) : seul l'`AppComponent` est chargé au démarrage. Les animations Angular se déclarent avec `provideAnimationsAsync()` (jamais `provideAnimations()`), pour que leur code ne pèse pas dans le chargement initial.
+
+Budget du chargement initial (`angular.json`) : avertissement à 1 Mo, erreur à 3 Mo. Le CSS global (thème PrimeNG, PrimeFlex, icônes, `styles.scss`, ~550 ko non compressés) en représente plus de la moitié ; le JavaScript initial est ~430 ko (Angular, PrimeNG utilisé par la page d'accueil). Mesure du 10/10/2026 : 0,99 Mo (164 ko transférés).
+
 ---
 
 # Gestion des erreurs

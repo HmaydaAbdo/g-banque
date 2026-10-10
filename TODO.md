@@ -53,7 +53,6 @@ Ensuite seulement : en-tête `Strict-Transport-Security`, et cadrer une CSP ngin
 - `recapitulatif.component.scss` : 7,89 ko pour un budget d'avertissement de 6 ko (9,59 ko avant le retrait des règles
   mortes le 10/10/2026 ; erreur à 10 ko). Aller sous 6 ko suppose de découper ce composant (cartes de source, modale
   « Ajouter », indicateurs) — à traiter avec la refonte visuelle des États des encours.
-- Bundle initial : 1,19 Mo pour 1 Mo. Charger les écrans et modules PrimeNG à la demande (lazy loading des routes).
 
 ### Chantier — Stratégie de tests, tous niveaux, tous modules (demandé le 09/10/2026)
 
