@@ -19,7 +19,7 @@
 | Niveau | Backend | Frontend | Quand |
 |---|---|---|---|
 | **Unitaire** | JUnit 5 + Mockito, sans Spring | Jasmine/Karma, `TestBed` minimal | Règles de calcul (agios, commissions, encours), mappers, validateurs, pipes, services purs |
-| **Intégration** | `@SpringBootTest` / `@DataJpaTest` sur **MySQL 8 Testcontainers** | `HttpTestingController` pour les services HTTP | Repositories (requêtes natives, vues SQL), services transactionnels, sécurité (`@PreAuthorize`), audit Envers |
+| **Intégration** | `@SpringBootTest` / `@DataJpaTest` sur **PostgreSQL 18 Testcontainers** | `HttpTestingController` pour les services HTTP | Repositories (requêtes natives, vues SQL), services transactionnels, sécurité (`@PreAuthorize`), audit Envers |
 | **Composant** | — | `TestBed` + composant + providers de test | Écrans à logique (formulaires, tableaux filtrés, actions conditionnées aux droits) |
 | **Bout en bout** | Parcours critiques via API (MockMvc / RestAssured) | Playwright (à introduire, cf. TODO) | Un parcours par chantier majeur : saisie → validation → rapprochement |
 
@@ -38,7 +38,7 @@ Répartition cible : beaucoup d'unitaires, une couche d'intégration ciblée, pe
 ## Base de données
 
 * **Jamais H2** : les requêtes natives, types `DECIMAL`, vues (`v_recapitulatif_encours`) et dates doivent se comporter comme en production.
-* MySQL 8 jetable via Testcontainers et `@ServiceConnection`. Toute classe d'intégration **hérite de `AbstractIntegrationTest`** sans ajouter de configuration (`@MockBean`, `@TestPropertySource`, profil…) : un seul conteneur et un seul contexte Spring pour toute la suite, sinon chaque classe redémarre le contexte (plusieurs minutes). Seul Docker est requis sur le poste.
+* PostgreSQL 18 jetable (`postgres:18.6-alpine`, locale ICU `fr-FR`, comme en production) via Testcontainers et `@ServiceConnection`. Toute classe d'intégration **hérite de `AbstractIntegrationTest`** sans ajouter de configuration (`@MockBean`, `@TestPropertySource`, profil…) : un seul conteneur et un seul contexte Spring pour toute la suite, sinon chaque classe redémarre le contexte (plusieurs minutes). Seul Docker est requis sur le poste.
 * Requêtes HTTP : `MockMvc` (`@AutoConfigureMockMvc` dans la base). Les requêtes modifiantes authentifiées par cookie envoient le cookie `XSRF-TOKEN` et l'en-tête `X-XSRF-TOKEN` (cf. `AuthSessionIntegrationTest`).
 * Profil `test` (`src/test/resources/application-test.yml`) : schéma créé par Hibernate, jobs planifiés désactivés. Les variables d'environnement exigées par `application.yml` reçoivent des valeurs fictives dans la configuration `maven-surefire-plugin` du `pom.xml`.
 * Les données de test sont créées par le test (builders / fixtures dédiés), jamais lues depuis la base de production ni depuis `sql/`.

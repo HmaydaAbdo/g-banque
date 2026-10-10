@@ -12,10 +12,10 @@ spring:
       pageable:
         max-page-size: 100
   datasource:
-    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${MYSQL_DATABASE}?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: ${MYSQL_USER}
-    password: ${MYSQL_PASSWORD}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
     hikari:
       pool-name: GbanquePool
       maximum-pool-size: 10
@@ -31,9 +31,6 @@ spring:
       # au démarrage que les entités correspondent au schéma, et refuse de démarrer sinon.
       ddl-auto: validate
     show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
   batch:
     job:
       enabled: true
@@ -43,12 +40,8 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
-    # Base existante sans historique Flyway (production au moment de l'adoption, 10/10/2026) :
-    # Flyway la marque en version 1 sans exécuter V1, puis applique V2 et suivantes.
-    # Sans effet sur une base vide, qui est construite entièrement par V1, V2…
-    baseline-on-migrate: true
-    baseline-version: 1
-    baseline-description: Schema de production au 10/10/2026
+    # Base PostgreSQL construite entièrement par les migrations (V1… puis vues R__) ; les données de
+    # production y sont versées ensuite par sql/migration-postgres (cf. docs/infra/migration-postgres.md).
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT}

@@ -2,54 +2,48 @@
 
 ## En attente
 
-### Déploiement en production — Flyway, environnement unique, sessions par cookies, Spring Boot 3.5 (préparé le 10/10/2026)
+### Déploiement en production — PostgreSQL 18, Flyway, environnement unique, sessions par cookies (préparé le 10/10/2026)
 
-Tout est dans `main` ; à déployer **en une seule fois** (les sessions en cours seront fermées, les utilisateurs se
-reconnectent). G-Banque reste servi en **HTTP** pour l'instant (cf. chantier HTTPS ci-dessous) : `AUTH_COOKIE_SECURE=false`.
+Tout est dans `main`. Bascule **en une seule fois** : la production passe de MySQL 8 à PostgreSQL 18 (les sessions en
+cours seront fermées, les utilisateurs se reconnectent). G-Banque reste servi en **HTTP** : `AUTH_COOKIE_SECURE=false`.
+Procédure détaillée et résultats de la répétition : `docs/infra/migration-postgres.md`.
 
-1. **Sauvegarde** de la base de production vérifiée (fichier du jour présent dans `./backups/mysql`).
-2. **Tables Spring Batch** : sur la production (MySQL 8 sous Linux, noms de tables sensibles à la casse), vérifier
-   `SHOW TABLES LIKE 'BATCH%';` → doit lister `BATCH_JOB_INSTANCE`… en MAJUSCULES (l'export passé par XAMPP les
-   montrait en minuscules). Si elles sont en minuscules, me le signaler avant de déployer.
-3. **`.env` du serveur** = le `.env` local mis à jour le 10/10/2026 (profil Spring et `FRONTEND_PORT` retirés ;
-   `JWT_ACCESS_TOKEN_MINUTES=15`, `JWT_REFRESH_TOKEN_HOURS=8`, `AUTH_COOKIE_SECURE=false` ; **nouvelle `JWT_SECRET`** —
-   l'ancienne était compromise). Comparer avec `.env.example` : aucune variable manquante.
+1. **Geler les saisies** puis exporter la base MySQL de production (phpMyAdmin, comme l'export du 10/10/2026).
+2. **`.env` du serveur** = le `.env` local mis à jour le 10/10/2026 : variables `POSTGRES_*` et `PGADMIN_*` (mots de
+   passe générés), `DB_HOST=postgres`, `DB_PORT=5432`, `MYSQL_*` et `GRAFANA_*` retirées, nouvelle `JWT_SECRET`.
+   Comparer avec `.env.example` : aucune variable manquante.
+3. Sur le serveur : `docker compose up -d postgres`, `docker compose up -d --build backend` (Flyway crée le schéma),
+   `docker compose stop backend`, puis `python sql/migration-postgres/migrer_vers_postgres.py <export.sql>` (contrôle
+   des volumes intégré, tout ou rien), puis `docker compose up -d`.
+   Ne pas copier `docker-data/postgres` depuis un poste Windows (droits refusés par PostgreSQL) : migrer depuis l'export,
+   ou restaurer une sauvegarde (`docs/infra/backup-postgres.md`).
 4. Le nginx frontal doit servir le frontend et `/gbanque/api` sur la **même origine** et transmettre `Set-Cookie` /
    `Cookie` sans les modifier (comportement par défaut de `proxy_pass`).
-5. **Déployer les images.** Au premier démarrage, Flyway marque la base existante en version 1 (baseline, V1 non
-   exécutée), applique `V2__refresh_token`, recrée les 2 vues (`R__`), puis Hibernate valide le schéma. Vérifier dans
-   les logs : `Successfully baselined schema with version: 1`, `Successfully applied 3 migrations`, puis démarrage complet.
-6. Vérifier : connexion, rechargement de page (session conservée), écran Récapitulatif (vue recréée), déconnexion ;
-   le lendemain, un fichier de sauvegarde du jour (mysql-cron-backup 1.15.0, `--skip-ssl`).
+5. Vérifier : connexion, rechargement de page (session conservée), Récapitulatif, une recherche par libellé, déconnexion ;
+   `docker logs gbanque-backup` → « SQL backup created successfully ».
+6. Conserver l'ancienne base MySQL (arrêtée, non supprimée) jusqu'à validation complète par l'équipe Finance.
 
-**Répétition faite le 10/10/2026** sur une copie de la production (export du jour importé dans un MySQL 8 jetable) :
-baseline V1, V2 et vues appliquées, **schéma de production validé par Hibernate sans écart**, démarrage en 37 s,
-10/10 contrôles API (connexion, cookies HTTP, Récapitulatif banque + par source, récap moyens de paiement, PDF,
-rafraîchissement, déconnexion). Les vues du dépôt remplacent celles de la production (5 739 et 4 922 lignes).
+**Répétition faite le 10/10/2026** sur l'export de production du jour : 102 tables / 55 403 lignes migrées, volumes
+identiques, schéma validé, 14/14 contrôles API (dont recherche insensible aux accents), sauvegarde restaurée à l'identique.
 
-**À trancher (données) :** 8 lignes `commission` (et leurs révisions d'audit) ont `operation = 'Importation'`, valeur
-qui n'existe plus dans le code : **ouvrir l'une d'elles renvoie une erreur 500** (vérifié sur la copie de production,
-commission 17276) ; la liste s'affiche. Décision métier sur ces lignes, puis migration Flyway dédiée (accord explicite
-avant toute écriture).
+**À trancher (données) :**
+- **Libellé du décompte n° 3** (4 198 674,70 MAD, payé, émis le 06/05/2025, observation « decompte , Marché N° :
+  3/2024/ASB ») : seul NULL réel parmi les 60 colonnes « obligatoires dans le code, facultatives en production » ; aucune
+  transaction liée pour le reprendre. Une fois la valeur décidée : migration `V2` qui la pose puis rend les 60 colonnes
+  `NOT NULL` (les DTO et l'interface les exigent déjà).
+- 8 lignes `commission` (et leurs révisions d'audit) ont `operation = 'Importation'`, valeur qui n'existe plus dans le
+  code : **ouvrir l'une d'elles renvoie une erreur 500** (vérifié, commission 17276) ; la liste s'affiche. Décision
+  métier, puis migration Flyway dédiée (accord explicite avant toute écriture).
 
-**Petit défaut relevé :** une URL d'API inexistante renvoie 500 (« Exception non gérée : No static resource ») au lieu
-de 404 — à traiter dans `GlobalExceptionHandler` (`NoResourceFoundException` → 404).
+**Petits défauts relevés :**
+- Une URL d'API inexistante renvoie 500 (« No static resource ») au lieu de 404 — `GlobalExceptionHandler`.
+- `rapprochement.date_rapprochement` est stockée en binaire (`YearMonth` Java sérialisé, `bytea`) faute de
+  convertisseur : illisible en SQL. Ajouter un `AttributeConverter` vers `date` (1er du mois) + migration de conversion.
 
-### Chantier — PostgreSQL 18 à la place de MySQL 8 (demandé le 10/10/2026, plan à valider)
+### Monitoring (Prometheus, Grafana) — retiré du compose le 10/10/2026
 
-Faisable : le code Java n'a **aucune requête SQL native** (tout passe par JPA/JPQL). Travail concentré sur :
-schéma Flyway réécrit pour PostgreSQL (V1 : types `boolean`, `timestamp`, `text`, enums en `varchar` + `CHECK`,
-identités, séquences Hibernate), 2 vues (911 lignes de SQL MySQL : `COLLATE`, fonctions de date…), tables Spring Batch
-(script officiel PostgreSQL), recherche texte (PostgreSQL est **sensible à la casse** : `LIKE`/`=` sur texte à auditer
-dans les Specifications), migration des données de production (outil `pgloader` ou script), Testcontainers PostgreSQL,
-service de sauvegarde PostgreSQL, pgAdmin à la place de phpMyAdmin, conventions et docs. Répétition complète sur copie
-de la production avant bascule. Précédent : la migration PostgreSQL 18 déjà faite sur ERP-RH.
-
-### Monitoring — configuration absente du dépôt (relevé le 10/10/2026)
-
-`docker-compose.yml` monte `./monitoring/prometheus.yml` et `./monitoring/grafana/provisioning`, absents du dépôt :
-un `docker compose up -d` complet sur un poste neuf démarre Prometheus/Grafana sans configuration (ou échoue). Récupérer
-ces fichiers depuis le serveur et les versionner (sans secret).
+Retiré à la demande de HMAYDA (configuration absente du dépôt). Le backend expose toujours `/actuator/prometheus`.
+Pour le réintroduire : versionner `monitoring/prometheus.yml` et le provisioning Grafana (sans secret), images épinglées.
 
 ### Chantier — Passage en HTTPS (demandé le 10/10/2026, après le déploiement ci-dessus)
 

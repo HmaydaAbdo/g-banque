@@ -6,7 +6,7 @@
 
 ## Principes
 
-* **Moteur unique : MySQL 8**, en développement, en test, en CI et en production (`mysql:8.0` du `docker-compose.yml`, Testcontainers `mysql:8.0`). Aucun autre moteur (MariaDB/XAMPP, H2) n'est utilisé pour développer ou tester.
+* **Moteur unique : PostgreSQL 18** (depuis le 10/10/2026, à la place de MySQL 8), en développement, en test, en CI et en production : image `postgres:18.6-alpine` du `docker-compose.yml` et de Testcontainers, base créée en locale ICU `fr-FR`. Aucun autre moteur (MySQL, MariaDB/XAMPP, H2) n'est utilisé pour développer ou tester.
 * **Flyway est la seule source de vérité du schéma.** Hibernate ne crée ni ne modifie jamais rien : `spring.jpa.hibernate.ddl-auto=validate` partout. Au démarrage, Hibernate vérifie que les entités correspondent au schéma et refuse de démarrer sinon.
 * Le backend applique lui-même les migrations en attente au démarrage (`spring.flyway`). Aucun script n'est plus exécuté à la main sur la production.
 * Une base vierge se construit entièrement par les migrations (`V1`, `V2`, … puis `R__`). C'est ainsi que les tests d'intégration construisent leur base : un écart entre une entité et les migrations fait échouer la CI.
@@ -25,8 +25,8 @@ Dossier unique : `Backend/src/main/resources/db/migration/`.
 * Numérotation continue (`V3`, `V4`…), jamais de trou volontaire ni de réutilisation.
 * **Une migration appliquée n'est jamais modifiée** (Flyway refuse de démarrer si son empreinte change). Une erreur se corrige par une nouvelle migration.
 * Une migration = un objectif. En-tête obligatoire : objectif, tables concernées, impact sur les données existantes, requêtes de contrôle.
-* Une vue se modifie en modifiant son fichier `R__` (commencer par `DROP VIEW IF EXISTS` puis `CREATE VIEW`). Les littéraux texte portent un `COLLATE` explicite aligné sur les colonnes (la connexion JDBC n'a pas la même collation que les tables).
-* `V1__schema_initial.sql` est le schéma de la production au 10/10/2026 (adoption de Flyway). Sur la production, elle n'a pas été exécutée : la base y a été marquée « baseline » en version 1 (`baseline-on-migrate`).
+* Une vue se modifie en modifiant son fichier `R__` (commencer par `DROP VIEW IF EXISTS` puis `CREATE VIEW`). Les colonnes texte d'une vue portent `COLLATE ci_ai` dans chaque branche d'un `UNION` ; les `NULL` de la **première** branche sont typés (`CAST(NULL AS date)`, `CAST(NULL AS varchar)`) car PostgreSQL résout les types du `UNION` de gauche à droite ; concaténer avec `a || b` (NULL si un opérande est NULL), jamais `concat()` qui ignore les NULL.
+* `V1__schema_initial.sql` est le schéma PostgreSQL généré depuis les entités le 10/10/2026 ; les données de production y ont été versées par `sql/migration-postgres/` (cf. `docs/infra/migration-postgres.md`).
 
 ---
 
@@ -47,7 +47,8 @@ Toute modification d'entité JPA s'accompagne, dans le même changement, de la m
 | Contrainte UNIQUE ajoutée ? | Vérifier l'absence de doublons ; les traiter dans la migration si décision validée. |
 | Index ajouté ? | `CREATE INDEX` ; vérifier l'impact sur les tables volumineuses. |
 | Vue impactée ? | Mettre à jour le fichier `R__` de la vue dans le même changement. |
-| Nom = mot réservé MySQL ? | Choisir un autre nom (`@Column(name = "...")`). |
+| Nouvelle colonne texte libre ? | `varchar(n) COLLATE ci_ai` (ou `text COLLATE ci_ai`), cf. « Texte et recherche ». Énumération : `varchar(50)` + `CHECK (col IN (...))`, sans `ci_ai`. |
+| Nom = mot réservé PostgreSQL ? | Choisir un autre nom (`@Column(name = "...")`). |
 
 ---
 
@@ -66,9 +67,33 @@ SELECT COUNT(*) FROM nom_table WHERE colonne IS NULL;                          -
 ```
 
 3. Écrire la migration en tenant compte des résultats, avec ses requêtes de contrôle en commentaire.
-4. **Tester** : sur une base vierge (tests d'intégration, automatique) **et** sur une copie restaurée de la sauvegarde de production (cf. `docs/infra/backup-mysql.md`), backend démarré contre cette copie.
+4. **Tester** : sur une base vierge (tests d'intégration, automatique) **et** sur une copie restaurée de la sauvegarde de production (cf. `docs/infra/backup-postgres.md`), backend démarré contre cette copie.
 
 Toute écriture sur des données de production (UPDATE/DELETE dans une migration) exige un accord explicite préalable.
+
+---
+
+## Texte et recherche (PostgreSQL distingue majuscules, minuscules et accents)
+
+Sous MySQL (`utf8mb4_*_ci`), « credit » trouvait « Crédit » et `'BMCI' = 'bmci'`. PostgreSQL, par défaut, distingue
+majuscules, minuscules **et** accents : sans précaution, une recherche ou une égalité sur du texte change de résultat.
+
+* Toute colonne de **texte libre** (libellés, noms, numéros, observations, `username`…) utilise la collation
+  **`ci_ai`** (ICU `und-u-ks-level1`, non déterministe, créée en V1) : égalité, `LIKE` (supporté depuis PostgreSQL 18),
+  `GROUP BY`, `DISTINCT` et contraintes d'unicité y ignorent la casse **et** les accents, comme sous MySQL.
+* Les colonnes d'**énumération** (`CHECK ... IN`) gardent la collation stricte de la base : leurs valeurs sont des
+  constantes du code.
+* Une recherche « contient » s'écrit `cb.like(root.get("libelle"), "%" + terme + "%")` sur une colonne `ci_ai` ;
+  `cb.lower(...)` y est inutile mais sans effet. Sur une colonne **sans** `ci_ai` (énumération, colonne technique),
+  une recherche textuelle libre est interdite.
+* `ORDER BY` sur texte suit la locale de la base (`fr-FR`) ; `ci_ai` ne sert pas au tri.
+* Nouvelle colonne texte libre dans une migration : `COLLATE ci_ai` obligatoire (oubli = recherche sensible à la
+  casse et aux accents, détectable en recette).
+* Conséquence assumée : le nom d'utilisateur à la connexion est insensible à la casse et aux accents (comme avant).
+* Les **expressions régulières** (`~`, `regexp_*`) sont refusées par PostgreSQL sur une collation non déterministe :
+  écrire `colonne COLLATE "C" ~ '...'` si une requête manuelle en a besoin (l'application n'en utilise pas).
+* `CHECK`, `NOT NULL` et longueurs : la V1 suit les entités, sauf exceptions documentées en tête de V1 (valeur
+  héritée `Importation`, 60 colonnes facultatives en production). Toute nouvelle exception est une décision écrite.
 
 ---
 
@@ -122,7 +147,8 @@ SELECT COUNT(*) FROM nom_table WHERE etat IS NULL; -- doit retourner 0
 
 ## Résumé
 
-* MySQL 8 partout ; Flyway seul maître du schéma ; Hibernate en `validate`.
+* PostgreSQL 18 partout ; Flyway seul maître du schéma ; Hibernate en `validate`.
+* Texte libre en collation `ci_ai` : recherches insensibles à la casse et aux accents.
 * Toute évolution d'entité = une migration `V<n>` dans le même changement ; une vue = son fichier `R__`.
 * Jamais de modification d'une migration appliquée ; jamais de script manuel sur la production.
 * Données existantes analysées avant, contrôlées après ; aucune écriture sans validation explicite.

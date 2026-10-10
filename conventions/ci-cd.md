@@ -9,7 +9,7 @@
 1. Le travail est regroupé en **lots cohérents** (code + tests + documentation + conventions), vérifiés en local (`mvn verify`, `ng test`, build de production) avant d'être poussés.
 2. **Un lot = un commit poussé sur `main` = un seul run de CI à suivre.** Pas de multiplication de branches ni de PR (la protection de `main` n'est pas disponible sur l'offre gratuite d'un dépôt privé). Une branche + PR (modèle `.github/pull_request_template.md`) n'est utilisée que pour un chantier long à faire relire avant intégration ; elle est supprimée dès la fusion (suppression automatique activée).
 3. La CI s'exécute (`.github/workflows/ci.yml`, workflow unique) :
-   * **backend** : `mvn verify` — tests d'intégration sur MySQL 8 Testcontainers, couverture JaCoCo, couverture du code modifié (diff-cover) ;
+   * **backend** : `mvn verify` — tests d'intégration sur PostgreSQL 18 Testcontainers, couverture JaCoCo, couverture du code modifié (diff-cover) ;
    * **frontend** : tests Karma + couverture, build de production ;
    * **security** : gitleaks (secrets), Trivy (dépendances, Dockerfile) ;
    * **images** : build des deux images, scan Trivy, taille affichée dans le résumé du job.
@@ -23,7 +23,7 @@
 Un changement qui touche la base, la sécurité, les sessions ou une montée de version n'est déployé qu'après :
 
 * les tests automatiques verts (CI) ;
-* pour une migration de base : une **répétition** — sauvegarde de production restaurée dans un MySQL 8 jetable, backend démarré dessus (migrations appliquées, schéma validé, écrans clés vérifiés) ;
+* pour une migration de base : une **répétition** — sauvegarde de production restaurée dans un PostgreSQL 18 jetable, backend démarré dessus (migrations appliquées, schéma validé, écrans clés vérifiés) ;
 * un **parcours navigateur** des écrans concernés (connexion, rechargement, action modifiante, déconnexion), sur la stack locale ;
 * la liste des actions de déploiement (variables `.env`, ordre) écrite dans `TODO.md`.
 

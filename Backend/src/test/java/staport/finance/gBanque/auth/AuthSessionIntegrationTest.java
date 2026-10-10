@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Sessions par cookies HttpOnly : connexion, accès, rafraîchissement (rotation, réutilisation),
- * déconnexion et protection CSRF — sur le vrai contexte Spring et un vrai MySQL.
+ * déconnexion et protection CSRF — sur le vrai contexte Spring et un vrai PostgreSQL.
  */
 class AuthSessionIntegrationTest extends AbstractIntegrationTest {
 

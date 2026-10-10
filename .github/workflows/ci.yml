@@ -1,6 +1,6 @@
 # =============================================================================
 # G-Banque — Pipeline CI
-#   backend    : compilation + tests d'intégration (Testcontainers MySQL 8) + couverture JaCoCo
+#   backend    : compilation + tests d'intégration (Testcontainers PostgreSQL 18) + couverture JaCoCo
 #   frontend   : tests Karma + couverture + build de production
 #   security   : secrets (gitleaks) + dépendances/configuration (Trivy fs)
 #   images     : build des 2 images Docker, scan Trivy, rapport de taille,

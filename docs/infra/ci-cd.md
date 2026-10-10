@@ -6,7 +6,7 @@
 
 | Workflow | Déclencheur | Rôle |
 |---|---|---|
-| `ci.yml` — job `backend` | PR, push `main` | `mvn verify` : tests d'intégration (MySQL 8 Testcontainers) + JaCoCo + couverture du code modifié |
+| `ci.yml` — job `backend` | PR, push `main` | `mvn verify` : tests d'intégration (PostgreSQL 18 Testcontainers) + JaCoCo + couverture du code modifié |
 | `ci.yml` — job `frontend` | PR, push `main` | Tests Karma + couverture (non bloquant temporairement), build de production |
 | `ci.yml` — job `security` | PR, push `main` | gitleaks (secrets) + Trivy (dépendances, Dockerfile) |
 | `ci.yml` — job `images` | après les trois précédents | Build des images, scan Trivy, taille ; push Docker Hub sur `main` |

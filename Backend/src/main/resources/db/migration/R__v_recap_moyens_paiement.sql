@@ -1,6 +1,9 @@
 -- =============================================================================
 -- Vue v_recap_moyens_paiement
 -- =============================================================================
+-- PostgreSQL 18 (10/10/2026) : les littéraux et expressions texte portent COLLATE ci_ai (collation de la base
+-- pour le texte libre, insensible à la casse et aux accents) pour que toutes les branches du UNION aient la même
+-- collation ; (a || b) remplace CONCAT(a, b) car, comme sous MySQL, il renvoie NULL si b est NULL.
 --
 -- Migration Flyway RÉPÉTABLE (R__) : ré-appliquée automatiquement au démarrage du backend
 -- dès que ce fichier change. Ne plus l'exécuter à la main. Modifier la vue = modifier ce fichier.
@@ -118,22 +121,22 @@ CREATE VIEW v_recap_moyens_paiement AS
 
 -- 1. CHEQUE
 SELECT
-    'CHEQUE' COLLATE utf8mb4_unicode_ci AS source_type,
+    'CHEQUE' COLLATE ci_ai AS source_type,
     c.id AS entity_id,
     c.banque_id AS banque_id,
-    b.nom COLLATE utf8mb4_unicode_ci AS banque_nom,
-    c.type COLLATE utf8mb4_unicode_ci AS type,
-    c.statut COLLATE utf8mb4_unicode_ci AS statut,
-    c.numero COLLATE utf8mb4_unicode_ci AS numero,
+    b.nom COLLATE ci_ai AS banque_nom,
+    c.type COLLATE ci_ai AS type,
+    c.statut COLLATE ci_ai AS statut,
+    c.numero COLLATE ci_ai AS numero,
     c.date_emission AS date_emission,
     c.date_operation AS date_operation,
     c.date_valeur AS date_valeur,
     c.date_echeance AS date_echeance,
     c.montant AS montant,
-    c.libelle COLLATE utf8mb4_unicode_ci AS libelle,
-    c.observation COLLATE utf8mb4_unicode_ci AS observation,
-    c.beneficiaire COLLATE utf8mb4_unicode_ci AS beneficiaire,
-    c.emetteur COLLATE utf8mb4_unicode_ci AS emetteur
+    c.libelle COLLATE ci_ai AS libelle,
+    c.observation COLLATE ci_ai AS observation,
+    c.beneficiaire COLLATE ci_ai AS beneficiaire,
+    c.emetteur COLLATE ci_ai AS emetteur
 FROM cheques c
 LEFT JOIN banque b ON b.id = c.banque_id
 
@@ -141,22 +144,22 @@ UNION ALL
 
 -- 2. LCN_ESCOMPTE
 SELECT
-    'LCN_ESCOMPTE' COLLATE utf8mb4_unicode_ci AS source_type,
+    'LCN_ESCOMPTE' COLLATE ci_ai AS source_type,
     l.id AS entity_id,
     l.banque_id AS banque_id,
-    b.nom COLLATE utf8mb4_unicode_ci AS banque_nom,
-    l.type COLLATE utf8mb4_unicode_ci AS type,
-    l.statut COLLATE utf8mb4_unicode_ci AS statut,
-    l.numero COLLATE utf8mb4_unicode_ci AS numero,
+    b.nom COLLATE ci_ai AS banque_nom,
+    l.type COLLATE ci_ai AS type,
+    l.statut COLLATE ci_ai AS statut,
+    l.numero COLLATE ci_ai AS numero,
     l.date_emission AS date_emission,
     l.date_operation AS date_operation,
     l.date_valeur AS date_valeur,
     l.date_echeance AS date_echeance,
     l.montant AS montant,
-    l.libelle COLLATE utf8mb4_unicode_ci AS libelle,
-    l.observation COLLATE utf8mb4_unicode_ci AS observation,
-    l.beneficiaire COLLATE utf8mb4_unicode_ci AS beneficiaire,
-    l.emetteur COLLATE utf8mb4_unicode_ci AS emetteur
+    l.libelle COLLATE ci_ai AS libelle,
+    l.observation COLLATE ci_ai AS observation,
+    l.beneficiaire COLLATE ci_ai AS beneficiaire,
+    l.emetteur COLLATE ci_ai AS emetteur
 FROM lcns l
 LEFT JOIN banque b ON b.id = l.banque_id
 WHERE l.nature_lcn = 'ESCOMPTE'
@@ -165,22 +168,22 @@ UNION ALL
 
 -- 3. LCN_ENCAISSEMENT
 SELECT
-    'LCN_ENCAISSEMENT' COLLATE utf8mb4_unicode_ci AS source_type,
+    'LCN_ENCAISSEMENT' COLLATE ci_ai AS source_type,
     l.id AS entity_id,
     l.banque_id AS banque_id,
-    b.nom COLLATE utf8mb4_unicode_ci AS banque_nom,
-    l.type COLLATE utf8mb4_unicode_ci AS type,
-    l.statut COLLATE utf8mb4_unicode_ci AS statut,
-    l.numero COLLATE utf8mb4_unicode_ci AS numero,
+    b.nom COLLATE ci_ai AS banque_nom,
+    l.type COLLATE ci_ai AS type,
+    l.statut COLLATE ci_ai AS statut,
+    l.numero COLLATE ci_ai AS numero,
     l.date_emission AS date_emission,
     l.date_operation AS date_operation,
     l.date_valeur AS date_valeur,
     l.date_echeance AS date_echeance,
     l.montant AS montant,
-    l.libelle COLLATE utf8mb4_unicode_ci AS libelle,
-    l.observation COLLATE utf8mb4_unicode_ci AS observation,
-    l.beneficiaire COLLATE utf8mb4_unicode_ci AS beneficiaire,
-    l.emetteur COLLATE utf8mb4_unicode_ci AS emetteur
+    l.libelle COLLATE ci_ai AS libelle,
+    l.observation COLLATE ci_ai AS observation,
+    l.beneficiaire COLLATE ci_ai AS beneficiaire,
+    l.emetteur COLLATE ci_ai AS emetteur
 FROM lcns l
 LEFT JOIN banque b ON b.id = l.banque_id
 WHERE (l.nature_lcn IS NULL OR l.nature_lcn <> 'ESCOMPTE')
@@ -190,22 +193,22 @@ UNION ALL
 
 -- 4. LCN_DECAISSEMENT
 SELECT
-    'LCN_DECAISSEMENT' COLLATE utf8mb4_unicode_ci AS source_type,
+    'LCN_DECAISSEMENT' COLLATE ci_ai AS source_type,
     l.id AS entity_id,
     l.banque_id AS banque_id,
-    b.nom COLLATE utf8mb4_unicode_ci AS banque_nom,
-    l.type COLLATE utf8mb4_unicode_ci AS type,
-    l.statut COLLATE utf8mb4_unicode_ci AS statut,
-    l.numero COLLATE utf8mb4_unicode_ci AS numero,
+    b.nom COLLATE ci_ai AS banque_nom,
+    l.type COLLATE ci_ai AS type,
+    l.statut COLLATE ci_ai AS statut,
+    l.numero COLLATE ci_ai AS numero,
     l.date_emission AS date_emission,
     l.date_operation AS date_operation,
     l.date_valeur AS date_valeur,
     l.date_echeance AS date_echeance,
     l.montant AS montant,
-    l.libelle COLLATE utf8mb4_unicode_ci AS libelle,
-    l.observation COLLATE utf8mb4_unicode_ci AS observation,
-    l.beneficiaire COLLATE utf8mb4_unicode_ci AS beneficiaire,
-    l.emetteur COLLATE utf8mb4_unicode_ci AS emetteur
+    l.libelle COLLATE ci_ai AS libelle,
+    l.observation COLLATE ci_ai AS observation,
+    l.beneficiaire COLLATE ci_ai AS beneficiaire,
+    l.emetteur COLLATE ci_ai AS emetteur
 FROM lcns l
 LEFT JOIN banque b ON b.id = l.banque_id
 WHERE (l.nature_lcn IS NULL OR l.nature_lcn <> 'ESCOMPTE')
@@ -218,22 +221,22 @@ UNION ALL
 --    branches distinctes pour ce même type — voir l'historique de ce dernier
 --    fichier pour le pourquoi de cette différence)
 SELECT
-    'Virement' COLLATE utf8mb4_unicode_ci AS source_type,
+    'Virement' COLLATE ci_ai AS source_type,
     v.id AS entity_id,
     CASE WHEN v.type = 'DECAISSEMENT' THEN v.banque_emettrice_id ELSE v.banque_beneficiare_id END AS banque_id,
-    CASE WHEN v.type = 'DECAISSEMENT' THEN be.nom ELSE bb.nom END COLLATE utf8mb4_unicode_ci AS banque_nom,
-    v.type COLLATE utf8mb4_unicode_ci AS type,
-    v.statut COLLATE utf8mb4_unicode_ci AS statut,
-    v.numero COLLATE utf8mb4_unicode_ci AS numero,
+    CASE WHEN v.type = 'DECAISSEMENT' THEN be.nom ELSE bb.nom END COLLATE ci_ai AS banque_nom,
+    v.type COLLATE ci_ai AS type,
+    v.statut COLLATE ci_ai AS statut,
+    v.numero COLLATE ci_ai AS numero,
     v.date_emission AS date_emission,
     v.date_operation AS date_operation,
     v.date_valeur AS date_valeur,
     CAST(NULL AS date) AS date_echeance,
     v.montant AS montant,
-    v.libelle COLLATE utf8mb4_unicode_ci AS libelle,
-    v.observation COLLATE utf8mb4_unicode_ci AS observation,
-    v.beneficiaire COLLATE utf8mb4_unicode_ci AS beneficiaire,
-    v.emetteur COLLATE utf8mb4_unicode_ci AS emetteur
+    v.libelle COLLATE ci_ai AS libelle,
+    v.observation COLLATE ci_ai AS observation,
+    v.beneficiaire COLLATE ci_ai AS beneficiaire,
+    v.emetteur COLLATE ci_ai AS emetteur
 FROM virements v
 LEFT JOIN banque be ON be.id = v.banque_emettrice_id
 LEFT JOIN banque bb ON bb.id = v.banque_beneficiare_id
@@ -242,22 +245,22 @@ UNION ALL
 
 -- 6. VIREMENT_INTERNATIONAL (pas de colonne numero native -> NULL)
 SELECT
-    'VIREMENT_INTERNATIONAL' COLLATE utf8mb4_unicode_ci AS source_type,
+    'VIREMENT_INTERNATIONAL' COLLATE ci_ai AS source_type,
     vi.id AS entity_id,
     vi.banque_id AS banque_id,
-    b.nom COLLATE utf8mb4_unicode_ci AS banque_nom,
-    vi.type COLLATE utf8mb4_unicode_ci AS type,
-    vi.statut COLLATE utf8mb4_unicode_ci AS statut,
-    CAST(NULL AS CHAR CHARSET utf8mb4) COLLATE utf8mb4_unicode_ci AS numero,
+    b.nom COLLATE ci_ai AS banque_nom,
+    vi.type COLLATE ci_ai AS type,
+    vi.statut COLLATE ci_ai AS statut,
+    CAST(NULL AS varchar) COLLATE ci_ai AS numero,
     vi.date_emission AS date_emission,
     vi.date_operation AS date_operation,
     vi.date_valeur AS date_valeur,
     CAST(NULL AS date) AS date_echeance,
     vi.montant AS montant,
-    vi.libelle COLLATE utf8mb4_unicode_ci AS libelle,
-    vi.observation COLLATE utf8mb4_unicode_ci AS observation,
-    vi.beneficiaire COLLATE utf8mb4_unicode_ci AS beneficiaire,
-    vi.emetteur COLLATE utf8mb4_unicode_ci AS emetteur
+    vi.libelle COLLATE ci_ai AS libelle,
+    vi.observation COLLATE ci_ai AS observation,
+    vi.beneficiaire COLLATE ci_ai AS beneficiaire,
+    vi.emetteur COLLATE ci_ai AS emetteur
 FROM virements_internationaux vi
 LEFT JOIN banque b ON b.id = vi.banque_id
 
@@ -265,21 +268,21 @@ UNION ALL
 
 -- 7. MiseADisposition
 SELECT
-    'MiseADisposition' COLLATE utf8mb4_unicode_ci AS source_type,
+    'MiseADisposition' COLLATE ci_ai AS source_type,
     m.id AS entity_id,
     m.banque_id AS banque_id,
-    b.nom COLLATE utf8mb4_unicode_ci AS banque_nom,
-    m.type COLLATE utf8mb4_unicode_ci AS type,
-    m.statut COLLATE utf8mb4_unicode_ci AS statut,
-    m.numero COLLATE utf8mb4_unicode_ci AS numero,
+    b.nom COLLATE ci_ai AS banque_nom,
+    m.type COLLATE ci_ai AS type,
+    m.statut COLLATE ci_ai AS statut,
+    m.numero COLLATE ci_ai AS numero,
     m.date_emission AS date_emission,
     m.date_operation AS date_operation,
     m.date_valeur AS date_valeur,
     CAST(NULL AS date) AS date_echeance,
     m.montant AS montant,
-    m.libelle COLLATE utf8mb4_unicode_ci AS libelle,
-    m.observation COLLATE utf8mb4_unicode_ci AS observation,
-    m.beneficiaire COLLATE utf8mb4_unicode_ci AS beneficiaire,
-    m.emetteur COLLATE utf8mb4_unicode_ci AS emetteur
+    m.libelle COLLATE ci_ai AS libelle,
+    m.observation COLLATE ci_ai AS observation,
+    m.beneficiaire COLLATE ci_ai AS beneficiaire,
+    m.emetteur COLLATE ci_ai AS emetteur
 FROM mises_a_disposition m
 LEFT JOIN banque b ON b.id = m.banque_id;

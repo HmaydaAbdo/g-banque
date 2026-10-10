@@ -46,7 +46,7 @@ public class Transaction {
     @Column(precision = 19, scale = 2)
     private BigDecimal credit=BigDecimal.ZERO;
 
-    @Column(columnDefinition = "LONGTEXT", nullable = false)
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String libelle;
     @Column(nullable = false)
     private String observation;

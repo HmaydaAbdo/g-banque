@@ -4,10 +4,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 /**
- * Base des tests d'intégration : un seul MySQL 8 jetable (Testcontainers) et un seul contexte Spring
+ * Base des tests d'intégration : un seul PostgreSQL 18 jetable (Testcontainers) et un seul contexte Spring
  * pour toute la suite. Toutes les classes d'intégration en héritent sans rien ajouter à la configuration,
  * sinon Spring recrée un contexte (plusieurs minutes) — cf. conventions/testing.md.
  *
@@ -22,10 +22,12 @@ import org.testcontainers.containers.MySQLContainer;
 @ActiveProfiles("test")
 public abstract class AbstractIntegrationTest {
 
+    /** Même image et même initialisation (locale ICU fr-FR) que le service postgres de docker-compose.yml. */
     @ServiceConnection
-    protected static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.0");
+    protected static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:18.6-alpine")
+            .withEnv("POSTGRES_INITDB_ARGS", "--locale-provider=icu --icu-locale=fr-FR --encoding=UTF8");
 
     static {
-        MYSQL.start();
+        POSTGRES.start();
     }
 }

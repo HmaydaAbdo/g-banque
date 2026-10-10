@@ -41,6 +41,8 @@
 		<java.version>17</java.version>
 		<!-- Testcontainers >= 1.21.4 : requis pour parler à Docker Engine 29+ (API minimale 1.44) -->
 		<testcontainers.version>1.21.4</testcontainers.version>
+		<!-- Flyway 11.20+ : prise en charge officielle de PostgreSQL 18 (le BOM Spring Boot 3.5 fournit 11.7, limité à 17) -->
+		<flyway.version>11.20.3</flyway.version>
 		<!-- Correctifs de sécurité (CVE HIGH/CRITICAL relevées par Trivy) en avance sur le BOM Spring Boot 3.5.16 ;
 		     à retirer quand le BOM fournit une version égale ou supérieure. -->
 		<tomcat.version>10.1.60</tomcat.version>
@@ -129,8 +131,8 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.mysql</groupId>
-			<artifactId>mysql-connector-j</artifactId>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 
@@ -153,10 +155,10 @@
 		</dependency>
 		<dependency>
 			<groupId>org.flywaydb</groupId>
-			<artifactId>flyway-mysql</artifactId>
+			<artifactId>flyway-database-postgresql</artifactId>
 		</dependency>
 
-		<!-- Tests d'intégration sur un vrai MySQL 8 jetable (même moteur qu'en prod) -->
+		<!-- Tests d'intégration sur un vrai PostgreSQL 18 jetable (même moteur qu'en prod) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-testcontainers</artifactId>
@@ -169,7 +171,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.testcontainers</groupId>
-			<artifactId>mysql</artifactId>
+			<artifactId>postgresql</artifactId>
 			<scope>test</scope>
 		</dependency>
 
@@ -224,10 +226,10 @@
                 <configuration>
                     <environmentVariables>
                         <DB_HOST>localhost</DB_HOST>
-                        <DB_PORT>3306</DB_PORT>
-                        <MYSQL_DATABASE>gbanque_test</MYSQL_DATABASE>
-                        <MYSQL_USER>test</MYSQL_USER>
-                        <MYSQL_PASSWORD>test</MYSQL_PASSWORD>
+                        <DB_PORT>5432</DB_PORT>
+                        <POSTGRES_DB>gbanque_test</POSTGRES_DB>
+                        <POSTGRES_USER>test</POSTGRES_USER>
+                        <POSTGRES_PASSWORD>test</POSTGRES_PASSWORD>
                         <SERVER_ADRESSE>127.0.0.1</SERVER_ADRESSE>
                         <SERVER_PORT>0</SERVER_PORT>
                         <CONTEXT_PATH>/gbanque/api</CONTEXT_PATH>

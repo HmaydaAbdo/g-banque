@@ -1,1345 +1,2097 @@
 -- =============================================================================
--- V1 — Schéma initial de G-Banque (structure de la production au 10/10/2026)
+-- V1 — Schéma initial de G-Banque sur PostgreSQL 18 (10/10/2026)
 -- =============================================================================
 --
--- Généré depuis l'export de la base de production du 10/10/2026 (structure seule, aucune donnée).
--- Sur la base de production existante, cette migration N'EST PAS exécutée : Flyway y pose une
--- « baseline » en version 1 (spring.flyway.baseline-on-migrate). Elle sert à construire une base
--- vierge identique (dev, tests, CI, nouvel environnement).
+-- Généré depuis les entités JPA (DDL Hibernate, dialecte PostgreSQL), donc identique à ce que valide
+-- Hibernate au démarrage (ddl-auto=validate). Remplace le schéma MySQL 8 : les données de production y sont
+-- versées par sql/migration-postgres (cf. docs/infra/migration-postgres.md).
 --
--- Adaptations par rapport à l'export :
---   * compteurs AUTO_INCREMENT retirés (repartent à 1) ;
---   * largeurs d'affichage des entiers retirées (bigint(20) → bigint…, obsolètes en MySQL 8 ; tinyint(1) conservé) ;
---   * tables Spring Batch : script officiel spring-batch-core 5.2 (schema-mysql.sql), noms en
---     MAJUSCULES — l'export (passé par un MySQL Windows) les avait mis en minuscules, ce qui les rend
---     introuvables par Spring Batch sur MySQL Linux (noms de tables sensibles à la casse) ;
---   * vues exclues : migrations répétables R__v_*.sql ;
---   * séquence d'audit Envers initialisée à 1.
+-- Adaptations :
+--   * collation ci_ai (ICU, insensible à la casse et aux accents, « non déterministe ») sur toutes les colonnes
+--     de texte libre : recherches (LIKE, depuis PostgreSQL 18), égalités et unicités se comportent comme sous
+--     MySQL (utf8mb4_*_ci) — cf. conventions/database.md « Texte et recherche ». Les colonnes d'énumération
+--     (CHECK ... IN) gardent la collation stricte de la base ;
+--   * commission.operation (et _aud) accepte aussi 'Importation', valeur retirée du code mais présente en
+--     production (8 lignes) : conservée à l'identique en attendant la décision métier (TODO.md) ;
+--   * tables Spring Batch : script officiel spring-batch-core 5.2 (schema-postgresql.sql).
 --
 -- Ne jamais modifier ce fichier une fois appliqué : toute évolution passe par une nouvelle V<n>.
 -- =============================================================================
 
-SET NAMES utf8mb4;
-
-
--- ── Tables ──────────────────────────────────────────────────────────────────
-
-CREATE TABLE `agios` (
-  `id` bigint NOT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(150) DEFAULT NULL,
-  `montant` decimal(19,4) NOT NULL,
-  `observation` varchar(500) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') NOT NULL,
-  `banque_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `agios_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(150) DEFAULT NULL,
-  `montant` decimal(19,4) DEFAULT NULL,
-  `observation` varchar(500) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `agios_journalier` (
-  `id` bigint NOT NULL,
-  `agios_ht` decimal(19,2) NOT NULL,
-  `agios_ttc` decimal(19,2) NOT NULL,
-  `base_calcul` decimal(19,2) NOT NULL,
-  `date_calcul` datetime(6) NOT NULL,
-  `date_valeur` date NOT NULL,
-  `metadata` text DEFAULT NULL,
-  `nb_recalculs` int NOT NULL,
-  `solde_journalier` decimal(19,2) NOT NULL,
-  `taux_applique` decimal(8,4) NOT NULL,
-  `tva` decimal(19,2) NOT NULL,
-  `type_agios` enum('DROIT_CONSTATE','FACILITE_CAISSE','FACTORING','PREFINANCEMENT') NOT NULL,
-  `banque_id` bigint NOT NULL,
-  `trimestre_id` bigint DEFAULT NULL,
-  `marche_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `agios_trimestriel` (
-  `id` bigint NOT NULL,
-  `agios_definitif_id` bigint DEFAULT NULL,
-  `annee` int NOT NULL,
-  `date_cloture` datetime(6) DEFAULT NULL,
-  `date_debut` date NOT NULL,
-  `date_dernier_calcul` datetime(6) DEFAULT NULL,
-  `date_fin` date NOT NULL,
-  `nb_jours_calcules` int NOT NULL,
-  `nb_jours_total` int NOT NULL,
-  `statut` enum('CLOTURE','OUVERT') NOT NULL,
-  `total_agios_ht` decimal(19,2) NOT NULL,
-  `total_agios_ttc` decimal(19,2) NOT NULL,
-  `total_tva` decimal(19,2) NOT NULL,
-  `trimestre` int NOT NULL,
-  `type_agios` enum('DROIT_CONSTATE','FACILITE_CAISSE','FACTORING','PREFINANCEMENT') NOT NULL,
-  `banque_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `agios_trimestriel_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `agios_definitif_id` bigint DEFAULT NULL,
-  `annee` int DEFAULT NULL,
-  `date_cloture` datetime(6) DEFAULT NULL,
-  `date_debut` date DEFAULT NULL,
-  `date_dernier_calcul` datetime(6) DEFAULT NULL,
-  `date_fin` date DEFAULT NULL,
-  `nb_jours_calcules` int DEFAULT NULL,
-  `nb_jours_total` int DEFAULT NULL,
-  `statut` enum('CLOTURE','OUVERT') DEFAULT NULL,
-  `total_agios_ht` decimal(19,2) DEFAULT NULL,
-  `total_agios_ttc` decimal(19,2) DEFAULT NULL,
-  `total_tva` decimal(19,2) DEFAULT NULL,
-  `trimestre` int DEFAULT NULL,
-  `type_agios` enum('DROIT_CONSTATE','FACILITE_CAISSE','FACTORING','PREFINANCEMENT') DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `audit_revision_entity` (
-  `id` int NOT NULL,
-  `timestamp` bigint NOT NULL,
-  `username` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `audit_revision_entity_seq` (
-  `next_val` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `banque` (
-  `id` bigint NOT NULL,
-  `address` varchar(255) NOT NULL,
-  `agence` varchar(100) NOT NULL,
-  `date_creation` date NOT NULL,
-  `date_modification` date NOT NULL,
-  `devise` enum('EUR','MAD','USD','GNS') NOT NULL,
-  `logo_data` longblob NOT NULL,
-  `nom` varchar(100) NOT NULL,
-  `numero_compte` varchar(24) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `banque_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `address` varchar(255) DEFAULT NULL,
-  `agence` varchar(100) DEFAULT NULL,
-  `date_creation` date DEFAULT NULL,
-  `date_modification` date DEFAULT NULL,
-  `devise` enum('EUR','GNS','MAD','USD') DEFAULT NULL,
-  `nom` varchar(100) DEFAULT NULL,
-  `numero_compte` varchar(24) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `cautions` (
-  `id` bigint NOT NULL,
-  `actif` tinyint(1) NOT NULL DEFAULT 1,
-  `created_at` date NOT NULL,
-  `date_de_prise` date DEFAULT NULL,
-  `designation` text NOT NULL,
-  `montant` decimal(19,2) NOT NULL,
-  `numero_caution` varchar(255) DEFAULT NULL,
-  `organisme` text NOT NULL,
-  `taux` decimal(19,6) NOT NULL,
-  `updated_at` date NOT NULL,
-  `banque_id` bigint NOT NULL,
-  `marche_id` bigint DEFAULT NULL,
-  `nature_id` bigint NOT NULL,
-  `date_de_main_levee` date DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `cautions_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `actif` tinyint(1) DEFAULT 1,
-  `created_at` date DEFAULT NULL,
-  `date_de_main_levee` date DEFAULT NULL,
-  `date_de_prise` date DEFAULT NULL,
-  `designation` text DEFAULT NULL,
-  `montant` decimal(19,2) DEFAULT NULL,
-  `numero_caution` varchar(255) DEFAULT NULL,
-  `organisme` text DEFAULT NULL,
-  `taux` decimal(19,6) DEFAULT NULL,
-  `updated_at` date DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL,
-  `marche_id` bigint DEFAULT NULL,
-  `nature_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `caution_commission_config` (
-  `id` bigint NOT NULL,
-  `diviseur` decimal(19,2) NOT NULL,
-  `montant_minimum` decimal(19,2) NOT NULL,
-  `banque_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `caution_commission_config_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `diviseur` decimal(19,2) DEFAULT NULL,
-  `montant_minimum` decimal(19,2) DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `charge_fixe_config` (
-  `id` bigint NOT NULL,
-  `append_periode` bit(1) NOT NULL,
-  `jour_emission` int NOT NULL,
-  `libelle` varchar(150) NOT NULL,
-  `mois_precedent` bit(1) NOT NULL,
-  `montant` decimal(19,2) NOT NULL,
-  `motif` enum('ADII','AUTRE_ASSURANCE','COMMUNAL','DGI','IR','IS','PENALITE_DE_RETARD','RETENUE_A_LA_SOURCE','TAXE_PROFESSIONNELLE','TVA','TVA_COMMISSION_CAUTION','VIGNETTE') DEFAULT NULL,
-  `type` enum('AGIOS','FRAIS_BANCAIRE','IMPOT_TAXE','PRELEVEMENT') NOT NULL,
-  `banque_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `charge_fixe_config_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `append_periode` bit(1) DEFAULT NULL,
-  `jour_emission` int DEFAULT NULL,
-  `libelle` varchar(150) DEFAULT NULL,
-  `mois_precedent` bit(1) DEFAULT NULL,
-  `montant` decimal(19,2) DEFAULT NULL,
-  `motif` enum('ADII','AUTRE_ASSURANCE','COMMUNAL','DGI','IR','IS','PENALITE_DE_RETARD','RETENUE_A_LA_SOURCE','TAXE_PROFESSIONNELLE','TVA','TVA_COMMISSION_CAUTION','VIGNETTE') DEFAULT NULL,
-  `type` enum('AGIOS','FRAIS_BANCAIRE','IMPOT_TAXE','PRELEVEMENT') DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `cheques` (
-  `id` bigint NOT NULL,
-  `numero` varchar(255) DEFAULT NULL,
-  `beneficiaire` varchar(255) NOT NULL,
-  `date_echeance` date DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant` decimal(19,2) NOT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `banque_id` bigint NOT NULL,
-  `type` enum('DECAISSEMENT','ENCAISSEMENT') DEFAULT NULL,
-  `emetteur` varchar(255) DEFAULT NULL,
-  `statut` enum('ANNULE','ENCOURS','REGLE') NOT NULL,
-  `id_paiement` varchar(50) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `cheques_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `beneficiaire` varchar(255) DEFAULT NULL,
-  `date_echeance` date DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `emetteur` varchar(255) DEFAULT NULL,
-  `id_paiement` varchar(50) DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant` decimal(19,2) DEFAULT NULL,
-  `numero` varchar(255) DEFAULT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `statut` enum('ANNULE','ENCOURS','REGLE') DEFAULT NULL,
-  `type` enum('DECAISSEMENT','ENCAISSEMENT') DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `cmt_config` (
-  `id` bigint NOT NULL,
-  `alerte_echeance_jours_court_terme` int NOT NULL,
-  `alerte_echeance_jours_long_terme` int NOT NULL,
-  `date_modification` datetime(6) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `cmt_config_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `alerte_echeance_jours_court_terme` int DEFAULT NULL,
-  `alerte_echeance_jours_long_terme` int DEFAULT NULL,
-  `date_modification` datetime(6) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `commission` (
-  `id` bigint NOT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(150) DEFAULT NULL,
-  `montant` decimal(19,4) NOT NULL,
-  `observation` varchar(500) DEFAULT NULL,
-  `operation` enum('AGIOS','CAUTION','CHEQUE','CMT','COMMISSION','DECOMPTES','DROIT_CONSTATE','FACTORING','FRAIS_BANCAIRE','IMPAYEE','IMPOT_TAXE','Importation','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','LEASING','MiseADisposition','OPERATION_ERRONE','PREFINANCEMENT','PRELEVEMENT','PROVISION','RESTITUTION','VIREMENT_INTERNATIONAL','Virement') NOT NULL,
-  `status` enum('PAYE','PREVU') NOT NULL,
-  `banque_id` bigint NOT NULL,
-  `caution_id` bigint DEFAULT NULL,
-  `impot_et_taxe_id` bigint DEFAULT NULL,
-  `virement_id` bigint DEFAULT NULL,
-  `type_commission` enum('CLOTURE','MENSUELLE','PRORATA_ENTREE') DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `commission_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(150) DEFAULT NULL,
-  `montant` decimal(19,4) DEFAULT NULL,
-  `observation` varchar(500) DEFAULT NULL,
-  `operation` enum('AGIOS','CAUTION','CHEQUE','CMT','COMMISSION','DECOMPTES','DROIT_CONSTATE','FACTORING','FRAIS_BANCAIRE','IMPAYEE','IMPOT_TAXE','Importation','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','LEASING','MiseADisposition','OPERATION_ERRONE','PREFINANCEMENT','PRELEVEMENT','PROVISION','RESTITUTION','VIREMENT_INTERNATIONAL','Virement') DEFAULT NULL,
-  `status` enum('PAYE','PREVU') DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL,
-  `caution_id` bigint DEFAULT NULL,
-  `impot_et_taxe_id` bigint DEFAULT NULL,
-  `virement_id` bigint DEFAULT NULL,
-  `type_commission` enum('CLOTURE','MENSUELLE','PRORATA_ENTREE') DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `commission_config` (
-  `id` bigint NOT NULL,
-  `commission_condition` enum('DEFAULT','SI_MATCH','SI_NON_MATCH') NOT NULL,
-  `montant` decimal(19,4) NOT NULL,
-  `organisme_nom` varchar(150) DEFAULT NULL,
-  `type` enum('AGIOS','CAUTION','CHEQUE','CMT','COMMISSION','DECOMPTES','DROIT_CONSTATE','FACTORING','FRAIS_BANCAIRE','IMPAYEE','IMPOT_TAXE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','LEASING','MiseADisposition','OPERATION_ERRONE','PREFINANCEMENT','PRELEVEMENT','PROVISION','RESTITUTION','VIREMENT_INTERNATIONAL','Virement') NOT NULL,
-  `banque_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `commission_config_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `commission_condition` enum('DEFAULT','SI_MATCH','SI_NON_MATCH') DEFAULT NULL,
-  `montant` decimal(19,4) DEFAULT NULL,
-  `organisme_nom` varchar(150) DEFAULT NULL,
-  `type` enum('AGIOS','CAUTION','CHEQUE','CMT','COMMISSION','DECOMPTES','DROIT_CONSTATE','FACTORING','FRAIS_BANCAIRE','IMPAYEE','IMPOT_TAXE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','LEASING','MiseADisposition','OPERATION_ERRONE','PREFINANCEMENT','PRELEVEMENT','PROVISION','RESTITUTION','VIREMENT_INTERNATIONAL','Virement') DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `contrat_cadre` (
-  `id` bigint NOT NULL,
-  `date_creation` datetime(6) NOT NULL,
-  `date_debut` date NOT NULL,
-  `date_fin` date NOT NULL,
-  `date_modification` datetime(6) NOT NULL,
-  `plafond` decimal(19,2) NOT NULL,
-  `statut` enum('ACTIF','ARCHIVE','EXPIRE') NOT NULL,
-  `organisme_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `contrat_cadre_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `date_creation` datetime(6) DEFAULT NULL,
-  `date_debut` date DEFAULT NULL,
-  `date_fin` date DEFAULT NULL,
-  `date_modification` datetime(6) DEFAULT NULL,
-  `plafond` decimal(19,2) DEFAULT NULL,
-  `statut` enum('ACTIF','ARCHIVE','EXPIRE') DEFAULT NULL,
-  `organisme_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `contrat_leasing` (
-  `id` bigint NOT NULL,
-  `completed` bit(1) NOT NULL,
-  `date_creation` datetime(6) NOT NULL,
-  `date_debut` date DEFAULT NULL,
-  `date_modification` datetime(6) NOT NULL,
-  `immobilisation` varchar(255) NOT NULL,
-  `montant_achat` decimal(38,2) NOT NULL,
-  `numero_contrat` varchar(255) NOT NULL,
-  `periode_mois` int NOT NULL,
-  `type_contrat` enum('DEGRESSIF','LINEAIRE','PROGRESSIF') NOT NULL,
-  `valeur_residuelle` decimal(38,2) DEFAULT NULL,
-  `banque_id` bigint NOT NULL,
-  `date_upload_pdf` date DEFAULT NULL,
-  `fichier_pdf_contenu` longblob DEFAULT NULL,
-  `nom_fichier_pdf` varchar(255) DEFAULT NULL,
-  `contrat_cadre_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `contrat_leasing_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `completed` bit(1) DEFAULT NULL,
-  `date_creation` datetime(6) DEFAULT NULL,
-  `date_debut` date DEFAULT NULL,
-  `date_modification` datetime(6) DEFAULT NULL,
-  `immobilisation` varchar(255) DEFAULT NULL,
-  `montant_achat` decimal(38,2) DEFAULT NULL,
-  `numero_contrat` varchar(255) DEFAULT NULL,
-  `periode_mois` int DEFAULT NULL,
-  `type_contrat` enum('DEGRESSIF','LINEAIRE','PROGRESSIF') DEFAULT NULL,
-  `valeur_residuelle` decimal(38,2) DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL,
-  `organisme_leasing_id` bigint DEFAULT NULL,
-  `contrat_cadre_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `contrat_leasing_phase` (
-  `id` bigint NOT NULL,
-  `date_creation` datetime(6) NOT NULL,
-  `date_modification` datetime(6) NOT NULL,
-  `duree_mois` int NOT NULL,
-  `mensualite_ttc` decimal(38,2) NOT NULL,
-  `numero_phase` int NOT NULL,
-  `contrat_leasing_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `contrat_leasing_phase_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `date_creation` datetime(6) DEFAULT NULL,
-  `date_modification` datetime(6) DEFAULT NULL,
-  `duree_mois` int DEFAULT NULL,
-  `mensualite_ttc` decimal(38,2) DEFAULT NULL,
-  `numero_phase` int DEFAULT NULL,
-  `contrat_leasing_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `credit_moyen_terme` (
-  `id` bigint NOT NULL,
-  `completed` bit(1) NOT NULL,
-  `date_creation` datetime(6) NOT NULL,
-  `date_debut` date DEFAULT NULL,
-  `date_modification` datetime(6) NOT NULL,
-  `designation` varchar(255) NOT NULL,
-  `duree` int NOT NULL,
-  `echeance` decimal(38,2) NOT NULL,
-  `nominal` decimal(38,2) NOT NULL,
-  `periodicite` int NOT NULL,
-  `taux` decimal(38,2) NOT NULL,
-  `banque_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `credit_moyen_terme_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `completed` bit(1) DEFAULT NULL,
-  `date_creation` datetime(6) DEFAULT NULL,
-  `date_debut` date DEFAULT NULL,
-  `date_modification` datetime(6) DEFAULT NULL,
-  `designation` varchar(255) DEFAULT NULL,
-  `duree` int DEFAULT NULL,
-  `echeance` decimal(38,2) DEFAULT NULL,
-  `nominal` decimal(38,2) DEFAULT NULL,
-  `periodicite` int DEFAULT NULL,
-  `taux` decimal(38,2) DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `decompte` (
-  `id` bigint NOT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant` decimal(19,2) DEFAULT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') NOT NULL,
-  `marche_id` bigint DEFAULT NULL,
-  `banque_encaissement_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `decompte_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant` decimal(19,2) DEFAULT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') DEFAULT NULL,
-  `banque_encaissement_id` bigint DEFAULT NULL,
-  `marche_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `department` (
-  `id` bigint NOT NULL,
-  `created_at` datetime(6) NOT NULL,
-  `description` varchar(255) DEFAULT NULL,
-  `name` varchar(100) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `department_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `created_at` datetime(6) DEFAULT NULL,
-  `description` varchar(255) DEFAULT NULL,
-  `name` varchar(100) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `droit_constate` (
-  `id` bigint NOT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant` decimal(38,2) DEFAULT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') DEFAULT NULL,
-  `type` enum('DEBLOCAGE','REMBOURSEMENT') DEFAULT NULL,
-  `marche_id` bigint DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL,
-  `ligne_fonctionnelle_id` bigint DEFAULT NULL,
-  `ligne_fonctionnelle_specifique_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `droit_constate_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant` decimal(38,2) DEFAULT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') DEFAULT NULL,
-  `type` enum('DEBLOCAGE','REMBOURSEMENT') DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL,
-  `ligne_fonctionnelle_id` bigint DEFAULT NULL,
-  `ligne_fonctionnelle_specifique_id` bigint DEFAULT NULL,
-  `marche_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `echeance_cmt` (
-  `id` bigint NOT NULL,
-  `date_creation` datetime(6) NOT NULL,
-  `date_echeance` date DEFAULT NULL,
-  `date_modification` datetime(6) NOT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant` decimal(19,2) NOT NULL,
-  `numero_echeance` int NOT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `statut_paiement` enum('PAYE','PREVU') NOT NULL,
-  `credit_moyen_terme_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `echeance_cmt_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `date_creation` datetime(6) DEFAULT NULL,
-  `date_echeance` date DEFAULT NULL,
-  `date_modification` datetime(6) DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant` decimal(19,2) DEFAULT NULL,
-  `numero_echeance` int DEFAULT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `statut_paiement` enum('PAYE','PREVU') DEFAULT NULL,
-  `credit_moyen_terme_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `echeance_leasing` (
-  `id` bigint NOT NULL,
-  `date_creation` datetime(6) NOT NULL,
-  `date_echeance` date DEFAULT NULL,
-  `date_modification` datetime(6) NOT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant_ttc` decimal(19,2) NOT NULL,
-  `numero_echeance` int NOT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `statut_paiement` enum('PAYE','PREVU') NOT NULL,
-  `contrat_leasing_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `echeance_leasing_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `date_creation` datetime(6) DEFAULT NULL,
-  `date_echeance` date DEFAULT NULL,
-  `date_modification` datetime(6) DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant_ttc` decimal(19,2) DEFAULT NULL,
-  `numero_echeance` int DEFAULT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `statut_paiement` enum('PAYE','PREVU') DEFAULT NULL,
-  `contrat_leasing_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `factoring` (
-  `id` bigint NOT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant` decimal(38,2) DEFAULT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') DEFAULT NULL,
-  `type` enum('DEBLOCAGE','REMBOURSEMENT') DEFAULT NULL,
-  `marche_id` bigint DEFAULT NULL,
-  `ligne_fonctionnelle_id` bigint DEFAULT NULL,
-  `ligne_fonctionnelle_specifique_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `factoring_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant` decimal(38,2) DEFAULT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') DEFAULT NULL,
-  `type` enum('DEBLOCAGE','REMBOURSEMENT') DEFAULT NULL,
-  `ligne_fonctionnelle_id` bigint DEFAULT NULL,
-  `ligne_fonctionnelle_specifique_id` bigint DEFAULT NULL,
-  `marche_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `frais_bancaire` (
-  `id` bigint NOT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(150) DEFAULT NULL,
-  `montant` decimal(19,4) NOT NULL,
-  `observation` varchar(500) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') NOT NULL,
-  `banque_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `frais_bancaire_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(150) DEFAULT NULL,
-  `montant` decimal(19,4) DEFAULT NULL,
-  `observation` varchar(500) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `impayee` (
-  `id` bigint NOT NULL,
-  `date_creation` datetime(6) NOT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_modification` datetime(6) NOT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(500) DEFAULT NULL,
-  `montant` decimal(19,4) NOT NULL,
-  `motif` enum('AGIOS','CAUTION','CHEQUE','CMT','COMMISSION','DECOMPTES','DROIT_CONSTATE','FACTORING','FRAIS_BANCAIRE','IMPAYEE','IMPOT_TAXE','INTERETS','LCN','LEASING','MiseADisposition','OPERATION_ERRONE','PREFINANCEMENT','PRELEVEMENT','RESTITUTION','VIREMENT_INTERNATIONAL','Virement') NOT NULL,
-  `observation` varchar(500) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') NOT NULL,
-  `banque_id` bigint NOT NULL,
-  `type` enum('DECAISSEMENT','ENCAISSEMENT') DEFAULT NULL,
-  `numero` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `impayee_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `date_creation` datetime(6) DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_modification` datetime(6) DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(500) DEFAULT NULL,
-  `montant` decimal(19,4) DEFAULT NULL,
-  `motif` enum('AGIOS','CAUTION','CHEQUE','CMT','COMMISSION','DECOMPTES','DROIT_CONSTATE','FACTORING','FRAIS_BANCAIRE','IMPAYEE','IMPOT_TAXE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','LEASING','MiseADisposition','OPERATION_ERRONE','PREFINANCEMENT','PRELEVEMENT','RESTITUTION','VIREMENT_INTERNATIONAL','Virement') DEFAULT NULL,
-  `observation` varchar(500) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') DEFAULT NULL,
-  `type` enum('DECAISSEMENT','ENCAISSEMENT') DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL,
-  `numero` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `impot_et_taxe` (
-  `id` bigint NOT NULL,
-  `date_creation` datetime(6) NOT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_modification` datetime(6) NOT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(500) DEFAULT NULL,
-  `montant` decimal(19,4) NOT NULL,
-  `motif` enum('ADII','AUTRE_ASSURANCE','COMMUNAL','DGI','IR','IS','PENALITE_DE_RETARD','RETENUE_A_LA_SOURCE','TAXE_PROFESSIONNELLE','TVA','TVA_COMMISSION_CAUTION','VIGNETTE') NOT NULL,
-  `observation` varchar(500) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') NOT NULL,
-  `banque_id` bigint NOT NULL,
-  `caution_id` bigint DEFAULT NULL,
-  `commission_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `impot_et_taxe_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `date_creation` datetime(6) DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_modification` datetime(6) DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(500) DEFAULT NULL,
-  `montant` decimal(19,4) DEFAULT NULL,
-  `motif` enum('ADII','AUTRE_ASSURANCE','COMMUNAL','DGI','IR','IS','PENALITE_DE_RETARD','RETENUE_A_LA_SOURCE','TAXE_PROFESSIONNELLE','TVA','TVA_COMMISSION_CAUTION','VIGNETTE') DEFAULT NULL,
-  `observation` varchar(500) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL,
-  `caution_id` bigint DEFAULT NULL,
-  `commission_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `lcns` (
-  `id` bigint NOT NULL,
-  `beneficiaire` varchar(255) NOT NULL,
-  `date_echeance` date DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `emetteur` varchar(255) DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant` decimal(19,2) NOT NULL,
-  `numero` varchar(255) DEFAULT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `type` enum('DECAISSEMENT','ENCAISSEMENT') DEFAULT NULL,
-  `banque_id` bigint NOT NULL,
-  `nature_lcn` enum('ENCAISSEMENT','ESCOMPTE') DEFAULT NULL,
-  `ligne_fonctionnelle_id` bigint DEFAULT NULL,
-  `statut` enum('ANNULE','ENCOURS','REGLE') NOT NULL,
-  `id_paiement` varchar(50) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `lcns_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `beneficiaire` varchar(255) DEFAULT NULL,
-  `date_echeance` date DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `emetteur` varchar(255) DEFAULT NULL,
-  `id_paiement` varchar(50) DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant` decimal(19,2) DEFAULT NULL,
-  `nature_lcn` enum('ENCAISSEMENT','ESCOMPTE') DEFAULT NULL,
-  `numero` varchar(255) DEFAULT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `statut` enum('ANNULE','ENCOURS','REGLE') DEFAULT NULL,
-  `type` enum('DECAISSEMENT','ENCAISSEMENT') DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL,
-  `ligne_fonctionnelle_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `leasing_config` (
-  `id` bigint NOT NULL,
-  `date_modification` datetime(6) NOT NULL,
-  `taux_tva` decimal(6,4) NOT NULL,
-  `valeur_residuelle` decimal(6,4) NOT NULL,
-  `alerte_echeance_jours_court_terme` int NOT NULL,
-  `alerte_echeance_jours_long_terme` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `leasing_config_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `date_modification` datetime(6) DEFAULT NULL,
-  `taux_tva` decimal(6,4) DEFAULT NULL,
-  `valeur_residuelle` decimal(6,4) DEFAULT NULL,
-  `alerte_echeance_jours_court_terme` int DEFAULT NULL,
-  `alerte_echeance_jours_long_terme` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `ligne_fonctionnelle` (
-  `id` bigint NOT NULL,
-  `actif` bit(1) NOT NULL,
-  `date_creation` datetime(6) NOT NULL,
-  `date_depart` date DEFAULT NULL,
-  `date_fin` date DEFAULT NULL,
-  `date_modification` datetime(6) NOT NULL,
-  `plafond` decimal(38,2) DEFAULT NULL,
-  `taux` decimal(38,2) NOT NULL,
-  `banque_id` bigint NOT NULL,
-  `nature_ligne_id` bigint NOT NULL,
-  `ligne_mere_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `ligne_fonctionnelle_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `actif` bit(1) DEFAULT NULL,
-  `date_creation` datetime(6) DEFAULT NULL,
-  `date_depart` date DEFAULT NULL,
-  `date_fin` date DEFAULT NULL,
-  `date_modification` datetime(6) DEFAULT NULL,
-  `plafond` decimal(38,2) DEFAULT NULL,
-  `taux` decimal(38,2) DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL,
-  `ligne_mere_id` bigint DEFAULT NULL,
-  `nature_ligne_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `ligne_fonctionnelle_config` (
-  `id` bigint NOT NULL,
-  `alert_threshold_months` int NOT NULL,
-  `date_modification` datetime(6) NOT NULL,
-  `warning_threshold_months` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `ligne_fonctionnelle_config_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `alert_threshold_months` int DEFAULT NULL,
-  `date_modification` datetime(6) DEFAULT NULL,
-  `warning_threshold_months` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `ligne_fonctionnelle_marche` (
-  `ligne_id` bigint NOT NULL,
-  `marche_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `ligne_fonctionnelle_marche_aud` (
-  `rev` int NOT NULL,
-  `ligne_id` bigint NOT NULL,
-  `marche_id` bigint NOT NULL,
-  `revtype` tinyint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `ligne_fonctionnelle_specifique` (
-  `id` bigint NOT NULL,
-  `actif` bit(1) NOT NULL,
-  `date_creation` datetime(6) NOT NULL,
-  `date_depart` date DEFAULT NULL,
-  `date_fin` date DEFAULT NULL,
-  `date_modification` datetime(6) NOT NULL,
-  `plafond` decimal(38,2) NOT NULL,
-  `taux` decimal(38,2) NOT NULL,
-  `marche_id` bigint NOT NULL,
-  `nature_ligne_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `ligne_fonctionnelle_specifique_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `actif` bit(1) DEFAULT NULL,
-  `date_creation` datetime(6) DEFAULT NULL,
-  `date_depart` date DEFAULT NULL,
-  `date_fin` date DEFAULT NULL,
-  `date_modification` datetime(6) DEFAULT NULL,
-  `plafond` decimal(38,2) DEFAULT NULL,
-  `taux` decimal(38,2) DEFAULT NULL,
-  `marche_id` bigint DEFAULT NULL,
-  `nature_ligne_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `log` (
-  `id` bigint NOT NULL,
-  `entity_id` bigint NOT NULL,
-  `entity_name` varchar(255) NOT NULL,
-  `operation_type` varchar(255) NOT NULL,
-  `timestamp` datetime(6) NOT NULL,
-  `user_name` varchar(255) NOT NULL,
-  `revision_number` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `log_entry_detail` (
-  `id` bigint NOT NULL,
-  `field_name` varchar(255) NOT NULL,
-  `new_value` text DEFAULT NULL,
-  `old_value` text DEFAULT NULL,
-  `log_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `marches` (
-  `id` bigint NOT NULL,
-  `created_at` date NOT NULL,
-  `date_d_achievement_des_travaux` date DEFAULT NULL,
-  `date_debut_des_travaux` date DEFAULT NULL,
-  `maitre_douvrage` varchar(255) NOT NULL,
-  `modified_at` date NOT NULL,
-  `montant` decimal(19,2) NOT NULL,
-  `nom` varchar(255) NOT NULL,
-  `numero` varchar(50) NOT NULL,
-  `banque_id` bigint NOT NULL,
-  `actif` bit(1) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `marches_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `actif` bit(1) DEFAULT NULL,
-  `created_at` date DEFAULT NULL,
-  `date_d_achievement_des_travaux` date DEFAULT NULL,
-  `date_debut_des_travaux` date DEFAULT NULL,
-  `maitre_douvrage` varchar(255) DEFAULT NULL,
-  `modified_at` date DEFAULT NULL,
-  `montant` decimal(19,2) DEFAULT NULL,
-  `nom` varchar(255) DEFAULT NULL,
-  `numero` varchar(50) DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `mises_a_disposition` (
-  `id` bigint NOT NULL,
-  `beneficiaire` varchar(255) NOT NULL,
-  `cin_beneficiaire` varchar(255) DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `emetteur` varchar(255) DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant` decimal(19,2) NOT NULL,
-  `numero` varchar(255) DEFAULT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `type` enum('DECAISSEMENT','ENCAISSEMENT') DEFAULT NULL,
-  `banque_id` bigint NOT NULL,
-  `statut` enum('ANNULE','ENCOURS','REGLE') NOT NULL,
-  `id_paiement` varchar(50) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `mises_a_disposition_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `beneficiaire` varchar(255) DEFAULT NULL,
-  `cin_beneficiaire` varchar(255) DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `emetteur` varchar(255) DEFAULT NULL,
-  `id_paiement` varchar(50) DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant` decimal(19,2) DEFAULT NULL,
-  `numero` varchar(255) DEFAULT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `statut` enum('ANNULE','ENCOURS','REGLE') DEFAULT NULL,
-  `type` enum('DECAISSEMENT','ENCAISSEMENT') DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `nature_ligne_fonctionnelle` (
-  `id` bigint NOT NULL,
-  `code` varchar(20) NOT NULL,
-  `date_creation` date NOT NULL,
-  `date_modification` date NOT NULL,
-  `description` varchar(255) NOT NULL,
-  `label` varchar(255) NOT NULL,
-  `portee` enum('GENERALE','GENERALE_ET_SPECIFIQUE','SPECIFIQUE') NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `nature_ligne_fonctionnelle_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `code` varchar(20) DEFAULT NULL,
-  `date_creation` date DEFAULT NULL,
-  `date_modification` date DEFAULT NULL,
-  `description` varchar(255) DEFAULT NULL,
-  `label` varchar(255) DEFAULT NULL,
-  `portee` enum('GENERALE','GENERALE_ET_SPECIFIQUE','SPECIFIQUE') DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `notifications` (
-  `id` bigint NOT NULL,
-  `content` text DEFAULT NULL,
-  `timestamp` datetime(6) DEFAULT NULL,
-  `title` varchar(255) DEFAULT NULL,
-  `type` enum('ALERT','INFO','SUCCESS','WARNING') DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `notifications_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `content` text DEFAULT NULL,
-  `timestamp` datetime(6) DEFAULT NULL,
-  `title` varchar(255) DEFAULT NULL,
-  `type` enum('ALERT','INFO','SUCCESS','WARNING') DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `operation_errone` (
-  `id` bigint NOT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(150) DEFAULT NULL,
-  `montant` decimal(19,4) NOT NULL,
-  `motif` enum('AGIOS','CAUTION','CHEQUE','CMT','COMMISSION','DECOMPTES','DROIT_CONSTATE','FACTORING','FRAIS_BANCAIRE','IMPAYEE','IMPOT_TAXE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','LEASING','MiseADisposition','OPERATION_ERRONE','PREFINANCEMENT','PRELEVEMENT','PROVISION','RESTITUTION','VIREMENT_INTERNATIONAL','Virement') NOT NULL,
-  `observation` varchar(500) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') NOT NULL,
-  `banque_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `operation_errone_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(150) DEFAULT NULL,
-  `montant` decimal(19,4) DEFAULT NULL,
-  `motif` enum('AGIOS','CAUTION','CHEQUE','CMT','COMMISSION','DECOMPTES','DROIT_CONSTATE','FACTORING','FRAIS_BANCAIRE','IMPAYEE','IMPOT_TAXE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','LEASING','MiseADisposition','OPERATION_ERRONE','PREFINANCEMENT','PRELEVEMENT','PROVISION','RESTITUTION','VIREMENT_INTERNATIONAL','Virement') DEFAULT NULL,
-  `observation` varchar(500) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `organisme_leasing` (
-  `id` bigint NOT NULL,
-  `date_creation` datetime(6) NOT NULL,
-  `date_modification` datetime(6) NOT NULL,
-  `nom` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `organisme_leasing_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `date_creation` datetime(6) DEFAULT NULL,
-  `date_debut` date DEFAULT NULL,
-  `date_fin` date DEFAULT NULL,
-  `date_modification` datetime(6) DEFAULT NULL,
-  `nom` varchar(255) DEFAULT NULL,
-  `plafond` decimal(38,2) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `prefinancement` (
-  `id` bigint NOT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant` decimal(38,2) DEFAULT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') DEFAULT NULL,
-  `type` enum('DEBLOCAGE','REMBOURSEMENT') DEFAULT NULL,
-  `marche_id` bigint DEFAULT NULL,
-  `ligne_fonctionnelle_id` bigint DEFAULT NULL,
-  `ligne_fonctionnelle_specifique_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `prefinancement_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant` decimal(38,2) DEFAULT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') DEFAULT NULL,
-  `type` enum('DEBLOCAGE','REMBOURSEMENT') DEFAULT NULL,
-  `ligne_fonctionnelle_id` bigint DEFAULT NULL,
-  `ligne_fonctionnelle_specifique_id` bigint DEFAULT NULL,
-  `marche_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `prelevement` (
-  `id` bigint NOT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(150) DEFAULT NULL,
-  `montant` decimal(19,4) NOT NULL,
-  `observation` varchar(500) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') NOT NULL,
-  `banque_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `prelevement_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(150) DEFAULT NULL,
-  `montant` decimal(19,4) DEFAULT NULL,
-  `observation` varchar(500) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `provision` (
-  `id` bigint NOT NULL,
-  `date_emission` date NOT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(150) NOT NULL,
-  `montant` decimal(19,4) NOT NULL,
-  `motif` enum('AGIOS','CAUTION','CHEQUE','CMT','COMMISSION','DECOMPTES','DROIT_CONSTATE','FACTORING','FRAIS_BANCAIRE','IMPAYEE','IMPOT_TAXE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','LEASING','MiseADisposition','OPERATION_ERRONE','PREFINANCEMENT','PRELEVEMENT','PROVISION','RESTITUTION','VIREMENT_INTERNATIONAL','Virement') NOT NULL,
-  `observation` varchar(500) NOT NULL,
-  `sens` enum('DECAISSEMENT','ENCAISSEMENT') NOT NULL,
-  `status` enum('PAYE','PREVU') NOT NULL,
-  `banque_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `provision_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(150) DEFAULT NULL,
-  `montant` decimal(19,4) DEFAULT NULL,
-  `motif` enum('AGIOS','CAUTION','CHEQUE','CMT','COMMISSION','DECOMPTES','DROIT_CONSTATE','FACTORING','FRAIS_BANCAIRE','IMPAYEE','IMPOT_TAXE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','LEASING','MiseADisposition','OPERATION_ERRONE','PREFINANCEMENT','PRELEVEMENT','PROVISION','RESTITUTION','VIREMENT_INTERNATIONAL','Virement') DEFAULT NULL,
-  `observation` varchar(500) DEFAULT NULL,
-  `sens` enum('DECAISSEMENT','ENCAISSEMENT') DEFAULT NULL,
-  `status` enum('PAYE','PREVU') DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `rapprochement` (
-  `id` bigint NOT NULL,
-  `created_at` datetime(6) NOT NULL,
-  `date_rapprochement` varbinary(255) NOT NULL,
-  `solde_debut` decimal(38,2) DEFAULT NULL,
-  `updated_at` datetime(6) NOT NULL,
-  `banque_id` bigint NOT NULL,
-  `statut` enum('EN_COURS','CLOTURE_PROVISOIRE','CLOTURE_DEFINITIVE') NOT NULL DEFAULT 'EN_COURS'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `rapprochement_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `created_at` datetime(6) DEFAULT NULL,
-  `date_rapprochement` varbinary(255) DEFAULT NULL,
-  `solde_debut` decimal(38,2) DEFAULT NULL,
-  `statut` enum('CLOTURE_DEFINITIVE','CLOTURE_PROVISOIRE','EN_COURS') DEFAULT NULL,
-  `updated_at` datetime(6) DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `restitution` (
-  `id` bigint NOT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(150) DEFAULT NULL,
-  `montant` decimal(19,4) NOT NULL,
-  `observation` varchar(500) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') NOT NULL,
-  `banque_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `restitution_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(150) DEFAULT NULL,
-  `montant` decimal(19,4) DEFAULT NULL,
-  `observation` varchar(500) DEFAULT NULL,
-  `status` enum('PAYE','PREVU') DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `transaction` (
-  `id` bigint NOT NULL,
-  `created_at` datetime(6) NOT NULL,
-  `credit` decimal(19,2) NOT NULL,
-  `date_emission` date NOT NULL,
-  `date_operations` date NOT NULL,
-  `date_valeur` date NOT NULL,
-  `debit` decimal(19,2) NOT NULL,
-  `libelle` longtext NOT NULL,
-  `observation` varchar(255) NOT NULL,
-  `transaction_source` enum('AGIOS','CAUTION','CHEQUE','CMT','COMMISSION','DECOMPTES','DROIT_CONSTATE','FACTORING','FRAIS_BANCAIRE','IMPAYEE','IMPOT_TAXE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','LEASING','MiseADisposition','OPERATION_ERRONE','PREFINANCEMENT','PRELEVEMENT','PROVISION','RESTITUTION','VIREMENT_INTERNATIONAL','Virement') DEFAULT NULL,
-  `tva_collectee` decimal(38,2) NOT NULL,
-  `tva_deductible` decimal(38,2) NOT NULL,
-  `updated_at` datetime(6) NOT NULL,
-  `banque_id` bigint NOT NULL,
-  `rapprochement_id` bigint NOT NULL,
-  `referent` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `transaction_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `created_at` datetime(6) DEFAULT NULL,
-  `credit` decimal(19,2) DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operations` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `debit` decimal(19,2) DEFAULT NULL,
-  `libelle` longtext DEFAULT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `referent` bigint DEFAULT NULL,
-  `transaction_source` enum('AGIOS','CAUTION','CHEQUE','CMT','COMMISSION','DECOMPTES','DROIT_CONSTATE','FACTORING','FRAIS_BANCAIRE','IMPAYEE','IMPOT_TAXE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','LEASING','MiseADisposition','OPERATION_ERRONE','PREFINANCEMENT','PRELEVEMENT','PROVISION','RESTITUTION','VIREMENT_INTERNATIONAL','Virement') DEFAULT NULL,
-  `tva_collectee` decimal(38,2) DEFAULT NULL,
-  `tva_deductible` decimal(38,2) DEFAULT NULL,
-  `updated_at` datetime(6) DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL,
-  `rapprochement_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `users` (
-  `id` bigint NOT NULL,
-  `enabled` bit(1) NOT NULL,
-  `password` varchar(255) DEFAULT NULL,
-  `username` varchar(50) NOT NULL,
-  `is_system_admin` bit(1) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `users_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `enabled` bit(1) DEFAULT NULL,
-  `is_system_admin` bit(1) DEFAULT NULL,
-  `username` varchar(50) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `user_department_role` (
-  `id` bigint NOT NULL,
-  `role_in_dept` enum('DIRECTOR','MEMBER') NOT NULL,
-  `department_id` bigint NOT NULL,
-  `user_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `user_department_role_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `role_in_dept` enum('DIRECTOR','MEMBER') DEFAULT NULL,
-  `department_id` bigint DEFAULT NULL,
-  `user_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `user_notification_status` (
-  `id` bigint NOT NULL,
-  `is_read` bit(1) NOT NULL,
-  `notification_id` bigint NOT NULL,
-  `user_id` bigint NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `user_notification_status_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `is_read` bit(1) DEFAULT NULL,
-  `notification_id` bigint DEFAULT NULL,
-  `user_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `virements` (
-  `id` bigint NOT NULL,
-  `numero` varchar(255) DEFAULT NULL,
-  `beneficiaire` varchar(255) NOT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant` decimal(19,2) NOT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `rib_beneficiaire` varchar(255) DEFAULT NULL,
-  `banque_emettrice_id` bigint DEFAULT NULL,
-  `type` enum('DECAISSEMENT','ENCAISSEMENT') DEFAULT NULL,
-  `banque_beneficiare_id` bigint DEFAULT NULL,
-  `nom_banque_beneficiaire_libre` varchar(255) DEFAULT NULL,
-  `emetteur` varchar(255) DEFAULT NULL,
-  `statut` enum('ANNULE','ENCOURS','REGLE') NOT NULL,
-  `id_paiement` varchar(50) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `virements_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `beneficiaire` varchar(255) DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `emetteur` varchar(255) DEFAULT NULL,
-  `id_paiement` varchar(50) DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant` decimal(19,2) DEFAULT NULL,
-  `nom_banque_beneficiaire_libre` varchar(255) DEFAULT NULL,
-  `numero` varchar(255) DEFAULT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `rib_beneficiaire` varchar(255) DEFAULT NULL,
-  `statut` enum('ANNULE','ENCOURS','REGLE') DEFAULT NULL,
-  `type` enum('DECAISSEMENT','ENCAISSEMENT') DEFAULT NULL,
-  `banque_beneficiare_id` bigint DEFAULT NULL,
-  `banque_emettrice_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `virements_internationaux` (
-  `id` bigint NOT NULL,
-  `beneficiaire` varchar(255) DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `emetteur` varchar(255) DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant` decimal(19,2) NOT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `type` enum('DECAISSEMENT','ENCAISSEMENT') NOT NULL,
-  `banque_id` bigint NOT NULL,
-  `statut` enum('ANNULE','ENCOURS','REGLE') NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `virements_internationaux_aud` (
-  `id` bigint NOT NULL,
-  `rev` int NOT NULL,
-  `revtype` tinyint DEFAULT NULL,
-  `beneficiaire` varchar(255) DEFAULT NULL,
-  `date_emission` date DEFAULT NULL,
-  `date_operation` date DEFAULT NULL,
-  `date_valeur` date DEFAULT NULL,
-  `emetteur` varchar(255) DEFAULT NULL,
-  `libelle` varchar(255) DEFAULT NULL,
-  `montant` decimal(19,2) DEFAULT NULL,
-  `observation` varchar(255) DEFAULT NULL,
-  `statut` enum('ANNULE','ENCOURS','REGLE') DEFAULT NULL,
-  `type` enum('DECAISSEMENT','ENCAISSEMENT') DEFAULT NULL,
-  `banque_id` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- ── Spring Batch (schema-mysql.sql officiel) ────────────────────────────────
+CREATE COLLATION IF NOT EXISTS ci_ai (provider = icu, locale = 'und-u-ks-level1', deterministic = false);
+
+
+-- ── Tables, séquences, contraintes et index des entités (Hibernate) ──────────
+
+create sequence audit_revision_entity_seq start with 1 increment by 50;
+    create table agios (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,4) not null,
+        banque_id bigint not null,
+        id bigint generated by default as identity,
+        status varchar(50) not null check (status in ('PREVU','PAYE')),
+        libelle varchar(150) collate ci_ai not null,
+        observation varchar(500) collate ci_ai not null,
+        primary key (id)
+    );
+    create table agios_aud (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,4),
+        rev integer not null,
+        revtype smallint,
+        banque_id bigint,
+        id bigint not null,
+        status varchar(50) check (status in ('PREVU','PAYE')),
+        libelle varchar(150) collate ci_ai,
+        observation varchar(500) collate ci_ai,
+        primary key (rev, id)
+    );
+    create table agios_journalier (
+        agios_ht numeric(19,2) not null,
+        agios_ttc numeric(19,2) not null,
+        base_calcul numeric(19,2) not null,
+        date_valeur date not null,
+        nb_recalculs integer not null,
+        solde_journalier numeric(19,2) not null,
+        taux_applique numeric(8,4) not null,
+        tva numeric(19,2) not null,
+        banque_id bigint not null,
+        date_calcul timestamp(6) with time zone not null,
+        id bigint generated by default as identity,
+        marche_id bigint,
+        trimestre_id bigint,
+        type_agios varchar(50) not null check (type_agios in ('FACILITE_CAISSE','PREFINANCEMENT','DROIT_CONSTATE','FACTORING')),
+        metadata TEXT collate ci_ai,
+        primary key (id)
+    );
+    create table agios_trimestriel (
+        annee integer not null,
+        date_debut date not null,
+        date_fin date not null,
+        nb_jours_calcules integer not null,
+        nb_jours_total integer not null,
+        total_agios_ht numeric(19,2) not null,
+        total_agios_ttc numeric(19,2) not null,
+        total_tva numeric(19,2) not null,
+        trimestre integer not null,
+        agios_definitif_id bigint,
+        banque_id bigint not null,
+        date_cloture timestamp(6) with time zone,
+        date_dernier_calcul timestamp(6) with time zone,
+        id bigint generated by default as identity,
+        statut varchar(20) not null check (statut in ('OUVERT','CLOTURE')),
+        type_agios varchar(50) not null check (type_agios in ('FACILITE_CAISSE','PREFINANCEMENT','DROIT_CONSTATE','FACTORING')),
+        primary key (id),
+        constraint uk_trim_banque_type unique (trimestre, annee, banque_id, type_agios)
+    );
+    create table agios_trimestriel_aud (
+        annee integer,
+        date_debut date,
+        date_fin date,
+        nb_jours_calcules integer,
+        nb_jours_total integer,
+        rev integer not null,
+        revtype smallint,
+        total_agios_ht numeric(19,2),
+        total_agios_ttc numeric(19,2),
+        total_tva numeric(19,2),
+        trimestre integer,
+        agios_definitif_id bigint,
+        banque_id bigint,
+        date_cloture timestamp(6) with time zone,
+        date_dernier_calcul timestamp(6) with time zone,
+        id bigint not null,
+        statut varchar(20) check (statut in ('OUVERT','CLOTURE')),
+        type_agios varchar(50) check (type_agios in ('FACILITE_CAISSE','PREFINANCEMENT','DROIT_CONSTATE','FACTORING')),
+        primary key (rev, id)
+    );
+    create table audit_revision_entity (
+        id integer not null,
+        timestamp bigint not null,
+        username varchar(255) collate ci_ai,
+        primary key (id)
+    );
+    create table banque (
+        date_creation date not null,
+        date_modification date not null,
+        id bigint generated by default as identity,
+        numero_compte varchar(24) collate ci_ai not null unique,
+        agence varchar(100) collate ci_ai not null,
+        nom varchar(100) collate ci_ai not null,
+        address varchar(255) collate ci_ai not null,
+        devise varchar(255) not null check (devise in ('MAD','EUR','USD','GNS')),
+        logo_data bytea not null,
+        primary key (id)
+    );
+    create table banque_aud (
+        date_creation date,
+        date_modification date,
+        rev integer not null,
+        revtype smallint,
+        id bigint not null,
+        numero_compte varchar(24) collate ci_ai,
+        agence varchar(100) collate ci_ai,
+        nom varchar(100) collate ci_ai,
+        address varchar(255) collate ci_ai,
+        devise varchar(255) check (devise in ('MAD','EUR','USD','GNS')),
+        primary key (rev, id)
+    );
+    create table caution_commission_config (
+        diviseur numeric(19,2) not null,
+        montant_minimum numeric(19,2) not null,
+        banque_id bigint not null unique,
+        id bigint generated by default as identity,
+        primary key (id)
+    );
+    create table caution_commission_config_aud (
+        diviseur numeric(19,2),
+        montant_minimum numeric(19,2),
+        rev integer not null,
+        revtype smallint,
+        banque_id bigint,
+        id bigint not null,
+        primary key (rev, id)
+    );
+    create table cautions (
+        actif BOOLEAN DEFAULT TRUE not null,
+        created_at date not null,
+        date_de_main_levee date,
+        date_de_prise date not null,
+        montant numeric(19,2) not null,
+        taux numeric(19,6) not null,
+        updated_at date not null,
+        banque_id bigint not null,
+        id bigint generated by default as identity,
+        marche_id bigint,
+        nature_id bigint not null,
+        designation TEXT collate ci_ai not null,
+        numero_caution varchar(255) collate ci_ai not null unique,
+        organisme TEXT collate ci_ai not null,
+        primary key (id)
+    );
+    create table cautions_aud (
+        actif BOOLEAN DEFAULT TRUE,
+        created_at date,
+        date_de_main_levee date,
+        date_de_prise date,
+        montant numeric(19,2),
+        rev integer not null,
+        revtype smallint,
+        taux numeric(19,6),
+        updated_at date,
+        banque_id bigint,
+        id bigint not null,
+        marche_id bigint,
+        nature_id bigint,
+        designation TEXT collate ci_ai,
+        numero_caution varchar(255) collate ci_ai,
+        organisme TEXT collate ci_ai,
+        primary key (rev, id)
+    );
+    create table charge_fixe_config (
+        append_periode boolean not null,
+        jour_emission integer not null,
+        mois_precedent boolean not null,
+        montant numeric(19,2) not null,
+        banque_id bigint not null,
+        id bigint generated by default as identity,
+        motif varchar(30) check (motif in ('TVA','IR','RETENUE_A_LA_SOURCE','PENALITE_DE_RETARD','DGI','ADII','IS','COMMUNAL','TVA_COMMISSION_CAUTION','TAXE_PROFESSIONNELLE','VIGNETTE','AUTRE_ASSURANCE')),
+        type varchar(30) not null check (type in ('FRAIS_BANCAIRE','IMPOT_TAXE','AGIOS','PRELEVEMENT')),
+        libelle varchar(150) collate ci_ai not null,
+        primary key (id)
+    );
+    create table charge_fixe_config_aud (
+        append_periode boolean,
+        jour_emission integer,
+        mois_precedent boolean,
+        montant numeric(19,2),
+        rev integer not null,
+        revtype smallint,
+        banque_id bigint,
+        id bigint not null,
+        motif varchar(30) check (motif in ('TVA','IR','RETENUE_A_LA_SOURCE','PENALITE_DE_RETARD','DGI','ADII','IS','COMMUNAL','TVA_COMMISSION_CAUTION','TAXE_PROFESSIONNELLE','VIGNETTE','AUTRE_ASSURANCE')),
+        type varchar(30) check (type in ('FRAIS_BANCAIRE','IMPOT_TAXE','AGIOS','PRELEVEMENT')),
+        libelle varchar(150) collate ci_ai,
+        primary key (rev, id)
+    );
+    create table cheques (
+        date_echeance date,
+        date_emission date not null,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,2) not null,
+        banque_id bigint not null,
+        id bigint generated by default as identity,
+        id_paiement varchar(50) collate ci_ai unique,
+        beneficiaire varchar(255) collate ci_ai not null,
+        emetteur varchar(255) collate ci_ai,
+        libelle varchar(255) collate ci_ai not null,
+        numero varchar(255) collate ci_ai,
+        observation varchar(255) collate ci_ai not null,
+        statut varchar(255) not null check (statut in ('ENCOURS','ANNULE','REGLE')),
+        type varchar(255) check (type in ('ENCAISSEMENT','DECAISSEMENT')),
+        primary key (id)
+    );
+    create table cheques_aud (
+        date_echeance date,
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,2),
+        rev integer not null,
+        revtype smallint,
+        banque_id bigint,
+        id bigint not null,
+        id_paiement varchar(50) collate ci_ai,
+        beneficiaire varchar(255) collate ci_ai,
+        emetteur varchar(255) collate ci_ai,
+        libelle varchar(255) collate ci_ai,
+        numero varchar(255) collate ci_ai,
+        observation varchar(255) collate ci_ai,
+        statut varchar(255) check (statut in ('ENCOURS','ANNULE','REGLE')),
+        type varchar(255) check (type in ('ENCAISSEMENT','DECAISSEMENT')),
+        primary key (rev, id)
+    );
+    create table cmt_config (
+        alerte_echeance_jours_court_terme integer not null,
+        alerte_echeance_jours_long_terme integer not null,
+        date_modification timestamp(6) with time zone not null,
+        id bigint not null,
+        primary key (id)
+    );
+    create table cmt_config_aud (
+        alerte_echeance_jours_court_terme integer,
+        alerte_echeance_jours_long_terme integer,
+        rev integer not null,
+        revtype smallint,
+        date_modification timestamp(6) with time zone,
+        id bigint not null,
+        primary key (rev, id)
+    );
+    create table commission (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,4) not null,
+        banque_id bigint not null,
+        caution_id bigint,
+        id bigint generated by default as identity,
+        impot_et_taxe_id bigint unique,
+        virement_id bigint unique,
+        operation varchar(50) not null check (operation in ('LEASING','CMT','CHEQUE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','Virement','MiseADisposition','PREFINANCEMENT','DROIT_CONSTATE','DECOMPTES','COMMISSION','AGIOS','FRAIS_BANCAIRE','FACTORING','PRELEVEMENT','CAUTION','IMPOT_TAXE','RESTITUTION','OPERATION_ERRONE','VIREMENT_INTERNATIONAL','IMPAYEE','PROVISION','Importation')),
+        status varchar(50) not null check (status in ('PREVU','PAYE')),
+        type_commission varchar(50) check (type_commission in ('PRORATA_ENTREE','MENSUELLE','CLOTURE')),
+        libelle varchar(150) collate ci_ai not null,
+        observation varchar(500) collate ci_ai not null,
+        primary key (id)
+    );
+    create table commission_aud (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,4),
+        rev integer not null,
+        revtype smallint,
+        banque_id bigint,
+        caution_id bigint,
+        id bigint not null,
+        impot_et_taxe_id bigint,
+        virement_id bigint,
+        operation varchar(50) check (operation in ('LEASING','CMT','CHEQUE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','Virement','MiseADisposition','PREFINANCEMENT','DROIT_CONSTATE','DECOMPTES','COMMISSION','AGIOS','FRAIS_BANCAIRE','FACTORING','PRELEVEMENT','CAUTION','IMPOT_TAXE','RESTITUTION','OPERATION_ERRONE','VIREMENT_INTERNATIONAL','IMPAYEE','PROVISION','Importation')),
+        status varchar(50) check (status in ('PREVU','PAYE')),
+        type_commission varchar(50) check (type_commission in ('PRORATA_ENTREE','MENSUELLE','CLOTURE')),
+        libelle varchar(150) collate ci_ai,
+        observation varchar(500) collate ci_ai,
+        primary key (rev, id)
+    );
+    create table commission_config (
+        montant numeric(19,4) not null,
+        banque_id bigint not null,
+        id bigint generated by default as identity,
+        commission_condition varchar(20) not null check (commission_condition in ('DEFAULT','SI_MATCH','SI_NON_MATCH')),
+        type varchar(50) not null check (type in ('LEASING','CMT','CHEQUE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','Virement','MiseADisposition','PREFINANCEMENT','DROIT_CONSTATE','DECOMPTES','COMMISSION','AGIOS','FRAIS_BANCAIRE','FACTORING','PRELEVEMENT','CAUTION','IMPOT_TAXE','RESTITUTION','OPERATION_ERRONE','VIREMENT_INTERNATIONAL','IMPAYEE','PROVISION')),
+        organisme_nom varchar(150) collate ci_ai,
+        primary key (id)
+    );
+    create table commission_config_aud (
+        montant numeric(19,4),
+        rev integer not null,
+        revtype smallint,
+        banque_id bigint,
+        id bigint not null,
+        commission_condition varchar(20) check (commission_condition in ('DEFAULT','SI_MATCH','SI_NON_MATCH')),
+        type varchar(50) check (type in ('LEASING','CMT','CHEQUE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','Virement','MiseADisposition','PREFINANCEMENT','DROIT_CONSTATE','DECOMPTES','COMMISSION','AGIOS','FRAIS_BANCAIRE','FACTORING','PRELEVEMENT','CAUTION','IMPOT_TAXE','RESTITUTION','OPERATION_ERRONE','VIREMENT_INTERNATIONAL','IMPAYEE','PROVISION')),
+        organisme_nom varchar(150) collate ci_ai,
+        primary key (rev, id)
+    );
+    create table contrat_cadre (
+        date_debut date not null,
+        date_fin date not null,
+        plafond numeric(19,2) not null,
+        date_creation timestamp(6) with time zone not null,
+        date_modification timestamp(6) with time zone not null,
+        id bigint generated by default as identity,
+        organisme_id bigint not null,
+        statut varchar(20) not null check (statut in ('ACTIF','EXPIRE','ARCHIVE')),
+        primary key (id)
+    );
+    create table contrat_cadre_aud (
+        date_debut date,
+        date_fin date,
+        plafond numeric(19,2),
+        rev integer not null,
+        revtype smallint,
+        date_creation timestamp(6) with time zone,
+        date_modification timestamp(6) with time zone,
+        id bigint not null,
+        organisme_id bigint,
+        statut varchar(20) check (statut in ('ACTIF','EXPIRE','ARCHIVE')),
+        primary key (rev, id)
+    );
+    create table contrat_leasing (
+        completed boolean not null,
+        date_debut date not null,
+        montant_achat numeric(38,2) not null,
+        periode_mois integer not null,
+        valeur_residuelle numeric(38,2),
+        banque_id bigint not null,
+        contrat_cadre_id bigint not null,
+        date_creation timestamp(6) with time zone not null,
+        date_modification timestamp(6) with time zone not null,
+        id bigint generated by default as identity,
+        immobilisation varchar(255) collate ci_ai not null,
+        numero_contrat varchar(255) collate ci_ai not null unique,
+        type_contrat varchar(255) not null check (type_contrat in ('LINEAIRE','PROGRESSIF','DEGRESSIF')),
+        primary key (id)
+    );
+    create table contrat_leasing_aud (
+        completed boolean,
+        date_debut date,
+        montant_achat numeric(38,2),
+        periode_mois integer,
+        rev integer not null,
+        revtype smallint,
+        valeur_residuelle numeric(38,2),
+        banque_id bigint,
+        contrat_cadre_id bigint,
+        date_creation timestamp(6) with time zone,
+        date_modification timestamp(6) with time zone,
+        id bigint not null,
+        immobilisation varchar(255) collate ci_ai,
+        numero_contrat varchar(255) collate ci_ai,
+        type_contrat varchar(255) check (type_contrat in ('LINEAIRE','PROGRESSIF','DEGRESSIF')),
+        primary key (rev, id)
+    );
+    create table contrat_leasing_phase (
+        duree_mois integer not null check (duree_mois>=1),
+        mensualite_ttc numeric(38,2) not null,
+        numero_phase integer not null check (numero_phase>=1),
+        contrat_leasing_id bigint not null,
+        date_creation timestamp(6) with time zone not null,
+        date_modification timestamp(6) with time zone not null,
+        id bigint generated by default as identity,
+        primary key (id)
+    );
+    create table contrat_leasing_phase_aud (
+        duree_mois integer,
+        mensualite_ttc numeric(38,2),
+        numero_phase integer,
+        rev integer not null,
+        revtype smallint,
+        contrat_leasing_id bigint,
+        date_creation timestamp(6) with time zone,
+        date_modification timestamp(6) with time zone,
+        id bigint not null,
+        primary key (rev, id)
+    );
+    create table credit_moyen_terme (
+        completed boolean not null,
+        date_debut date not null,
+        duree integer not null,
+        echeance numeric(38,2) not null,
+        nominal numeric(38,2) not null,
+        periodicite integer not null,
+        taux numeric(38,2) not null,
+        banque_id bigint not null,
+        date_creation timestamp(6) with time zone not null,
+        date_modification timestamp(6) with time zone not null,
+        id bigint generated by default as identity,
+        designation varchar(255) collate ci_ai not null,
+        primary key (id)
+    );
+    create table credit_moyen_terme_aud (
+        completed boolean,
+        date_debut date,
+        duree integer,
+        echeance numeric(38,2),
+        nominal numeric(38,2),
+        periodicite integer,
+        rev integer not null,
+        revtype smallint,
+        taux numeric(38,2),
+        banque_id bigint,
+        date_creation timestamp(6) with time zone,
+        date_modification timestamp(6) with time zone,
+        id bigint not null,
+        designation varchar(255) collate ci_ai,
+        primary key (rev, id)
+    );
+    create table decompte (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,2),
+        banque_encaissement_id bigint not null,
+        id bigint generated by default as identity,
+        marche_id bigint,
+        libelle varchar(255) collate ci_ai not null,
+        observation varchar(255) collate ci_ai not null,
+        status varchar(255) not null check (status in ('PREVU','PAYE')),
+        primary key (id)
+    );
+    create table decompte_aud (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,2),
+        rev integer not null,
+        revtype smallint,
+        banque_encaissement_id bigint,
+        id bigint not null,
+        marche_id bigint,
+        libelle varchar(255) collate ci_ai,
+        observation varchar(255) collate ci_ai,
+        status varchar(255) check (status in ('PREVU','PAYE')),
+        primary key (rev, id)
+    );
+    create table department (
+        created_at timestamp(6) with time zone not null,
+        id bigint generated by default as identity,
+        name varchar(100) collate ci_ai not null unique,
+        description varchar(255) collate ci_ai,
+        primary key (id)
+    );
+    create table department_aud (
+        rev integer not null,
+        revtype smallint,
+        created_at timestamp(6) with time zone,
+        id bigint not null,
+        name varchar(100) collate ci_ai,
+        description varchar(255) collate ci_ai,
+        primary key (rev, id)
+    );
+    create table droit_constate_aud (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(38,2),
+        rev integer not null,
+        revtype smallint,
+        banque_id bigint,
+        id bigint not null,
+        ligne_fonctionnelle_id bigint,
+        ligne_fonctionnelle_specifique_id bigint,
+        marche_id bigint,
+        libelle varchar(255) collate ci_ai,
+        observation varchar(255) collate ci_ai,
+        status varchar(255) check (status in ('PREVU','PAYE')),
+        type varchar(255) check (type in ('REMBOURSEMENT','DEBLOCAGE')),
+        primary key (rev, id)
+    );
+    create table droit_constate (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(38,2),
+        banque_id bigint not null,
+        id bigint generated by default as identity,
+        ligne_fonctionnelle_id bigint,
+        ligne_fonctionnelle_specifique_id bigint,
+        marche_id bigint,
+        libelle varchar(255) collate ci_ai not null,
+        observation varchar(255) collate ci_ai not null,
+        status varchar(255) check (status in ('PREVU','PAYE')),
+        type varchar(255) check (type in ('REMBOURSEMENT','DEBLOCAGE')),
+        primary key (id)
+    );
+    create table echeance_cmt (
+        date_echeance date not null,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,2) not null,
+        numero_echeance integer not null,
+        credit_moyen_terme_id bigint not null,
+        date_creation timestamp(6) with time zone not null,
+        date_modification timestamp(6) with time zone not null,
+        id bigint generated by default as identity,
+        libelle varchar(255) collate ci_ai not null,
+        observation varchar(255) collate ci_ai not null,
+        statut_paiement varchar(255) not null check (statut_paiement in ('PREVU','PAYE')),
+        primary key (id)
+    );
+    create table echeance_cmt_aud (
+        date_echeance date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,2),
+        numero_echeance integer,
+        rev integer not null,
+        revtype smallint,
+        credit_moyen_terme_id bigint,
+        date_creation timestamp(6) with time zone,
+        date_modification timestamp(6) with time zone,
+        id bigint not null,
+        libelle varchar(255) collate ci_ai,
+        observation varchar(255) collate ci_ai,
+        statut_paiement varchar(255) check (statut_paiement in ('PREVU','PAYE')),
+        primary key (rev, id)
+    );
+    create table echeance_leasing (
+        date_echeance date not null,
+        date_operation date,
+        date_valeur date,
+        montant_ttc numeric(19,2) not null,
+        numero_echeance integer not null,
+        contrat_leasing_id bigint not null,
+        date_creation timestamp(6) with time zone not null,
+        date_modification timestamp(6) with time zone not null,
+        id bigint generated by default as identity,
+        libelle varchar(255) collate ci_ai not null,
+        observation varchar(255) collate ci_ai not null,
+        statut_paiement varchar(255) not null check (statut_paiement in ('PREVU','PAYE')),
+        primary key (id)
+    );
+    create table echeance_leasing_aud (
+        date_echeance date,
+        date_operation date,
+        date_valeur date,
+        montant_ttc numeric(19,2),
+        numero_echeance integer,
+        rev integer not null,
+        revtype smallint,
+        contrat_leasing_id bigint,
+        date_creation timestamp(6) with time zone,
+        date_modification timestamp(6) with time zone,
+        id bigint not null,
+        libelle varchar(255) collate ci_ai,
+        observation varchar(255) collate ci_ai,
+        statut_paiement varchar(255) check (statut_paiement in ('PREVU','PAYE')),
+        primary key (rev, id)
+    );
+    create table factoring (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(38,2),
+        id bigint generated by default as identity,
+        ligne_fonctionnelle_id bigint,
+        ligne_fonctionnelle_specifique_id bigint,
+        marche_id bigint,
+        libelle varchar(255) collate ci_ai not null,
+        observation varchar(255) collate ci_ai not null,
+        status varchar(255) check (status in ('PREVU','PAYE')),
+        type varchar(255) check (type in ('REMBOURSEMENT','DEBLOCAGE')),
+        primary key (id)
+    );
+    create table factoring_aud (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(38,2),
+        rev integer not null,
+        revtype smallint,
+        id bigint not null,
+        ligne_fonctionnelle_id bigint,
+        ligne_fonctionnelle_specifique_id bigint,
+        marche_id bigint,
+        libelle varchar(255) collate ci_ai,
+        observation varchar(255) collate ci_ai,
+        status varchar(255) check (status in ('PREVU','PAYE')),
+        type varchar(255) check (type in ('REMBOURSEMENT','DEBLOCAGE')),
+        primary key (rev, id)
+    );
+    create table frais_bancaire_aud (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,4),
+        rev integer not null,
+        revtype smallint,
+        banque_id bigint,
+        id bigint not null,
+        status varchar(50) check (status in ('PREVU','PAYE')),
+        libelle varchar(150) collate ci_ai,
+        observation varchar(500) collate ci_ai,
+        primary key (rev, id)
+    );
+    create table frais_bancaire (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,4) not null,
+        banque_id bigint not null,
+        id bigint generated by default as identity,
+        status varchar(50) not null check (status in ('PREVU','PAYE')),
+        libelle varchar(150) collate ci_ai not null,
+        observation varchar(500) collate ci_ai not null,
+        primary key (id)
+    );
+    create table impayee (
+        date_emission date not null,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,4) not null,
+        banque_id bigint not null,
+        date_creation timestamp(6) with time zone not null,
+        date_modification timestamp(6) with time zone not null,
+        id bigint generated by default as identity,
+        libelle varchar(500) collate ci_ai not null,
+        observation varchar(500) collate ci_ai not null,
+        motif varchar(255) not null check (motif in ('LEASING','CMT','CHEQUE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','Virement','MiseADisposition','PREFINANCEMENT','DROIT_CONSTATE','DECOMPTES','COMMISSION','AGIOS','FRAIS_BANCAIRE','FACTORING','PRELEVEMENT','CAUTION','IMPOT_TAXE','RESTITUTION','OPERATION_ERRONE','VIREMENT_INTERNATIONAL','IMPAYEE','PROVISION')),
+        numero varchar(255) collate ci_ai,
+        status varchar(255) not null check (status in ('PREVU','PAYE')),
+        type varchar(255) not null check (type in ('ENCAISSEMENT','DECAISSEMENT')),
+        primary key (id)
+    );
+    create table impayee_aud (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,4),
+        rev integer not null,
+        revtype smallint,
+        banque_id bigint,
+        date_creation timestamp(6) with time zone,
+        date_modification timestamp(6) with time zone,
+        id bigint not null,
+        libelle varchar(500) collate ci_ai,
+        observation varchar(500) collate ci_ai,
+        motif varchar(255) check (motif in ('LEASING','CMT','CHEQUE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','Virement','MiseADisposition','PREFINANCEMENT','DROIT_CONSTATE','DECOMPTES','COMMISSION','AGIOS','FRAIS_BANCAIRE','FACTORING','PRELEVEMENT','CAUTION','IMPOT_TAXE','RESTITUTION','OPERATION_ERRONE','VIREMENT_INTERNATIONAL','IMPAYEE','PROVISION')),
+        numero varchar(255) collate ci_ai,
+        status varchar(255) check (status in ('PREVU','PAYE')),
+        type varchar(255) check (type in ('ENCAISSEMENT','DECAISSEMENT')),
+        primary key (rev, id)
+    );
+    create table impot_et_taxe (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,4) not null,
+        banque_id bigint not null,
+        caution_id bigint,
+        commission_id bigint unique,
+        date_creation timestamp(6) with time zone not null,
+        date_modification timestamp(6) with time zone not null,
+        id bigint generated by default as identity,
+        motif varchar(50) not null check (motif in ('TVA','IR','RETENUE_A_LA_SOURCE','PENALITE_DE_RETARD','DGI','ADII','IS','COMMUNAL','TVA_COMMISSION_CAUTION','TAXE_PROFESSIONNELLE','VIGNETTE','AUTRE_ASSURANCE')),
+        status varchar(50) not null check (status in ('PREVU','PAYE')),
+        libelle varchar(500) collate ci_ai not null,
+        observation varchar(500) collate ci_ai not null,
+        primary key (id)
+    );
+    create table impot_et_taxe_aud (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,4),
+        rev integer not null,
+        revtype smallint,
+        banque_id bigint,
+        caution_id bigint,
+        commission_id bigint,
+        date_creation timestamp(6) with time zone,
+        date_modification timestamp(6) with time zone,
+        id bigint not null,
+        motif varchar(50) check (motif in ('TVA','IR','RETENUE_A_LA_SOURCE','PENALITE_DE_RETARD','DGI','ADII','IS','COMMUNAL','TVA_COMMISSION_CAUTION','TAXE_PROFESSIONNELLE','VIGNETTE','AUTRE_ASSURANCE')),
+        status varchar(50) check (status in ('PREVU','PAYE')),
+        libelle varchar(500) collate ci_ai,
+        observation varchar(500) collate ci_ai,
+        primary key (rev, id)
+    );
+    create table lcns (
+        date_echeance date not null,
+        date_emission date not null,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,2) not null,
+        banque_id bigint not null,
+        id bigint generated by default as identity,
+        ligne_fonctionnelle_id bigint,
+        id_paiement varchar(50) collate ci_ai unique,
+        beneficiaire varchar(255) collate ci_ai not null,
+        emetteur varchar(255) collate ci_ai,
+        libelle varchar(255) collate ci_ai not null,
+        nature_lcn varchar(255) check (nature_lcn in ('ENCAISSEMENT','ESCOMPTE')),
+        numero varchar(255) collate ci_ai,
+        observation varchar(255) collate ci_ai not null,
+        statut varchar(255) not null check (statut in ('ENCOURS','ANNULE','REGLE')),
+        type varchar(255) check (type in ('ENCAISSEMENT','DECAISSEMENT')),
+        primary key (id)
+    );
+    create table lcns_aud (
+        date_echeance date,
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,2),
+        rev integer not null,
+        revtype smallint,
+        banque_id bigint,
+        id bigint not null,
+        ligne_fonctionnelle_id bigint,
+        id_paiement varchar(50) collate ci_ai,
+        beneficiaire varchar(255) collate ci_ai,
+        emetteur varchar(255) collate ci_ai,
+        libelle varchar(255) collate ci_ai,
+        nature_lcn varchar(255) check (nature_lcn in ('ENCAISSEMENT','ESCOMPTE')),
+        numero varchar(255) collate ci_ai,
+        observation varchar(255) collate ci_ai,
+        statut varchar(255) check (statut in ('ENCOURS','ANNULE','REGLE')),
+        type varchar(255) check (type in ('ENCAISSEMENT','DECAISSEMENT')),
+        primary key (rev, id)
+    );
+    create table leasing_config (
+        alerte_echeance_jours_court_terme integer not null,
+        alerte_echeance_jours_long_terme integer not null,
+        taux_tva numeric(6,4) not null,
+        valeur_residuelle numeric(6,4) not null,
+        date_modification timestamp(6) with time zone not null,
+        id bigint not null,
+        primary key (id)
+    );
+    create table leasing_config_aud (
+        alerte_echeance_jours_court_terme integer,
+        alerte_echeance_jours_long_terme integer,
+        rev integer not null,
+        revtype smallint,
+        taux_tva numeric(6,4),
+        valeur_residuelle numeric(6,4),
+        date_modification timestamp(6) with time zone,
+        id bigint not null,
+        primary key (rev, id)
+    );
+    create table ligne_fonctionnelle (
+        actif boolean not null,
+        date_depart date not null,
+        date_fin date not null,
+        plafond numeric(38,2),
+        taux numeric(38,2) not null,
+        banque_id bigint not null,
+        date_creation timestamp(6) with time zone not null,
+        date_modification timestamp(6) with time zone not null,
+        id bigint generated by default as identity,
+        ligne_mere_id bigint,
+        nature_ligne_id bigint not null,
+        primary key (id)
+    );
+    create table ligne_fonctionnelle_aud (
+        actif boolean,
+        date_depart date,
+        date_fin date,
+        plafond numeric(38,2),
+        rev integer not null,
+        revtype smallint,
+        taux numeric(38,2),
+        banque_id bigint,
+        date_creation timestamp(6) with time zone,
+        date_modification timestamp(6) with time zone,
+        id bigint not null,
+        ligne_mere_id bigint,
+        nature_ligne_id bigint,
+        primary key (rev, id)
+    );
+    create table ligne_fonctionnelle_config (
+        alert_threshold_months integer not null,
+        warning_threshold_months integer not null,
+        date_modification timestamp(6) with time zone not null,
+        id bigint not null,
+        primary key (id)
+    );
+    create table ligne_fonctionnelle_config_aud (
+        alert_threshold_months integer,
+        rev integer not null,
+        revtype smallint,
+        warning_threshold_months integer,
+        date_modification timestamp(6) with time zone,
+        id bigint not null,
+        primary key (rev, id)
+    );
+    create table ligne_fonctionnelle_marche (
+        ligne_id bigint not null,
+        marche_id bigint not null
+    );
+    create table ligne_fonctionnelle_marche_aud (
+        rev integer not null,
+        revtype smallint,
+        ligne_id bigint not null,
+        marche_id bigint not null,
+        primary key (rev, ligne_id, marche_id)
+    );
+    create table ligne_fonctionnelle_specifique (
+        actif boolean not null,
+        date_depart date not null,
+        date_fin date not null,
+        plafond numeric(38,2) not null,
+        taux numeric(38,2) not null,
+        date_creation timestamp(6) with time zone not null,
+        date_modification timestamp(6) with time zone not null,
+        id bigint generated by default as identity,
+        marche_id bigint not null,
+        nature_ligne_id bigint not null,
+        primary key (id)
+    );
+    create table ligne_fonctionnelle_specifique_aud (
+        actif boolean,
+        date_depart date,
+        date_fin date,
+        plafond numeric(38,2),
+        rev integer not null,
+        revtype smallint,
+        taux numeric(38,2),
+        date_creation timestamp(6) with time zone,
+        date_modification timestamp(6) with time zone,
+        id bigint not null,
+        marche_id bigint,
+        nature_ligne_id bigint,
+        primary key (rev, id)
+    );
+    create table log (
+        revision_number integer,
+        entity_id bigint not null,
+        id bigint generated by default as identity,
+        timestamp timestamp(6) with time zone not null,
+        entity_name varchar(255) collate ci_ai not null,
+        operation_type varchar(255) collate ci_ai not null,
+        user_name varchar(255) collate ci_ai not null,
+        primary key (id)
+    );
+    create table log_entry_detail (
+        id bigint generated by default as identity,
+        log_id bigint not null,
+        field_name varchar(255) collate ci_ai not null,
+        new_value TEXT collate ci_ai,
+        old_value TEXT collate ci_ai,
+        primary key (id)
+    );
+    create table marches (
+        actif boolean not null,
+        created_at date not null,
+        date_d_achievement_des_travaux date,
+        date_debut_des_travaux date,
+        modified_at date not null,
+        montant numeric(19,2) not null,
+        banque_id bigint not null,
+        id bigint generated by default as identity,
+        numero varchar(50) collate ci_ai not null unique,
+        maitre_douvrage varchar(255) collate ci_ai not null,
+        nom varchar(255) collate ci_ai not null,
+        primary key (id)
+    );
+    create table marches_aud (
+        actif boolean,
+        created_at date,
+        date_d_achievement_des_travaux date,
+        date_debut_des_travaux date,
+        modified_at date,
+        montant numeric(19,2),
+        rev integer not null,
+        revtype smallint,
+        banque_id bigint,
+        id bigint not null,
+        numero varchar(50) collate ci_ai,
+        maitre_douvrage varchar(255) collate ci_ai,
+        nom varchar(255) collate ci_ai,
+        primary key (rev, id)
+    );
+    create table mises_a_disposition (
+        date_emission date not null,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,2) not null,
+        banque_id bigint not null,
+        id bigint generated by default as identity,
+        id_paiement varchar(50) collate ci_ai unique,
+        beneficiaire varchar(255) collate ci_ai not null,
+        cin_beneficiaire varchar(255) collate ci_ai,
+        emetteur varchar(255) collate ci_ai,
+        libelle varchar(255) collate ci_ai not null,
+        numero varchar(255) collate ci_ai,
+        observation varchar(255) collate ci_ai not null,
+        statut varchar(255) not null check (statut in ('ENCOURS','ANNULE','REGLE')),
+        type varchar(255) check (type in ('ENCAISSEMENT','DECAISSEMENT')),
+        primary key (id)
+    );
+    create table mises_a_disposition_aud (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,2),
+        rev integer not null,
+        revtype smallint,
+        banque_id bigint,
+        id bigint not null,
+        id_paiement varchar(50) collate ci_ai,
+        beneficiaire varchar(255) collate ci_ai,
+        cin_beneficiaire varchar(255) collate ci_ai,
+        emetteur varchar(255) collate ci_ai,
+        libelle varchar(255) collate ci_ai,
+        numero varchar(255) collate ci_ai,
+        observation varchar(255) collate ci_ai,
+        statut varchar(255) check (statut in ('ENCOURS','ANNULE','REGLE')),
+        type varchar(255) check (type in ('ENCAISSEMENT','DECAISSEMENT')),
+        primary key (rev, id)
+    );
+    create table nature_ligne_fonctionnelle (
+        date_creation date not null,
+        date_modification date not null,
+        id bigint generated by default as identity,
+        code varchar(20) collate ci_ai not null unique,
+        portee varchar(30) not null check (portee in ('GENERALE','SPECIFIQUE','GENERALE_ET_SPECIFIQUE')),
+        description varchar(255) collate ci_ai not null,
+        label varchar(255) collate ci_ai not null unique,
+        primary key (id)
+    );
+    create table nature_ligne_fonctionnelle_aud (
+        date_creation date,
+        date_modification date,
+        rev integer not null,
+        revtype smallint,
+        id bigint not null,
+        code varchar(20) collate ci_ai,
+        portee varchar(30) check (portee in ('GENERALE','SPECIFIQUE','GENERALE_ET_SPECIFIQUE')),
+        description varchar(255) collate ci_ai,
+        label varchar(255) collate ci_ai,
+        primary key (rev, id)
+    );
+    create table notifications (
+        id bigint generated by default as identity,
+        timestamp timestamp(6) with time zone,
+        content TEXT collate ci_ai,
+        title varchar(255) collate ci_ai,
+        type varchar(255) check (type in ('INFO','WARNING','ALERT','SUCCESS')),
+        primary key (id)
+    );
+    create table notifications_aud (
+        rev integer not null,
+        revtype smallint,
+        id bigint not null,
+        timestamp timestamp(6) with time zone,
+        content TEXT collate ci_ai,
+        title varchar(255) collate ci_ai,
+        type varchar(255) check (type in ('INFO','WARNING','ALERT','SUCCESS')),
+        primary key (rev, id)
+    );
+    create table operation_errone_aud (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,4),
+        rev integer not null,
+        revtype smallint,
+        banque_id bigint,
+        id bigint not null,
+        motif varchar(50) check (motif in ('LEASING','CMT','CHEQUE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','Virement','MiseADisposition','PREFINANCEMENT','DROIT_CONSTATE','DECOMPTES','COMMISSION','AGIOS','FRAIS_BANCAIRE','FACTORING','PRELEVEMENT','CAUTION','IMPOT_TAXE','RESTITUTION','OPERATION_ERRONE','VIREMENT_INTERNATIONAL','IMPAYEE','PROVISION')),
+        status varchar(50) check (status in ('PREVU','PAYE')),
+        libelle varchar(150) collate ci_ai,
+        observation varchar(500) collate ci_ai,
+        primary key (rev, id)
+    );
+    create table operation_errone (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,4) not null,
+        banque_id bigint not null,
+        id bigint generated by default as identity,
+        motif varchar(50) not null check (motif in ('LEASING','CMT','CHEQUE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','Virement','MiseADisposition','PREFINANCEMENT','DROIT_CONSTATE','DECOMPTES','COMMISSION','AGIOS','FRAIS_BANCAIRE','FACTORING','PRELEVEMENT','CAUTION','IMPOT_TAXE','RESTITUTION','OPERATION_ERRONE','VIREMENT_INTERNATIONAL','IMPAYEE','PROVISION')),
+        status varchar(50) not null check (status in ('PREVU','PAYE')),
+        libelle varchar(150) collate ci_ai not null,
+        observation varchar(500) collate ci_ai not null,
+        primary key (id)
+    );
+    create table organisme_leasing (
+        date_creation timestamp(6) with time zone not null,
+        date_modification timestamp(6) with time zone not null,
+        id bigint generated by default as identity,
+        nom varchar(255) collate ci_ai not null,
+        primary key (id)
+    );
+    create table organisme_leasing_aud (
+        rev integer not null,
+        revtype smallint,
+        date_creation timestamp(6) with time zone,
+        date_modification timestamp(6) with time zone,
+        id bigint not null,
+        nom varchar(255) collate ci_ai,
+        primary key (rev, id)
+    );
+    create table prefinancement (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(38,2),
+        id bigint generated by default as identity,
+        ligne_fonctionnelle_id bigint,
+        ligne_fonctionnelle_specifique_id bigint,
+        marche_id bigint,
+        libelle varchar(255) collate ci_ai not null,
+        observation varchar(255) collate ci_ai not null,
+        status varchar(255) check (status in ('PREVU','PAYE')),
+        type varchar(255) check (type in ('REMBOURSEMENT','DEBLOCAGE')),
+        primary key (id)
+    );
+    create table prefinancement_aud (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(38,2),
+        rev integer not null,
+        revtype smallint,
+        id bigint not null,
+        ligne_fonctionnelle_id bigint,
+        ligne_fonctionnelle_specifique_id bigint,
+        marche_id bigint,
+        libelle varchar(255) collate ci_ai,
+        observation varchar(255) collate ci_ai,
+        status varchar(255) check (status in ('PREVU','PAYE')),
+        type varchar(255) check (type in ('REMBOURSEMENT','DEBLOCAGE')),
+        primary key (rev, id)
+    );
+    create table prelevement (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,4) not null,
+        banque_id bigint not null,
+        id bigint generated by default as identity,
+        status varchar(50) not null check (status in ('PREVU','PAYE')),
+        libelle varchar(150) collate ci_ai not null,
+        observation varchar(500) collate ci_ai not null,
+        primary key (id)
+    );
+    create table prelevement_aud (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,4),
+        rev integer not null,
+        revtype smallint,
+        banque_id bigint,
+        id bigint not null,
+        status varchar(50) check (status in ('PREVU','PAYE')),
+        libelle varchar(150) collate ci_ai,
+        observation varchar(500) collate ci_ai,
+        primary key (rev, id)
+    );
+    create table provision (
+        date_emission date not null,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,4) not null,
+        banque_id bigint not null,
+        id bigint generated by default as identity,
+        sens varchar(20) not null check (sens in ('DECAISSEMENT','ENCAISSEMENT')),
+        motif varchar(50) not null check (motif in ('LEASING','CMT','CHEQUE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','Virement','MiseADisposition','PREFINANCEMENT','DROIT_CONSTATE','DECOMPTES','COMMISSION','AGIOS','FRAIS_BANCAIRE','FACTORING','PRELEVEMENT','CAUTION','IMPOT_TAXE','RESTITUTION','OPERATION_ERRONE','VIREMENT_INTERNATIONAL','IMPAYEE','PROVISION')),
+        status varchar(50) not null check (status in ('PREVU','PAYE')),
+        libelle varchar(150) collate ci_ai not null,
+        observation varchar(500) collate ci_ai not null,
+        primary key (id)
+    );
+    create table provision_aud (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,4),
+        rev integer not null,
+        revtype smallint,
+        banque_id bigint,
+        id bigint not null,
+        sens varchar(20) check (sens in ('DECAISSEMENT','ENCAISSEMENT')),
+        motif varchar(50) check (motif in ('LEASING','CMT','CHEQUE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','Virement','MiseADisposition','PREFINANCEMENT','DROIT_CONSTATE','DECOMPTES','COMMISSION','AGIOS','FRAIS_BANCAIRE','FACTORING','PRELEVEMENT','CAUTION','IMPOT_TAXE','RESTITUTION','OPERATION_ERRONE','VIREMENT_INTERNATIONAL','IMPAYEE','PROVISION')),
+        status varchar(50) check (status in ('PREVU','PAYE')),
+        libelle varchar(150) collate ci_ai,
+        observation varchar(500) collate ci_ai,
+        primary key (rev, id)
+    );
+    create table rapprochement (
+        solde_debut numeric(38,2),
+        banque_id bigint not null,
+        created_at timestamp(6) with time zone not null,
+        id bigint generated by default as identity,
+        updated_at timestamp(6) with time zone not null,
+        statut varchar(255) not null check (statut in ('EN_COURS','CLOTURE_PROVISOIRE','CLOTURE_DEFINITIVE')),
+        date_rapprochement bytea not null,
+        primary key (id)
+    );
+    create table rapprochement_aud (
+        rev integer not null,
+        revtype smallint,
+        solde_debut numeric(38,2),
+        banque_id bigint,
+        created_at timestamp(6) with time zone,
+        id bigint not null,
+        updated_at timestamp(6) with time zone,
+        statut varchar(255) check (statut in ('EN_COURS','CLOTURE_PROVISOIRE','CLOTURE_DEFINITIVE')),
+        date_rapprochement bytea,
+        primary key (rev, id)
+    );
+    create table refresh_token (
+        created_at timestamp(6) with time zone not null,
+        expires_at timestamp(6) with time zone not null,
+        id bigint generated by default as identity,
+        revoked_at timestamp(6) with time zone,
+        rotated_at timestamp(6) with time zone,
+        family_id varchar(36) collate ci_ai not null,
+        username varchar(50) collate ci_ai not null,
+        token_hash varchar(64) collate ci_ai not null unique,
+        primary key (id)
+    );
+    create table restitution (
+        date_emission date not null,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,4) not null,
+        banque_id bigint not null,
+        id bigint generated by default as identity,
+        status varchar(50) not null check (status in ('PREVU','PAYE')),
+        libelle varchar(150) collate ci_ai not null,
+        observation varchar(500) collate ci_ai not null,
+        primary key (id)
+    );
+    create table restitution_aud (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,4),
+        rev integer not null,
+        revtype smallint,
+        banque_id bigint,
+        id bigint not null,
+        status varchar(50) check (status in ('PREVU','PAYE')),
+        libelle varchar(150) collate ci_ai,
+        observation varchar(500) collate ci_ai,
+        primary key (rev, id)
+    );
+    create table transaction (
+        credit numeric(19,2),
+        date_emission date,
+        date_operations date,
+        date_valeur date,
+        debit numeric(19,2),
+        tva_collectee numeric(38,2),
+        tva_deductible numeric(38,2),
+        banque_id bigint,
+        created_at timestamp(6) with time zone,
+        id bigint generated by default as identity,
+        rapprochement_id bigint not null,
+        referent bigint,
+        updated_at timestamp(6) with time zone,
+        transaction_source varchar(100) check (transaction_source in ('LEASING','CMT','CHEQUE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','Virement','MiseADisposition','PREFINANCEMENT','DROIT_CONSTATE','DECOMPTES','COMMISSION','AGIOS','FRAIS_BANCAIRE','FACTORING','PRELEVEMENT','CAUTION','IMPOT_TAXE','RESTITUTION','OPERATION_ERRONE','VIREMENT_INTERNATIONAL','IMPAYEE','PROVISION')),
+        libelle TEXT collate ci_ai not null,
+        observation varchar(255) collate ci_ai not null,
+        primary key (id)
+    );
+    create table transaction_aud (
+        credit numeric(19,2),
+        date_emission date,
+        date_operations date,
+        date_valeur date,
+        debit numeric(19,2),
+        rev integer not null,
+        revtype smallint,
+        tva_collectee numeric(38,2),
+        tva_deductible numeric(38,2),
+        banque_id bigint,
+        created_at timestamp(6) with time zone,
+        id bigint not null,
+        rapprochement_id bigint,
+        referent bigint,
+        updated_at timestamp(6) with time zone,
+        transaction_source varchar(100) check (transaction_source in ('LEASING','CMT','CHEQUE','LCN','LCN_DECAISSEMENT','LCN_ENCAISSEMENT','LCN_ESCOMPTE','Virement','MiseADisposition','PREFINANCEMENT','DROIT_CONSTATE','DECOMPTES','COMMISSION','AGIOS','FRAIS_BANCAIRE','FACTORING','PRELEVEMENT','CAUTION','IMPOT_TAXE','RESTITUTION','OPERATION_ERRONE','VIREMENT_INTERNATIONAL','IMPAYEE','PROVISION')),
+        libelle TEXT collate ci_ai,
+        observation varchar(255) collate ci_ai,
+        primary key (rev, id)
+    );
+    create table user_department_role (
+        department_id bigint not null,
+        id bigint generated by default as identity,
+        user_id bigint not null,
+        role_in_dept varchar(20) not null check (role_in_dept in ('MEMBER','DIRECTOR')),
+        primary key (id),
+        constraint uq_user_dept unique (user_id, department_id)
+    );
+    create table user_department_role_aud (
+        rev integer not null,
+        revtype smallint,
+        department_id bigint,
+        id bigint not null,
+        user_id bigint,
+        role_in_dept varchar(20) check (role_in_dept in ('MEMBER','DIRECTOR')),
+        primary key (rev, id)
+    );
+    create table user_notification_status (
+        is_read boolean not null,
+        id bigint generated by default as identity,
+        notification_id bigint not null,
+        user_id bigint not null,
+        primary key (id),
+        unique (notification_id, user_id)
+    );
+    create table user_notification_status_aud (
+        is_read boolean,
+        rev integer not null,
+        revtype smallint,
+        id bigint not null,
+        notification_id bigint,
+        user_id bigint,
+        primary key (rev, id)
+    );
+    create table users (
+        enabled boolean not null,
+        is_system_admin boolean not null,
+        id bigint generated by default as identity,
+        username varchar(50) collate ci_ai not null unique,
+        password varchar(255) collate ci_ai not null,
+        primary key (id)
+    );
+    create table users_aud (
+        enabled boolean,
+        is_system_admin boolean,
+        rev integer not null,
+        revtype smallint,
+        id bigint not null,
+        username varchar(50) collate ci_ai,
+        primary key (rev, id)
+    );
+    create table virements (
+        date_emission date not null,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,2) not null,
+        banque_beneficiare_id bigint,
+        banque_emettrice_id bigint,
+        id bigint generated by default as identity,
+        id_paiement varchar(50) collate ci_ai unique,
+        beneficiaire varchar(255) collate ci_ai not null,
+        emetteur varchar(255) collate ci_ai,
+        libelle varchar(255) collate ci_ai not null,
+        nom_banque_beneficiaire_libre varchar(255) collate ci_ai,
+        numero varchar(255) collate ci_ai,
+        observation varchar(255) collate ci_ai not null,
+        rib_beneficiaire varchar(255) collate ci_ai,
+        statut varchar(255) not null check (statut in ('ENCOURS','ANNULE','REGLE')),
+        type varchar(255) check (type in ('ENCAISSEMENT','DECAISSEMENT')),
+        primary key (id)
+    );
+    create table virements_aud (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,2),
+        rev integer not null,
+        revtype smallint,
+        banque_beneficiare_id bigint,
+        banque_emettrice_id bigint,
+        id bigint not null,
+        id_paiement varchar(50) collate ci_ai,
+        beneficiaire varchar(255) collate ci_ai,
+        emetteur varchar(255) collate ci_ai,
+        libelle varchar(255) collate ci_ai,
+        nom_banque_beneficiaire_libre varchar(255) collate ci_ai,
+        numero varchar(255) collate ci_ai,
+        observation varchar(255) collate ci_ai,
+        rib_beneficiaire varchar(255) collate ci_ai,
+        statut varchar(255) check (statut in ('ENCOURS','ANNULE','REGLE')),
+        type varchar(255) check (type in ('ENCAISSEMENT','DECAISSEMENT')),
+        primary key (rev, id)
+    );
+    create table virements_internationaux (
+        date_emission date not null,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,2) not null,
+        banque_id bigint not null,
+        id bigint generated by default as identity,
+        beneficiaire varchar(255) collate ci_ai,
+        emetteur varchar(255) collate ci_ai,
+        libelle varchar(255) collate ci_ai not null,
+        observation varchar(255) collate ci_ai not null,
+        statut varchar(255) not null check (statut in ('ENCOURS','ANNULE','REGLE')),
+        type varchar(255) not null check (type in ('ENCAISSEMENT','DECAISSEMENT')),
+        primary key (id)
+    );
+    create table virements_internationaux_aud (
+        date_emission date,
+        date_operation date,
+        date_valeur date,
+        montant numeric(19,2),
+        rev integer not null,
+        revtype smallint,
+        banque_id bigint,
+        id bigint not null,
+        beneficiaire varchar(255) collate ci_ai,
+        emetteur varchar(255) collate ci_ai,
+        libelle varchar(255) collate ci_ai,
+        observation varchar(255) collate ci_ai,
+        statut varchar(255) check (statut in ('ENCOURS','ANNULE','REGLE')),
+        type varchar(255) check (type in ('ENCAISSEMENT','DECAISSEMENT')),
+        primary key (rev, id)
+    );
+    create index idx_agios_banque_id 
+       on agios (banque_id);
+    create index idx_agios_status 
+       on agios (status);
+    create index idx_agios_date_emission 
+       on agios (date_emission);
+    create index idx_agios_jour_banque_id 
+       on agios_journalier (banque_id);
+    create index idx_agios_jour_type_agios 
+       on agios_journalier (type_agios);
+    create index idx_agios_jour_marche_id 
+       on agios_journalier (marche_id);
+    create index idx_agios_jour_trimestre_id 
+       on agios_journalier (trimestre_id);
+    create index idx_agios_trim_banque_id 
+       on agios_trimestriel (banque_id);
+    create index idx_agios_trim_statut 
+       on agios_trimestriel (statut);
+    create index idx_agios_trim_type_agios 
+       on agios_trimestriel (type_agios);
+    create index idx_banque_numero_compte 
+       on banque (numero_compte);
+    create index idx_banque_nom 
+       on banque (nom);
+    create index idx_banque_devise 
+       on banque (devise);
+    create index idx_caution_commission_config_banque 
+       on caution_commission_config (banque_id);
+    create index idx_caution_numero 
+       on cautions (numero_caution);
+    create index idx_caution_banque_id 
+       on cautions (banque_id);
+    create index idx_caution_nature_id 
+       on cautions (nature_id);
+    create index idx_caution_marche_id 
+       on cautions (marche_id);
+    create index idx_caution_actif 
+       on cautions (actif);
+    create index idx_charge_fixe_config_banque 
+       on charge_fixe_config (banque_id);
+    create index idx_cheque_numero 
+       on cheques (numero);
+    create index idx_cheque_banque_id 
+       on cheques (banque_id);
+    create index idx_cheque_statut 
+       on cheques (statut);
+    create index idx_cheque_date_emission 
+       on cheques (date_emission);
+    create index idx_cheque_type 
+       on cheques (type);
+    create index idx_commission_config_banque_type 
+       on commission_config (banque_id, type);
+    create index idx_commission_config_condition 
+       on commission_config (commission_condition);
+    create index idx_contrat_cadre_organisme_id 
+       on contrat_cadre (organisme_id);
+    create index idx_contrat_cadre_statut 
+       on contrat_cadre (statut);
+    create index idx_contrat_leasing_banque_id 
+       on contrat_leasing (banque_id);
+    create index idx_contrat_leasing_contrat_cadre 
+       on contrat_leasing (contrat_cadre_id);
+    create index idx_contrat_leasing_type_contrat 
+       on contrat_leasing (type_contrat);
+    create index idx_contrat_leasing_completed 
+       on contrat_leasing (completed);
+    create index idx_contrat_leasing_phase_contrat_id 
+       on contrat_leasing_phase (contrat_leasing_id);
+    create index idx_credit_moyen_terme_banque_id 
+       on credit_moyen_terme (banque_id);
+    create index idx_credit_moyen_terme_completed 
+       on credit_moyen_terme (completed);
+    create index idx_credit_moyen_terme_date_debut 
+       on credit_moyen_terme (date_debut);
+    create index idx_decompte_marche_id 
+       on decompte (marche_id);
+    create index idx_decompte_banque_encaissement_id 
+       on decompte (banque_encaissement_id);
+    create index idx_decompte_status 
+       on decompte (status);
+    create index idx_decompte_date_valeur 
+       on decompte (date_valeur);
+    create index idx_department_name 
+       on department (name);
+    create index idx_droit_constate_marche_id 
+       on droit_constate (marche_id);
+    create index idx_droit_constate_banque_id 
+       on droit_constate (banque_id);
+    create index idx_droit_constate_status 
+       on droit_constate (status);
+    create index idx_droit_constate_type 
+       on droit_constate (type);
+    create index idx_droit_constate_date_valeur 
+       on droit_constate (date_valeur);
+    create index idx_echeance_cmt_credit_moyen_terme_id 
+       on echeance_cmt (credit_moyen_terme_id);
+    create index idx_echeance_cmt_statut_paiement 
+       on echeance_cmt (statut_paiement);
+    create index idx_echeance_cmt_date_echeance 
+       on echeance_cmt (date_echeance);
+    create index idx_echeance_leasing_contrat_id 
+       on echeance_leasing (contrat_leasing_id);
+    create index idx_echeance_leasing_statut_paiement 
+       on echeance_leasing (statut_paiement);
+    create index idx_echeance_leasing_date_echeance 
+       on echeance_leasing (date_echeance);
+    create index idx_factoring_marche_id 
+       on factoring (marche_id);
+    create index idx_factoring_status 
+       on factoring (status);
+    create index idx_factoring_type 
+       on factoring (type);
+    create index idx_factoring_date_valeur 
+       on factoring (date_valeur);
+    create index idx_impot_et_taxe_banque_id 
+       on impot_et_taxe (banque_id);
+    create index idx_impot_et_taxe_status 
+       on impot_et_taxe (status);
+    create index idx_impot_et_taxe_motif 
+       on impot_et_taxe (motif);
+    create index idx_impot_et_taxe_date_emission 
+       on impot_et_taxe (date_emission);
+    create index idx_lcn_numero 
+       on lcns (numero);
+    create index idx_lcn_banque_id 
+       on lcns (banque_id);
+    create index idx_lcn_statut 
+       on lcns (statut);
+    create index idx_lcn_date_echeance 
+       on lcns (date_echeance);
+    create index idx_lcn_type 
+       on lcns (type);
+    create index idx_lcn_nature_lcn 
+       on lcns (nature_lcn);
+    create index idx_lf_banque_id 
+       on ligne_fonctionnelle (banque_id);
+    create index idx_lf_nature_id 
+       on ligne_fonctionnelle (nature_ligne_id);
+    create index idx_lf_actif 
+       on ligne_fonctionnelle (actif);
+    create index idx_lf_date_depart 
+       on ligne_fonctionnelle (date_depart);
+    create index idx_lf_ligne_mere_id 
+       on ligne_fonctionnelle (ligne_mere_id);
+    create index idx_lfs_nature_id 
+       on ligne_fonctionnelle_specifique (nature_ligne_id);
+    create index idx_lfs_marche_id 
+       on ligne_fonctionnelle_specifique (marche_id);
+    create index idx_lfs_actif 
+       on ligne_fonctionnelle_specifique (actif);
+    create index idx_marche_actif 
+       on marches (actif);
+    create index idx_marche_banque_id 
+       on marches (banque_id);
+    create index idx_mise_a_dispo_numero 
+       on mises_a_disposition (numero);
+    create index idx_mise_a_dispo_banque_id 
+       on mises_a_disposition (banque_id);
+    create index idx_mise_a_dispo_statut 
+       on mises_a_disposition (statut);
+    create index idx_mise_a_dispo_date_emission 
+       on mises_a_disposition (date_emission);
+    create index idx_mise_a_dispo_type 
+       on mises_a_disposition (type);
+    create index idx_nlf_code 
+       on nature_ligne_fonctionnelle (code);
+    create index idx_nlf_label 
+       on nature_ligne_fonctionnelle (label);
+    create index idx_nlf_portee 
+       on nature_ligne_fonctionnelle (portee);
+    create index idx_organisme_leasing_nom 
+       on organisme_leasing (nom);
+    create index idx_prefinancement_marche_id 
+       on prefinancement (marche_id);
+    create index idx_prefinancement_status 
+       on prefinancement (status);
+    create index idx_prefinancement_type 
+       on prefinancement (type);
+    create index idx_prefinancement_date_valeur 
+       on prefinancement (date_valeur);
+    create index idx_prelevement_banque_id 
+       on prelevement (banque_id);
+    create index idx_prelevement_status 
+       on prelevement (status);
+    create index idx_prelevement_date_emission 
+       on prelevement (date_emission);
+    create index idx_rapprochement_banque_id 
+       on rapprochement (banque_id);
+    create index idx_rapprochement_statut 
+       on rapprochement (statut);
+    create index idx_rapprochement_date 
+       on rapprochement (date_rapprochement);
+    create index idx_rapprochement_banque_statut 
+       on rapprochement (banque_id, statut);
+    create index idx_refresh_token_family 
+       on refresh_token (family_id);
+    create index idx_refresh_token_expires_at 
+       on refresh_token (expires_at);
+    create index idx_transaction_banque_id 
+       on transaction (banque_id);
+    create index idx_transaction_rapprochement_id 
+       on transaction (rapprochement_id);
+    create index idx_transaction_source 
+       on transaction (transaction_source);
+    create index idx_transaction_date_operations 
+       on transaction (date_operations);
+    create index idx_transaction_date_emission 
+       on transaction (date_emission);
+    create index idx_user_department_role_user_id 
+       on user_department_role (user_id);
+    create index idx_user_department_role_department_id 
+       on user_department_role (department_id);
+    create index idx_user_username 
+       on users (username);
+    create index idx_user_system_admin 
+       on users (is_system_admin);
+    create index idx_virement_numero 
+       on virements (numero);
+    create index idx_virement_banque_emettrice_id 
+       on virements (banque_emettrice_id);
+    create index idx_virement_banque_beneficiare_id 
+       on virements (banque_beneficiare_id);
+    create index idx_virement_statut 
+       on virements (statut);
+    create index idx_virement_date_emission 
+       on virements (date_emission);
+    create index idx_virement_type 
+       on virements (type);
+    create index idx_virement_intl_banque_id 
+       on virements_internationaux (banque_id);
+    create index idx_virement_intl_statut 
+       on virements_internationaux (statut);
+    create index idx_virement_intl_date_emission 
+       on virements_internationaux (date_emission);
+    create index idx_virement_intl_type 
+       on virements_internationaux (type);
+    alter table if exists agios 
+       add constraint FK8dp1ltfv7wr5al9sipy4b0107 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists agios_aud 
+       add constraint FKiqbobvs010iyidv1t0nn02xhy 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists agios_journalier 
+       add constraint FK2en0pwll1dsulm2pxdeoqpqqj 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists agios_journalier 
+       add constraint FK7bbq8xylg7nqtokn9418mpyjl 
+       foreign key (marche_id) 
+       references marches;
+    alter table if exists agios_journalier 
+       add constraint FK8qjsgqh7e4d3jgearhns9uc4c 
+       foreign key (trimestre_id) 
+       references agios_trimestriel;
+    alter table if exists agios_trimestriel 
+       add constraint FKcaaqqxmwbl0owg7ik3jik463f 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists agios_trimestriel_aud 
+       add constraint FKdakssioxo8ngyj0smer8kgxir 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists banque_aud 
+       add constraint FKp12gnvoorjq0kcm6gosms2h94 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists caution_commission_config 
+       add constraint FKo7w9xlq9cwswyd8a4qpxtugj4 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists caution_commission_config_aud 
+       add constraint FKmmt02t65ht1a21p7sxyxl5ys5 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists cautions 
+       add constraint FKfost869htj8594dmi7ae579fl 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists cautions 
+       add constraint FKasc3f7yqjjmf3enytlodagp2o 
+       foreign key (marche_id) 
+       references marches;
+    alter table if exists cautions 
+       add constraint FK8gbpemsexoepyvwt20tb390ed 
+       foreign key (nature_id) 
+       references nature_ligne_fonctionnelle;
+    alter table if exists cautions_aud 
+       add constraint FKlq9oj07bf3unksbn0e2no638o 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists charge_fixe_config 
+       add constraint FKou66k0unndvretd7hyc6cvmm8 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists charge_fixe_config_aud 
+       add constraint FK5m5y8rf3wxvlcdfa0hfykhibc 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists cheques 
+       add constraint FKq2rbj2rkjv05tv4kf017gtq4c 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists cheques_aud 
+       add constraint FKoce14m6v8t8j4lhxb5j4qv69p 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists cmt_config_aud 
+       add constraint FKd1x3nddefa9xu6dbf9g26n1jn 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists commission 
+       add constraint FKpcarewovrseewylrm6pasqhvi 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists commission 
+       add constraint FKfjravd1r62rantee2guiamn7o 
+       foreign key (caution_id) 
+       references cautions;
+    alter table if exists commission 
+       add constraint FKbx7ef0cyl07w191ay62ghq9dl 
+       foreign key (impot_et_taxe_id) 
+       references impot_et_taxe;
+    alter table if exists commission 
+       add constraint FKgh5mdd1rg9hywoyclmakyeweu 
+       foreign key (virement_id) 
+       references virements;
+    alter table if exists commission_aud 
+       add constraint FKchsssjqw01m245bw7oitw0shx 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists commission_config 
+       add constraint FKpnye9qu3tbkthy4n7t1mx9wii 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists commission_config_aud 
+       add constraint FKpor64wqb30n5o6gwnjai3l52i 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists contrat_cadre 
+       add constraint FK30v1i7gd86xujw7ji6jrktbr 
+       foreign key (organisme_id) 
+       references organisme_leasing;
+    alter table if exists contrat_cadre_aud 
+       add constraint FKpuqidooy9w5ds3hj3k9bn4q75 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists contrat_leasing 
+       add constraint FKd4e8mee7l3jbkf45oyrikpiv9 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists contrat_leasing 
+       add constraint FK6yt78nc8qouovmj14hqaoxkjf 
+       foreign key (contrat_cadre_id) 
+       references contrat_cadre;
+    alter table if exists contrat_leasing_aud 
+       add constraint FK5dvcgg945e41ptit9w5npl7gv 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists contrat_leasing_phase 
+       add constraint FK13xw8kjqibumbr40kcta8g8bv 
+       foreign key (contrat_leasing_id) 
+       references contrat_leasing;
+    alter table if exists contrat_leasing_phase_aud 
+       add constraint FK32io3hpm4xln9gg2h0yhhbryr 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists credit_moyen_terme 
+       add constraint FKb63rivvpq4cymn7y4eb73m3vt 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists credit_moyen_terme_aud 
+       add constraint FKptbfw1b84119kunn21jvrfm1p 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists decompte 
+       add constraint FKk2nh68eny65q5m6qip5h516ee 
+       foreign key (banque_encaissement_id) 
+       references banque;
+    alter table if exists decompte 
+       add constraint FKb5a1qt9el4g26drbbb198f3d8 
+       foreign key (marche_id) 
+       references marches;
+    alter table if exists decompte_aud 
+       add constraint FKgaf4n8x08ipqnnyjwrus2bk85 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists department_aud 
+       add constraint FK8ml32j0a8c006cscnx3v0cp0d 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists droit_constate_aud 
+       add constraint FKa9c49bs21najkv7qq89obm5bm 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists droit_constate 
+       add constraint FKpp56khgk9dxbabpganxxft8hk 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists droit_constate 
+       add constraint FKopkuan9rishe55yx22lfly5i1 
+       foreign key (ligne_fonctionnelle_id) 
+       references ligne_fonctionnelle;
+    alter table if exists droit_constate 
+       add constraint FKea8xrqwfie3oyra5v18oyjfxc 
+       foreign key (ligne_fonctionnelle_specifique_id) 
+       references ligne_fonctionnelle_specifique;
+    alter table if exists droit_constate 
+       add constraint FKjw3k1pq8jnouir3s3a2jtj6le 
+       foreign key (marche_id) 
+       references marches;
+    alter table if exists echeance_cmt 
+       add constraint FK3j02dbgpdkqg816lyke49181h 
+       foreign key (credit_moyen_terme_id) 
+       references credit_moyen_terme;
+    alter table if exists echeance_cmt_aud 
+       add constraint FKpm6238mhprwvpxrosgbk255id 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists echeance_leasing 
+       add constraint FK6lqt5kw7ekfm8wvof6u8y0ev6 
+       foreign key (contrat_leasing_id) 
+       references contrat_leasing;
+    alter table if exists echeance_leasing_aud 
+       add constraint FKd23df20onklajehdt9b351qbt 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists factoring 
+       add constraint FKd0rjg0rw9pvlax83l5gqns1kx 
+       foreign key (ligne_fonctionnelle_id) 
+       references ligne_fonctionnelle;
+    alter table if exists factoring 
+       add constraint FK4nf0q1l16ibka9g7wmlwkd1sg 
+       foreign key (ligne_fonctionnelle_specifique_id) 
+       references ligne_fonctionnelle_specifique;
+    alter table if exists factoring 
+       add constraint FK1owbcg4rihh8wxybc5hcq579t 
+       foreign key (marche_id) 
+       references marches;
+    alter table if exists factoring_aud 
+       add constraint FK3i8ktu51xa9jtbaa81ibfi7ln 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists frais_bancaire_aud 
+       add constraint FKq6ohpxsm7veovwet33c2vo0ha 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists frais_bancaire 
+       add constraint FK3b0mmyf6mm94h3hubxjru0tel 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists impayee 
+       add constraint FKjc2py6jrla85oygt3nqo2h69m 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists impayee_aud 
+       add constraint FKqcutxd0bks32c9gs15l94lu78 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists impot_et_taxe 
+       add constraint FK8nkpfqmwev9cdjielt19vj9bh 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists impot_et_taxe 
+       add constraint FK6822r70ni2xoue7nno1thgo74 
+       foreign key (caution_id) 
+       references cautions;
+    alter table if exists impot_et_taxe 
+       add constraint FKl9stm0or019wgwv9u6ngdv6md 
+       foreign key (commission_id) 
+       references commission;
+    alter table if exists impot_et_taxe_aud 
+       add constraint FK5ie7fpduejvaij14tuj3id1is 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists lcns 
+       add constraint FKbgoif52n0bs32q15oncvf1p93 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists lcns 
+       add constraint FK9ph6p1cyjg4nsc59iucorafw3 
+       foreign key (ligne_fonctionnelle_id) 
+       references ligne_fonctionnelle;
+    alter table if exists lcns_aud 
+       add constraint FKsxs04pe2biytucddtdbqxp0ab 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists leasing_config_aud 
+       add constraint FKf2eh4yndtxiqckeegvxuqhdr4 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists ligne_fonctionnelle 
+       add constraint FKiwfx893ms6t4s0r8p4p212659 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists ligne_fonctionnelle 
+       add constraint FKem7x3v915h4okb2cf03c9lsh2 
+       foreign key (ligne_mere_id) 
+       references ligne_fonctionnelle;
+    alter table if exists ligne_fonctionnelle 
+       add constraint FK950ndr0000osm83ob87lq47dx 
+       foreign key (nature_ligne_id) 
+       references nature_ligne_fonctionnelle;
+    alter table if exists ligne_fonctionnelle_aud 
+       add constraint FKay2taoldwdfa3md7yd8sb3dux 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists ligne_fonctionnelle_config_aud 
+       add constraint FK1cwrh0ngwieewljavxcen8mnw 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists ligne_fonctionnelle_marche 
+       add constraint FKc7q78fxx5wpwn2owjqkd0pctg 
+       foreign key (marche_id) 
+       references marches;
+    alter table if exists ligne_fonctionnelle_marche 
+       add constraint FKmehqwt8xrb101jp3kcknmox04 
+       foreign key (ligne_id) 
+       references ligne_fonctionnelle;
+    alter table if exists ligne_fonctionnelle_marche_aud 
+       add constraint FKanhk1lirn1g1sidf0oo6kbbd3 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists ligne_fonctionnelle_specifique 
+       add constraint FK57lk2ydnkt1um5o98h1cfri81 
+       foreign key (marche_id) 
+       references marches;
+    alter table if exists ligne_fonctionnelle_specifique 
+       add constraint FKlfodudydwmhtqocgajmo862e9 
+       foreign key (nature_ligne_id) 
+       references nature_ligne_fonctionnelle;
+    alter table if exists ligne_fonctionnelle_specifique_aud 
+       add constraint FKfh52vn2vs2el0wp0jrq8jwjs6 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists log_entry_detail 
+       add constraint FKqyda0kxkktunv8kyalky6cr7k 
+       foreign key (log_id) 
+       references log;
+    alter table if exists marches 
+       add constraint FKcpi3mv9yhm6gs9b22qxvcedt5 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists marches_aud 
+       add constraint FKd1246dinnjekoywgu1lglj5b9 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists mises_a_disposition 
+       add constraint FK2mwhxb2rlme2h916yggaga3ku 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists mises_a_disposition_aud 
+       add constraint FKd5ow2opukndhy03wjoioh1k63 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists nature_ligne_fonctionnelle_aud 
+       add constraint FKnm7ly625qwkw31q8axfceqdkc 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists notifications_aud 
+       add constraint FKq13cdum57uaulds1c0y53jd4j 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists operation_errone_aud 
+       add constraint FKklis0r030sqaw2u6q54nnyl7y 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists operation_errone 
+       add constraint FK64gpla2wkwxqxikq0i1l9oita 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists organisme_leasing_aud 
+       add constraint FKiqt0dfrkr3i27j17gtayqvyve 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists prefinancement 
+       add constraint FKtilv0u1346pt55815uscwjm4s 
+       foreign key (ligne_fonctionnelle_id) 
+       references ligne_fonctionnelle;
+    alter table if exists prefinancement 
+       add constraint FKo0yv0j8c6jdvg4hl9l5l4s16g 
+       foreign key (ligne_fonctionnelle_specifique_id) 
+       references ligne_fonctionnelle_specifique;
+    alter table if exists prefinancement 
+       add constraint FK4g5mv670pd9jwp2hnw2phpk4e 
+       foreign key (marche_id) 
+       references marches;
+    alter table if exists prefinancement_aud 
+       add constraint FKdbpnx4wr6h25kwy6iev1pf394 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists prelevement 
+       add constraint FKql7rimltc1kmokjmhxpm0spq4 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists prelevement_aud 
+       add constraint FKjj39ifrh2y503ta6rw81b2o9c 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists provision 
+       add constraint FKglsjrhgrwtqef5sja7cbb4an9 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists provision_aud 
+       add constraint FKk8898t26efmt6wxah762mbk6g 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists rapprochement 
+       add constraint FKspq7j7jtjyesk6b0gsoejwnt1 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists rapprochement_aud 
+       add constraint FKkxue94gcr6i4pkjmogg17top1 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists restitution 
+       add constraint FK9gwtf8ws5rn2rlxlfac6gpnar 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists restitution_aud 
+       add constraint FKg6uln2rup9h0cdre9glnpo3kj 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists transaction 
+       add constraint FK6q4n22db62ovn9vtvdg547quo 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists transaction 
+       add constraint FK6clh3e3bqnc90kq02lu0j97fw 
+       foreign key (rapprochement_id) 
+       references rapprochement;
+    alter table if exists transaction_aud 
+       add constraint FKb0b8njq8b3l4vwvo7mhgc39t0 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists user_department_role 
+       add constraint FK1upufonuoyy28tjjom0qd8gt7 
+       foreign key (department_id) 
+       references department;
+    alter table if exists user_department_role 
+       add constraint FKsq358pb2ydgjrk5gf9ihbes53 
+       foreign key (user_id) 
+       references users;
+    alter table if exists user_department_role_aud 
+       add constraint FK38k1ct5ayos6yfr6vr747vjiy 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists user_notification_status 
+       add constraint FKjbj96u0aof2vnfsh9aepxkyqi 
+       foreign key (notification_id) 
+       references notifications;
+    alter table if exists user_notification_status 
+       add constraint FK9wdicp7t7t9gydc73ii1eweg7 
+       foreign key (user_id) 
+       references users;
+    alter table if exists user_notification_status_aud 
+       add constraint FKpyy4cvow7te4nqywg60vpmtib 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists users_aud 
+       add constraint FKld7cdnhid45yc6535cecshyop 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists virements 
+       add constraint FKtanl65cwb33wvme2wrqrjifh3 
+       foreign key (banque_beneficiare_id) 
+       references banque;
+    alter table if exists virements 
+       add constraint FKchrb8hfylc0grt3iy6xk21icw 
+       foreign key (banque_emettrice_id) 
+       references banque;
+    alter table if exists virements_aud 
+       add constraint FK12ocf7aq99n0f92y313a6mjt3 
+       foreign key (rev) 
+       references audit_revision_entity;
+    alter table if exists virements_internationaux 
+       add constraint FKl8dgtbsabohwidglfuonv0dxb 
+       foreign key (banque_id) 
+       references banque;
+    alter table if exists virements_internationaux_aud 
+       add constraint FKgfs5b7jprk8dtdjyc345fqwn7 
+       foreign key (rev) 
+       references audit_revision_entity;
+
+-- ── Colonnes facultatives en production (contiennent des NULL), obligatoires dans les entités ─
+-- Alignées sur la production pour verser les données à l'identique. À resserrer par une migration
+-- dédiée une fois les données complétées (décision métier, cf. TODO.md).
+
+ALTER TABLE agios ALTER COLUMN libelle DROP NOT NULL;
+ALTER TABLE agios ALTER COLUMN observation DROP NOT NULL;
+ALTER TABLE cautions ALTER COLUMN date_de_prise DROP NOT NULL;
+ALTER TABLE cautions ALTER COLUMN numero_caution DROP NOT NULL;
+ALTER TABLE cheques ALTER COLUMN date_emission DROP NOT NULL;
+ALTER TABLE cheques ALTER COLUMN libelle DROP NOT NULL;
+ALTER TABLE cheques ALTER COLUMN observation DROP NOT NULL;
+ALTER TABLE commission ALTER COLUMN libelle DROP NOT NULL;
+ALTER TABLE commission ALTER COLUMN observation DROP NOT NULL;
+ALTER TABLE contrat_leasing ALTER COLUMN date_debut DROP NOT NULL;
+ALTER TABLE credit_moyen_terme ALTER COLUMN date_debut DROP NOT NULL;
+ALTER TABLE decompte ALTER COLUMN banque_encaissement_id DROP NOT NULL;
+ALTER TABLE decompte ALTER COLUMN libelle DROP NOT NULL;
+ALTER TABLE decompte ALTER COLUMN observation DROP NOT NULL;
+ALTER TABLE droit_constate ALTER COLUMN banque_id DROP NOT NULL;
+ALTER TABLE droit_constate ALTER COLUMN libelle DROP NOT NULL;
+ALTER TABLE droit_constate ALTER COLUMN observation DROP NOT NULL;
+ALTER TABLE echeance_cmt ALTER COLUMN date_echeance DROP NOT NULL;
+ALTER TABLE echeance_cmt ALTER COLUMN libelle DROP NOT NULL;
+ALTER TABLE echeance_cmt ALTER COLUMN observation DROP NOT NULL;
+ALTER TABLE echeance_leasing ALTER COLUMN date_echeance DROP NOT NULL;
+ALTER TABLE echeance_leasing ALTER COLUMN libelle DROP NOT NULL;
+ALTER TABLE echeance_leasing ALTER COLUMN observation DROP NOT NULL;
+ALTER TABLE factoring ALTER COLUMN libelle DROP NOT NULL;
+ALTER TABLE factoring ALTER COLUMN observation DROP NOT NULL;
+ALTER TABLE frais_bancaire ALTER COLUMN libelle DROP NOT NULL;
+ALTER TABLE frais_bancaire ALTER COLUMN observation DROP NOT NULL;
+ALTER TABLE impayee ALTER COLUMN date_emission DROP NOT NULL;
+ALTER TABLE impayee ALTER COLUMN libelle DROP NOT NULL;
+ALTER TABLE impayee ALTER COLUMN observation DROP NOT NULL;
+ALTER TABLE impayee ALTER COLUMN type DROP NOT NULL;
+ALTER TABLE impot_et_taxe ALTER COLUMN libelle DROP NOT NULL;
+ALTER TABLE impot_et_taxe ALTER COLUMN observation DROP NOT NULL;
+ALTER TABLE lcns ALTER COLUMN date_echeance DROP NOT NULL;
+ALTER TABLE lcns ALTER COLUMN date_emission DROP NOT NULL;
+ALTER TABLE lcns ALTER COLUMN libelle DROP NOT NULL;
+ALTER TABLE lcns ALTER COLUMN observation DROP NOT NULL;
+ALTER TABLE ligne_fonctionnelle ALTER COLUMN date_depart DROP NOT NULL;
+ALTER TABLE ligne_fonctionnelle ALTER COLUMN date_fin DROP NOT NULL;
+ALTER TABLE ligne_fonctionnelle_specifique ALTER COLUMN date_depart DROP NOT NULL;
+ALTER TABLE ligne_fonctionnelle_specifique ALTER COLUMN date_fin DROP NOT NULL;
+ALTER TABLE mises_a_disposition ALTER COLUMN date_emission DROP NOT NULL;
+ALTER TABLE mises_a_disposition ALTER COLUMN libelle DROP NOT NULL;
+ALTER TABLE mises_a_disposition ALTER COLUMN observation DROP NOT NULL;
+ALTER TABLE operation_errone ALTER COLUMN libelle DROP NOT NULL;
+ALTER TABLE operation_errone ALTER COLUMN observation DROP NOT NULL;
+ALTER TABLE prefinancement ALTER COLUMN libelle DROP NOT NULL;
+ALTER TABLE prefinancement ALTER COLUMN observation DROP NOT NULL;
+ALTER TABLE prelevement ALTER COLUMN libelle DROP NOT NULL;
+ALTER TABLE prelevement ALTER COLUMN observation DROP NOT NULL;
+ALTER TABLE restitution ALTER COLUMN date_emission DROP NOT NULL;
+ALTER TABLE restitution ALTER COLUMN libelle DROP NOT NULL;
+ALTER TABLE restitution ALTER COLUMN observation DROP NOT NULL;
+ALTER TABLE users ALTER COLUMN password DROP NOT NULL;
+ALTER TABLE virements ALTER COLUMN date_emission DROP NOT NULL;
+ALTER TABLE virements ALTER COLUMN libelle DROP NOT NULL;
+ALTER TABLE virements ALTER COLUMN observation DROP NOT NULL;
+ALTER TABLE virements_internationaux ALTER COLUMN date_emission DROP NOT NULL;
+ALTER TABLE virements_internationaux ALTER COLUMN libelle DROP NOT NULL;
+ALTER TABLE virements_internationaux ALTER COLUMN observation DROP NOT NULL;
+
+-- ── Spring Batch (schema-postgresql.sql officiel) ────────────────────────────
 
 -- Autogenerated: do not edit this file
 
@@ -1349,22 +2101,22 @@ CREATE TABLE BATCH_JOB_INSTANCE  (
 	JOB_NAME VARCHAR(100) NOT NULL,
 	JOB_KEY VARCHAR(32) NOT NULL,
 	constraint JOB_INST_UN unique (JOB_NAME, JOB_KEY)
-) ENGINE=InnoDB;
+) ;
 
 CREATE TABLE BATCH_JOB_EXECUTION  (
 	JOB_EXECUTION_ID BIGINT  NOT NULL PRIMARY KEY ,
 	VERSION BIGINT  ,
 	JOB_INSTANCE_ID BIGINT NOT NULL,
-	CREATE_TIME DATETIME(6) NOT NULL,
-	START_TIME DATETIME(6) DEFAULT NULL ,
-	END_TIME DATETIME(6) DEFAULT NULL ,
+	CREATE_TIME TIMESTAMP NOT NULL,
+	START_TIME TIMESTAMP DEFAULT NULL ,
+	END_TIME TIMESTAMP DEFAULT NULL ,
 	STATUS VARCHAR(10) ,
 	EXIT_CODE VARCHAR(2500) ,
 	EXIT_MESSAGE VARCHAR(2500) ,
-	LAST_UPDATED DATETIME(6),
+	LAST_UPDATED TIMESTAMP,
 	constraint JOB_INST_EXEC_FK foreign key (JOB_INSTANCE_ID)
 	references BATCH_JOB_INSTANCE(JOB_INSTANCE_ID)
-) ENGINE=InnoDB;
+) ;
 
 CREATE TABLE BATCH_JOB_EXECUTION_PARAMS  (
 	JOB_EXECUTION_ID BIGINT NOT NULL ,
@@ -1374,16 +2126,16 @@ CREATE TABLE BATCH_JOB_EXECUTION_PARAMS  (
 	IDENTIFYING CHAR(1) NOT NULL ,
 	constraint JOB_EXEC_PARAMS_FK foreign key (JOB_EXECUTION_ID)
 	references BATCH_JOB_EXECUTION(JOB_EXECUTION_ID)
-) ENGINE=InnoDB;
+) ;
 
 CREATE TABLE BATCH_STEP_EXECUTION  (
 	STEP_EXECUTION_ID BIGINT  NOT NULL PRIMARY KEY ,
 	VERSION BIGINT NOT NULL,
 	STEP_NAME VARCHAR(100) NOT NULL,
 	JOB_EXECUTION_ID BIGINT NOT NULL,
-	CREATE_TIME DATETIME(6) NOT NULL,
-	START_TIME DATETIME(6) DEFAULT NULL ,
-	END_TIME DATETIME(6) DEFAULT NULL ,
+	CREATE_TIME TIMESTAMP NOT NULL,
+	START_TIME TIMESTAMP DEFAULT NULL ,
+	END_TIME TIMESTAMP DEFAULT NULL ,
 	STATUS VARCHAR(10) ,
 	COMMIT_COUNT BIGINT ,
 	READ_COUNT BIGINT ,
@@ -1395,10 +2147,10 @@ CREATE TABLE BATCH_STEP_EXECUTION  (
 	ROLLBACK_COUNT BIGINT ,
 	EXIT_CODE VARCHAR(2500) ,
 	EXIT_MESSAGE VARCHAR(2500) ,
-	LAST_UPDATED DATETIME(6),
+	LAST_UPDATED TIMESTAMP,
 	constraint JOB_EXEC_STEP_FK foreign key (JOB_EXECUTION_ID)
 	references BATCH_JOB_EXECUTION(JOB_EXECUTION_ID)
-) ENGINE=InnoDB;
+) ;
 
 CREATE TABLE BATCH_STEP_EXECUTION_CONTEXT  (
 	STEP_EXECUTION_ID BIGINT NOT NULL PRIMARY KEY,
@@ -1406,7 +2158,7 @@ CREATE TABLE BATCH_STEP_EXECUTION_CONTEXT  (
 	SERIALIZED_CONTEXT TEXT ,
 	constraint STEP_EXEC_CTX_FK foreign key (STEP_EXECUTION_ID)
 	references BATCH_STEP_EXECUTION(STEP_EXECUTION_ID)
-) ENGINE=InnoDB;
+) ;
 
 CREATE TABLE BATCH_JOB_EXECUTION_CONTEXT  (
 	JOB_EXECUTION_ID BIGINT NOT NULL PRIMARY KEY,
@@ -1414,933 +2166,9 @@ CREATE TABLE BATCH_JOB_EXECUTION_CONTEXT  (
 	SERIALIZED_CONTEXT TEXT ,
 	constraint JOB_EXEC_CTX_FK foreign key (JOB_EXECUTION_ID)
 	references BATCH_JOB_EXECUTION(JOB_EXECUTION_ID)
-) ENGINE=InnoDB;
-
-CREATE TABLE BATCH_STEP_EXECUTION_SEQ (
-	ID BIGINT NOT NULL,
-	UNIQUE_KEY CHAR(1) NOT NULL,
-	constraint UNIQUE_KEY_UN unique (UNIQUE_KEY)
-) ENGINE=InnoDB;
-
-INSERT INTO BATCH_STEP_EXECUTION_SEQ (ID, UNIQUE_KEY) select * from (select 0 as ID, '0' as UNIQUE_KEY) as tmp where not exists(select * from BATCH_STEP_EXECUTION_SEQ);
-
-CREATE TABLE BATCH_JOB_EXECUTION_SEQ (
-	ID BIGINT NOT NULL,
-	UNIQUE_KEY CHAR(1) NOT NULL,
-	constraint UNIQUE_KEY_UN unique (UNIQUE_KEY)
-) ENGINE=InnoDB;
-
-INSERT INTO BATCH_JOB_EXECUTION_SEQ (ID, UNIQUE_KEY) select * from (select 0 as ID, '0' as UNIQUE_KEY) as tmp where not exists(select * from BATCH_JOB_EXECUTION_SEQ);
-
-CREATE TABLE BATCH_JOB_SEQ (
-	ID BIGINT NOT NULL,
-	UNIQUE_KEY CHAR(1) NOT NULL,
-	constraint UNIQUE_KEY_UN unique (UNIQUE_KEY)
-) ENGINE=InnoDB;
-
-INSERT INTO BATCH_JOB_SEQ (ID, UNIQUE_KEY) select * from (select 0 as ID, '0' as UNIQUE_KEY) as tmp where not exists(select * from BATCH_JOB_SEQ);
-
--- ── Clés primaires et index ────────────────────────────────────────────────
-
-ALTER TABLE `agios`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FK8dp1ltfv7wr5al9sipy4b0107` (`banque_id`),
-  ADD KEY `idx_agios_banque_id` (`banque_id`),
-  ADD KEY `idx_agios_status` (`status`),
-  ADD KEY `idx_agios_date_emission` (`date_emission`);
-
-ALTER TABLE `agios_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `agios_journalier`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FK2en0pwll1dsulm2pxdeoqpqqj` (`banque_id`),
-  ADD KEY `FK8qjsgqh7e4d3jgearhns9uc4c` (`trimestre_id`),
-  ADD KEY `FK7bbq8xylg7nqtokn9418mpyjl` (`marche_id`),
-  ADD KEY `idx_agios_jour_banque_id` (`banque_id`),
-  ADD KEY `idx_agios_jour_type_agios` (`type_agios`),
-  ADD KEY `idx_agios_jour_marche_id` (`marche_id`),
-  ADD KEY `idx_agios_jour_trimestre_id` (`trimestre_id`);
-
-ALTER TABLE `agios_trimestriel`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uk_trim_banque_type` (`trimestre`,`annee`,`banque_id`,`type_agios`),
-  ADD KEY `FKcaaqqxmwbl0owg7ik3jik463f` (`banque_id`),
-  ADD KEY `idx_agios_trim_banque_id` (`banque_id`),
-  ADD KEY `idx_agios_trim_statut` (`statut`),
-  ADD KEY `idx_agios_trim_type_agios` (`type_agios`);
-
-ALTER TABLE `agios_trimestriel_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `audit_revision_entity`
-  ADD PRIMARY KEY (`id`);
-
-ALTER TABLE `banque`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `UKcpq92gr9qh03fpotihs7c4o36` (`numero_compte`),
-  ADD KEY `idx_banque_numero_compte` (`numero_compte`),
-  ADD KEY `idx_banque_nom` (`nom`),
-  ADD KEY `idx_banque_devise` (`devise`);
-
-ALTER TABLE `banque_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `cautions`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `UKhyu23nydp8io2sdo93r05c9b3` (`numero_caution`),
-  ADD KEY `idx_caution_numero` (`numero_caution`),
-  ADD KEY `idx_caution_banque_id` (`banque_id`),
-  ADD KEY `idx_caution_nature_id` (`nature_id`),
-  ADD KEY `idx_caution_marche_id` (`marche_id`),
-  ADD KEY `idx_caution_actif` (`actif`);
-
-ALTER TABLE `cautions_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `caution_commission_config`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `UKl4e55wle5qily8ef4lcto6ujq` (`banque_id`),
-  ADD KEY `idx_caution_commission_config_banque` (`banque_id`);
-
-ALTER TABLE `caution_commission_config_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `charge_fixe_config`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_charge_fixe_config_banque` (`banque_id`);
-
-ALTER TABLE `charge_fixe_config_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `cheques`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `UKtnisvdwv1jajjvlkxr1hgst00` (`id_paiement`),
-  ADD KEY `FKq2rbj2rkjv05tv4kf017gtq4c` (`banque_id`),
-  ADD KEY `idx_cheque_numero` (`numero`),
-  ADD KEY `idx_cheque_banque_id` (`banque_id`),
-  ADD KEY `idx_cheque_statut` (`statut`),
-  ADD KEY `idx_cheque_date_emission` (`date_emission`),
-  ADD KEY `idx_cheque_type` (`type`);
-
-ALTER TABLE `cheques_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `cmt_config`
-  ADD PRIMARY KEY (`id`);
-
-ALTER TABLE `cmt_config_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `commission`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `UK42aedk4qsl3t0vr0hc0nv04ce` (`impot_et_taxe_id`),
-  ADD UNIQUE KEY `UK1o3l2nb0om5ayp77468297hay` (`virement_id`),
-  ADD KEY `FKpcarewovrseewylrm6pasqhvi` (`banque_id`),
-  ADD KEY `FKfjravd1r62rantee2guiamn7o` (`caution_id`);
-
-ALTER TABLE `commission_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `commission_config`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_commission_config_banque_type` (`banque_id`,`type`),
-  ADD KEY `idx_commission_config_condition` (`commission_condition`);
-
-ALTER TABLE `commission_config_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `contrat_cadre`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_contrat_cadre_organisme_id` (`organisme_id`),
-  ADD KEY `idx_contrat_cadre_statut` (`statut`);
-
-ALTER TABLE `contrat_cadre_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `contrat_leasing`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `UKquxa2lcg2h174r3tsgv26vhx9` (`numero_contrat`),
-  ADD KEY `FKd4e8mee7l3jbkf45oyrikpiv9` (`banque_id`),
-  ADD KEY `idx_contrat_leasing_banque_id` (`banque_id`),
-  ADD KEY `idx_contrat_leasing_type_contrat` (`type_contrat`),
-  ADD KEY `idx_contrat_leasing_completed` (`completed`),
-  ADD KEY `idx_contrat_leasing_contrat_cadre` (`contrat_cadre_id`);
-
-ALTER TABLE `contrat_leasing_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `contrat_leasing_phase`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FK13xw8kjqibumbr40kcta8g8bv` (`contrat_leasing_id`),
-  ADD KEY `idx_contrat_leasing_phase_contrat_id` (`contrat_leasing_id`);
-
-ALTER TABLE `contrat_leasing_phase_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `credit_moyen_terme`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FKb63rivvpq4cymn7y4eb73m3vt` (`banque_id`),
-  ADD KEY `idx_credit_moyen_terme_banque_id` (`banque_id`),
-  ADD KEY `idx_credit_moyen_terme_completed` (`completed`),
-  ADD KEY `idx_credit_moyen_terme_date_debut` (`date_debut`);
-
-ALTER TABLE `credit_moyen_terme_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `decompte`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FKb5a1qt9el4g26drbbb198f3d8` (`marche_id`),
-  ADD KEY `FKk2nh68eny65q5m6qip5h516ee` (`banque_encaissement_id`),
-  ADD KEY `idx_decompte_marche_id` (`marche_id`),
-  ADD KEY `idx_decompte_banque_encaissement_id` (`banque_encaissement_id`),
-  ADD KEY `idx_decompte_status` (`status`),
-  ADD KEY `idx_decompte_date_valeur` (`date_valeur`);
-
-ALTER TABLE `decompte_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `department`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `UK1t68827l97cwyxo9r1u6t4p7d` (`name`),
-  ADD KEY `idx_department_name` (`name`);
-
-ALTER TABLE `department_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `droit_constate`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FKjw3k1pq8jnouir3s3a2jtj6le` (`marche_id`),
-  ADD KEY `FKpp56khgk9dxbabpganxxft8hk` (`banque_id`),
-  ADD KEY `FKopkuan9rishe55yx22lfly5i1` (`ligne_fonctionnelle_id`),
-  ADD KEY `FKea8xrqwfie3oyra5v18oyjfxc` (`ligne_fonctionnelle_specifique_id`),
-  ADD KEY `idx_droit_constate_marche_id` (`marche_id`),
-  ADD KEY `idx_droit_constate_banque_id` (`banque_id`),
-  ADD KEY `idx_droit_constate_status` (`status`),
-  ADD KEY `idx_droit_constate_type` (`type`),
-  ADD KEY `idx_droit_constate_date_valeur` (`date_valeur`);
-
-ALTER TABLE `droit_constate_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `echeance_cmt`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FK3j02dbgpdkqg816lyke49181h` (`credit_moyen_terme_id`),
-  ADD KEY `idx_echeance_cmt_credit_moyen_terme_id` (`credit_moyen_terme_id`),
-  ADD KEY `idx_echeance_cmt_statut_paiement` (`statut_paiement`),
-  ADD KEY `idx_echeance_cmt_date_echeance` (`date_echeance`);
-
-ALTER TABLE `echeance_cmt_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `echeance_leasing`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FK6lqt5kw7ekfm8wvof6u8y0ev6` (`contrat_leasing_id`),
-  ADD KEY `idx_echeance_leasing_contrat_id` (`contrat_leasing_id`),
-  ADD KEY `idx_echeance_leasing_statut_paiement` (`statut_paiement`),
-  ADD KEY `idx_echeance_leasing_date_echeance` (`date_echeance`);
-
-ALTER TABLE `echeance_leasing_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `factoring`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FK1owbcg4rihh8wxybc5hcq579t` (`marche_id`),
-  ADD KEY `FKd0rjg0rw9pvlax83l5gqns1kx` (`ligne_fonctionnelle_id`),
-  ADD KEY `FK4nf0q1l16ibka9g7wmlwkd1sg` (`ligne_fonctionnelle_specifique_id`),
-  ADD KEY `idx_factoring_marche_id` (`marche_id`),
-  ADD KEY `idx_factoring_status` (`status`),
-  ADD KEY `idx_factoring_type` (`type`),
-  ADD KEY `idx_factoring_date_valeur` (`date_valeur`);
-
-ALTER TABLE `factoring_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `frais_bancaire`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FK3b0mmyf6mm94h3hubxjru0tel` (`banque_id`);
-
-ALTER TABLE `frais_bancaire_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `impayee`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FKeylp2fflkjxwguefd0kvq0adq` (`banque_id`);
-
-ALTER TABLE `impayee_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `impot_et_taxe`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uk_impot_commission` (`commission_id`),
-  ADD KEY `FK8nkpfqmwev9cdjielt19vj9bh` (`banque_id`),
-  ADD KEY `FK6822r70ni2xoue7nno1thgo74` (`caution_id`),
-  ADD KEY `FKl9stm0or019wgwv9u6ngdv6md` (`commission_id`),
-  ADD KEY `idx_impot_et_taxe_banque_id` (`banque_id`),
-  ADD KEY `idx_impot_et_taxe_status` (`status`),
-  ADD KEY `idx_impot_et_taxe_motif` (`motif`),
-  ADD KEY `idx_impot_et_taxe_date_emission` (`date_emission`);
-
-ALTER TABLE `impot_et_taxe_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `lcns`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `UKe3a3d4e6rvry71q5raqavro8q` (`id_paiement`),
-  ADD KEY `FKbgoif52n0bs32q15oncvf1p93` (`banque_id`),
-  ADD KEY `FK9ph6p1cyjg4nsc59iucorafw3` (`ligne_fonctionnelle_id`),
-  ADD KEY `idx_lcn_numero` (`numero`),
-  ADD KEY `idx_lcn_banque_id` (`banque_id`),
-  ADD KEY `idx_lcn_statut` (`statut`),
-  ADD KEY `idx_lcn_date_echeance` (`date_echeance`),
-  ADD KEY `idx_lcn_type` (`type`),
-  ADD KEY `idx_lcn_nature_lcn` (`nature_lcn`);
-
-ALTER TABLE `lcns_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `leasing_config`
-  ADD PRIMARY KEY (`id`);
-
-ALTER TABLE `leasing_config_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `ligne_fonctionnelle`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FKiwfx893ms6t4s0r8p4p212659` (`banque_id`),
-  ADD KEY `FK950ndr0000osm83ob87lq47dx` (`nature_ligne_id`),
-  ADD KEY `FKem7x3v915h4okb2cf03c9lsh2` (`ligne_mere_id`),
-  ADD KEY `idx_lf_banque_id` (`banque_id`),
-  ADD KEY `idx_lf_nature_id` (`nature_ligne_id`),
-  ADD KEY `idx_lf_actif` (`actif`),
-  ADD KEY `idx_lf_date_depart` (`date_depart`),
-  ADD KEY `idx_lf_ligne_mere_id` (`ligne_mere_id`);
-
-ALTER TABLE `ligne_fonctionnelle_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `ligne_fonctionnelle_config`
-  ADD PRIMARY KEY (`id`);
-
-ALTER TABLE `ligne_fonctionnelle_config_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `ligne_fonctionnelle_marche`
-  ADD KEY `FKc7q78fxx5wpwn2owjqkd0pctg` (`marche_id`),
-  ADD KEY `FKmehqwt8xrb101jp3kcknmox04` (`ligne_id`);
-
-ALTER TABLE `ligne_fonctionnelle_marche_aud`
-  ADD PRIMARY KEY (`ligne_id`,`rev`,`marche_id`),
-  ADD KEY `FKanhk1lirn1g1sidf0oo6kbbd3` (`rev`);
-
-ALTER TABLE `ligne_fonctionnelle_specifique`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FK57lk2ydnkt1um5o98h1cfri81` (`marche_id`),
-  ADD KEY `FKlfodudydwmhtqocgajmo862e9` (`nature_ligne_id`),
-  ADD KEY `idx_lfs_nature_id` (`nature_ligne_id`),
-  ADD KEY `idx_lfs_marche_id` (`marche_id`),
-  ADD KEY `idx_lfs_actif` (`actif`);
-
-ALTER TABLE `ligne_fonctionnelle_specifique_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `log`
-  ADD PRIMARY KEY (`id`);
-
-ALTER TABLE `log_entry_detail`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FKqyda0kxkktunv8kyalky6cr7k` (`log_id`);
-
-ALTER TABLE `marches`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `UK6lt7sqmf282e9y0vvjry6wj2u` (`numero`),
-  ADD KEY `FKcpi3mv9yhm6gs9b22qxvcedt5` (`banque_id`),
-  ADD KEY `idx_marche_actif` (`actif`),
-  ADD KEY `idx_marche_banque_id` (`banque_id`);
-
-ALTER TABLE `marches_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `mises_a_disposition`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `UKgw080va9la2rtwk668g48q48c` (`id_paiement`),
-  ADD KEY `FK2mwhxb2rlme2h916yggaga3ku` (`banque_id`),
-  ADD KEY `idx_mise_a_dispo_numero` (`numero`),
-  ADD KEY `idx_mise_a_dispo_banque_id` (`banque_id`),
-  ADD KEY `idx_mise_a_dispo_statut` (`statut`),
-  ADD KEY `idx_mise_a_dispo_date_emission` (`date_emission`),
-  ADD KEY `idx_mise_a_dispo_type` (`type`);
-
-ALTER TABLE `mises_a_disposition_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `nature_ligne_fonctionnelle`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `UKsjnhtqaim07sqlmq7cpetwvx0` (`label`),
-  ADD KEY `idx_nlf_code` (`code`),
-  ADD KEY `idx_nlf_label` (`label`),
-  ADD KEY `idx_nlf_portee` (`portee`);
-
-ALTER TABLE `nature_ligne_fonctionnelle_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `notifications`
-  ADD PRIMARY KEY (`id`);
-
-ALTER TABLE `notifications_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `operation_errone`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FK64gpla2wkwxqxikq0i1l9oita` (`banque_id`);
-
-ALTER TABLE `operation_errone_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `organisme_leasing`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_organisme_leasing_nom` (`nom`);
-
-ALTER TABLE `organisme_leasing_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `prefinancement`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FK4g5mv670pd9jwp2hnw2phpk4e` (`marche_id`),
-  ADD KEY `FKtilv0u1346pt55815uscwjm4s` (`ligne_fonctionnelle_id`),
-  ADD KEY `FKo0yv0j8c6jdvg4hl9l5l4s16g` (`ligne_fonctionnelle_specifique_id`),
-  ADD KEY `idx_prefinancement_marche_id` (`marche_id`),
-  ADD KEY `idx_prefinancement_status` (`status`),
-  ADD KEY `idx_prefinancement_type` (`type`),
-  ADD KEY `idx_prefinancement_date_valeur` (`date_valeur`);
-
-ALTER TABLE `prefinancement_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `prelevement`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FKql7rimltc1kmokjmhxpm0spq4` (`banque_id`),
-  ADD KEY `idx_prelevement_banque_id` (`banque_id`),
-  ADD KEY `idx_prelevement_status` (`status`),
-  ADD KEY `idx_prelevement_date_emission` (`date_emission`);
-
-ALTER TABLE `prelevement_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `provision`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FKglsjrhgrwtqef5sja7cbb4an9` (`banque_id`);
-
-ALTER TABLE `provision_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `rapprochement`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FKspq7j7jtjyesk6b0gsoejwnt1` (`banque_id`),
-  ADD KEY `idx_rapprochement_banque_id` (`banque_id`),
-  ADD KEY `idx_rapprochement_statut` (`statut`),
-  ADD KEY `idx_rapprochement_date` (`date_rapprochement`),
-  ADD KEY `idx_rapprochement_banque_statut` (`banque_id`,`statut`);
-
-ALTER TABLE `rapprochement_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `restitution`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FK9gwtf8ws5rn2rlxlfac6gpnar` (`banque_id`);
-
-ALTER TABLE `restitution_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `transaction`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FK6q4n22db62ovn9vtvdg547quo` (`banque_id`),
-  ADD KEY `FK6clh3e3bqnc90kq02lu0j97fw` (`rapprochement_id`),
-  ADD KEY `idx_transaction_banque_id` (`banque_id`),
-  ADD KEY `idx_transaction_rapprochement_id` (`rapprochement_id`),
-  ADD KEY `idx_transaction_source` (`transaction_source`),
-  ADD KEY `idx_transaction_date_operations` (`date_operations`),
-  ADD KEY `idx_transaction_date_emission` (`date_emission`);
-
-ALTER TABLE `transaction_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `users`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `UKr43af9ap4edm43mmtq01oddj6` (`username`),
-  ADD KEY `idx_user_username` (`username`),
-  ADD KEY `idx_user_system_admin` (`is_system_admin`);
-
-ALTER TABLE `users_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `user_department_role`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_user_dept` (`user_id`,`department_id`),
-  ADD KEY `FK1upufonuoyy28tjjom0qd8gt7` (`department_id`),
-  ADD KEY `idx_user_department_role_department_id` (`department_id`),
-  ADD KEY `idx_user_department_role_user_id` (`user_id`);
-
-ALTER TABLE `user_department_role_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `user_notification_status`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `UKiooau267w40m8gtql5vsvww5x` (`notification_id`,`user_id`),
-  ADD KEY `FK9wdicp7t7t9gydc73ii1eweg7` (`user_id`);
-
-ALTER TABLE `user_notification_status_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `virements`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `UK8bln0qc1bui967nkl1pc2cgkf` (`id_paiement`),
-  ADD KEY `FKchrb8hfylc0grt3iy6xk21icw` (`banque_emettrice_id`),
-  ADD KEY `FKtanl65cwb33wvme2wrqrjifh3` (`banque_beneficiare_id`),
-  ADD KEY `idx_virement_numero` (`numero`),
-  ADD KEY `idx_virement_banque_emettrice_id` (`banque_emettrice_id`),
-  ADD KEY `idx_virement_banque_beneficiare_id` (`banque_beneficiare_id`),
-  ADD KEY `idx_virement_statut` (`statut`),
-  ADD KEY `idx_virement_date_emission` (`date_emission`),
-  ADD KEY `idx_virement_type` (`type`);
-
-ALTER TABLE `virements_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
-ALTER TABLE `virements_internationaux`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FKl8dgtbsabohwidglfuonv0dxb` (`banque_id`),
-  ADD KEY `idx_virement_intl_banque_id` (`banque_id`),
-  ADD KEY `idx_virement_intl_statut` (`statut`),
-  ADD KEY `idx_virement_intl_date_emission` (`date_emission`),
-  ADD KEY `idx_virement_intl_type` (`type`);
-
-ALTER TABLE `virements_internationaux_aud`
-  ADD PRIMARY KEY (`rev`,`id`);
-
--- ── Auto-incréments ────────────────────────────────────────────────────────
-
-ALTER TABLE `agios`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `agios_journalier`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `agios_trimestriel`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `banque`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `cautions`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `caution_commission_config`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `charge_fixe_config`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `cheques`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `commission`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `commission_config`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `contrat_cadre`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `contrat_leasing`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `contrat_leasing_phase`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `credit_moyen_terme`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `decompte`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `department`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `droit_constate`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `echeance_cmt`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `echeance_leasing`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `factoring`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `frais_bancaire`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `impayee`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `impot_et_taxe`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `lcns`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `ligne_fonctionnelle`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `ligne_fonctionnelle_specifique`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `log`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `log_entry_detail`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `marches`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `mises_a_disposition`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `nature_ligne_fonctionnelle`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `notifications`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `operation_errone`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `organisme_leasing`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `prefinancement`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `prelevement`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `provision`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `rapprochement`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `restitution`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `transaction`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `users`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `user_department_role`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `user_notification_status`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `virements`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `virements_internationaux`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
-
--- ── Clés étrangères ────────────────────────────────────────────────────────
-
-ALTER TABLE `agios`
-  ADD CONSTRAINT `FK8dp1ltfv7wr5al9sipy4b0107` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `agios_aud`
-  ADD CONSTRAINT `FKiqbobvs010iyidv1t0nn02xhy` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `agios_journalier`
-  ADD CONSTRAINT `FK2en0pwll1dsulm2pxdeoqpqqj` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`),
-  ADD CONSTRAINT `FK7bbq8xylg7nqtokn9418mpyjl` FOREIGN KEY (`marche_id`) REFERENCES `marches` (`id`),
-  ADD CONSTRAINT `FK8qjsgqh7e4d3jgearhns9uc4c` FOREIGN KEY (`trimestre_id`) REFERENCES `agios_trimestriel` (`id`);
-
-ALTER TABLE `agios_trimestriel`
-  ADD CONSTRAINT `FKcaaqqxmwbl0owg7ik3jik463f` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `agios_trimestriel_aud`
-  ADD CONSTRAINT `FKdakssioxo8ngyj0smer8kgxir` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `banque_aud`
-  ADD CONSTRAINT `FKp12gnvoorjq0kcm6gosms2h94` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `cautions`
-  ADD CONSTRAINT `FK8gbpemsexoepyvwt20tb390ed` FOREIGN KEY (`nature_id`) REFERENCES `nature_ligne_fonctionnelle` (`id`),
-  ADD CONSTRAINT `FKasc3f7yqjjmf3enytlodagp2o` FOREIGN KEY (`marche_id`) REFERENCES `marches` (`id`),
-  ADD CONSTRAINT `FKfost869htj8594dmi7ae579fl` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `cautions_aud`
-  ADD CONSTRAINT `FKlq9oj07bf3unksbn0e2no638o` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `caution_commission_config`
-  ADD CONSTRAINT `FKo7w9xlq9cwswyd8a4qpxtugj4` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `caution_commission_config_aud`
-  ADD CONSTRAINT `FKmmt02t65ht1a21p7sxyxl5ys5` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `charge_fixe_config`
-  ADD CONSTRAINT `FKou66k0unndvretd7hyc6cvmm8` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `charge_fixe_config_aud`
-  ADD CONSTRAINT `FK5m5y8rf3wxvlcdfa0hfykhibc` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `cheques`
-  ADD CONSTRAINT `FKq2rbj2rkjv05tv4kf017gtq4c` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `cheques_aud`
-  ADD CONSTRAINT `FKoce14m6v8t8j4lhxb5j4qv69p` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `cmt_config_aud`
-  ADD CONSTRAINT `FKd1x3nddefa9xu6dbf9g26n1jn` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `commission`
-  ADD CONSTRAINT `FKbx7ef0cyl07w191ay62ghq9dl` FOREIGN KEY (`impot_et_taxe_id`) REFERENCES `impot_et_taxe` (`id`),
-  ADD CONSTRAINT `FKfjravd1r62rantee2guiamn7o` FOREIGN KEY (`caution_id`) REFERENCES `cautions` (`id`),
-  ADD CONSTRAINT `FKgh5mdd1rg9hywoyclmakyeweu` FOREIGN KEY (`virement_id`) REFERENCES `virements` (`id`),
-  ADD CONSTRAINT `FKpcarewovrseewylrm6pasqhvi` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `commission_aud`
-  ADD CONSTRAINT `FKchsssjqw01m245bw7oitw0shx` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `commission_config`
-  ADD CONSTRAINT `FKpnye9qu3tbkthy4n7t1mx9wii` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `commission_config_aud`
-  ADD CONSTRAINT `FKpor64wqb30n5o6gwnjai3l52i` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `contrat_cadre`
-  ADD CONSTRAINT `FK30v1i7gd86xujw7ji6jrktbr` FOREIGN KEY (`organisme_id`) REFERENCES `organisme_leasing` (`id`);
-
-ALTER TABLE `contrat_cadre_aud`
-  ADD CONSTRAINT `FKpuqidooy9w5ds3hj3k9bn4q75` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `contrat_leasing`
-  ADD CONSTRAINT `FK6yt78nc8qouovmj14hqaoxkjf` FOREIGN KEY (`contrat_cadre_id`) REFERENCES `contrat_cadre` (`id`),
-  ADD CONSTRAINT `FKd4e8mee7l3jbkf45oyrikpiv9` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`),
-  ADD CONSTRAINT `fk_contrat_leasing_cadre` FOREIGN KEY (`contrat_cadre_id`) REFERENCES `contrat_cadre` (`id`);
-
-ALTER TABLE `contrat_leasing_aud`
-  ADD CONSTRAINT `FK5dvcgg945e41ptit9w5npl7gv` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `contrat_leasing_phase`
-  ADD CONSTRAINT `FK13xw8kjqibumbr40kcta8g8bv` FOREIGN KEY (`contrat_leasing_id`) REFERENCES `contrat_leasing` (`id`);
-
-ALTER TABLE `contrat_leasing_phase_aud`
-  ADD CONSTRAINT `FK32io3hpm4xln9gg2h0yhhbryr` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `credit_moyen_terme`
-  ADD CONSTRAINT `FKb63rivvpq4cymn7y4eb73m3vt` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `credit_moyen_terme_aud`
-  ADD CONSTRAINT `FKptbfw1b84119kunn21jvrfm1p` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `decompte`
-  ADD CONSTRAINT `FKb5a1qt9el4g26drbbb198f3d8` FOREIGN KEY (`marche_id`) REFERENCES `marches` (`id`),
-  ADD CONSTRAINT `FKk2nh68eny65q5m6qip5h516ee` FOREIGN KEY (`banque_encaissement_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `decompte_aud`
-  ADD CONSTRAINT `FKgaf4n8x08ipqnnyjwrus2bk85` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `department_aud`
-  ADD CONSTRAINT `FK8ml32j0a8c006cscnx3v0cp0d` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `droit_constate`
-  ADD CONSTRAINT `FKea8xrqwfie3oyra5v18oyjfxc` FOREIGN KEY (`ligne_fonctionnelle_specifique_id`) REFERENCES `ligne_fonctionnelle_specifique` (`id`),
-  ADD CONSTRAINT `FKjw3k1pq8jnouir3s3a2jtj6le` FOREIGN KEY (`marche_id`) REFERENCES `marches` (`id`),
-  ADD CONSTRAINT `FKopkuan9rishe55yx22lfly5i1` FOREIGN KEY (`ligne_fonctionnelle_id`) REFERENCES `ligne_fonctionnelle` (`id`),
-  ADD CONSTRAINT `FKpp56khgk9dxbabpganxxft8hk` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `droit_constate_aud`
-  ADD CONSTRAINT `FKa9c49bs21najkv7qq89obm5bm` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `echeance_cmt`
-  ADD CONSTRAINT `FK3j02dbgpdkqg816lyke49181h` FOREIGN KEY (`credit_moyen_terme_id`) REFERENCES `credit_moyen_terme` (`id`);
-
-ALTER TABLE `echeance_cmt_aud`
-  ADD CONSTRAINT `FKpm6238mhprwvpxrosgbk255id` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `echeance_leasing`
-  ADD CONSTRAINT `FK6lqt5kw7ekfm8wvof6u8y0ev6` FOREIGN KEY (`contrat_leasing_id`) REFERENCES `contrat_leasing` (`id`);
-
-ALTER TABLE `echeance_leasing_aud`
-  ADD CONSTRAINT `FKd23df20onklajehdt9b351qbt` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `factoring`
-  ADD CONSTRAINT `FK1owbcg4rihh8wxybc5hcq579t` FOREIGN KEY (`marche_id`) REFERENCES `marches` (`id`),
-  ADD CONSTRAINT `FK4nf0q1l16ibka9g7wmlwkd1sg` FOREIGN KEY (`ligne_fonctionnelle_specifique_id`) REFERENCES `ligne_fonctionnelle_specifique` (`id`),
-  ADD CONSTRAINT `FKd0rjg0rw9pvlax83l5gqns1kx` FOREIGN KEY (`ligne_fonctionnelle_id`) REFERENCES `ligne_fonctionnelle` (`id`);
-
-ALTER TABLE `factoring_aud`
-  ADD CONSTRAINT `FK3i8ktu51xa9jtbaa81ibfi7ln` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `frais_bancaire`
-  ADD CONSTRAINT `FK3b0mmyf6mm94h3hubxjru0tel` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `frais_bancaire_aud`
-  ADD CONSTRAINT `FKq6ohpxsm7veovwet33c2vo0ha` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `impayee`
-  ADD CONSTRAINT `FKeylp2fflkjxwguefd0kvq0adq` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `impayee_aud`
-  ADD CONSTRAINT `FKqcutxd0bks32c9gs15l94lu78` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `impot_et_taxe`
-  ADD CONSTRAINT `FK6822r70ni2xoue7nno1thgo74` FOREIGN KEY (`caution_id`) REFERENCES `cautions` (`id`),
-  ADD CONSTRAINT `FK8nkpfqmwev9cdjielt19vj9bh` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`),
-  ADD CONSTRAINT `FKl9stm0or019wgwv9u6ngdv6md` FOREIGN KEY (`commission_id`) REFERENCES `commission` (`id`);
-
-ALTER TABLE `impot_et_taxe_aud`
-  ADD CONSTRAINT `FK5ie7fpduejvaij14tuj3id1is` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `lcns`
-  ADD CONSTRAINT `FK9ph6p1cyjg4nsc59iucorafw3` FOREIGN KEY (`ligne_fonctionnelle_id`) REFERENCES `ligne_fonctionnelle` (`id`),
-  ADD CONSTRAINT `FKbgoif52n0bs32q15oncvf1p93` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `lcns_aud`
-  ADD CONSTRAINT `FKsxs04pe2biytucddtdbqxp0ab` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `leasing_config_aud`
-  ADD CONSTRAINT `FKf2eh4yndtxiqckeegvxuqhdr4` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `ligne_fonctionnelle`
-  ADD CONSTRAINT `FK950ndr0000osm83ob87lq47dx` FOREIGN KEY (`nature_ligne_id`) REFERENCES `nature_ligne_fonctionnelle` (`id`),
-  ADD CONSTRAINT `FKem7x3v915h4okb2cf03c9lsh2` FOREIGN KEY (`ligne_mere_id`) REFERENCES `ligne_fonctionnelle` (`id`),
-  ADD CONSTRAINT `FKiwfx893ms6t4s0r8p4p212659` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `ligne_fonctionnelle_aud`
-  ADD CONSTRAINT `FKay2taoldwdfa3md7yd8sb3dux` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `ligne_fonctionnelle_config_aud`
-  ADD CONSTRAINT `FK1cwrh0ngwieewljavxcen8mnw` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `ligne_fonctionnelle_marche`
-  ADD CONSTRAINT `FKc7q78fxx5wpwn2owjqkd0pctg` FOREIGN KEY (`marche_id`) REFERENCES `marches` (`id`),
-  ADD CONSTRAINT `FKmehqwt8xrb101jp3kcknmox04` FOREIGN KEY (`ligne_id`) REFERENCES `ligne_fonctionnelle` (`id`);
-
-ALTER TABLE `ligne_fonctionnelle_marche_aud`
-  ADD CONSTRAINT `FKanhk1lirn1g1sidf0oo6kbbd3` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `ligne_fonctionnelle_specifique`
-  ADD CONSTRAINT `FK57lk2ydnkt1um5o98h1cfri81` FOREIGN KEY (`marche_id`) REFERENCES `marches` (`id`),
-  ADD CONSTRAINT `FKlfodudydwmhtqocgajmo862e9` FOREIGN KEY (`nature_ligne_id`) REFERENCES `nature_ligne_fonctionnelle` (`id`);
-
-ALTER TABLE `ligne_fonctionnelle_specifique_aud`
-  ADD CONSTRAINT `FKfh52vn2vs2el0wp0jrq8jwjs6` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `log_entry_detail`
-  ADD CONSTRAINT `FKqyda0kxkktunv8kyalky6cr7k` FOREIGN KEY (`log_id`) REFERENCES `log` (`id`);
-
-ALTER TABLE `marches`
-  ADD CONSTRAINT `FKcpi3mv9yhm6gs9b22qxvcedt5` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `marches_aud`
-  ADD CONSTRAINT `FKd1246dinnjekoywgu1lglj5b9` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `mises_a_disposition`
-  ADD CONSTRAINT `FK2mwhxb2rlme2h916yggaga3ku` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `mises_a_disposition_aud`
-  ADD CONSTRAINT `FKd5ow2opukndhy03wjoioh1k63` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `nature_ligne_fonctionnelle_aud`
-  ADD CONSTRAINT `FKnm7ly625qwkw31q8axfceqdkc` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `notifications_aud`
-  ADD CONSTRAINT `FKq13cdum57uaulds1c0y53jd4j` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `operation_errone`
-  ADD CONSTRAINT `FK64gpla2wkwxqxikq0i1l9oita` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `operation_errone_aud`
-  ADD CONSTRAINT `FKklis0r030sqaw2u6q54nnyl7y` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `organisme_leasing_aud`
-  ADD CONSTRAINT `FKiqt0dfrkr3i27j17gtayqvyve` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `prefinancement`
-  ADD CONSTRAINT `FK4g5mv670pd9jwp2hnw2phpk4e` FOREIGN KEY (`marche_id`) REFERENCES `marches` (`id`),
-  ADD CONSTRAINT `FKo0yv0j8c6jdvg4hl9l5l4s16g` FOREIGN KEY (`ligne_fonctionnelle_specifique_id`) REFERENCES `ligne_fonctionnelle_specifique` (`id`),
-  ADD CONSTRAINT `FKtilv0u1346pt55815uscwjm4s` FOREIGN KEY (`ligne_fonctionnelle_id`) REFERENCES `ligne_fonctionnelle` (`id`);
-
-ALTER TABLE `prefinancement_aud`
-  ADD CONSTRAINT `FKdbpnx4wr6h25kwy6iev1pf394` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `prelevement`
-  ADD CONSTRAINT `FKql7rimltc1kmokjmhxpm0spq4` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `prelevement_aud`
-  ADD CONSTRAINT `FKjj39ifrh2y503ta6rw81b2o9c` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `provision`
-  ADD CONSTRAINT `FKglsjrhgrwtqef5sja7cbb4an9` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `provision_aud`
-  ADD CONSTRAINT `FKk8898t26efmt6wxah762mbk6g` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `rapprochement`
-  ADD CONSTRAINT `FKspq7j7jtjyesk6b0gsoejwnt1` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `rapprochement_aud`
-  ADD CONSTRAINT `FKkxue94gcr6i4pkjmogg17top1` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `restitution`
-  ADD CONSTRAINT `FK9gwtf8ws5rn2rlxlfac6gpnar` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `restitution_aud`
-  ADD CONSTRAINT `FKg6uln2rup9h0cdre9glnpo3kj` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `transaction`
-  ADD CONSTRAINT `FK6clh3e3bqnc90kq02lu0j97fw` FOREIGN KEY (`rapprochement_id`) REFERENCES `rapprochement` (`id`),
-  ADD CONSTRAINT `FK6q4n22db62ovn9vtvdg547quo` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `transaction_aud`
-  ADD CONSTRAINT `FKb0b8njq8b3l4vwvo7mhgc39t0` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `users_aud`
-  ADD CONSTRAINT `FKld7cdnhid45yc6535cecshyop` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `user_department_role`
-  ADD CONSTRAINT `FK1upufonuoyy28tjjom0qd8gt7` FOREIGN KEY (`department_id`) REFERENCES `department` (`id`),
-  ADD CONSTRAINT `FKsq358pb2ydgjrk5gf9ihbes53` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
-
-ALTER TABLE `user_department_role_aud`
-  ADD CONSTRAINT `FK38k1ct5ayos6yfr6vr747vjiy` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `user_notification_status`
-  ADD CONSTRAINT `FK9wdicp7t7t9gydc73ii1eweg7` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `FKjbj96u0aof2vnfsh9aepxkyqi` FOREIGN KEY (`notification_id`) REFERENCES `notifications` (`id`);
-
-ALTER TABLE `user_notification_status_aud`
-  ADD CONSTRAINT `FKpyy4cvow7te4nqywg60vpmtib` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `virements`
-  ADD CONSTRAINT `FKchrb8hfylc0grt3iy6xk21icw` FOREIGN KEY (`banque_emettrice_id`) REFERENCES `banque` (`id`),
-  ADD CONSTRAINT `FKtanl65cwb33wvme2wrqrjifh3` FOREIGN KEY (`banque_beneficiare_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `virements_aud`
-  ADD CONSTRAINT `FK12ocf7aq99n0f92y313a6mjt3` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
-ALTER TABLE `virements_internationaux`
-  ADD CONSTRAINT `FKl8dgtbsabohwidglfuonv0dxb` FOREIGN KEY (`banque_id`) REFERENCES `banque` (`id`);
-
-ALTER TABLE `virements_internationaux_aud`
-  ADD CONSTRAINT `FKgfs5b7jprk8dtdjyc345fqwn7` FOREIGN KEY (`rev`) REFERENCES `audit_revision_entity` (`id`);
-
--- ── Séquence des révisions d'audit (Hibernate Envers) ──────────────────────
-
-INSERT INTO `audit_revision_entity_seq` (`next_val`) VALUES (1);
+) ;
+
+CREATE SEQUENCE BATCH_STEP_EXECUTION_SEQ MAXVALUE 9223372036854775807 NO CYCLE;
+CREATE SEQUENCE BATCH_JOB_EXECUTION_SEQ MAXVALUE 9223372036854775807 NO CYCLE;
+CREATE SEQUENCE BATCH_JOB_SEQ MAXVALUE 9223372036854775807 NO CYCLE;
 

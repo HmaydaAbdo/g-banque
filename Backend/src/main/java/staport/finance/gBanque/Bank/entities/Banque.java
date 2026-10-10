@@ -34,9 +34,9 @@ public class Banque {
     private Long id;
 
     @NotAudited
-    @Lob
+    // bytea sous PostgreSQL (pas de @Lob : il produirait un « large object » oid, à gérer à part)
     @Basic(fetch = FetchType.LAZY)
-    @Column(name = "logo_data", nullable = false, columnDefinition = "LONGBLOB")
+    @Column(name = "logo_data", nullable = false, columnDefinition = "bytea")
     private byte[] logoData;
 
     @Column(nullable = false, length = 100)

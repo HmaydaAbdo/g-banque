@@ -1,6 +1,9 @@
 -- =============================================================================
 -- Vue v_recapitulatif_encours
 -- =============================================================================
+-- PostgreSQL 18 (10/10/2026) : les littéraux et expressions texte portent COLLATE ci_ai (collation de la base
+-- pour le texte libre, insensible à la casse et aux accents) pour que toutes les branches du UNION aient la même
+-- collation ; (a || b) remplace CONCAT(a, b) car, comme sous MySQL, il renvoie NULL si b est NULL.
 --
 -- Migration Flyway RÉPÉTABLE (R__) : ré-appliquée automatiquement au démarrage du backend
 -- dès que ce fichier change. Ne plus l'exécuter à la main. Modifier la vue = modifier ce fichier.
@@ -171,20 +174,20 @@ CREATE VIEW v_recapitulatif_encours AS
 
 -- 1. LEASING (corrigée — voir historique point 1)
 SELECT
-    'LEASING' COLLATE utf8mb4_unicode_ci AS source_type,
+    'LEASING' COLLATE ci_ai AS source_type,
     el.id AS entity_id,
     cl.banque_id AS banque_id,
-    'DECAISSEMENT' COLLATE utf8mb4_unicode_ci AS sens,
+    'DECAISSEMENT' COLLATE ci_ai AS sens,
     el.date_echeance AS date_reference,
-    NULL AS date_emission,
+    CAST(NULL AS date) AS date_emission,
     el.date_echeance AS date_echeance_affichage,
     CAST(el.montant_ttc AS DECIMAL(19,2)) AS montant,
-    el.libelle COLLATE utf8mb4_unicode_ci AS libelle,
-    el.observation COLLATE utf8mb4_unicode_ci AS observation,
-    cl.numero_contrat COLLATE utf8mb4_unicode_ci AS numero,
-    ol.nom COLLATE utf8mb4_unicode_ci AS recherche_complementaire,
-    NULL AS commission_operation,
-    NULL AS impot_taxe_motif
+    el.libelle COLLATE ci_ai AS libelle,
+    el.observation COLLATE ci_ai AS observation,
+    cl.numero_contrat COLLATE ci_ai AS numero,
+    ol.nom COLLATE ci_ai AS recherche_complementaire,
+    CAST(NULL AS varchar) AS commission_operation,
+    CAST(NULL AS varchar) AS impot_taxe_motif
 FROM echeance_leasing el
 JOIN contrat_leasing cl ON cl.id = el.contrat_leasing_id
 JOIN contrat_cadre cc ON cc.id = cl.contrat_cadre_id
@@ -195,16 +198,16 @@ UNION ALL
 
 -- 2. CMT (corrigée — voir historique point 2)
 SELECT
-    'CMT' COLLATE utf8mb4_unicode_ci AS source_type,
+    'CMT' COLLATE ci_ai AS source_type,
     ec.id AS entity_id,
     cmt.banque_id AS banque_id,
-    'DECAISSEMENT' COLLATE utf8mb4_unicode_ci AS sens,
+    'DECAISSEMENT' COLLATE ci_ai AS sens,
     ec.date_echeance AS date_reference,
     NULL AS date_emission,
     ec.date_echeance AS date_echeance_affichage,
     CAST(ec.montant AS DECIMAL(19,2)) AS montant,
-    ec.libelle COLLATE utf8mb4_unicode_ci AS libelle,
-    ec.observation COLLATE utf8mb4_unicode_ci AS observation,
+    ec.libelle COLLATE ci_ai AS libelle,
+    ec.observation COLLATE ci_ai AS observation,
     NULL AS numero,
     NULL AS recherche_complementaire,
     NULL AS commission_operation,
@@ -217,18 +220,18 @@ UNION ALL
 
 -- 3. CHEQUE (consolidée — voir historique point 4 ; sorties identiques à l'ancienne version)
 SELECT
-    'CHEQUE' COLLATE utf8mb4_unicode_ci AS source_type,
+    'CHEQUE' COLLATE ci_ai AS source_type,
     c.id AS entity_id,
     c.banque_id AS banque_id,
-    c.type COLLATE utf8mb4_unicode_ci AS sens,
+    c.type COLLATE ci_ai AS sens,
     c.date_emission AS date_reference,
     c.date_emission AS date_emission,
     NULL AS date_echeance_affichage,
     CAST(c.montant AS DECIMAL(19,2)) AS montant,
-    CASE WHEN c.type = 'ENCAISSEMENT' THEN CONCAT('Bénéficiaire ', c.beneficiaire) ELSE c.beneficiaire END COLLATE utf8mb4_unicode_ci AS libelle,
-    CASE WHEN c.type = 'ENCAISSEMENT' THEN CONCAT('emetteur  ', c.emetteur) ELSE CONCAT('Chèque N° ', c.numero) END COLLATE utf8mb4_unicode_ci AS observation,
-    c.numero COLLATE utf8mb4_unicode_ci AS numero,
-    c.emetteur COLLATE utf8mb4_unicode_ci AS recherche_complementaire,
+    CASE WHEN c.type = 'ENCAISSEMENT' THEN ('Bénéficiaire ' || c.beneficiaire) ELSE c.beneficiaire END COLLATE ci_ai AS libelle,
+    CASE WHEN c.type = 'ENCAISSEMENT' THEN ('emetteur  ' || c.emetteur) ELSE ('Chèque N° ' || c.numero) END COLLATE ci_ai AS observation,
+    c.numero COLLATE ci_ai AS numero,
+    c.emetteur COLLATE ci_ai AS recherche_complementaire,
     NULL AS commission_operation,
     NULL AS impot_taxe_motif
 FROM cheques c
@@ -243,18 +246,18 @@ SELECT
         WHEN l.type = 'DECAISSEMENT' THEN 'LCN_DECAISSEMENT'
         WHEN l.nature_lcn = 'ENCAISSEMENT' THEN 'LCN_ENCAISSEMENT'
         ELSE 'LCN_ESCOMPTE'
-    END COLLATE utf8mb4_unicode_ci AS source_type,
+    END COLLATE ci_ai AS source_type,
     l.id AS entity_id,
     l.banque_id AS banque_id,
-    l.type COLLATE utf8mb4_unicode_ci AS sens,
+    l.type COLLATE ci_ai AS sens,
     CASE WHEN l.type = 'ENCAISSEMENT' AND l.nature_lcn = 'ESCOMPTE' THEN l.date_emission ELSE l.date_echeance END AS date_reference,
     l.date_emission AS date_emission,
     l.date_echeance AS date_echeance_affichage,
     CAST(l.montant AS DECIMAL(19,2)) AS montant,
-    l.beneficiaire COLLATE utf8mb4_unicode_ci AS libelle,
-    CASE WHEN l.type = 'DECAISSEMENT' THEN CONCAT('LCN N° ', l.numero) ELSE l.emetteur END COLLATE utf8mb4_unicode_ci AS observation,
-    l.numero COLLATE utf8mb4_unicode_ci AS numero,
-    l.emetteur COLLATE utf8mb4_unicode_ci AS recherche_complementaire,
+    l.beneficiaire COLLATE ci_ai AS libelle,
+    CASE WHEN l.type = 'DECAISSEMENT' THEN ('LCN N° ' || l.numero) ELSE l.emetteur END COLLATE ci_ai AS observation,
+    l.numero COLLATE ci_ai AS numero,
+    l.emetteur COLLATE ci_ai AS recherche_complementaire,
     NULL AS commission_operation,
     NULL AS impot_taxe_motif
 FROM lcns l
@@ -266,18 +269,18 @@ UNION ALL
 -- 5a. Virement — décaissement (banque émettrice). NON consolidée avec 5b, volontairement —
 --     voir historique point 4 (NB).
 SELECT
-    'Virement' COLLATE utf8mb4_unicode_ci AS source_type,
+    'Virement' COLLATE ci_ai AS source_type,
     v.id AS entity_id,
     v.banque_emettrice_id AS banque_id,
-    'DECAISSEMENT' COLLATE utf8mb4_unicode_ci AS sens,
+    'DECAISSEMENT' COLLATE ci_ai AS sens,
     v.date_emission AS date_reference,
     v.date_emission AS date_emission,
     NULL AS date_echeance_affichage,
     CAST(v.montant AS DECIMAL(19,2)) AS montant,
-    v.beneficiaire COLLATE utf8mb4_unicode_ci AS libelle,
-    CONCAT('Virement N° ', v.numero) COLLATE utf8mb4_unicode_ci AS observation,
-    v.numero COLLATE utf8mb4_unicode_ci AS numero,
-    v.emetteur COLLATE utf8mb4_unicode_ci AS recherche_complementaire,
+    v.beneficiaire COLLATE ci_ai AS libelle,
+    ('Virement N° ' || v.numero) COLLATE ci_ai AS observation,
+    v.numero COLLATE ci_ai AS numero,
+    v.emetteur COLLATE ci_ai AS recherche_complementaire,
     NULL AS commission_operation,
     NULL AS impot_taxe_motif
 FROM virements v
@@ -287,18 +290,18 @@ UNION ALL
 
 -- 5b. Virement — encaissement (banque bénéficiaire)
 SELECT
-    'Virement' COLLATE utf8mb4_unicode_ci AS source_type,
+    'Virement' COLLATE ci_ai AS source_type,
     v.id AS entity_id,
     v.banque_beneficiare_id AS banque_id,
-    'ENCAISSEMENT' COLLATE utf8mb4_unicode_ci AS sens,
+    'ENCAISSEMENT' COLLATE ci_ai AS sens,
     v.date_emission AS date_reference,
     v.date_emission AS date_emission,
     NULL AS date_echeance_affichage,
     CAST(v.montant AS DECIMAL(19,2)) AS montant,
-    v.beneficiaire COLLATE utf8mb4_unicode_ci AS libelle,
-    v.emetteur COLLATE utf8mb4_unicode_ci AS observation,
-    v.numero COLLATE utf8mb4_unicode_ci AS numero,
-    v.emetteur COLLATE utf8mb4_unicode_ci AS recherche_complementaire,
+    v.beneficiaire COLLATE ci_ai AS libelle,
+    v.emetteur COLLATE ci_ai AS observation,
+    v.numero COLLATE ci_ai AS numero,
+    v.emetteur COLLATE ci_ai AS recherche_complementaire,
     NULL AS commission_operation,
     NULL AS impot_taxe_motif
 FROM virements v
@@ -308,18 +311,18 @@ UNION ALL
 
 -- 6. VIREMENT_INTERNATIONAL (inchangée + numero, + recherche_complementaire = bénéficiaire/émetteur)
 SELECT
-    'VIREMENT_INTERNATIONAL' COLLATE utf8mb4_unicode_ci AS source_type,
+    'VIREMENT_INTERNATIONAL' COLLATE ci_ai AS source_type,
     vi.id AS entity_id,
     vi.banque_id AS banque_id,
-    vi.type COLLATE utf8mb4_unicode_ci AS sens,
+    vi.type COLLATE ci_ai AS sens,
     vi.date_emission AS date_reference,
     vi.date_emission AS date_emission,
     NULL AS date_echeance_affichage,
     CAST(vi.montant AS DECIMAL(19,2)) AS montant,
-    vi.libelle COLLATE utf8mb4_unicode_ci AS libelle,
-    vi.observation COLLATE utf8mb4_unicode_ci AS observation,
+    vi.libelle COLLATE ci_ai AS libelle,
+    vi.observation COLLATE ci_ai AS observation,
     NULL AS numero,
-    CONCAT_WS(' ', vi.beneficiaire, vi.emetteur) COLLATE utf8mb4_unicode_ci AS recherche_complementaire,
+    CONCAT_WS(' ', vi.beneficiaire, vi.emetteur) COLLATE ci_ai AS recherche_complementaire,
     NULL AS commission_operation,
     NULL AS impot_taxe_motif
 FROM virements_internationaux vi
@@ -329,18 +332,18 @@ UNION ALL
 
 -- 7. MiseADisposition (inchangée + numero, + recherche_complementaire = émetteur)
 SELECT
-    'MiseADisposition' COLLATE utf8mb4_unicode_ci AS source_type,
+    'MiseADisposition' COLLATE ci_ai AS source_type,
     m.id AS entity_id,
     m.banque_id AS banque_id,
-    m.type COLLATE utf8mb4_unicode_ci AS sens,
+    m.type COLLATE ci_ai AS sens,
     m.date_emission AS date_reference,
     m.date_emission AS date_emission,
     NULL AS date_echeance_affichage,
     CAST(m.montant AS DECIMAL(19,2)) AS montant,
-    CASE WHEN m.type = 'ENCAISSEMENT' THEN CONCAT('Bénéficiaire ', m.beneficiaire) ELSE m.beneficiaire END COLLATE utf8mb4_unicode_ci AS libelle,
-    CONCAT('Mise à disposition N° ', m.numero) COLLATE utf8mb4_unicode_ci AS observation,
-    m.numero COLLATE utf8mb4_unicode_ci AS numero,
-    m.emetteur COLLATE utf8mb4_unicode_ci AS recherche_complementaire,
+    CASE WHEN m.type = 'ENCAISSEMENT' THEN ('Bénéficiaire ' || m.beneficiaire) ELSE m.beneficiaire END COLLATE ci_ai AS libelle,
+    ('Mise à disposition N° ' || m.numero) COLLATE ci_ai AS observation,
+    m.numero COLLATE ci_ai AS numero,
+    m.emetteur COLLATE ci_ai AS recherche_complementaire,
     NULL AS commission_operation,
     NULL AS impot_taxe_motif
 FROM mises_a_disposition m
@@ -350,17 +353,17 @@ UNION ALL
 
 -- 8. PREFINANCEMENT (inchangée + numero = numéro du marché)
 SELECT
-    'PREFINANCEMENT' COLLATE utf8mb4_unicode_ci AS source_type,
+    'PREFINANCEMENT' COLLATE ci_ai AS source_type,
     p.id AS entity_id,
     mc.banque_id AS banque_id,
-    CASE WHEN p.type = 'REMBOURSEMENT' THEN 'DECAISSEMENT' ELSE 'ENCAISSEMENT' END COLLATE utf8mb4_unicode_ci AS sens,
+    CASE WHEN p.type = 'REMBOURSEMENT' THEN 'DECAISSEMENT' ELSE 'ENCAISSEMENT' END COLLATE ci_ai AS sens,
     p.date_emission AS date_reference,
     p.date_emission AS date_emission,
     NULL AS date_echeance_affichage,
     CAST(p.montant AS DECIMAL(19,2)) AS montant,
-    CONCAT('Marché N° : ', mc.numero) COLLATE utf8mb4_unicode_ci AS libelle,
-    CASE WHEN p.type = 'REMBOURSEMENT' THEN 'Remboursement du préfinancement' ELSE 'Déblocage du préfinancement' END COLLATE utf8mb4_unicode_ci AS observation,
-    mc.numero COLLATE utf8mb4_unicode_ci AS numero,
+    ('Marché N° : ' || mc.numero) COLLATE ci_ai AS libelle,
+    CASE WHEN p.type = 'REMBOURSEMENT' THEN 'Remboursement du préfinancement' ELSE 'Déblocage du préfinancement' END COLLATE ci_ai AS observation,
+    mc.numero COLLATE ci_ai AS numero,
     NULL AS recherche_complementaire,
     NULL AS commission_operation,
     NULL AS impot_taxe_motif
@@ -372,17 +375,17 @@ UNION ALL
 
 -- 9. FACTORING (inchangée + numero = numéro du marché)
 SELECT
-    'FACTORING' COLLATE utf8mb4_unicode_ci AS source_type,
+    'FACTORING' COLLATE ci_ai AS source_type,
     f.id AS entity_id,
     mc.banque_id AS banque_id,
-    CASE WHEN f.type = 'REMBOURSEMENT' THEN 'DECAISSEMENT' ELSE 'ENCAISSEMENT' END COLLATE utf8mb4_unicode_ci AS sens,
+    CASE WHEN f.type = 'REMBOURSEMENT' THEN 'DECAISSEMENT' ELSE 'ENCAISSEMENT' END COLLATE ci_ai AS sens,
     f.date_emission AS date_reference,
     f.date_emission AS date_emission,
     NULL AS date_echeance_affichage,
     CAST(f.montant AS DECIMAL(19,2)) AS montant,
-    CONCAT('Marché N° : ', mc.numero) COLLATE utf8mb4_unicode_ci AS libelle,
-    CASE WHEN f.type = 'REMBOURSEMENT' THEN 'Remboursement du factoring' ELSE 'Déblocage du factoring' END COLLATE utf8mb4_unicode_ci AS observation,
-    mc.numero COLLATE utf8mb4_unicode_ci AS numero,
+    ('Marché N° : ' || mc.numero) COLLATE ci_ai AS libelle,
+    CASE WHEN f.type = 'REMBOURSEMENT' THEN 'Remboursement du factoring' ELSE 'Déblocage du factoring' END COLLATE ci_ai AS observation,
+    mc.numero COLLATE ci_ai AS numero,
     NULL AS recherche_complementaire,
     NULL AS commission_operation,
     NULL AS impot_taxe_motif
@@ -394,17 +397,17 @@ UNION ALL
 
 -- 10. DROIT_CONSTATE (inchangée + numero = numéro du marché)
 SELECT
-    'DROIT_CONSTATE' COLLATE utf8mb4_unicode_ci AS source_type,
+    'DROIT_CONSTATE' COLLATE ci_ai AS source_type,
     dc.id AS entity_id,
     mc.banque_id AS banque_id,
-    CASE WHEN dc.type = 'REMBOURSEMENT' THEN 'DECAISSEMENT' ELSE 'ENCAISSEMENT' END COLLATE utf8mb4_unicode_ci AS sens,
+    CASE WHEN dc.type = 'REMBOURSEMENT' THEN 'DECAISSEMENT' ELSE 'ENCAISSEMENT' END COLLATE ci_ai AS sens,
     dc.date_emission AS date_reference,
     dc.date_emission AS date_emission,
     NULL AS date_echeance_affichage,
     CAST(dc.montant AS DECIMAL(19,2)) AS montant,
-    CONCAT('Marché N° : ', mc.numero) COLLATE utf8mb4_unicode_ci AS libelle,
-    CASE WHEN dc.type = 'REMBOURSEMENT' THEN 'Remboursement du droit constaté' ELSE 'Déblocage du droit constaté' END COLLATE utf8mb4_unicode_ci AS observation,
-    mc.numero COLLATE utf8mb4_unicode_ci AS numero,
+    ('Marché N° : ' || mc.numero) COLLATE ci_ai AS libelle,
+    CASE WHEN dc.type = 'REMBOURSEMENT' THEN 'Remboursement du droit constaté' ELSE 'Déblocage du droit constaté' END COLLATE ci_ai AS observation,
+    mc.numero COLLATE ci_ai AS numero,
     NULL AS recherche_complementaire,
     NULL AS commission_operation,
     NULL AS impot_taxe_motif
@@ -416,17 +419,17 @@ UNION ALL
 
 -- 11. DECOMPTES (inchangée + numero = numéro du marché)
 SELECT
-    'DECOMPTES' COLLATE utf8mb4_unicode_ci AS source_type,
+    'DECOMPTES' COLLATE ci_ai AS source_type,
     d.id AS entity_id,
     d.banque_encaissement_id AS banque_id,
-    'ENCAISSEMENT' COLLATE utf8mb4_unicode_ci AS sens,
+    'ENCAISSEMENT' COLLATE ci_ai AS sens,
     d.date_emission AS date_reference,
     d.date_emission AS date_emission,
     NULL AS date_echeance_affichage,
     CAST(d.montant AS DECIMAL(19,2)) AS montant,
-    CONCAT('Marché N° : ', mc.numero) COLLATE utf8mb4_unicode_ci AS libelle,
-    d.observation COLLATE utf8mb4_unicode_ci AS observation,
-    mc.numero COLLATE utf8mb4_unicode_ci AS numero,
+    ('Marché N° : ' || mc.numero) COLLATE ci_ai AS libelle,
+    d.observation COLLATE ci_ai AS observation,
+    mc.numero COLLATE ci_ai AS numero,
     NULL AS recherche_complementaire,
     NULL AS commission_operation,
     NULL AS impot_taxe_motif
@@ -438,16 +441,16 @@ UNION ALL
 
 -- 12. RESTITUTION (inchangée, pas de numéro de pièce)
 SELECT
-    'RESTITUTION' COLLATE utf8mb4_unicode_ci AS source_type,
+    'RESTITUTION' COLLATE ci_ai AS source_type,
     r.id AS entity_id,
     r.banque_id AS banque_id,
-    'ENCAISSEMENT' COLLATE utf8mb4_unicode_ci AS sens,
+    'ENCAISSEMENT' COLLATE ci_ai AS sens,
     r.date_emission AS date_reference,
     r.date_emission AS date_emission,
     NULL AS date_echeance_affichage,
     CAST(r.montant AS DECIMAL(19,2)) AS montant,
-    r.libelle COLLATE utf8mb4_unicode_ci AS libelle,
-    r.observation COLLATE utf8mb4_unicode_ci AS observation,
+    r.libelle COLLATE ci_ai AS libelle,
+    r.observation COLLATE ci_ai AS observation,
     NULL AS numero,
     NULL AS recherche_complementaire,
     NULL AS commission_operation,
@@ -459,19 +462,19 @@ UNION ALL
 
 -- 13. COMMISSION (inchangée, pas de numéro de pièce ; + commission_operation = motif)
 SELECT
-    'COMMISSION' COLLATE utf8mb4_unicode_ci AS source_type,
+    'COMMISSION' COLLATE ci_ai AS source_type,
     co.id AS entity_id,
     co.banque_id AS banque_id,
-    'DECAISSEMENT' COLLATE utf8mb4_unicode_ci AS sens,
+    'DECAISSEMENT' COLLATE ci_ai AS sens,
     co.date_emission AS date_reference,
     co.date_emission AS date_emission,
     NULL AS date_echeance_affichage,
     CAST(co.montant AS DECIMAL(19,2)) AS montant,
-    co.libelle COLLATE utf8mb4_unicode_ci AS libelle,
-    co.observation COLLATE utf8mb4_unicode_ci AS observation,
+    co.libelle COLLATE ci_ai AS libelle,
+    co.observation COLLATE ci_ai AS observation,
     NULL AS numero,
     NULL AS recherche_complementaire,
-    co.operation COLLATE utf8mb4_unicode_ci AS commission_operation,
+    co.operation COLLATE ci_ai AS commission_operation,
     NULL AS impot_taxe_motif
 FROM commission co
 WHERE co.status = 'PREVU'
@@ -480,16 +483,16 @@ UNION ALL
 
 -- 14. AGIOS (inchangée, pas de numéro de pièce)
 SELECT
-    'AGIOS' COLLATE utf8mb4_unicode_ci AS source_type,
+    'AGIOS' COLLATE ci_ai AS source_type,
     a.id AS entity_id,
     a.banque_id AS banque_id,
-    'DECAISSEMENT' COLLATE utf8mb4_unicode_ci AS sens,
+    'DECAISSEMENT' COLLATE ci_ai AS sens,
     a.date_emission AS date_reference,
     a.date_emission AS date_emission,
     NULL AS date_echeance_affichage,
     CAST(a.montant AS DECIMAL(19,2)) AS montant,
-    a.libelle COLLATE utf8mb4_unicode_ci AS libelle,
-    a.observation COLLATE utf8mb4_unicode_ci AS observation,
+    a.libelle COLLATE ci_ai AS libelle,
+    a.observation COLLATE ci_ai AS observation,
     NULL AS numero,
     NULL AS recherche_complementaire,
     NULL AS commission_operation,
@@ -501,16 +504,16 @@ UNION ALL
 
 -- 15. PRELEVEMENT (inchangée, pas de numéro de pièce)
 SELECT
-    'PRELEVEMENT' COLLATE utf8mb4_unicode_ci AS source_type,
+    'PRELEVEMENT' COLLATE ci_ai AS source_type,
     pr.id AS entity_id,
     pr.banque_id AS banque_id,
-    'DECAISSEMENT' COLLATE utf8mb4_unicode_ci AS sens,
+    'DECAISSEMENT' COLLATE ci_ai AS sens,
     pr.date_emission AS date_reference,
     pr.date_emission AS date_emission,
     NULL AS date_echeance_affichage,
     CAST(pr.montant AS DECIMAL(19,2)) AS montant,
-    pr.libelle COLLATE utf8mb4_unicode_ci AS libelle,
-    pr.observation COLLATE utf8mb4_unicode_ci AS observation,
+    pr.libelle COLLATE ci_ai AS libelle,
+    pr.observation COLLATE ci_ai AS observation,
     NULL AS numero,
     NULL AS recherche_complementaire,
     NULL AS commission_operation,
@@ -522,16 +525,16 @@ UNION ALL
 
 -- 16. FRAIS_BANCAIRE (inchangée, pas de numéro de pièce)
 SELECT
-    'FRAIS_BANCAIRE' COLLATE utf8mb4_unicode_ci AS source_type,
+    'FRAIS_BANCAIRE' COLLATE ci_ai AS source_type,
     fb.id AS entity_id,
     fb.banque_id AS banque_id,
-    'DECAISSEMENT' COLLATE utf8mb4_unicode_ci AS sens,
+    'DECAISSEMENT' COLLATE ci_ai AS sens,
     fb.date_emission AS date_reference,
     fb.date_emission AS date_emission,
     NULL AS date_echeance_affichage,
     CAST(fb.montant AS DECIMAL(19,2)) AS montant,
-    fb.libelle COLLATE utf8mb4_unicode_ci AS libelle,
-    fb.observation COLLATE utf8mb4_unicode_ci AS observation,
+    fb.libelle COLLATE ci_ai AS libelle,
+    fb.observation COLLATE ci_ai AS observation,
     NULL AS numero,
     NULL AS recherche_complementaire,
     NULL AS commission_operation,
@@ -543,20 +546,20 @@ UNION ALL
 
 -- 17. IMPOT_TAXE (inchangée, pas de numéro de pièce ; + impot_taxe_motif = motif)
 SELECT
-    'IMPOT_TAXE' COLLATE utf8mb4_unicode_ci AS source_type,
+    'IMPOT_TAXE' COLLATE ci_ai AS source_type,
     it.id AS entity_id,
     it.banque_id AS banque_id,
-    'DECAISSEMENT' COLLATE utf8mb4_unicode_ci AS sens,
+    'DECAISSEMENT' COLLATE ci_ai AS sens,
     it.date_emission AS date_reference,
     it.date_emission AS date_emission,
     NULL AS date_echeance_affichage,
     CAST(it.montant AS DECIMAL(19,2)) AS montant,
-    it.libelle COLLATE utf8mb4_unicode_ci AS libelle,
-    it.observation COLLATE utf8mb4_unicode_ci AS observation,
+    it.libelle COLLATE ci_ai AS libelle,
+    it.observation COLLATE ci_ai AS observation,
     NULL AS numero,
     NULL AS recherche_complementaire,
     NULL AS commission_operation,
-    it.motif COLLATE utf8mb4_unicode_ci AS impot_taxe_motif
+    it.motif COLLATE ci_ai AS impot_taxe_motif
 FROM impot_et_taxe it
 WHERE it.status = 'PREVU'
 
@@ -564,17 +567,17 @@ UNION ALL
 
 -- 18. IMPAYEE (inchangée + numero = im.numero, colonne déjà existante sur la table)
 SELECT
-    'IMPAYEE' COLLATE utf8mb4_unicode_ci AS source_type,
+    'IMPAYEE' COLLATE ci_ai AS source_type,
     im.id AS entity_id,
     im.banque_id AS banque_id,
-    im.type COLLATE utf8mb4_unicode_ci AS sens,
+    im.type COLLATE ci_ai AS sens,
     im.date_emission AS date_reference,
     im.date_emission AS date_emission,
     NULL AS date_echeance_affichage,
     CAST(im.montant AS DECIMAL(19,2)) AS montant,
-    im.libelle COLLATE utf8mb4_unicode_ci AS libelle,
-    im.observation COLLATE utf8mb4_unicode_ci AS observation,
-    im.numero COLLATE utf8mb4_unicode_ci AS numero,
+    im.libelle COLLATE ci_ai AS libelle,
+    im.observation COLLATE ci_ai AS observation,
+    im.numero COLLATE ci_ai AS numero,
     NULL AS recherche_complementaire,
     NULL AS commission_operation,
     NULL AS impot_taxe_motif
@@ -585,16 +588,16 @@ UNION ALL
 
 -- 19. OPERATION_ERRONE (inchangée, pas de numéro de pièce)
 SELECT
-    'OPERATION_ERRONE' COLLATE utf8mb4_unicode_ci AS source_type,
+    'OPERATION_ERRONE' COLLATE ci_ai AS source_type,
     oe.id AS entity_id,
     oe.banque_id AS banque_id,
-    'DECAISSEMENT' COLLATE utf8mb4_unicode_ci AS sens,
+    'DECAISSEMENT' COLLATE ci_ai AS sens,
     oe.date_emission AS date_reference,
     oe.date_emission AS date_emission,
     NULL AS date_echeance_affichage,
     CAST(oe.montant AS DECIMAL(19,2)) AS montant,
-    oe.libelle COLLATE utf8mb4_unicode_ci AS libelle,
-    oe.observation COLLATE utf8mb4_unicode_ci AS observation,
+    oe.libelle COLLATE ci_ai AS libelle,
+    oe.observation COLLATE ci_ai AS observation,
     NULL AS numero,
     NULL AS recherche_complementaire,
     NULL AS commission_operation,
@@ -608,16 +611,16 @@ UNION ALL
 --     la vue d'origine du 17/07, qui l'ignorait donc ; la catégorie « Provision »
 --     de RecapGeneralDetailleServiceImpl affichait zéro en permanence)
 SELECT
-    'PROVISION' COLLATE utf8mb4_unicode_ci AS source_type,
+    'PROVISION' COLLATE ci_ai AS source_type,
     pv.id AS entity_id,
     pv.banque_id AS banque_id,
-    pv.sens COLLATE utf8mb4_unicode_ci AS sens,
+    pv.sens COLLATE ci_ai AS sens,
     pv.date_emission AS date_reference,
     pv.date_emission AS date_emission,
     NULL AS date_echeance_affichage,
     CAST(pv.montant AS DECIMAL(19,2)) AS montant,
-    pv.libelle COLLATE utf8mb4_unicode_ci AS libelle,
-    pv.observation COLLATE utf8mb4_unicode_ci AS observation,
+    pv.libelle COLLATE ci_ai AS libelle,
+    pv.observation COLLATE ci_ai AS observation,
     NULL AS numero,
     NULL AS recherche_complementaire,
     NULL AS commission_operation,

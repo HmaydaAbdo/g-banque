@@ -7,7 +7,7 @@ API Spring Boot de gestion et de suivi des opérations bancaires internes de Sta
 
 ## Pile technique
 
-Java 17 · Spring Boot 3.5 · MySQL 8 · Flyway · Spring Security (JWT en cookies HttpOnly) · Spring Batch ·
+Java 17 · Spring Boot 3.5 · PostgreSQL 18 · Flyway · Spring Security (JWT en cookies HttpOnly) · Spring Batch ·
 Hibernate Envers · MapStruct · springdoc (Swagger) · Apache POI / OpenPDF · Maven.
 
 ## Environnement unique
@@ -17,12 +17,12 @@ Toute la configuration vient du fichier `../.env` (modèle : `../.env.example`) 
 variable manque.
 
 ```bash
-# Depuis la racine du dépôt : toute la stack (MySQL 8, backend, frontend, sauvegarde, monitoring)
+# Depuis la racine du dépôt : toute la stack (PostgreSQL 18, backend, frontend, sauvegarde, monitoring)
 docker compose up -d --build
 ```
 
 Pour déboguer le backend depuis l'IDE contre la base de la stack : mêmes variables que `.env`, avec
-`DB_HOST=localhost` et `DB_PORT=3307`.
+`DB_HOST=localhost` et `DB_PORT=5433`.
 
 ## Base de données
 
@@ -32,7 +32,7 @@ Hibernate est en `ddl-auto: validate`. Règles : `../conventions/database.md`.
 ## Tests
 
 ```bash
-mvn verify   # tests unitaires et d'intégration (MySQL 8 Testcontainers : Docker requis) + couverture JaCoCo
+mvn verify   # tests unitaires et d'intégration (PostgreSQL 18 Testcontainers : Docker requis) + couverture JaCoCo
 ```
 
 Règles : `../conventions/testing.md`. La CI rejoue la même commande (`../.github/workflows/ci.yml`).
@@ -49,4 +49,4 @@ Règles : `../conventions/testing.md`. La CI rejoue la même commande (`../.gith
 ## Documentation
 
 - Fonctionnelle : `../docs/modules/README.md` · Accès : `../docs/rbac/README.md`
-- Exploitation : `../docs/infra/ci-cd.md`, `../docs/infra/backup-mysql.md`
+- Exploitation : `../docs/infra/ci-cd.md`, `../docs/infra/backup-postgres.md`, `../docs/infra/migration-postgres.md`
