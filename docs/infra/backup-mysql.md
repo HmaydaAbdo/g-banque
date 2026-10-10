@@ -107,6 +107,27 @@ docker compose restart backend
 
 ---
 
+## Charger un export phpMyAdmin dans une base vide (première mise en place, poste de développement)
+
+Cas d'usage : démarrer la stack Docker sur un poste avec les données d'un export (phpMyAdmin de la production
+ou de XAMPP), par exemple après suppression de `./docker-data/mysql`.
+
+```bash
+docker compose up -d mysql
+python sql/importer_export.py "C:/chemin/vers/export.sql"
+docker compose up -d
+```
+
+* L'outil refuse d'importer si la base contient déjà des tables : il n'écrase jamais de données.
+* Il adapte l'export à MySQL 8 sous Linux (tables Spring Batch en majuscules, vues retirées) ; au démarrage, le
+  backend pose la baseline Flyway, applique les migrations et recrée les vues.
+* Démarrer le service `backup` **après** l'import : sa sauvegarde initiale (`INIT_BACKUP=1`) contient alors les données.
+* Vérifié le 10/10/2026 : export de production du jour → 106 tables, 5 713 transactions importées en 3 min 30 ;
+  baseline + 3 migrations ; sauvegarde initiale de 1,4 Mo contenant les 106 tables.
+
+Où sont les données : `./docker-data/mysql` (base) et `./backups/mysql` (sauvegardes) sont des dossiers de l'hôte
+montés dans les conteneurs. Ils survivent à `docker compose down` et aux redéploiements ; ne pas les supprimer.
+
 ## Test de restauration périodique
 
 Un backup jamais testé n'est pas une garantie de récupération. Il est recommandé de tester une

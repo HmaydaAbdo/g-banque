@@ -21,8 +21,6 @@ reconnectent). G-Banque reste servi en **HTTP** pour l'instant (cf. chantier HTT
    les logs : `Successfully baselined schema with version: 1`, `Successfully applied 3 migrations`, puis démarrage complet.
 6. Vérifier : connexion, rechargement de page (session conservée), écran Récapitulatif (vue recréée), déconnexion ;
    le lendemain, un fichier de sauvegarde du jour (mysql-cron-backup 1.15.0, `--skip-ssl`).
-7. Après déploiement : supprimer `env.dev` (remplacé par le `.env` unique) ; développer sur la stack Docker
-   (`docker compose up -d --build`), la base XAMPP locale n'est plus utilisée.
 
 **Répétition faite le 10/10/2026** sur une copie de la production (export du jour importé dans un MySQL 8 jetable) :
 baseline V1, V2 et vues appliquées, **schéma de production validé par Hibernate sans écart**, démarrage en 37 s,
@@ -36,6 +34,22 @@ avant toute écriture).
 
 **Petit défaut relevé :** une URL d'API inexistante renvoie 500 (« Exception non gérée : No static resource ») au lieu
 de 404 — à traiter dans `GlobalExceptionHandler` (`NoResourceFoundException` → 404).
+
+### Chantier — PostgreSQL 18 à la place de MySQL 8 (demandé le 10/10/2026, plan à valider)
+
+Faisable : le code Java n'a **aucune requête SQL native** (tout passe par JPA/JPQL). Travail concentré sur :
+schéma Flyway réécrit pour PostgreSQL (V1 : types `boolean`, `timestamp`, `text`, enums en `varchar` + `CHECK`,
+identités, séquences Hibernate), 2 vues (911 lignes de SQL MySQL : `COLLATE`, fonctions de date…), tables Spring Batch
+(script officiel PostgreSQL), recherche texte (PostgreSQL est **sensible à la casse** : `LIKE`/`=` sur texte à auditer
+dans les Specifications), migration des données de production (outil `pgloader` ou script), Testcontainers PostgreSQL,
+service de sauvegarde PostgreSQL, pgAdmin à la place de phpMyAdmin, conventions et docs. Répétition complète sur copie
+de la production avant bascule. Précédent : la migration PostgreSQL 18 déjà faite sur ERP-RH.
+
+### Monitoring — configuration absente du dépôt (relevé le 10/10/2026)
+
+`docker-compose.yml` monte `./monitoring/prometheus.yml` et `./monitoring/grafana/provisioning`, absents du dépôt :
+un `docker compose up -d` complet sur un poste neuf démarre Prometheus/Grafana sans configuration (ou échoue). Récupérer
+ces fichiers depuis le serveur et les versionner (sans secret).
 
 ### Chantier — Passage en HTTPS (demandé le 10/10/2026, après le déploiement ci-dessus)
 
