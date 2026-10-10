@@ -9,7 +9,7 @@
 d'images n'ont pas tourné. Aucune image publiée sur Docker Hub pour l'instant. Seule la branche `main` est conservée.
 
 **À faire.**
-1. **Corriger le rate limit Docker Hub** : placer `docker/login-action` (identifiants Docker Hub déjà configurés) avant
+1. **Rate limit Docker Hub (correctif poussé le 10/10/2026, à vérifier sur le run de `main`)** : `docker/login-action` placé `docker/login-action` (identifiants Docker Hub déjà configurés) avant
    les `docker run` gitleaks et Trivy du job `security`, et avant le build du job `images`. Relancer la CI sur `main`
    et vérifier le push de `gbanque-backend` / `gbanque-frontend` (`latest` + sha). Confirmer que le secret
    `DOCKERHUB_TOKEN` existe sous ce nom exact.
@@ -18,7 +18,7 @@ d'images n'ont pas tourné. Aucune image publiée sur Docker Hub pour l'instant.
    branches fusionnées activée. Règle d'équipe en attendant : jamais de push direct sur `main` hors correctifs de CI, PR
    obligatoire avec la CI verte. À reprendre si le dépôt passe en offre payante (checks exigés : `Backend`, `Frontend`,
    `Sécurité`, `Image Docker (backend|frontend)`).
-3. **Mises à jour Dependabot écartées le 10/10/2026** (branches supprimées, PR 5 et 6 à fermer). À reprendre une par
+3. **Mises à jour de dépendances écartées le 10/10/2026** (anciennes PR Dependabot fermées). À reprendre une par
    une comme chantiers décidés, jamais en fusion automatique :
    - Angular 17 → 20/22 (`router`, `platform-browser-dynamic` ; toute la famille `@angular/*`, CLI, TypeScript, Node) ;
    - PrimeFlex 3 → 4 (et PrimeNG en cohérence) ;
@@ -27,10 +27,9 @@ d'images n'ont pas tourné. Aucune image publiée sur Docker Hub pour l'instant.
    - actions GitHub en version majeure : `checkout` 7, `setup-node` 6, `build-push-action` 7, `login-action` 4,
      `setup-buildx-action` 4 (faible risque, à valider sur la CI) ;
    - mises à jour mineures/patch groupées Maven et npm (faible risque).
-   `dependabot.yml` ignore désormais les versions majeures Docker et l'image `maven` ; étendre `ignore` à Maven/npm
-   si l'on veut aussi les couper là.
-4. **Cadence (fait le 10/10/2026)** : `open-pull-requests-limit: 1` par écosystème dans `dependabot.yml` et suppression
-   automatique des branches fusionnées. Règle : on fusionne ou on ferme chaque PR Dependabot avant la suivante.
+4. **Dependabot supprimé (10/10/2026)** : il ouvrait une PR (et 2 workflows CI/CodeQL) par écosystème, trop de bruit pour
+   suivre une seule CI. Mises à jour de dépendances faites à la main, quand on le décide. Si on le réactive : un seul
+   écosystème, rythme mensuel. La suppression automatique des branches fusionnées reste activée sur le dépôt.
 
 ### Chantier — Stratégie de tests, tous niveaux, tous modules (demandé le 09/10/2026)
 

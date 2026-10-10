@@ -11,7 +11,6 @@
 | `ci.yml` — job `security` | PR, push `main` | gitleaks (secrets) + Trivy (dépendances, Dockerfile) |
 | `ci.yml` — job `images` | après les trois précédents | Build des images, scan Trivy, taille ; push Docker Hub sur `main` |
 | `codeql.yml` | PR, push `main`, lundi 03:00 UTC | Analyse statique Java / TypeScript |
-| `dependabot.yml` | hebdomadaire | PR de mise à jour Maven, npm, Docker, GitHub Actions |
 
 Les rapports (JaCoCo, Karma, résumés de taille, couverture du code modifié) sont dans le **résumé du run** et dans les artefacts (14 jours).
 
@@ -22,7 +21,7 @@ Les rapports (JaCoCo, Karma, résumés de taille, couverture du code modifié) s
    * *Variables* → `DOCKERHUB_USERNAME` = identifiant Docker Hub ;
    * *Secrets* → `DOCKERHUB_TOKEN` = le token créé.
    Sans ces deux valeurs, la CI fonctionne mais ne publie rien.
-3. **Protection de `main`** (*Settings → Branches → Add rule*) : exiger une PR, exiger les checks `Backend`, `Frontend`, `Sécurité` et `Image Docker (backend|frontend)`, interdire le push direct.
+3. **Protection de `main`** : indisponible sur un dépôt privé en offre gratuite (erreur 403). Règle d'équipe : PR avec CI verte, pas de push direct.
 4. *Settings → Code security* : activer Dependabot alerts, Secret scanning et Push protection.
 
 ## Images publiées

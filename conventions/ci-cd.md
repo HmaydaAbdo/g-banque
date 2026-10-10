@@ -31,7 +31,7 @@
 
 * **Reproductibilité** : `npm ci` (jamais `npm install`) ; `package-lock.json` versionné ; versions de base d'images épinglées au minimum en `major.minor`.
 * **Un seuil bloquant ne se désactive pas pour faire passer une PR.** Un contrôle temporairement non bloquant est marqué dans le workflow (commentaire + entrée `TODO.md`) et retiré dès que possible.
-* Les mises à jour de dépendances arrivent par Dependabot (PR hebdomadaires groupées), validées par la CI.
+* Les mises à jour de dépendances se font à la main, par une PR dédiée validée par la CI (Dependabot volontairement non utilisé : trop de PR et de runs à suivre).
 * Les secrets (`DOCKERHUB_TOKEN`, futurs accès SSH) sont des *secrets* GitHub ; l'identifiant Docker Hub est la variable de dépôt `DOCKERHUB_USERNAME`. Jamais de secret dans le dépôt ni dans les logs.
 
 ---
