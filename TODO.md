@@ -7,12 +7,11 @@
 Serveur Windows, dossier `C:\apps\G-Banque` (`docker-compose.yml` + `.env`, images Docker Hub `:latest`).
 **Fait le 10/10/2026 :** ancienne stack MySQL arrêtée (données MySQL conservées pour retour arrière), base PostgreSQL
 restaurée depuis la sauvegarde locale du 10/10 (export de production de 04h12 migré) : Flyway en version 2,
-5 713 transactions, 5 621 commissions, 3 utilisateurs.
+5 713 transactions, 5 621 commissions, 3 utilisateurs. Base passée dans le volume nommé `gbanque-postgres-data`,
+contrôle conforme (104 tables, 2 vues, Flyway 2, 55 407 lignes).
 
 **Reste à faire :**
-1. Passer la base du serveur dans le volume nommé `gbanque-postgres-data` (nouveau `docker-compose.yml`) : arrêt,
-   volume vide, nouvelle restauration de `gbanque-init.sql.gz`, contrôle (104 tables, 2 vues, 55 407 lignes),
-   démarrage. Ensuite seulement, supprimer l'ancien dossier `docker-data\postgres` du serveur.
+1. Supprimer sur le serveur l'ancien dossier `docker-data\postgres` et `gbanque-init.sql.gz` (contrôle du volume validé).
 2. Le nginx frontal doit servir le frontend et `/gbanque/api` sur la **même origine** et transmettre `Set-Cookie` /
    `Cookie` sans les modifier (comportement par défaut de `proxy_pass`).
 3. Vérifier : connexion, rechargement de page (session conservée), Récapitulatif, une recherche par libellé,
@@ -28,7 +27,6 @@ restaurée depuis la sauvegarde locale du 10/10 (export de production de 04h12 m
   métier, puis migration Flyway dédiée (accord explicite avant toute écriture).
 
 **Petits défauts relevés :**
-- Une URL d'API inexistante renvoie 500 (« No static resource ») au lieu de 404 — `GlobalExceptionHandler`.
 - `rapprochement.date_rapprochement` est stockée en binaire (`YearMonth` Java sérialisé, `bytea`) faute de
   convertisseur : illisible en SQL. Ajouter un `AttributeConverter` vers `date` (1er du mois) + migration de conversion.
 
@@ -53,15 +51,12 @@ Ensuite seulement : en-tête `Strict-Transport-Security`, et cadrer une CSP ngin
 - **Java 17 → 21/25** et image Maven correspondante.
 - Mises à jour mineures/patch Maven et npm, par lot validé par la CI.
 - Évaluer un JRE réduit (`jlink`) pour l'image backend (~290 Mo) — gain ~100 Mo, à tester.
-- Vérifier sur le serveur les versions de Grafana/Prometheus en service : l'épinglage (13.2.3 / v3.15.0) fera une montée
-  de version au prochain `pull` si le serveur tourne plus ancien.
 
 ### Avertissements du build de production frontend (relevés le 10/10/2026)
 
 - `recapitulatif.component.scss` : 9,59 ko pour un budget d'avertissement de 6 ko — **à 0,4 ko de l'erreur (10 ko)
   qui bloquerait le build**. L'alléger (styles morts, règles communes vers `styles.scss`/tokens).
 - Bundle initial : 1,19 Mo pour 1 Mo. Charger les écrans et modules PrimeNG à la demande (lazy loading des routes).
-- (Corrigé le 10/10/2026 : page `landing`, budget composant relevé à 6 ko, cf. `conventions/Frontend.md`.)
 
 ### Chantier — Stratégie de tests, tous niveaux, tous modules (demandé le 09/10/2026)
 

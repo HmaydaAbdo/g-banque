@@ -9,6 +9,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.FileStorageException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
@@ -79,6 +80,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
         log.warn("Ressource introuvable : {}", ex.getMessage());
         return build(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage());
+    }
+
+    /** URL qui ne correspond à aucun endpoint (sans cela, le filet de sécurité la renverrait en 500). */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFound(NoResourceFoundException ex) {
+        log.warn("URL inexistante : {}", ex.getResourcePath());
+        return build(HttpStatus.NOT_FOUND, "Not Found", "Ressource introuvable.");
     }
 
     // ── 409 — Doublon ─────────────────────────────────────────────────────────
