@@ -1,20 +1,14 @@
 package staport.finance.gBanque.rapprochement;
 
-import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import staport.finance.gBanque.AbstractIntegrationTest;
+import staport.finance.gBanque.AbstractMigrationTest;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -24,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * {@code date}. Rejouée sur une base jetable amenée en V3 puis chargée de valeurs « héritées » au format exact
  * relevé en production (43 octets), avec les mêmes tables {@code rapprochement} et {@code rapprochement_aud}.
  */
-class RapprochementDateMigrationTest extends AbstractIntegrationTest {
+class RapprochementDateMigrationTest extends AbstractMigrationTest {
 
     /** Flux Java sérialisé d'un YearMonth : en-tête et descripteur de classe, puis bloc [type 12][année][mois]. */
     private static String legacy(int annee, int mois) {
@@ -84,50 +78,6 @@ class RapprochementDateMigrationTest extends AbstractIntegrationTest {
         try (Connection c = connexion(url); Statement st = c.createStatement()) {
             assertThat(texte(st, "SELECT data_type FROM information_schema.columns "
                     + "WHERE table_name = 'rapprochement' AND column_name = 'date_rapprochement'")).isEqualTo("bytea");
-        }
-    }
-
-    // ── Helpers ────────────────────────────────────────────────────────────────
-
-    /** Crée une base vide sur le PostgreSQL de test et renvoie son URL JDBC. */
-    private static String baseJetable() throws SQLException {
-        String nom = "mig_v4_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
-        try (Connection c = DriverManager.getConnection(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
-             Statement st = c.createStatement()) {
-            st.execute("CREATE DATABASE " + nom);
-        }
-        return POSTGRES.getJdbcUrl().replace("/" + POSTGRES.getDatabaseName(), "/" + nom);
-    }
-
-    private static Connection connexion(String url) throws SQLException {
-        return DriverManager.getConnection(url, POSTGRES.getUsername(), POSTGRES.getPassword());
-    }
-
-    /** Applique les migrations jusqu'à la version donnée (toutes si {@code null}). */
-    private static void migrer(String url, String versionCible) {
-        var config = Flyway.configure()
-                .dataSource(url, POSTGRES.getUsername(), POSTGRES.getPassword())
-                .locations("classpath:db/migration");
-        if (versionCible != null) {
-            config.target(versionCible);
-        }
-        config.load().migrate();
-    }
-
-    private static List<LocalDate> dates(Statement st, String sql) throws SQLException {
-        List<LocalDate> valeurs = new ArrayList<>();
-        try (ResultSet rs = st.executeQuery(sql)) {
-            while (rs.next()) {
-                valeurs.add(rs.getObject(1, LocalDate.class));
-            }
-        }
-        return valeurs;
-    }
-
-    private static String texte(Statement st, String sql) throws SQLException {
-        try (ResultSet rs = st.executeQuery(sql)) {
-            rs.next();
-            return rs.getString(1);
         }
     }
 }

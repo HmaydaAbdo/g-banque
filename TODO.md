@@ -21,11 +21,6 @@ contrôle conforme (104 tables, 2 vues, Flyway 2, 55 407 lignes).
 5. Si des saisies ont été faites dans l'ancienne application après l'export de 04h12 : refaire la migration avec un
    nouvel export (`docs/infra/migration-postgres.md`).
 
-**À trancher (données) :**
-- 8 lignes `commission` (et leurs révisions d'audit) ont `operation = 'Importation'`, valeur qui n'existe plus dans le
-  code : **ouvrir l'une d'elles renvoie une erreur 500** (vérifié, commission 17276) ; la liste s'affiche. Décision
-  métier, puis migration Flyway dédiée (accord explicite avant toute écriture).
-
 ### Monitoring (Prometheus, Grafana) — retiré du compose le 10/10/2026
 
 Retiré à la demande de HMAYDA (configuration absente du dépôt). Le backend expose toujours `/actuator/prometheus`.
@@ -40,11 +35,17 @@ Ensuite seulement : en-tête `Strict-Transport-Security`, et cadrer une CSP ngin
 
 ### Chantier — Montées de version (à décider une par une, jamais automatiques)
 
-- **Angular 17 → 19+** (toute la famille `@angular/*`, CLI, TypeScript, Node) : 16 CVE HIGH dans `package-lock.json`,
-  corrigées seulement à partir d'Angular 19 (scan non bloquant dans le job `security` d'ici là). PrimeNG/PrimeFlex en cohérence.
-- **Spring Boot 4** (Spring Framework 7, Jackson 3, Security 7) : décision d'architecture ; retirera les 3 exceptions de
-  `.trivyignore`. Retirer alors les propriétés `tomcat.version`, `netty.version`, `jackson-bom.version` du `pom.xml`.
-- **Java 17 → 21/25** et image Maven correspondante.
+*Décisions HMAYDA du 11/10/2026 : chantiers à ouvrir dans des sessions dédiées (trop longs pour une session de rattrapage).*
+
+- **Backend — Spring Boot 3.5 → 4.1, puis Java.** Le support gratuit de Boot 3.5 s'est arrêté le 30/06/2026 (plus de correctifs de
+  sécurité : d'où les versions Tomcat/Netty/Jackson épinglées à la main). Cible **4.1** (support jusqu'au 31/07/2027 ; 4.0 : 31/12/2026).
+  Spring Framework 7, Jackson 3, Hibernate 7 (Envers), Security 7, springdoc 3 ; garder Java 17 pour ce lot. Retire les 3 exceptions de
+  `.trivyignore` et les propriétés `tomcat.version`, `netty.version`, `jackson-bom.version` du `pom.xml`. Ensuite, lot séparé **Java 17 → 21 ou 25**
+  (pom, images Maven/JRE, CI).
+- **Frontend — Angular 17 → 22 par étapes** (comme pour erp-rh), un lot vert par marche. Le code livré est exposé : failles dans
+  `@angular/core`, `common`, `compiler`, `router` (XSS i18n/SVG, fuite du jeton XSRF, déni de service), corrigées en 20.3 / 21.2 et au-delà.
+  Node 20 est en fin de support (CI et `Frontend/Dockerfile`) : passer à Node 22 ou plus avec Angular 21+. PrimeNG 17 → 21+ à traiter
+  à part : nouveau système de thème (le `styles.scss` de 35 Ko et les surcharges de tableaux sont le vrai coût), contrôle visuel écran par écran.
 - Mises à jour mineures/patch faites le 11/10/2026 (npm : verrou rafraîchi dans les plages, 90 → 71 vulnérabilités ; Maven : openpdf 1.3.43, jacoco 0.8.15, maven-compiler-plugin 3.16.0). Reste : **PostgreSQL JDBC 42.7.14** (publié le 07/10/2026, règle des 2 semaines : à passer à partir du 21/10/2026) ; les autres dépendances sont déjà à la dernière version de leur série. OpenPDF 2.x/3.x (changement de paquets) et le reste des vulnérabilités npm relèvent des montées majeures ci-dessous.
 - **JRE réduit (`jlink`) — évalué le 11/10/2026, non adopté (décision d'architecture à valider).** Essai : build jlink (modules détectés par `jdeps` + `jdk.crypto.ec`, `jdk.unsupported`, `jdk.management`…) sur `alpine:3.24` avec `fontconfig` et `font-dejavu` : **image 203 Mo au lieu de 298 Mo (−95 Mo, −32 %)** ; JRE de 65 Mo au lieu de 135 Mo. Démarrage vérifié sur une base vierge (Flyway jusqu'à V4, validation Hibernate, 0 erreur). Non vérifié : génération PDF et envoi de courriel dans le conteneur (nécessite une session). Contreparties : un `Dockerfile` plus long, une liste de modules à maintenir (un module oublié ne se voit qu'à l'exécution), l'image de base n'est plus `eclipse-temurin` (mises à jour de sécurité du JRE à suivre soi-même : reconstruire l'image à chaque correctif Temurin). Essai non conservé dans le dépôt (une vingtaine de lignes : `jdeps --print-module-deps` puis `jlink --strip-debug --no-man-pages --compress=2`) ; à refaire si la taille d'image devient un problème (déploiement sur un lien lent).
 
@@ -187,31 +188,19 @@ Le code (20 sources, ~30 écrans, modal de lot) est terminé et le build de prod
 (XOR strict taux/montant, TVA optionnelle CMT/Leasing, saisie en lot interdite). Détail : historique git et mémoire
 `project_gbanque_tva_saisie_libre`.
 
-### Bascule du statut d'un virement — garde-fou contre le retour en « en cours » (relevé le 09/10/2026)
+### Bascule du statut — retour « en cours » d'un élément déjà rapproché (décision HMAYDA du 11/10/2026, à confirmer avant le code)
 
-**Constat.** Le virement n° 008981 (id 1814, BP, AGNI BTP, 30 000 MAD) est resté « En cours » alors
-que la transaction id 250 du rapprochement n° 5 de BP (janvier 2026) pointe sur lui
-(`referent = 1814`). Cas unique : les 1 584 autres transactions de type Virement pointent toutes
-vers un virement « Réglé ».
+**État des données (copie de production du 10/10/2026).** Le virement 1814 est `REGLE` ; ses dates vides sont reprises de la
+transaction 250 par la migration V5 (faite le 11/10/2026). Aucun autre écart sur 7 types de moyens de paiement.
 
-**Cause la plus plausible** (non prouvable : l'historique d'audit ne commence que le 21/07/2026).
-`VirementService.toggleVirementStatus` bascule `REGLE` ↔ `ENCOURS` sans vérifier si une transaction
-de rapprochement pointe sur le virement : quelqu'un a pu le repasser en cours à la main. Le chemin
-d'annulation de validation (`VirementReversalHandler`) ne colle pas avec le cas 250 : il remet le
-virement en cours mais la transaction est alors supprimée.
+**Cause.** Une quarantaine de méthodes `toggle…Status` (un par type d'opération) bascule `REGLE`/`ENCOURS` (ou `PAYE`/`PREVU`)
+sans regarder si une transaction de rapprochement pointe sur l'élément.
 
-À faire (décisions de HMAYDA attendues avant toute modification) :
-
-1. **Corriger la donnée** du virement 1814 : passer à `REGLE` et reprendre
-   `date_operation` / `date_valeur` de la transaction 250 (19/01/2026). En attente d'accord
-   explicite — consigne antérieure « ne rien toucher en base » pour l'historique.
-2. **Garde-fou métier** : refuser le retour `REGLE` → `ENCOURS` par la bascule lorsqu'une
-   transaction référence le virement, avec un message clair (le retour en cours passe alors par
-   l'annulation de la validation dans le rapprochement). Changement de règle métier : à valider,
-   puis documenter dans `docs/modules`, `docs/guide-utilisateur` et `docs/rbac`
-   (chapitre Virements).
-3. Vérifier si les autres moyens de paiement disposant d'une bascule manuelle
-   (virements internationaux, etc.) ont le même défaut.
+**Décision.** Garde-fou pour tous les types (un seul contrôle partagé). HMAYDA propose que, pour l'administrateur système, le retour
+`REGLE` → `ENCOURS` d'un élément **rapproché** supprime la transaction liée et remette l'élément « en cours » (au lieu de refuser).
+Points à confirmer avec lui avant de coder : confirmation explicite à l'écran (montant, rapprochement concerné), refus si le
+rapprochement est clôturé définitivement, recalcul des soldes en cascade, audit de la suppression ; l'élément sans transaction
+(`REGLE` posé à la main) garde la bascule libre. Puis documenter (`docs/modules`, `docs/guide-utilisateur`, `docs/rbac`).
 
 ### Refonte visuelle — écrans États des encours (reporté le 20/09/2026)
 
