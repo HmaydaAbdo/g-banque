@@ -4184,7 +4184,7 @@ de suppression d'une commission déjà PAYÉE est rejetée.
 Les règles de commission sont entièrement gérées depuis l'interface d'administration, sans modification du code. Chaque règle définit :
 
 - La **banque** concernée
-- Le **type d'opération** (leasing, virement, LCN de décaissement, mise à disposition de décaissement, caution, etc.)
+- Le **type d'opération** (leasing, virement, LCN de décaissement, mise à disposition de décaissement, caution, importation, etc.)
 - La **condition** (DEFAULT, SI_MATCH, SI_NON_MATCH)
 - L'**organisme** (obligatoire pour SI_MATCH, vide pour DEFAULT et SI_NON_MATCH)
 - Le **montant** en MAD

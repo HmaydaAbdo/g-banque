@@ -52,5 +52,6 @@ public enum TransactionSource {
     VIREMENT_INTERNATIONAL,
     IMPAYEE,
     PROVISION,
-
+    /** Frais d'importation (crédit documentaire, domiciliation…) : valeur de la colonne « opération » d'une commission. */
+    Importation
 }

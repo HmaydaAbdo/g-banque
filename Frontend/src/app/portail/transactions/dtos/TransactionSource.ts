@@ -26,6 +26,7 @@ export enum TransactionSource {
   VIREMENT_INTERNATIONAL="VIREMENT_INTERNATIONAL",
   IMPAYEE="IMPAYEE",
   PROVISION="PROVISION",
+  Importation = "Importation",
 }
 
 
@@ -54,6 +55,7 @@ export const TransactionSourceLabels: Record<TransactionSource, string> = {
   [TransactionSource.VIREMENT_INTERNATIONAL]: "Virement international",
   [TransactionSource.IMPAYEE]: "Impayé",
   [TransactionSource.PROVISION]: "Provision",
+  [TransactionSource.Importation]: "Importation",
 };
 
 
