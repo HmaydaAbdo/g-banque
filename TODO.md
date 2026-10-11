@@ -45,8 +45,8 @@ Ensuite seulement : en-tête `Strict-Transport-Security`, et cadrer une CSP ngin
 - **Spring Boot 4** (Spring Framework 7, Jackson 3, Security 7) : décision d'architecture ; retirera les 3 exceptions de
   `.trivyignore`. Retirer alors les propriétés `tomcat.version`, `netty.version`, `jackson-bom.version` du `pom.xml`.
 - **Java 17 → 21/25** et image Maven correspondante.
-- Mises à jour mineures/patch Maven et npm, par lot validé par la CI.
-- Évaluer un JRE réduit (`jlink`) pour l'image backend (~290 Mo) — gain ~100 Mo, à tester.
+- Mises à jour mineures/patch faites le 11/10/2026 (npm : verrou rafraîchi dans les plages, 90 → 71 vulnérabilités ; Maven : openpdf 1.3.43, jacoco 0.8.15, maven-compiler-plugin 3.16.0). Reste : **PostgreSQL JDBC 42.7.14** (publié le 07/10/2026, règle des 2 semaines : à passer à partir du 21/10/2026) ; les autres dépendances sont déjà à la dernière version de leur série. OpenPDF 2.x/3.x (changement de paquets) et le reste des vulnérabilités npm relèvent des montées majeures ci-dessous.
+- **JRE réduit (`jlink`) — évalué le 11/10/2026, non adopté (décision d'architecture à valider).** Essai : build jlink (modules détectés par `jdeps` + `jdk.crypto.ec`, `jdk.unsupported`, `jdk.management`…) sur `alpine:3.24` avec `fontconfig` et `font-dejavu` : **image 203 Mo au lieu de 298 Mo (−95 Mo, −32 %)** ; JRE de 65 Mo au lieu de 135 Mo. Démarrage vérifié sur une base vierge (Flyway jusqu'à V4, validation Hibernate, 0 erreur). Non vérifié : génération PDF et envoi de courriel dans le conteneur (nécessite une session). Contreparties : un `Dockerfile` plus long, une liste de modules à maintenir (un module oublié ne se voit qu'à l'exécution), l'image de base n'est plus `eclipse-temurin` (mises à jour de sécurité du JRE à suivre soi-même : reconstruire l'image à chaque correctif Temurin). Essai non conservé dans le dépôt (une vingtaine de lignes : `jdeps --print-module-deps` puis `jlink --strip-debug --no-man-pages --compress=2`) ; à refaire si la taille d'image devient un problème (déploiement sur un lien lent).
 
 ### Avertissements du build de production frontend (relevés le 10/10/2026)
 
