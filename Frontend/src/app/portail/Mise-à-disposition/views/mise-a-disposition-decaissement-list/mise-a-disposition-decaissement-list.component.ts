@@ -276,32 +276,4 @@ export class MiseADispositionDecaissementListComponent implements OnInit, OnDest
       }
     });
   }
-
-  deleteMiseADisposition(mad: MiseADispositionResponseDto): void {
-    this.confirmationService.confirm({
-      message: `<div class="text-center">
-        <i class="pi pi-exclamation-triangle" style="margin-right:5px;"></i>
-        <p>Êtes-vous sûr de vouloir supprimer la mise à disposition <strong>${mad.id}</strong> ?</p>
-        <p style="color:#ef4444;font-weight:bold;">Cette action est irréversible.</p>
-      </div>`,
-      header: 'Confirmation de Suppression',
-      icon: 'none',
-      acceptLabel: 'Confirmer',
-      rejectLabel: 'Annuler',
-      accept: () => {
-        this.loading = true;
-        this.miseADispositionService.deleteMiseAdisposition(mad.id).subscribe({
-          next: () => {
-            this.messageService.add({severity: 'success', summary: 'Succès', detail: 'Mise à disposition supprimée avec succès.', life: 3000});
-            this.loadMisesADisposition(this.lastLazyLoadEvent);
-            this.loading = false;
-          },
-          error: (err) => {
-            console.error('Erreur lors de la suppression de la mise à disposition:', err);
-            this.loading = false;
-          }
-        });
-      }
-    });
-  }
 }

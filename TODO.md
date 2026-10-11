@@ -187,17 +187,6 @@ Le code (20 sources, ~30 écrans, modal de lot) est terminé et le build de prod
 (XOR strict taux/montant, TVA optionnelle CMT/Leasing, saisie en lot interdite). Détail : historique git et mémoire
 `project_gbanque_tva_saisie_libre`.
 
-### Mise à disposition — type des enregistrements (relevé le 21/09/2026, contradiction constatée le 10/10/2026)
-
-Le formulaire de saisie crée depuis le 21/09/2026 des mises à disposition de type **décaissement** (avant :
-toujours « encaissement », par erreur). Conséquences à trancher avec HMAYDA (accord explicite avant toute écriture) :
-- les enregistrements créés avant cette date portent le type `ENCAISSEMENT` alors que ce sont des décaissements ;
-- **contradiction de règle** : le backend n'autorise la modification que d'une mise à disposition de type
-  `ENCAISSEMENT` (`MiseADispositionService.editEncaissementMiseAdisposition`) et la documentation (chapitre
-  Mises à disposition, règles 1 et 6) dit que la saisie manuelle ne concerne que les encaissements ; or le formulaire
-  crée maintenant des décaissements, qu'on ne peut donc plus modifier. Décision métier : quels types se saisissent à la
-  main, lesquels se modifient ? Puis code, éventuelle migration Flyway de correction des données, et documentation.
-
 ### Bascule du statut d'un virement — garde-fou contre le retour en « en cours » (relevé le 09/10/2026)
 
 **Constat.** Le virement n° 008981 (id 1814, BP, AGNI BTP, 30 000 MAD) est resté « En cours » alors

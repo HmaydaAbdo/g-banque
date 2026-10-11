@@ -596,26 +596,26 @@ G-Banque centralise le suivi des virements internationaux de Staport, reçus com
 
 ### Ce que ce module résout
 
-G-Banque centralise le suivi des mises à disposition de fonds de Staport, qu'elles soient reçues
-(encaissements) ou émises (décaissements), avec un état à jour en permanence et une traçabilité
-complète de chaque opération.
+G-Banque centralise le suivi des mises à disposition de fonds émises par Staport, avec un état à jour
+en permanence et une traçabilité complète de chaque opération.
 
 ### Ce que le système apporte
 
-- **Suivi centralisé des deux sens** : mises à disposition reçues et émises par Staport suivies
-  dans les mêmes écrans, avec un état (en cours, réglé, annulé) toujours à jour.
-- **Alimentation automatique des décaissements** : récupérées automatiquement depuis le système de
-  paiement externe — aucune ressaisie.
+- **Alimentation automatique** : les mises à disposition sont récupérées automatiquement depuis le
+  système de paiement externe — aucune ressaisie, donc aucun risque d'erreur de saisie.
+- **Suivi de l'état** : en cours, réglé, annulé — toujours à jour.
 - **Vue des encours par banque** : montant total non encore réglé consultable instantanément, par
-  banque et par sens.
+  banque.
 - **Rapprochement bancaire intégré** : la validation rattache directement l'opération au
   rapprochement du mois, sans ressaisie.
-- **Protection contre les erreurs** : une mise à disposition déjà réglée ne peut plus être
-  modifiée, supprimée ou altérée ; toute création, modification ou suppression est auditée.
-- **Recherche par période** : les mises à disposition de décaissement se retrouvent instantanément
-  sur une plage de dates d'émission, d'opération ou de valeur, au choix, utile pour tout
-  rapprochement ou reporting périodique.
-- **Export PDF** : la liste des décaissements peut être exportée en PDF en un clic, filtres appliqués, prête à partager ou archiver ; les encours s'exportent depuis le Récapitulatif des États des encours.
+- **Protection contre les erreurs** : une mise à disposition ne se supprime pas (la synchronisation la
+  recréerait) ; elle s'annule, et une mise à disposition déjà réglée ne peut plus être altérée ;
+  les changements de statut sont audités.
+- **Recherche par période** : les mises à disposition se retrouvent instantanément sur une plage de
+  dates d'émission, d'opération ou de valeur, au choix, utile pour tout rapprochement ou reporting
+  périodique.
+- **Export PDF** : la liste peut être exportée en PDF en un clic, filtres appliqués, prête à partager
+  ou archiver ; les encours s'exportent depuis le Récapitulatif des États des encours.
 
 ## Chapitre 19 — Recap Encaissement / Recap Décaissement
 

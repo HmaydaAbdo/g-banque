@@ -1530,18 +1530,12 @@ explicitement réannotée.
 
 | Méthode | URL | `@PreAuthorize` | Justification |
 |---|---|---|---|
-| POST | `/misesADisposition` | `FINANCE_OR_ADMIN` (`SYSTEM_ADMIN`, `DEPT_Finance:MEMBER`, `DEPT_Finance:DIRECTOR`) | Création (encaissement) réservée à l'équipe Finance ou à l'admin système. |
-| PUT | `/misesADisposition/{id}` | `FINANCE_OR_ADMIN` | Modification réservée à l'équipe Finance ou à l'admin système. |
 | GET | `/misesADisposition/{id}` | `FINANCE_OR_ADMIN` | Consultation réservée à l'équipe Finance ou à l'admin système. |
-| DELETE | `/misesADisposition/{id}` | `SYSTEM_ADMIN` | Règle transverse (`conventions/security.md`, "Suppression") : suppression toujours réservée à `SYSTEM_ADMIN`. |
 | GET | `/misesADisposition/decaissements` | `FINANCE_OR_ADMIN` | Liste réservée à l'équipe Finance ou à l'admin système. |
-| GET | `/misesADisposition/encaissements` | `FINANCE_OR_ADMIN` | Idem. |
 | PATCH | `/misesADisposition/toggle/{id}` | `SYSTEM_ADMIN` | Changement de statut réservé à `SYSTEM_ADMIN` (11/07/2026, aligné sur tous les modules moyens de paiement — décision utilisateur explicite). |
-| GET | `/misesADisposition/encours/decaissements/{banqueId}` | `FINANCE_OR_ADMIN` | Idem. |
-| GET | `/misesADisposition/encours/encaissements/{banqueId}` | `FINANCE_OR_ADMIN` | Idem. |
-| GET | `/misesADisposition/decaissements/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (22/07/2026) — export PDF de la liste des décaissements filtrée, sans pagination. Aucun écran encaissement n'existe côté frontend pour ce module — pas d'export ajouté sur ce flux. |
-| GET | `/misesADisposition/encours/decaissements/{banqueId}/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (22/07/2026) — export PDF de l'encours de décaissement filtré, sans pagination. |
-| GET | `/misesADisposition/encours/encaissements/{banqueId}/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (23/07/2026) — export PDF de l'encours d'encaissement filtré, sans pagination. Écran "Encaissements / Mise à disposition" du module États des encours (jusqu'ici seul le flux décaissement avait un export). |
+| GET | `/misesADisposition/decaissements/export/pdf` | `FINANCE_OR_ADMIN` | Export PDF de la liste des décaissements filtrée, sans pagination. |
+
+Le module ne gère que des décaissements, alimentés par la synchronisation FunPaiement : aucun endpoint de création, de modification, de suppression ni d'encaissement (retirés le 11/10/2026). Les encours se consultent, s'exportent et se valident depuis le Récapitulatif des États des encours (chapitre 29).
 
 Endpoint de validation (rapprochement) : voir Chapitre 28 — Validation (`ValidationController`,
 `POST /rapprochement/process`).
@@ -1553,8 +1547,6 @@ Endpoint de validation (rapprochement) : voir Chapitre 28 — Validation (`Valid
 | Route | Guard | Rôle vérifié |
 |---|---|---|
 | `/portail/Mise-a-disposition/decaissement` | `departmentGuard('Finance')` | `DEPT_Finance:MEMBER` ou `DEPT_Finance:DIRECTOR`. `SYSTEM_ADMIN` passe toujours. |
-| `/portail/Mise-a-disposition/new` | `departmentGuard('Finance')` | Idem. |
-| `/portail/Mise-a-disposition/edit/:id` | `departmentGuard('Finance')` | Idem. |
 
 ---
 
@@ -1570,7 +1562,6 @@ Endpoint de validation (rapprochement) : voir Chapitre 28 — Validation (`Valid
 
 | Action | Condition d'affichage | Composant |
 |---|---|---|
-| Bouton "Supprimer" (liste décaissements) | `isAdmin` (`authService.isSystemAdmin()`) | `MiseADispositionDecaissementListComponent` |
 | Commutateur de statut (ENCOURS ↔ REGLE) | `isAdmin` (`authService.isSystemAdmin()`) | `MiseADispositionDecaissementListComponent` |
 
 ---
@@ -1579,8 +1570,8 @@ Endpoint de validation (rapprochement) : voir Chapitre 28 — Validation (`Valid
 
 | Action | Qui peut faire |
 |---|---|
-| Consulter / créer / modifier une mise à disposition (API + écran) | Équipe Finance (membre ou directeur), `SYSTEM_ADMIN` |
-| Basculer le statut / supprimer une mise à disposition | `SYSTEM_ADMIN` uniquement |
+| Consulter / exporter les mises à disposition (API + écran) | Équipe Finance (membre ou directeur), `SYSTEM_ADMIN` |
+| Basculer le statut d'une mise à disposition | `SYSTEM_ADMIN` uniquement |
 
 <a id="chap16"></a>
 ## Chapitre 16 — Recap Encaissement / Recap Décaissement

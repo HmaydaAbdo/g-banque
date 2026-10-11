@@ -2838,10 +2838,7 @@ synchronisation FunPaiement.
 
 ### 1. Périmètre du module
 
-Ce module gère les mises à disposition de fonds de l'entreprise, dans les deux sens :
-
-- **Encaissement** : mises à disposition reçues par Staport (saisies manuellement).
-- **Décaissement** : mises à disposition émises par Staport (alimentées par la synchronisation avec le système de paiement externe FunPaiement — non saisies manuellement).
+Ce module gère les mises à disposition de fonds émises par l'entreprise : uniquement des **décaissements**, alimentés par la synchronisation avec le système de paiement externe FunPaiement. Aucune mise à disposition n'est saisie ni modifiée à la main dans G-Banque : elles y arrivent déjà complètes, et l'équipe Finance les consulte, les exporte, les valide dans le rapprochement et, si besoin, constate leur annulation.
 
 ---
 
@@ -2849,12 +2846,10 @@ Ce module gère les mises à disposition de fonds de l'entreprise, dans les deux
 
 **Mise à disposition** : moyen de paiement associé à une banque, un montant, une date d'émission, un bénéficiaire et sa CIN (carte d'identité nationale).
 
-**Encaissement** : mise à disposition reçue par Staport d'un tiers (l'émetteur). Le bénéficiaire est toujours Staport.
-
-**Décaissement** : mise à disposition émise par Staport au profit d'un tiers (le bénéficiaire), dont la CIN est également enregistrée.
+**Décaissement** : mise à disposition émise par Staport au profit d'un tiers (le bénéficiaire), dont la CIN est également enregistrée. C'est le seul sens utilisé.
 
 **Statut** : état de la mise à disposition, l'un des trois suivants :
-- **ENCOURS** : mise à disposition non encore réglée — reçue du système de paiement externe ou saisie manuellement.
+- **ENCOURS** : mise à disposition non encore réglée, reçue du système de paiement externe.
 - **REGLE** : mise à disposition validée/réglée côté G-Banque.
 - **ANNULE** : mise à disposition annulée côté système de paiement externe (uniquement possible si elle était encore ENCOURS ; une mise à disposition déjà REGLE ne peut plus être annulée par cette voie).
 
@@ -2865,8 +2860,7 @@ Ce module gère les mises à disposition de fonds de l'entreprise, dans les deux
 ### 3. Cycle de vie d'une mise à disposition
 
 ```
-Création
-  │  (manuelle pour un encaissement, ou reçue de FunPaiement pour un décaissement)
+Réception de FunPaiement
   ↓
 ENCOURS
   │
@@ -2875,39 +2869,31 @@ ENCOURS
   └──→ Annulation côté FunPaiement ──→ ANNULE
 ```
 
-Une mise à disposition REGLE ne peut plus être modifiée, supprimée, ni annulée. Une mise à disposition ANNULE ne peut plus changer de statut.
+Une mise à disposition REGLE ne peut plus être annulée. Une mise à disposition ANNULE ne peut plus changer de statut.
 
 ---
 
 ### 4. Règles métier
 
-#### Création (encaissement uniquement)
+#### Réception
 
-1. La saisie manuelle d'une mise à disposition ne concerne que les encaissements — une mise à disposition de décaissement provient exclusivement de la synchronisation FunPaiement.
-2. Le bénéficiaire d'une mise à disposition d'encaissement est toujours Staport.
-3. La banque associée est obligatoire.
-4. Le statut initial d'une mise à disposition créée manuellement est toujours ENCOURS.
-5. Pour une mise à disposition de décaissement issue de la synchronisation FunPaiement, le libellé et l'observation reçoivent automatiquement la même valeur (référence courte du type et du numéro, ex. « MAD 123 »).
-
-#### Modification
-
-6. Seule une mise à disposition d'encaissement peut être modifiée — une mise à disposition de décaissement (issue de FunPaiement) ne l'est pas.
-7. Une mise à disposition déjà REGLE ne peut plus être modifiée.
+1. Une mise à disposition n'est jamais saisie ni modifiée manuellement : elle provient exclusivement de la synchronisation FunPaiement, avec son bénéficiaire, sa CIN, son montant, sa date d'émission et sa banque.
+2. Le statut initial d'une mise à disposition reçue est ENCOURS.
+3. Le libellé et l'observation reçoivent automatiquement la même valeur (référence courte du type et du numéro, ex. « MAD 123 »).
 
 #### Suppression
 
-8. Une mise à disposition déjà REGLE ne peut pas être supprimée.
-9. Une mise à disposition issue de la synchronisation FunPaiement ne peut pas être supprimée, quel que soit son statut. La synchronisation relit l'intégralité de l'historique à chaque exécution : une ligne supprimée est systématiquement recréée à l'identique lors de la synchronisation suivante. Pour retirer une telle mise à disposition des encours, il faut l'annuler — une ligne déjà présente n'est jamais recréée ni écrasée par la synchronisation. Seules les mises à disposition saisies manuellement peuvent être supprimées, et leur suppression est définitive.
+4. Une mise à disposition ne peut pas être supprimée. La synchronisation relit l'intégralité de l'historique à chaque exécution : une ligne supprimée serait systématiquement recréée à l'identique lors de la synchronisation suivante. Pour retirer une mise à disposition des encours, il faut l'annuler — une ligne déjà présente n'est jamais recréée ni écrasée par la synchronisation.
 
 #### Changement de statut manuel
 
-10. Le statut d'une mise à disposition peut être basculé manuellement entre ENCOURS et REGLE.
-11. Une mise à disposition ANNULE ne peut plus changer de statut par cette action.
+5. Le statut d'une mise à disposition peut être basculé manuellement entre ENCOURS et REGLE (correction exceptionnelle, administrateur système uniquement).
+6. Une mise à disposition ANNULE ne peut plus changer de statut par cette action.
 
 #### Validation (rapprochement)
 
-12. Valider une mise à disposition (encaissement ou décaissement) crée une transaction bancaire rattachée à un rapprochement, calcule la TVA associée, puis marque la mise à disposition REGLE.
-13. Une mise à disposition qui n'est pas ENCOURS ne peut pas être validée.
+7. Valider une mise à disposition crée une transaction bancaire rattachée à un rapprochement, calcule la TVA associée, puis marque la mise à disposition REGLE.
+8. Une mise à disposition qui n'est pas ENCOURS ne peut pas être validée.
 
 ---
 
@@ -2915,7 +2901,7 @@ Une mise à disposition REGLE ne peut plus être modifiée, supprimée, ni annul
 
 Les mises à disposition au statut En cours dont la date d'émission ne dépasse pas la fin du mois en cours sont consultées, filtrées, exportées en PDF et validées (une par une ou en lot) depuis l'écran **États des encours — Récapitulatif** (chapitre 31), sous la carte « Mise à disposition ». Il n'existe plus d'écran d'encours propre au module.
 
-L'écran de liste, aussi bien pour les **décaissements** (22/07/2026) que pour les **encaissements** (23/07/2026), dispose d'un **export PDF** : le document contient
+L'écran de liste des décaissements dispose d'un **export PDF** : le document contient
 l'intégralité des résultats correspondant aux filtres actuellement appliqués à l'écran, pas seulement
 la page affichée.
 
@@ -2925,21 +2911,21 @@ la page affichée.
 
 | Action | Qui peut faire |
 |--------|----------------|
-| Consulter / créer / modifier une mise à disposition | Équipe Finance (membres et directeur), Administrateur système |
-| Exporter en PDF (liste ou encours des décaissements) | Équipe Finance (membres et directeur), Administrateur système |
-| Basculer le statut / supprimer une mise à disposition | Administrateur système uniquement |
+| Consulter la liste, la détailler | Équipe Finance (membres et directeur), Administrateur système |
+| Exporter en PDF | Équipe Finance (membres et directeur), Administrateur système |
+| Basculer le statut | Administrateur système uniquement |
 
 ---
 
 ### 7. Audit
 
-Toute création, modification ou suppression d'une mise à disposition est historisée : auteur, date et valeurs avant/après restent consultables ultérieurement.
+Le changement manuel de statut d'une mise à disposition est historisé : auteur, date et valeurs avant/après restent consultables ultérieurement.
 
 ---
 
 ### 8. Logs
 
-La création, la modification, la suppression et le changement de statut d'une mise à disposition génèrent chacun un événement journalisé, utile au diagnostic. Une tentative de modification ou de suppression bloquée (mise à disposition déjà réglée, ou changement de statut sur une mise à disposition annulée) est également journalisée comme anomalie gérée.
+Le changement de statut d'une mise à disposition génère un événement journalisé, utile au diagnostic. Une tentative de changement de statut bloquée (mise à disposition annulée) est également journalisée comme anomalie gérée.
 
 ---
 
@@ -2949,7 +2935,7 @@ La création, la modification, la suppression et le changement de statut d'une m
 |--------|------------------------|
 | **Comptes bancaires** | Chaque mise à disposition est rattachée à un compte bancaire. |
 | **Rapprochement** | La validation d'une mise à disposition crée une transaction rattachée à un rapprochement. |
-| **Synchronisation FunPaiement** | Alimente automatiquement les mises à disposition de décaissement et leur passage à l'état ANNULE. |
+| **Synchronisation FunPaiement** | Alimente automatiquement les mises à disposition et leur passage à l'état ANNULE. |
 
 ---
 

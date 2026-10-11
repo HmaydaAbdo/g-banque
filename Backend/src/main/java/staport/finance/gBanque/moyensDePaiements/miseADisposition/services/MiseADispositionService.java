@@ -9,8 +9,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
@@ -49,111 +47,23 @@ public class MiseADispositionService {
     private static final Logger log = LoggerFactory.getLogger(MiseADispositionService.class);
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final MiseADispositionRepository miseADispositionRepository;
-    private final IBanqueService banqueService;
     private final MiseADispositionMapper miseADispositionMapper;
     private final MiseADispositionMetrics miseADispositionMetrics;
     private final StaportPdfReportService staportPdfReportService;
 
-    public MiseADispositionService(MiseADispositionRepository miseADispositionRepository, IBanqueService banqueService,
+    public MiseADispositionService(MiseADispositionRepository miseADispositionRepository,
                                     MiseADispositionMapper miseADispositionMapper, MiseADispositionMetrics miseADispositionMetrics,
                                     StaportPdfReportService staportPdfReportService) {
         this.miseADispositionRepository = miseADispositionRepository;
-        this.banqueService = banqueService;
         this.miseADispositionMapper = miseADispositionMapper;
         this.miseADispositionMetrics = miseADispositionMetrics;
         this.staportPdfReportService = staportPdfReportService;
-    }
-
-    @Transactional
-    @AuditableAction(operation = AuditOperation.CREATE, entity = MiseADisposition.class)
-    public MiseADispositionResponseDto createEncaissementMiseAdisposition(MiseAdispositionRequestDto dto) {
-        log.info("Création d'une nouvelle mise à disposition d'encaissement: {}", dto);
-
-        Banque banque = banqueService.findOrThrow(dto.getBanqueId());
-        MiseADisposition miseADisposition = miseADispositionMapper.toEntity(dto, banque);
-
-        log.debug("Enregistrement de l'entité mise à disposition: {}", miseADisposition);
-        miseADisposition = miseADispositionRepository.save(miseADisposition);
-        miseADispositionMetrics.incrementerCreation();
-
-        log.info("Mise à disposition créée avec succès avec l'ID: {}", miseADisposition.getId());
-        return toDto(miseADisposition);
-    }
-
-    @Transactional
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = MiseADisposition.class)
-    public MiseADispositionResponseDto editEncaissementMiseAdisposition(Long id, MiseAdispositionRequestDto dto) {
-        log.info("Modification de la mise à disposition d'encaissement ID={} avec les données={}", id, dto);
-
-        MiseADisposition existingMiseAdisposition = trouverOuLeverException(id);
-
-        if (existingMiseAdisposition.getType() != Type.ENCAISSEMENT) {
-            log.warn("Tentative de modification d'une mise à disposition qui n'est pas de type ENCAISSEMENT, ID={}", id);
-            throw new MiseADispositionBusinessException("Modification interdite: la MiseADisposition with id " + id + " n'est pas de type ENCAISSEMENT.");
-        }
-
-        if (existingMiseAdisposition.getStatut() == StatutMoyenPaiement.REGLE) {
-            log.warn("Tentative de modification d'une mise à disposition déjà réglée, ID={}", id);
-            throw new MiseADispositionBusinessException("Modification interdite: la MiseADisposition with id " + id + " est déjà réglée.");
-        }
-
-        if (dto.getDateEmission() != null) {
-            existingMiseAdisposition.setDateEmission(dto.getDateEmission());
-        }
-        if (dto.getBanqueId() != null) {
-            existingMiseAdisposition.setBanque(banqueService.findOrThrow(dto.getBanqueId()));
-        }
-        if (dto.getMontant() != null) {
-            existingMiseAdisposition.setMontant(dto.getMontant());
-        }
-        if (dto.getEmetteur() != null) {
-            existingMiseAdisposition.setEmetteur(dto.getEmetteur());
-        }
-
-        existingMiseAdisposition = miseADispositionRepository.save(existingMiseAdisposition);
-        log.info("Mise à disposition ID={} mise à jour avec succès", id);
-        return toDto(existingMiseAdisposition);
     }
 
     @Transactional(readOnly = true)
     public MiseADispositionResponseDto getMiseAdispositionById(Long id) {
         log.debug("Récupération de la mise à disposition avec l'ID={}", id);
         return toDto(trouverOuLeverException(id));
-    }
-
-    /**
-     * Supprime une mise à disposition saisie manuellement.
-     *
-     * <p>Une mise à disposition issue de la synchronisation FunPaiement ({@code idPaiement}
-     * renseigné) ne peut pas être supprimée : le lecteur de synchro relit tout l'historique à chaque
-     * exécution et la seule clé d'idempotence est {@code findByIdPaiement}. Supprimer la ligne efface
-     * cette clé, et la synchro suivante la recrée à l'identique. Pour retirer une telle ligne des
-     * encours, l'annuler plutôt que la supprimer : une ligne existante n'est jamais recréée ni
-     * écrasée par la synchro. Même règle que {@code VirementService.deleteVirement} (boucle
-     * constatée en production sur les virements en juillet 2026).
-     */
-    @Transactional
-    @AuditableAction(operation = AuditOperation.DELETE, entity = MiseADisposition.class)
-    public void deleteMiseAdispositionById(Long id) {
-        log.info("Suppression de la mise à disposition avec l'ID={}", id);
-
-        MiseADisposition miseADisposition = trouverOuLeverException(id);
-
-        if (miseADisposition.getStatut() == StatutMoyenPaiement.REGLE) {
-            log.warn("Tentative de suppression d'une mise à disposition déjà réglée, ID={}", id);
-            throw new MiseADispositionBusinessException("Suppression interdite: la mise à dispo with id " + id + " est déjà réglée.");
-        }
-
-        if (miseADisposition.getIdPaiement() != null) {
-            log.warn("Tentative de suppression d'une mise à disposition synchronisée, ID={}, idPaiement={}",
-                    id, miseADisposition.getIdPaiement());
-            throw new MiseADispositionBusinessException(
-                    "Suppression interdite: la mise à disposition " + id + " provient de la synchronisation FunPaiement "
-                            + "et serait recréée à la prochaine synchronisation. Annulez-la plutôt que de la supprimer.");
-        }
-
-        miseADispositionRepository.deleteById(id);
-        log.info("Mise à disposition ID={} supprimée avec succès", id);
     }
 
     @Transactional(readOnly = true)
@@ -165,18 +75,6 @@ public class MiseADispositionService {
         Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, stablePageable(pageable));
 
         log.debug("{} mise(s) à disposition de décaissement trouvée(s)", miseADispositionPage.getTotalElements());
-        return miseADispositionPage.map(this::toDto);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<MiseADispositionResponseDto> getEncaissementForMiseAdisposition(MiseADispositionSearchDto searchDto, Pageable pageable) {
-        log.debug("Recherche des mises à disposition d'encaissement avec les filtres={} et pagination={}", searchDto, pageable);
-
-        Specification<MiseADisposition> spec = MiseADispositionSpec.bySearchDto(searchDto)
-                .and(MiseADispositionSpec.hasType(Type.ENCAISSEMENT));
-        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, stablePageable(pageable));
-
-        log.debug("{} mise(s) à disposition d'encaissement trouvée(s)", miseADispositionPage.getTotalElements());
         return miseADispositionPage.map(this::toDto);
     }
 

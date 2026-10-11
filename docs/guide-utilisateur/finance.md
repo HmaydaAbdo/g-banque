@@ -1037,9 +1037,8 @@ Un bouton **Exporter PDF** est disponible sur la liste combinée (encaissements 
 
 ### Consulter les mises à disposition
 
-Une seule liste, paginée et triable (accessible via l'écran "Décaissements" dans la sidebar, mais
-gérant en réalité uniquement des mises à disposition de type Encaissement — bénéficiaire toujours
-"STAPORT" ; il n'existe pas d'écran de liste séparé pour un autre flux). Colonnes : ID, banque, date
+Une seule liste, paginée et triable (écran "Décaissements" de la sidebar). Les mises à disposition sont des décaissements
+alimentés automatiquement par la synchronisation FunPaiement : elles ne se saisissent ni ne se modifient à la main. Colonnes : ID, banque, date
 d'émission, date d'opération, date de valeur, bénéficiaire, CIN du bénéficiaire, montant, libellé,
 observation, statut. Filtres : numéro, bénéficiaire, CIN du bénéficiaire, banque, statut.
 
@@ -1057,29 +1056,13 @@ trois plages est indépendante et chaque borne (du, au) est optionnelle.
 
 Statuts possibles : **En cours**, **Réglé**, **Annulé**.
 
-### Créer une mise à disposition
-
-Bouton **Ajouter**. Champs requis : banque, montant (strictement positif), date d'émission,
-émetteur. Le bénéficiaire ("STAPORT") et le type (Encaissement) sont fixes, non modifiables.
-
-### Modifier une mise à disposition
-
-Bouton crayon depuis la liste Encaissements. **Désactivé si déjà Réglée.**
-
 ### Changer le statut d'une mise à disposition
 
 Interrupteur En cours/Réglé dans la liste — **réservé à l'administrateur système**. Désactivé si Annulée.
 
 ### Supprimer une mise à disposition
 
-Bouton corbeille — **réservé à l'administrateur système**. Désactivé si déjà Réglée.
-
-> **Seules les mises à disposition saisies manuellement peuvent être supprimées.** Une mise à
-> disposition provenant de la synchronisation FunPaiement est refusée, avec un message invitant à
-> l'annuler plutôt qu'à la supprimer. La raison : la synchronisation relit tout l'historique des
-> paiements à chaque exécution, et une ligne supprimée est recréée à l'identique le lendemain.
-> **L'annulation, elle, est stable** — une ligne déjà présente n'est jamais recréée ni modifiée par
-> la synchronisation.
+Une mise à disposition ne se supprime pas : la synchronisation relit tout l'historique des paiements à chaque exécution et la recréerait à l'identique le lendemain. Pour la retirer des encours, elle est **annulée** côté FunPaiement — une ligne annulée n'est jamais recréée ni modifiée par la synchronisation.
 
 ### Valider les mises à disposition en cours
 
@@ -1087,7 +1070,7 @@ Les mises à disposition « En cours » dont la date d'émission est antérieure
 
 ### Exporter en PDF
 
-Un bouton **Exporter PDF** est disponible sur la liste **Décaissements** — il n'existe pas d'écran dédié aux encaissements pour ce module, donc pas d'export sur ce flux. Le PDF reprend l'intégralité des mises à disposition correspondant aux filtres actuellement appliqués à l'écran — pas seulement la page affichée. L'export des encours se fait depuis **États des encours → Récapitulatifs** (bouton **Exporter PDF** du tableau). Le fichier est
+Un bouton **Exporter PDF** est disponible sur la liste **Décaissements** — Le PDF reprend l'intégralité des mises à disposition correspondant aux filtres actuellement appliqués à l'écran — pas seulement la page affichée. L'export des encours se fait depuis **États des encours → Récapitulatifs** (bouton **Exporter PDF** du tableau). Le fichier est
 téléchargé directement dans le navigateur.
 
 ---

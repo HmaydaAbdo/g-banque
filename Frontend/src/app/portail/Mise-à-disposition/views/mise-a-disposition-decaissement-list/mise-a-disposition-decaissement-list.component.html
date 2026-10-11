@@ -24,9 +24,6 @@
       <button pButton pRipple label="Exporter PDF" class="h-fit mt-2" size="small" icon="pi pi-file-pdf"
               severity="secondary" [loading]="exporting" (click)="exportPdf()">
       </button>
-      <button pButton pRipple label="Ajouter" class="h-fit mt-2" size="small" icon="pi pi-plus"
-              severity="primary" routerLink="/portail/Mise-a-disposition/new">
-      </button>
     </div>
   </div>
 
@@ -188,22 +185,12 @@
             </p-tag>
           </td>
           <td class="flex flex-row align-items-center gap-2">
-            <button pButton pRipple icon="pi pi-pencil"
-                    class="p-button-rounded p-button-outlined p-button-secondary"
-                    [disabled]="mad.statut === StatutMoyenPaiement.REGLE"
-                    [routerLink]="['/portail/Mise-a-disposition/edit', mad.id]">
-            </button>
             @if (isAdmin) {
               <p-inputSwitch #sw
                 [ngModel]="mad.statut === StatutMoyenPaiement.ENCOURS"
                 [disabled]="mad.statut === StatutMoyenPaiement.ANNULE"
                 (onChange)="confirmToggleStatus(mad, sw)">
               </p-inputSwitch>
-              <button pButton pRipple icon="pi pi-trash"
-                      class="p-button-rounded p-button-outlined p-button-danger"
-                      [disabled]="mad.statut === StatutMoyenPaiement.REGLE"
-                      (click)="deleteMiseADisposition(mad)">
-              </button>
             }
           </td>
         </tr>

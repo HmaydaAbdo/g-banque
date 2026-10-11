@@ -17,7 +17,6 @@ public class MiseADispositionMetrics {
 
     private final MeterRegistry registry;
     private final MiseADispositionRepository miseADispositionRepository;
-    private Counter creationsEncaissement;
     private Counter passagesRegle;
 
     public MiseADispositionMetrics(MeterRegistry registry, MiseADispositionRepository miseADispositionRepository) {
@@ -34,17 +33,9 @@ public class MiseADispositionMetrics {
                 .description("Nombre de mises à disposition actuellement ENCOURS")
                 .register(registry);
 
-        creationsEncaissement = Counter.builder("gbanque.miseADisposition.creations.count")
-                .description("Nombre de mises à disposition d'encaissement créées (seul sens saisi manuellement)")
-                .register(registry);
-
         passagesRegle = Counter.builder("gbanque.miseADisposition.regle.count")
                 .description("Nombre de mises à disposition passées à l'état REGLE")
                 .register(registry);
-    }
-
-    public void incrementerCreation() {
-        creationsEncaissement.increment();
     }
 
     public void incrementerPassageRegle() {
