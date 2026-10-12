@@ -27,7 +27,7 @@ Dossier unique : `Backend/src/main/resources/db/migration/`.
 * **Une migration appliquée n'est jamais modifiée** (Flyway refuse de démarrer si son empreinte change). Une erreur se corrige par une nouvelle migration.
 * Une migration = un objectif. En-tête obligatoire : objectif, tables concernées, impact sur les données existantes, requêtes de contrôle.
 * Une vue se modifie en modifiant son fichier `R__` (commencer par `DROP VIEW IF EXISTS` puis `CREATE VIEW`). Les colonnes texte d'une vue portent `COLLATE ci_ai` dans chaque branche d'un `UNION` ; les `NULL` de la **première** branche sont typés (`CAST(NULL AS date)`, `CAST(NULL AS varchar)`) car PostgreSQL résout les types du `UNION` de gauche à droite ; concaténer avec `a || b` (NULL si un opérande est NULL), jamais `concat()` qui ignore les NULL.
-* `V1__schema_initial.sql` est le schéma PostgreSQL généré depuis les entités le 10/10/2026 ; les données de production y ont été versées par `sql/migration-postgres/` (cf. `docs/infra/migration-postgres.md`).
+* `V1__schema_initial.sql` est le schéma PostgreSQL généré depuis les entités le 10/10/2026 ; les données de production y ont été versées lors de la migration depuis MySQL (cf. `docs/infra/migration-postgres.md`, archive).
 
 ---
 

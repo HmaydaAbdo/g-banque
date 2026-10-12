@@ -22,7 +22,7 @@ Vérifier d'abord la sauvegarde du jour (`./backups/postgres`), puis dans les lo
 4. Conserver l'ancienne base MySQL (conteneur `gbanque-mysql` arrêté, dossier `docker-data\mysql`) jusqu'à validation
    complète par l'équipe Finance, puis la supprimer ; supprimer aussi les copies de `gbanque-init.sql.gz`.
 5. Si des saisies ont été faites dans l'ancienne application après l'export de 04h12 : refaire la migration avec un
-   nouvel export (`docs/infra/migration-postgres.md`).
+   nouvel export (outil récupérable dans l'historique git, cf. `docs/infra/migration-postgres.md`).
 
 ### Monitoring (Prometheus, Grafana) — retiré du compose le 10/10/2026
 

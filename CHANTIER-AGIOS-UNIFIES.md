@@ -42,7 +42,7 @@
 - Aucun calcul pour : escompte LCN, frais fixes, frais d'engagement factoring, T4/2025, préfinancement et DC du
   T1/2026, factoring BMCI hors mars et septembre.
 
-## 2.2 Ce que le calcul retrouve ou pas (voir `sql/analyse_agios/`)
+## 2.2 Ce que le calcul retrouve ou pas (analyse du 09/10/2026 ; scripts supprimés, voir l'historique git `a9563902^:sql/analyse_agios/`)
 
 - **Colle à la banque (± centimes)** : facilité de caisse BMCI T1/T2, CIH T1–T3, SAHAM T1–T3, CDM T2 ;
   préfinancement BMCE T2, CDM T2, SAHAM T3, CIH T3 (somme de deux lignes : 100 524,48 + 1 502,81).
@@ -144,7 +144,7 @@ Obtenir les réponses du §4, le **catalogue des types d'agios par banque** (fr�
 la règle de chaque type. Livrable : tableau banque × type × fréquence × règle.
 
 ## Étape 1 — Préparation des données (aucun code applicatif)
-1. Rejouer l'analyse (`sql/analyse_agios/README.md`) sur la copie de base la plus récente.
+1. Rejouer l'analyse sur la copie de base la plus récente (scripts à récupérer dans l'historique git : `git show a9563902^:sql/analyse_agios/README.md`).
 2. Typer avec Finance les 77 lignes → **(banque, type, période)** ; produire la **matrice banque × type × période**
    (✔ couvert, ◐ écart, ✘ non calculé). Elle devient le **jeu de recette** de tout le chantier.
 3. Corriger les anomalies §2.3 (scripts SQL transactionnels, test à blanc sur copie, garde-fous `WHERE`,
@@ -215,6 +215,6 @@ affichage « temps réel » au sens strict. **[À TRANCHER avec Finance]**
 1. Lire : ce fichier, `CLAUDE.md`, `conventions/architecture.md`, `conventions/design-patterns.md`,
    `conventions/jpa.md`, `conventions/database.md`, `TODO.md` (section « Chantier — Agios unifiés »).
 2. Obtenir la base à jour (dump) et la charger dans un schéma d'analyse **séparé** ; rejouer
-   `sql/analyse_agios/`.
+   les scripts d'analyse (historique git, `a9563902^:sql/analyse_agios/`).
 3. Reprendre au point : décisions du 10/10 avec Finance (§4) → étape 1 → étape 2.
 4. `graphify query` avant toute lecture de code ; `graphify update .` après modification.

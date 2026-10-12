@@ -1,37 +1,24 @@
-# Migration MySQL 8 → PostgreSQL 18 — G-Banque
+# Migration MySQL 8 → PostgreSQL 18 — G-Banque (archive)
 
-> Document technique (infra/exploitation). Décision HMAYDA du 10/10/2026 : PostgreSQL 18 remplace MySQL 8 pour le
-> développement, les tests, la CI et la production. Règles de travail : `conventions/database.md`.
-
----
-
-## Principe
-
-1. L'outil `sql/migration-postgres/` crée le schéma **en version 1** avec l'image Flyway officielle (mêmes fichiers
-   `db/migration` que le backend), puis y **verse** les données d'un export phpMyAdmin de la base MySQL : un MySQL
-   temporaire charge l'export, un conteneur Python copie chaque table dans PostgreSQL **en une seule transaction**
-   (tout ou rien), recale les compteurs et compare les volumes table par table.
-2. Au démarrage, le backend applique les migrations suivantes **sur les données migrées** (V2 : libellé du décompte
-   n° 3 puis 60 colonnes rendues obligatoires), recrée les vues `R__`, puis Hibernate valide le schéma.
-
-Aucun outil n'est à installer : tout tourne dans des conteneurs (Docker requis).
+> **Migration terminée le 10/10/2026** : la production tourne sur PostgreSQL 18 (volume nommé `gbanque-postgres-data`).
+> Ce document est conservé comme **trace** des choix de conversion et du résultat. Décision HMAYDA du 10/10/2026 :
+> PostgreSQL 18 remplace MySQL 8 pour le développement, les tests, la CI et la production. Règles de travail :
+> `conventions/database.md`.
 
 ---
 
-## Procédure (base PostgreSQL vide)
+## Déroulé
 
-```bash
-docker compose up -d postgres              # base vierge
-python sql/migration-postgres/migrer_vers_postgres.py "C:/chemin/vers/export.sql"
-docker compose up -d                        # le backend applique V2 et suivantes
-```
+1. L'outil de migration (supprimé du dépôt le 12/10/2026, la migration étant faite) créait le schéma **en version 1** avec
+   l'image Flyway officielle (mêmes fichiers `db/migration` que le backend), puis y versait les données d'un export
+   phpMyAdmin de la base MySQL **en une seule transaction** (tout ou rien), recalait les compteurs et comparait les
+   volumes table par table. Les données entraient en V1, avant les migrations qui resserrent les contraintes.
+2. Au démarrage, le backend a appliqué les migrations suivantes **sur les données migrées** (V2 : libellé du décompte
+   n° 3 puis 60 colonnes rendues obligatoires), recréé les vues `R__`, puis Hibernate a validé le schéma.
 
-* L'outil refuse de s'exécuter si la base PostgreSQL contient des utilisateurs ou un schéma au-delà de la version 1
-  (jamais d'écrasement). Les données doivent entrer en V1, avant les migrations qui resserrent les contraintes.
-* Si le backend a démarré une fois sur une base vide, ses configurations par défaut (CMT, leasing, lignes
-  fonctionnelles) sont remplacées par celles de la production.
-* En cas d'erreur, la transaction est annulée : la base reste vide, corriger puis relancer.
-* Durée constatée : ~5 min 30 pour l'export de production du 10/10/2026.
+Si une nouvelle migration depuis un export MySQL redevenait nécessaire (le TODO conserve l'ancienne base MySQL jusqu'à
+la validation par la Finance), l'outil reste récupérable dans l'historique git :
+`git show a9563902^:sql/migration-postgres/migrer_vers_postgres.py` (dossier `sql/migration-postgres/` du commit `a9563902^`).
 
 ---
 
