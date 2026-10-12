@@ -54,9 +54,12 @@ Ensuite seulement : en-tête `Strict-Transport-Security`, et cadrer une CSP ngin
 
 ### Avertissements du build de production frontend (relevés le 10/10/2026)
 
-- `recapitulatif.component.scss` : 7,89 ko pour un budget d'avertissement de 6 ko (9,59 ko avant le retrait des règles
-  mortes le 10/10/2026 ; erreur à 10 ko). Aller sous 6 ko suppose de découper ce composant (cartes de source, modale
-  « Ajouter », indicateurs) — à traiter avec la refonte visuelle des États des encours.
+- `recapitulatif.component.scss` : 8,37 ko pour un budget d'avertissement de 6 ko (7,89 ko avant la vue focus du
+  12/10/2026 — liste des sources, espace de travail et filtres par source ont ajouté ~0,5 ko, après réutilisation des
+  indicateurs `.recap-kpi` et retrait des règles de repli de l'ancienne carte ouverte ; 9,59 ko avant le retrait des
+  règles mortes le 10/10/2026 ; erreur à 10 ko). Aller sous 6 ko suppose de découper ce composant : le plus net est
+  d'extraire la modale « Ajouter » (~1,7 ko de styles, ~110 lignes de TypeScript) dans son propre composant — décision
+  d'architecture à valider.
 
 ### Chantier — Stratégie de tests, tous niveaux, tous modules (demandé le 09/10/2026)
 

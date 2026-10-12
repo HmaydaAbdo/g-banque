@@ -5092,7 +5092,15 @@ nom du type, le nombre d'opérations à valider, le total débit et le total cr�
 opérations sont échues, un repère d'alerte avec leur nombre. Au-dessus des cartes, quatre
 **indicateurs globaux** résument l'ensemble : total débit prévisionnel, total crédit prévisionnel,
 nombre d'opérations à valider, nombre d'opérations échues à ce jour. Les cartes et les indicateurs
-suivent toujours les filtres appliqués.
+suivent toujours les **filtres globaux**. Un clic sur une carte ouvre la **vue focus** de ce type :
+l'écran se concentre sur lui, avec ses propres filtres, tout en gardant visibles, dans une liste à
+gauche, les indicateurs de tous les autres types.
+
+**Filtres globaux et filtres d'un type** : les filtres globaux s'appliquent à tous les types ; chaque type
+ouvert dispose en plus de **ses propres filtres**, qui ne concernent que lui. Quand un même critère
+(par exemple le libellé) est renseigné à la fois en global et dans le type ouvert, **le filtre du type
+remplace le filtre global pour ce type seulement** ; une pastille l'indique. Les cartes et la liste des
+types restent calculées avec les seuls filtres globaux.
 
 **Échue à ce jour** : opération dont la date de référence est atteinte (ou dépassée) à la date du jour.
 
@@ -5132,7 +5140,10 @@ l'opération d'origine, pour que les deux restent cohérentes (voir chapitre 21)
 **Ajouter / Éditer** : depuis le Récapitulatif, l'utilisateur peut créer une nouvelle opération
 (bouton **Ajouter**) ou corriger une opération en attente (bouton **Éditer** de la ligne) sans repasser
 par le menu du module concerné. Ces actions ouvrent l'écran de saisie ou de modification du module
-d'origine ; à l'enregistrement, l'utilisateur revient au Récapitulatif.
+d'origine ; à l'enregistrement comme à l'annulation, l'utilisateur revient au Récapitulatif **dans
+l'état exact où il l'a quitté** : même type ouvert, mêmes filtres, même page et même tri du tableau.
+Au retour d'une édition, la ligne modifiée est surlignée quelques secondes. Depuis le Récapitulatif d'une
+banque, un écran de création qui propose le choix de la banque l'a déjà sélectionnée.
 
 **Récapitulatif global** : version non paginée du même contenu, utilisée pour la génération du rapport
 PDF. Depuis le tableau de bord Finance, l'utilisateur choisit la période avant le téléchargement :
@@ -5196,8 +5207,8 @@ Se compose de :
 
 #### Écran Récapitulatifs
 
-*Filtres.* Une barre de filtres, toujours visible, s'applique à la fois aux indicateurs, aux cartes et
-au tableau. Critères, tous combinables :
+*Filtres globaux.* Une barre de filtres, toujours visible, s'applique à la fois aux indicateurs, aux
+cartes, à la liste des types et au tableau du type ouvert. Critères, tous combinables :
 - **Sens** (Tous par défaut, Encaissement, Décaissement) ;
 - **Type de transaction** (un ou plusieurs types, avec recherche) ;
 - **Libellé / Observation** : un seul champ, qui cherche le terme à la fois dans le libellé et dans
@@ -5208,26 +5219,57 @@ au tableau. Critères, tous combinables :
   marché (préfinancement, factoring, droit constaté, décompte) ou du contrat (leasing) — les autres
   types n'en ont pas ;
 - **Montant exact** ;
-- **Motif Commission** et **Motif Impôt/Taxe** : listes déroulantes qui n'apparaissent que lorsque le
-  type correspondant fait partie des types sélectionnés ; elles ne restreignent que ce type et laissent les
-  autres types sélectionnés inchangés ;
 - **Période** : bornes « Date de référence — depuis » et « jusqu'au » (la date de référence est
   l'échéance pour le leasing, le CMT et les LCN, l'émission pour les autres types ; si aucune
   borne haute n'est choisie, elle reste la fin du mois en cours). Le bouton affiche le nombre de bornes actives.
 
-Le bouton **Effacer** réinitialise tous les filtres. Lorsqu'aucune opération ne correspond, un message
-l'indique et propose d'effacer les filtres.
+Le bouton **Effacer** réinitialise tous les filtres globaux. Lorsqu'aucune opération ne correspond, un
+message l'indique et propose d'effacer les filtres.
 
-*Cartes par type.* Une carte par type d'opération présent. Un clic sur une carte l'ouvre (une seule
-carte ouverte à la fois, les autres se compactent) : elle affiche alors ses statistiques (débit,
-crédit, net crédit − débit, nombre d'opérations échues) et le tableau de ses opérations. Le bouton
-**Réduire** referme la carte.
+*Vue d'ensemble.* À l'arrivée sur l'écran, une carte par type d'opération présent, avec ses
+indicateurs (nombre, total débit, total crédit, repère d'échues). Un clic sur une carte (ou la touche
+Entrée / Espace) ouvre la vue focus de ce type.
 
-*Tableau d'une carte.* Colonnes : sens (pastille Décaissement/Encaissement), date d'émission, date
+*Vue focus.* Deux zones :
+- à gauche, la **liste des types**, qui reprend pour chacun son nom, son nombre d'opérations à valider,
+  son repère d'échues, son total débit et son total crédit ; la rubrique **Vue d'ensemble**, en tête,
+  ramène à la grille de cartes. Sur un écran étroit, cette liste devient une liste déroulante ;
+- à droite, l'**espace de travail du type** : son nom, les boutons **Ajouter**, **Exporter PDF** et de
+  retour à la vue d'ensemble, quatre indicateurs (débit, crédit, net crédit − débit et nombre
+  d'opérations, **selon les filtres réellement appliqués au tableau**), la barre des filtres du type,
+  puis le tableau et la barre de validation en lot.
+Changer de type remet le tableau à la première page, avec son tri par défaut, et efface les filtres
+du type précédent.
+
+*Filtres d'un type.* Dans l'espace de travail, une barre « Filtres [type] — uniquement pour cette
+source » propose :
+- **Libellé / Observation**, **Montant exact** et **Période** (mêmes règles que les filtres globaux) :
+  pour tous les types ;
+- **N° de pièce** : seulement pour les types qui en portent un (leasing, chèque, LCN, virement, mise à
+  disposition, préfinancement, factoring, droit constaté, décompte, impayé) ;
+- **Sens** : seulement pour les types dont les opérations peuvent être des encaissements comme des
+  décaissements (chèque, virement, virement international, mise à disposition, préfinancement,
+  factoring, droit constaté, impayé, provision) ;
+- **Motif** : seulement pour Commission (**Motif Commission**) et Impôt/Taxe (**Motif Impôt/Taxe**).
+Un message rappelle les filtres non proposés pour le type ouvert, et pourquoi. Un critère renseigné ici
+remplace son équivalent global pour ce type (pastille « Remplace le filtre global pour cette source »).
+Le bouton **Effacer les filtres de la source** réinitialise uniquement cette barre ; le message
+« aucune opération » du tableau propose d'effacer tous les filtres, globaux et du type.
+
+*État de l'écran.* Le type ouvert, les filtres globaux, les filtres du type, la page, le nombre de
+lignes et le tri du tableau sont conservés dans l'adresse de la page. Ils sont donc retrouvés au retour
+d'un écran d'ajout ou d'édition (ou du bouton « précédent » du navigateur), après un rechargement de la
+page, et peuvent être partagés par le lien. Un clic sur « Récapitulatifs » dans la barre latérale
+repart d'un écran vierge. Après une validation, le tableau reste sur sa page (il retombe sur la
+dernière page si la sienne n'existe plus) ; si le type n'a plus aucune opération à valider, l'écran
+revient à la vue d'ensemble.
+
+*Tableau d'un type.* Colonnes : sens (pastille Décaissement/Encaissement), date d'émission, date
 d'échéance (« — » si le type n'en porte pas), libellé, observations, source, débit, crédit,
 identifiant source, actions. Paginé (5, 10, 25 ou 50 lignes, 10 par défaut) et triable ; par défaut,
-trié par date de référence, de la plus récente à la plus ancienne. Le bouton **Exporter PDF** du tableau
-exporte exactement les lignes filtrées.
+trié par date de référence, de la plus récente à la plus ancienne (une mention l'indique tant qu'aucun
+en-tête n'a été cliqué). Le bouton **Exporter PDF** de l'espace de travail exporte exactement les lignes
+filtrées, filtres du type compris.
 
 *Actions sur une ligne.*
 - **Valider** (coche verte) : ouvre la fenêtre « Passage au rapprochement bancaire », qui reprend la
@@ -5243,8 +5285,8 @@ boutons **Effacer la sélection** et **Valider en lot**. La fenêtre de lot dema
 date de valeur et la date de l'opération, rappelle le type, le sens, le nombre d'opérations et le
 montant total, et affiche un récapitulatif à confirmer avant exécution.
 
-*Ajouter.* Le bouton **Ajouter** (en haut de l'écran, et dans la barre du tableau) ouvre, selon le
-cas, directement l'écran de création du type de la carte ouverte, ou une fenêtre de choix : une grille
+*Ajouter.* Le bouton **Ajouter** (en haut de l'écran, et dans l'espace de travail d'un type) ouvre, selon
+le cas, directement l'écran de création du type ouvert, ou une fenêtre de choix : une grille
 de types d'opérations avec un champ de recherche qui ignore majuscules et accents. Les types dont la
 création n'est pas possible depuis cet écran sont affichés grisés (« Création indisponible »).
 
@@ -5304,6 +5346,15 @@ Les règles et leurs limites sont décrites aux chapitres 21 (Transactions) et 3
     disposition et les cautions, dont les opérations ne se créent pas depuis cet écran.
 12. Un type sans opération à valider n'a pas de carte ; si aucun encours ne correspond aux filtres,
     l'écran l'indique.
+13. Les filtres globaux s'appliquent à tous les types ; les filtres d'un type ne s'appliquent qu'à lui.
+    Un critère renseigné dans les deux est pris dans le filtre du type pour ce type seulement. Les
+    indicateurs des cartes et de la liste des types ne tiennent compte que des filtres globaux ; les
+    indicateurs de l'espace de travail et le tableau tiennent compte des deux.
+14. Le Récapitulatif retrouve, au retour d'un écran d'ajout ou d'édition, le type ouvert, les filtres, la
+    page et le tri qu'il avait au départ ; la ligne éditée est surlignée si elle figure sur la page
+    affichée.
+15. Depuis le Récapitulatif d'une banque, l'ajout d'une opération présélectionne cette banque dans les
+    écrans de création qui proposent le choix de la banque.
 
 ---
 

@@ -2684,10 +2684,11 @@ static final String FINANCE_OR_ADMIN =
 
 ### Endpoints — `RecapitulatifController` (base `/recapitulatif`)
 
-`@PreAuthorize(FINANCE_OR_ADMIN)` posé au niveau classe — couvre les 4 endpoints d'un coup.
+`@PreAuthorize(FINANCE_OR_ADMIN)` posé au niveau classe — couvre les 5 endpoints d'un coup.
 
 | Méthode | URL | Description |
 |---|---|---|
+| GET | `/recapitulatif/banque/{banqueId}/par-source` | Indicateurs par source (nombre d'opérations, total débit, total crédit, nombre d'échues), mêmes critères que l'endpoint ci-dessous, sans pagination — alimente les cartes de la vue d'ensemble et la liste des sources de la vue focus de l'écran Récapitulatifs. |
 | GET | `/recapitulatif/banque/{banqueId}` | Encaissements **et** décaissements prévisionnels du mois, entrelacés, paginés/triés/filtrés — alimente l'écran unique Récapitulatifs. Le sens est un critère optionnel (`?sens=ENCAISSEMENT` \| `DECAISSEMENT`) : absent, les deux sens sont retournés. |
 | GET | `/recapitulatif/banque/{banqueId}/export/pdf` | Export PDF du récapitulatif, mêmes critères que l'endpoint ci-dessus (filtre de sens compris), sans pagination. |
 | GET | `/recapitulatif/{banqueId}/pdf` | Récapitulatif global (PDF) d'une banque. **Aucun déclencheur dans l'UI actuellement** — `RecapService.downloadRecapGlobalByBank()` existe côté frontend mais n'est appelé par aucun composant ; endpoint disponible via Swagger uniquement. |
@@ -2735,6 +2736,15 @@ sélection du rapprochement actif).
 
 Consultation, validation individuelle ou en lot, clôture, téléchargement PDF : disponibles à tout
 utilisateur ayant passé le `departmentGuard('Finance')`, sans condition de rôle supplémentaire.
+
+**Vue focus, filtres par source, état dans l'adresse (12/10/2026) — aucune autorisation modifiée.**
+L'écran Récapitulatifs garde son état (source ouverte, filtres globaux et de la source, page, tri, ligne à
+surligner) dans les paramètres d'adresse (`?source=…&page=…`) : ce sont de simples critères de lecture,
+relus à chaque chargement et jamais interprétés comme des droits ; une valeur inconnue retombe sur sa valeur
+neutre, et le tri n'accepte qu'une liste blanche de colonnes. Les endpoints appelés sont les mêmes
+(`GET /recapitulatif/banque/{banqueId}`, `…/par-source`, `…/export/pdf`) avec le même `@PreAuthorize`. Le bouton
+« Ajouter » transmet désormais `?banqueId=` à l'écran de création (présélection de la banque) : les écrans
+et endpoints de création restent protégés par leurs propres gardes, inchangés.
 
 **Ajouter / Éditer (20/09/2026) — conditionnées par (source, sens), pas par un rôle.**
 `RecapitulatifComponent` route désormais vers l'écran dédié de création/édition de chaque source

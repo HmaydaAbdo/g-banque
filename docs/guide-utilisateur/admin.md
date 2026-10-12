@@ -385,7 +385,7 @@ d'opération et de valeur, observation, libellé). Une échéance déjà **Payé
    pas de formulaire.
 3. Modifier les champs voulus, puis cliquer sur **Enregistrer**, ou sur **Annuler** pour abandonner.
 4. Dans les deux cas, vous revenez automatiquement à l'écran d'où vous veniez (tableau d'amortissement
-   ou récapitulatif).
+   ou récapitulatif — ce dernier dans le même état : même type ouvert, mêmes filtres, même page).
 
 > Les autres profils (membre ou directeur Finance) ne voient pas cette action : pour eux, le bouton
 > **Éditer** des échéances de leasing et de CMT est grisé dans le récapitulatif.

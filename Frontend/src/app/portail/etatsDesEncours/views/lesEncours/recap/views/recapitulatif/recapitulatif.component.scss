@@ -24,8 +24,7 @@
 .debit-badge:hover  { background: color-mix(in srgb, var(--color-danger-light) 70%, var(--color-danger) 30%); }
 .credit-badge:hover { background: color-mix(in srgb, var(--color-success-light) 70%, var(--color-success) 30%); }
 
-// ── Badge de sens (icône + libellé, une ligne peut être encaissement ou
-// décaissement depuis la fusion des deux écrans du 06/09/2026) ─────────
+// ── Badge de sens (une ligne peut être encaissement ou décaissement) ──
 .sens-badge {
   display      : inline-flex;
   align-items  : center;
@@ -54,12 +53,16 @@
   transform : scale(1.001);
   box-shadow: var(--shadow-sm);
 }
+// Ligne éditée, surlignée au retour du formulaire d'édition
+.table-row.row-focus {
+  background: var(--color-warning-light) !important;
+  box-shadow: inset 4px 0 0 var(--color-warning);
+}
 
 // ── Spécificité dark mode ────────────────────────────────
 .text-500  { color: var(--color-text-secondary) !important; }
 .text-400  { color: var(--color-text-muted)     !important; }
-.text-900  { color: var(--color-text-primary)   !important; }
-.text-700  { color: var(--color-text-primary)   !important; }
+.text-900, .text-700 { color: var(--color-text-primary) !important; }
 
 // ── Identifiant technique (dernier de la ligne, jamais l'info principale) ──
 .id-cell {
@@ -72,12 +75,6 @@
 
 // Icônes d'aide des libellés de filtre
 .pg-filters label .pi-info-circle { color: var(--color-text-muted); }
-
-// ── Bandeau de synthèse (caption du tableau) ─────────────
-// Totaux + export vivent dans l'en-tête du tableau plutôt que dans une
-// troisième carte : une surface de moins, et autant de hauteur rendue aux
-// lignes, qui n'étaient plus visibles sans scroller.
-.recap-summary { width: 100%; }
 
 // ── Modale « Ajouter » — grille de mini-cartes filtrable par recherche ───
 .ajouter-grid {
@@ -102,7 +99,7 @@
   background     : var(--color-surface) !important;
   transition     : background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 
-  &:hover {
+  &:not(.is-unavailable):hover {
     background   : var(--color-surface-3) !important;
     border-color : var(--color-primary);
     transform    : translateY(-2px);
@@ -140,19 +137,7 @@
   }
 
   // Source sans route de création : visible, mais grisée et non cliquable
-  &.is-unavailable {
-    opacity: 0.55;
-    cursor : not-allowed;
-
-    &:hover {
-      transform   : none;
-      box-shadow  : none;
-      border-color: var(--color-border);
-      background  : var(--color-surface) !important;
-
-      .ajouter-card__icon { background: var(--color-surface-3); color: var(--color-primary); }
-    }
-  }
+  &.is-unavailable { opacity: 0.55; cursor: not-allowed; }
 }
 
 // Bornes de date repliables : ligne complète sous les filtres quand ouvertes
@@ -163,6 +148,16 @@
   padding-top   : 0.75rem;
 }
 
+// Portée d'un bloc de filtres : « globaux » (toutes les sources) ou « de la source ouverte »
+.recap-scope {
+  display    : flex;
+  align-items: center;
+  gap        : var(--space-2);
+  flex-wrap  : wrap;
+  margin-bottom: var(--space-2);
+  font-size  : var(--text-sm);
+  color      : var(--color-primary-text);
+}
 
 // ── Indicateurs globaux ──────────────────────────────────
 .recap-kpis {
@@ -200,7 +195,6 @@
   }
 }
 
-
 .src-empty {
   display       : flex;
   flex-direction: column;
@@ -212,12 +206,11 @@
   border-radius : var(--radius-xl);
 }
 
+// ── Vue d'ensemble : une carte par source ────────────────
 .src-grid {
   display              : grid;
   grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
   gap                  : var(--space-3);
-  // stretch : toutes les cartes d'une même ligne ont la même hauteur
-  // (la largeur est identique par construction : colonnes auto-fill en 1fr)
   align-items          : stretch;
 }
 
@@ -225,42 +218,21 @@
   display       : flex;
   flex-direction: column;
   min-width     : 0;
-  background   : var(--color-surface);
-  border       : 1px solid var(--color-border-strong);
-  border-radius: var(--radius-xl);
-  overflow     : hidden;
-  box-shadow   : var(--shadow-card);
-  transition   : transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  background    : var(--color-surface);
+  border        : 1px solid var(--color-border-strong);
+  border-radius : var(--radius-xl);
+  overflow      : hidden;
+  cursor        : pointer;
+  box-shadow    : var(--shadow-sm);
+  transition    : transform 0.2s ease, box-shadow 0.2s ease;
 
-  &:hover:not(.is-open) {
-    transform : translateY(-2px);
-    box-shadow: var(--shadow-lg);
-  }
-
-  // Carte ouverte : pleine largeur, remontée en tête de grille
-  &.is-open {
-    grid-column : 1 / -1;
-    order       : -1;
-    border-color: var(--color-primary);
-    box-shadow  : 0 0 0 1px var(--color-primary), var(--shadow-lg);
-    animation   : srcPop 0.35s ease both;
-  }
+  &:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 
   &__head {
     display    : flex;
     align-items: center;
     gap        : var(--space-2);
     padding    : var(--space-3) var(--space-4);
-    cursor     : pointer;
-    outline    : none;
-
-    &:focus-visible { box-shadow: inset 0 0 0 2px var(--color-primary); }
-  }
-
-  &.is-open &__head {
-    cursor       : default;
-    background   : var(--color-surface-2);
-    border-bottom: 1px solid var(--color-border);
   }
 
   &__icon {
@@ -297,16 +269,9 @@
     color        : var(--color-text-primary);
   }
 
-  &__arrow {
-    color     : var(--color-text-secondary);
-    transition: transform 0.2s ease;
-  }
-  &:hover &__arrow { transform: translateX(3px); }
+  &__arrow { color: var(--color-text-secondary); }
 
-  &__kpis { padding: 0 var(--space-4) var(--space-3); }
-
-  // Le bloc débit / crédit occupe tout l'espace restant : la carte remplit sa cellule de grille
-  &:not(.is-open) .src-collapse--kpis { flex: 1 1 auto; }
+  &__kpis { padding: 0 var(--space-4) var(--space-3); flex: 1 1 auto; }
 
   &__line {
     display        : flex;
@@ -323,7 +288,7 @@
     }
   }
 
-  // Badge « échues » : dans l'en-tête, juste avant le compteur d'opérations
+  // Badge « échues » : juste avant le compteur d'opérations
   &__echues {
     flex-shrink  : 0;
     display      : inline-flex;
@@ -337,73 +302,126 @@
     font-weight  : var(--weight-bold);
     font-variant-numeric: tabular-nums;
   }
-
-  &__table { padding: var(--space-3) var(--space-4) var(--space-4); }
 }
 
-// Autres cartes compactées quand l'une est ouverte
-.src-grid.has-open .src-card:not(.is-open) .src-card__head {
-  padding: var(--space-2) var(--space-4);
-}
-
-// Repli / dépli animé (hauteur 0fr → 1fr)
-.src-collapse {
+// ── Vue focus : liste des sources + espace de travail de la source ────────
+.recap-focus {
   display              : grid;
-  grid-template-rows   : 1fr;
-  transition           : grid-template-rows 0.35s ease;
-
-  > .src-collapse__inner {
-    overflow  : hidden;
-    min-height: 0;
-  }
+  grid-template-columns: 17rem minmax(0, 1fr);
+  gap                  : var(--space-3);
+  align-items          : start;
 }
 
-.src-card.is-open .src-collapse--kpis,
-.src-grid.has-open .src-card:not(.is-open) .src-collapse--kpis,
-.src-card:not(.is-open) .src-collapse--body {
-  grid-template-rows: 0fr;
-}
-
-// Indicateurs propres à la source ouverte
-.src-stats {
-  display              : grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap                  : var(--space-2);
-  padding              : var(--space-3) var(--space-4) 0;
-}
-
-.src-stat {
+.recap-rail {
   display       : flex;
   flex-direction: column;
-  gap           : 2px;
+  gap           : var(--space-2);
+  position      : sticky;
+  top           : var(--space-2);
+  max-height    : calc(100vh - 2rem);
+  overflow-y    : auto;
+}
+
+.rail-card {
+  display       : flex;
+  flex-direction: column;
+  gap           : var(--space-1);
   padding       : var(--space-2) var(--space-3);
-  background    : var(--color-surface-2);
+  background    : var(--color-surface);
   border        : 1px solid var(--color-border);
-  border-radius : var(--radius-md);
+  border-radius : var(--radius-lg);
+  cursor        : pointer;
+  transition    : border-color 0.15s ease, background-color 0.15s ease;
 
-  span {
-    font-size  : var(--text-xs);
-    font-weight: var(--weight-medium);
-    color      : var(--color-text-secondary);
+  &:hover { border-color: var(--color-primary); }
+
+  &.is-open {
+    background  : var(--color-primary-light);
+    border-color: var(--color-primary);
   }
 
-  b {
-    font-size           : var(--text-md);
-    font-weight         : var(--weight-bold);
-    font-variant-numeric: tabular-nums;
-    color               : var(--color-text-primary);
+  &__top, &__amounts {
+    display    : flex;
+    align-items: center;
+    gap        : var(--space-2);
   }
+
+  &__amounts {
+    justify-content: space-between;
+    padding-left   : calc(2rem + var(--space-2));
+    font-size      : var(--text-sm);
+    color          : var(--color-text-secondary);
+
+    b { font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; }
+  }
+}
+
+.recap-picker { display: none; }
+
+.recap-workspace {
+  min-width     : 0;
+  display       : flex;
+  flex-direction: column;
+  gap           : var(--space-3);
+  padding       : var(--space-4);
+  background    : var(--color-surface);
+  border        : 1px solid var(--color-primary);
+  border-radius : var(--radius-xl);
+  box-shadow    : var(--shadow-lg);
+
+  &__head {
+    display    : flex;
+    align-items: center;
+    gap        : var(--space-2);
+    flex-wrap  : wrap;
+  }
+
+  &__title {
+    margin     : 0;
+    font-size  : var(--text-title);
+    font-weight: var(--weight-bold);
+    color      : var(--color-text-primary);
+  }
+}
+
+// Filtres propres à la source ouverte
+.recap-source-filters {
+  display       : flex;
+  flex-direction: column;
+  gap           : var(--space-2);
+  padding       : var(--space-3) var(--space-4);
+  background    : var(--color-surface-3);
+  border        : 1px solid var(--color-surface-4);
+  border-radius : var(--radius-lg);
+}
+
+// Pastille : un filtre de la source remplace un filtre global
+.recap-chip {
+  align-self   : flex-start;
+  display      : inline-flex;
+  align-items  : center;
+  gap          : var(--space-1);
+  padding      : 2px var(--space-3);
+  border-radius: var(--radius-full);
+  background   : var(--color-warning-light);
+  color        : var(--color-warning-text);
+  font-size    : var(--text-sm);
+  font-weight  : var(--weight-medium);
 }
 
 .is-debit  { color: var(--color-danger)  !important; }
 .is-credit { color: var(--color-success) !important; }
 
-@keyframes srcPop {
-  from { opacity: 0.4; transform: scale(0.97); }
-  to   { opacity: 1;   transform: scale(1);    }
+// Focus clavier des cartes et de la liste des sources
+.src-card:focus-visible, .rail-card:focus-visible { outline: 2px solid var(--color-primary); }
+
+// Écran étroit : la liste des sources devient une liste déroulante
+@media (max-width: 900px) {
+  .recap-focus  { grid-template-columns: minmax(0, 1fr); }
+  .recap-rail   { display: none; }
+  .recap-picker { display: flex; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .src-card, .src-collapse { transition: none; }
-  .src-card.is-open        { animation: none;  }
+  .src-card, .rail-card { transition: none; }
 }

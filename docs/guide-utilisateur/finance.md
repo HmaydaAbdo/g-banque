@@ -1469,7 +1469,7 @@ Payé.**
 
 ### Valider les impôts et taxes en attente
 
-Les impôts et taxes « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Impôt / Taxe** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA). Un filtre **Motif Impôt/Taxe** est disponible quand ce type est sélectionné.
+Les impôts et taxes « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Impôt / Taxe** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA). Un filtre **Motif Impôt/Taxe** est disponible dans les filtres de ce type.
 
 ### Exporter en PDF
 
@@ -1534,7 +1534,7 @@ la TVA associée (le cas échéant) est supprimée avec elle.
 
 ### Valider les commissions en attente
 
-Les commissions « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Commission** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA). Un filtre **Motif Commission** est disponible quand ce type est sélectionné.
+Les commissions « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Commission** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA). Un filtre **Motif Commission** est disponible dans les filtres de ce type.
 
 ### Exporter en PDF
 
@@ -1860,8 +1860,8 @@ deux écrans :
 L'écran se lit de haut en bas :
 
 1. **Le bouton Ajouter** (en haut à droite) — voir « Ajouter une opération ».
-2. **La barre de filtres** — voir « Filtrer les opérations ».
-3. **Quatre indicateurs** qui suivent les filtres : **Total débit prévisionnel**, **Total crédit
+2. **La barre de filtres globaux** — voir « Filtrer les opérations ».
+3. **Quatre indicateurs** qui suivent les filtres globaux : **Total débit prévisionnel**, **Total crédit
    prévisionnel**, **Opérations à valider**, **Échues à ce jour** (en rouge dès qu'au moins une
    opération est arrivée à échéance).
 4. **Une carte par type d'opération** (Leasing, Crédit Moyen Terme, Chèque, LCN, Virement, Virement
@@ -1875,12 +1875,23 @@ L'écran se lit de haut en bas :
 Quand aucune opération ne correspond, le message **« Aucune opération à valider »** s'affiche ; si
 des filtres sont actifs, il propose **Effacer les filtres**.
 
-**Ouvrir une carte** : cliquer sur son en-tête. La carte s'ouvre en pleine largeur et passe en tête
-de liste ; les autres cartes se compactent (une seule carte est ouverte à la fois). Elle affiche ses
-statistiques — **Débit**, **Crédit**, **Net (crédit − débit)**, **Échues à ce jour** — puis le
-tableau de ses opérations. Le bouton **Réduire** referme la carte.
+**Ouvrir un type d'opération** : cliquer sur sa carte (ou, au clavier, Entrée ou Espace quand elle a
+le focus). L'écran passe en **vue focus**, en deux zones :
 
-**Le tableau d'une carte** présente une ligne par opération : **Sens** (pastille Décaissement ou
+- **À gauche, la liste des types.** Chaque type garde sa « mini-carte » avec son nombre d'opérations,
+  son repère d'échues et ses totaux **D** (débit) et **C** (crédit) : les indicateurs des autres types
+  restent donc visibles pendant que vous travaillez sur l'un d'eux. Cliquer sur un autre type change
+  de type ; **Vue d'ensemble**, en tête de liste, ramène à la grille de cartes. Sur un écran étroit,
+  cette liste devient une liste déroulante **Source**.
+- **À droite, l'espace de travail du type.** En-tête (nom du type, nombre d'opérations à valider,
+  boutons **Ajouter**, **Exporter PDF** et la croix qui revient à la vue d'ensemble), quatre
+  indicateurs — **Débit**, **Crédit**, **Net (crédit − débit)** et **Opérations (filtres appliqués)**,
+  qui suivent les filtres réellement appliqués au tableau —, la barre des filtres du type, puis le
+  tableau de ses opérations.
+
+Changer de type remet le tableau à la première page et efface les filtres du type précédent.
+
+**Le tableau d'un type** présente une ligne par opération : **Sens** (pastille Décaissement ou
 Encaissement), **Date d'émission**, **Date d'échéance** (« — » si le type n'en a pas), **Libellé**,
 **Observations**, **Source**, **Débit**, **Crédit**, **ID source** et **Actions**. Il est paginé (5,
 10, 25 ou 50 lignes ; 10 par défaut) et triable en cliquant sur un en-tête. Tant que vous n'avez
@@ -1888,10 +1899,22 @@ cliqué sur aucun en-tête, il est trié par date de référence, de la plus ré
 (la date de référence est l'échéance pour le leasing, le CMT et les LCN, l'émission pour les autres
 types).
 
+**Votre place est gardée.** Le type ouvert, les filtres, la page et le tri sont retenus dans l'adresse
+de la page : quand vous revenez d'un écran d'ajout ou d'édition (enregistrer, annuler ou bouton
+« précédent » du navigateur), vous retrouvez le Récapitulatif exactement comme vous l'avez laissé, sans
+avoir à refiltrer ni à rouvrir le type. Après une édition, la ligne modifiée est surlignée quelques
+secondes. Un rechargement de la page (F5) garde aussi votre place, et vous pouvez copier l'adresse
+pour partager la vue. Un clic sur **Récapitulatifs** dans la barre latérale repart d'un écran vierge.
+
 ### Filtrer les opérations
 
-La barre de filtres est toujours visible. Elle s'applique à la fois aux indicateurs, aux cartes et
-au tableau. Critères, tous combinables :
+Il y a deux niveaux de filtres. Les **filtres globaux** (barre du haut, toujours visible)
+s'appliquent à la fois aux indicateurs, aux cartes, à la liste des types et au tableau. Les **filtres
+du type** (dans l'espace de travail) ne concernent que le type ouvert.
+
+#### Filtres globaux
+
+Critères, tous combinables :
 
 - **Sens** : Tous (par défaut), Encaissement ou Décaissement. Quand un sens est choisi, le total de
   l'autre tombe à zéro.
@@ -1904,19 +1927,43 @@ au tableau. Critères, tous combinables :
   marché (préfinancement, factoring, droit constaté, décompte) ou du contrat (leasing). Les autres
   types n'ont pas de numéro. Une bulle d'aide explique ce champ.
 - **Montant exact**.
-- **Motif Commission** et **Motif Impôt/Taxe** : listes déroulantes qui n'apparaissent que si le type
-  correspondant est sélectionné dans « Type de transaction ». Elles ne restreignent que ce type : les
-  autres types sélectionnés restent affichés.
 - **Période** (bouton **Période**, qui affiche le nombre de bornes actives) : **Date de référence —
   depuis** et **jusqu'au**. Chaque opération est comparée à sa propre date de référence (une bulle
   d'aide le rappelle) ; si vous ne saisissez pas de borne haute, la fin du mois en cours reste
   utilisée.
 
-Le bouton **Effacer** (visible dès qu'un filtre est actif) réinitialise tous les filtres.
+Le bouton **Effacer** (visible dès qu'un filtre global est actif) réinitialise tous les filtres
+globaux.
+
+#### Filtres du type ouvert
+
+La barre **« Filtres [type] — uniquement pour cette source »** de l'espace de travail propose :
+
+- **Libellé / Observation**, **Montant exact** et **Période** : pour tous les types, avec les mêmes
+  règles que les filtres globaux ;
+- **N° de pièce** : seulement pour les types qui portent un numéro (leasing, chèque, LCN, virement,
+  mise à disposition, préfinancement, factoring, droit constaté, décompte, impayé) ;
+- **Sens** : seulement pour les types qui ont des encaissements et des décaissements (chèque,
+  virement, virement international, mise à disposition, préfinancement, factoring, droit constaté,
+  impayé, provision) ;
+- **Motif Commission** (type Commission) ou **Motif Impôt/Taxe** (type Impôt / Taxe) : liste déroulante
+  avec recherche.
+
+Une ligne de texte sous la barre rappelle les filtres qui ne sont pas proposés pour le type ouvert, et
+pourquoi (« cette source n'en porte pas », « cette source n'a qu'un seul sens »).
+
+**Quand un critère est rempli à la fois en global et dans le type**, c'est celui du type qui s'applique,
+pour ce type seulement : une pastille jaune **« Remplace le filtre global pour cette source : … »**
+nomme les critères concernés. Les autres types, la liste de gauche et les cartes continuent d'utiliser
+le filtre global.
+
+Le bouton **Effacer les filtres de la source** (visible dès qu'un filtre du type est actif) réinitialise
+uniquement cette barre. Quand le tableau est vide à cause des filtres, son message propose **Effacer
+les filtres**, qui efface les filtres globaux **et** ceux du type.
 
 ### Valider une opération en attente
 
-1. Ouvrir la carte du type d'opération concerné.
+1. Ouvrir le type d'opération concerné (clic sur sa carte, ou dans la liste de gauche).
 2. Cliquer sur le bouton rond vert **Valider** (coche) de la ligne. Une fenêtre **« Passage au
    rapprochement bancaire »** s'ouvre après un bref chargement.
 3. Compléter la fenêtre :
@@ -1932,6 +1979,8 @@ Le bouton **Effacer** (visible dès qu'un filtre est actif) réinitialise tous l
    les erreurs. »** s'affiche. **Annuler** referme la fenêtre sans rien enregistrer.
 5. Un message de confirmation s'affiche : l'opération disparaît du récapitulatif, les indicateurs se
    mettent à jour et la transaction apparaît dans l'écran **Rapprochement** de la période affichée.
+   Le tableau reste sur sa page (il passe à la dernière page si la vôtre n'existe plus) ; quand le type
+   n'a plus aucune opération à valider, l'écran revient à la vue d'ensemble.
 
 Le sens de la TVA découle du sens de l'opération (déductible pour un décaissement, collectée pour un
 encaissement). Si une ligne affiche un tiret à la place du bouton **Valider**, cette opération ne
@@ -1940,7 +1989,7 @@ concerné pour ses cas particuliers.
 
 ### Valider plusieurs opérations en lot
 
-1. Ouvrir la carte du type d'opération concerné.
+1. Ouvrir le type d'opération concerné.
 2. Cocher les lignes à valider (la case d'en-tête coche toutes les lignes de la page). Une barre
    apparaît au-dessus du tableau : **« n opération(s) sélectionnée(s) — montant total MAD »**, avec
    les boutons **Effacer la sélection** et **Valider en lot (n)**.
@@ -1962,20 +2011,23 @@ concerné pour ses cas particuliers.
 
 ### Ajouter une opération
 
-Le bouton **Ajouter** existe en haut de l'écran et dans la barre du tableau d'une carte ouverte.
-- Dans la barre du tableau d'une carte dont le type peut être créé depuis le récapitulatif, il ouvre
+Le bouton **Ajouter** existe en haut de l'écran et dans l'en-tête de l'espace de travail d'un type.
+- Dans l'espace de travail d'un type qui peut être créé depuis le récapitulatif, il ouvre
   directement l'écran de création de ce type.
-- Sinon (bouton en haut de l'écran, ou carte dont le type ne se crée pas d'ici), il ouvre la fenêtre
+- Sinon (bouton en haut de l'écran, ou type qui ne se crée pas d'ici), il ouvre la fenêtre
   **« Ajouter une opération »** : une grille de types d'opérations avec un champ de recherche (les
   majuscules et les accents sont ignorés : « cheque » trouve « Chèque »). Cliquer sur un type ouvre
-  son écran de création ; à l'enregistrement, vous revenez au récapitulatif. Les types dont la
+  son écran de création ; à l'enregistrement, vous revenez au récapitulatif, sur le même type, avec les
+  mêmes filtres et la même page. La banque dont vous consultez le récapitulatif est déjà sélectionnée
+  dans les écrans de création qui demandent une banque. Les types dont la
   création n'est pas possible depuis ici sont grisés, avec la mention « Création indisponible »
   (c'est le cas du leasing, du CMT, des mises à disposition et des cautions).
 
 ### Éditer une opération en attente
 
 Le bouton rond bleu **Éditer** (crayon) de chaque ligne ouvre l'écran de modification de l'opération
-dans son module d'origine ; à l'enregistrement ou à l'annulation, vous revenez au récapitulatif.
+dans son module d'origine ; à l'enregistrement ou à l'annulation, vous revenez au récapitulatif dans
+le même état (même type ouvert, mêmes filtres, même page), la ligne modifiée surlignée quelques secondes.
 Le bouton est grisé (survol : « Édition non disponible pour cette source depuis le récapitulatif »)
 dans les cas suivants :
 - mises à disposition et LCN en décaissement : jamais éditables depuis le récapitulatif ;
@@ -1985,8 +2037,8 @@ dans les cas suivants :
 
 ### Exporter en PDF
 
-Le bouton **Exporter PDF** de la barre du tableau génère un PDF des lignes correspondant exactement
-aux filtres appliqués, sans limite de pagination. Le fichier se télécharge directement dans le
+Le bouton **Exporter PDF** de l'espace de travail génère un PDF des lignes correspondant exactement
+aux filtres appliqués (globaux et du type), sans limite de pagination. Le fichier se télécharge directement dans le
 navigateur. L'écran **Rapprochement** dispose du même bouton, pour les transactions filtrées de la
 période.
 

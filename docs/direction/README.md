@@ -1003,6 +1003,18 @@ opérations en attente d'une banque donnée, quel que soit leur type d'origine.
   le nombre d'opérations, les totaux débit et crédit et le nombre d'opérations échues. Encaissements
   et décaissements figurent dans le **même** tableau : la lecture de la position du mois se fait
   d'un seul coup d'œil, avec les totaux côte à côte.
+- **Un espace de travail concentré sur chaque type, sans perdre la vue d'ensemble** : en ouvrant un
+  type d'opération, l'équipe travaille sur lui seul, avec ses propres filtres, tandis que la liste des
+  autres types reste affichée à côté avec leurs indicateurs. On passe d'un type à l'autre en un clic,
+  sans quitter l'écran.
+- **Un écran qui retient où l'on en était** : après avoir créé ou corrigé une opération, l'utilisateur
+  retrouve l'écran exactement comme il l'a quitté — même type, mêmes filtres, même page — et la ligne
+  modifiée est mise en évidence. Plus de refiltrage à chaque aller-retour : un gain de temps direct sur
+  les mois chargés, et moins de risques d'erreur d'attention. La banque est aussi présélectionnée à la
+  création.
+- **Des filtres à deux niveaux** : des filtres globaux pour balayer toutes les opérations, et des filtres
+  propres à chaque type (numéro de pièce, sens, motif…) pour aller droit à l'opération cherchée ; en cas
+  de recoupement, le plus précis l'emporte et l'écran le signale.
 - **Les mêmes gestes pour tous les types** : valider une opération, valider un lot, créer une
   opération, corriger une opération en attente — la démarche et les champs sont identiques quel que
   soit le type, ce qui réduit le temps de prise en main, les erreurs de saisie et la dépendance à une
@@ -1010,7 +1022,8 @@ opérations en attente d'une banque donnée, quel que soit leur type d'origine.
   parcours des utilisateurs.
 - **Recherche transversale** : un seul champ « Libellé / Observation » (qui couvre aussi émetteur et
   organisme), le numéro de pièce, le montant, le motif, la période et le sens permettent de retrouver
-  une opération parmi toutes les autres en quelques secondes.
+  une opération parmi toutes les autres en quelques secondes ; un lien vers l'écran tel qu'il est
+  affiché peut être partagé avec un collègue.
 - **Alerte sur les échéances** : les opérations arrivées à échéance sont signalées directement sur
   chaque carte et dans les indicateurs globaux, pour qu'aucune échéance ne passe inaperçue.
 - **Corrections maîtrisées après validation** : une transaction validée peut être corrigée ou annulée
