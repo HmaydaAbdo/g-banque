@@ -2,141 +2,47 @@
 <p-confirmDialog></p-confirmDialog>
 
 <div class="flex flex-column gap-2 w-full route-enter">
-  <div class="flex flex-row justify-content-end">
-    <!-- Ajout d'une opération de n'importe quelle source, sans passer par sa carte -->
-    <button type="button" pButton pRipple label="Ajouter" icon="pi pi-plus"
-            class="p-button-sm p-button-success"
-            pTooltip="Créer une opération — choix de la source dans une liste avec recherche"
-            tooltipPosition="left"
-            (click)="openAjouterModal()"></button>
-  </div>
 
+  <!-- ── Filtres globaux (sens, types) + indicateurs : une seule barre compacte ──
+       Ils s'appliquent aux cartes, à la liste des sources et au tableau de la source ouverte. -->
+  <div class="recap-bar">
+    <form id="recap-filters-panel" [formGroup]="searchForm" class="recap-bar__filters">
+      <p-dropdown inputId="sens" formControlName="sens" [options]="sensOptions"
+                  optionLabel="label" optionValue="value" ariaLabel="Sens"
+                  appendTo="body" [style]="{'width': '10rem'}"></p-dropdown>
 
-  <!-- ── Filtres globaux : appliqués aux cartes, à la liste des sources ET au tableau ── -->
-  <div class="pg-filters">
-    <div class="recap-scope">
-      <i class="pi pi-globe" aria-hidden="true"></i>
-      <span class="font-semibold">Filtres globaux</span>
-      <span class="text-500">— s'appliquent à toutes les sources</span>
-    </div>
-    <form id="recap-filters-panel" [formGroup]="searchForm" class="flex flex-wrap gap-3 align-items-end">
+      <p-multiSelect inputId="transactionSources" formControlName="transactionSources"
+                     [options]="transactionSourceOptions"
+                     optionLabel="label" optionValue="value" ariaLabel="Type de transaction"
+                     placeholder="Tous les types"
+                     selectedItemsLabel="{0} types sélectionnés"
+                     [showClear]="true" [filter]="true"
+                     appendTo="body" [style]="{'width': '15rem'}"></p-multiSelect>
 
-      <div class="flex flex-column gap-1" style="min-width:150px;">
-        <label for="sens">Sens</label>
-        <p-dropdown inputId="sens" formControlName="sens" [options]="sensOptions"
-                    optionLabel="label" optionValue="value"
-                    appendTo="body" styleClass="w-full"></p-dropdown>
-      </div>
-
-      <div class="flex flex-column gap-1 flex-1" style="min-width:190px;">
-        <label for="transactionSources">Type de transaction</label>
-        <p-multiSelect inputId="transactionSources" formControlName="transactionSources"
-                       [options]="transactionSourceOptions"
-                       optionLabel="label" optionValue="value"
-                       placeholder="Tous les types"
-                       selectedItemsLabel="{0} types sélectionnés"
-                       [showClear]="true" [filter]="true"
-                       appendTo="body" styleClass="w-full"></p-multiSelect>
-      </div>
-
-      <div class="flex flex-column gap-1 flex-1" style="min-width:220px;">
-        <label for="libelleOuObservation">Libellé / Observation</label>
-        <span class="p-input-icon-left w-full">
-          <i class="pi pi-search"></i>
-          <input id="libelleOuObservation" pInputText type="text" formControlName="libelleOuObservation"
-                 placeholder="Rechercher dans le libellé ou l'observation..." class="w-full" />
-        </span>
-      </div>
-
-      <div class="flex flex-column gap-1" style="min-width:140px;">
-        <label for="numero" class="flex align-items-center gap-1">
-          N° de pièce
-          <i class="pi pi-info-circle text-xs cursor-help"
-             [pTooltip]="numeroHelp" tooltipPosition="top" aria-hidden="true"></i>
-        </label>
-        <span class="p-input-icon-left w-full">
-          <i class="pi pi-hashtag"></i>
-          <input id="numero" pInputText type="text" formControlName="numero"
-                 placeholder="Ex. 616298" class="w-full" />
-        </span>
-      </div>
-
-      <div class="flex flex-column gap-1" style="min-width:130px;">
-        <label for="montant">Montant exact</label>
-        <input id="montant" pInputText type="number" formControlName="montant"
-               placeholder="0,00" class="w-full" />
-      </div>
-
-      <div class="flex-shrink-0 flex gap-2">
-        <button pButton pRipple type="button"
-                [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
-                icon="pi pi-calendar"
-                [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
-                (click)="toggleDatePanel()"></button>
-
-        @if (activeFilterCount > 0) {
-          <p-button label="Effacer" icon="pi pi-times" severity="secondary" size="small"
-                    (onClick)="clearSearch()" [style]="{'white-space':'nowrap'}"></p-button>
-        }
-      </div>
-
-      @if (showDatePanel) {
-        <div class="recap-dates flex flex-wrap gap-3 align-items-end">
-          <div class="flex flex-column gap-1" style="min-width:180px;">
-            <label for="dateReferenceDepuis" class="flex align-items-center gap-1">
-              Date de référence — depuis
-              <i class="pi pi-info-circle text-xs cursor-help"
-                 [pTooltip]="dateReferenceHelp" tooltipPosition="top" aria-hidden="true"></i>
-            </label>
-            <p-calendar inputId="dateReferenceDepuis" formControlName="dateReferenceDepuis"
-                        placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
-                        [showClear]="true" [showButtonBar]="true" appendTo="body"
-                        styleClass="w-full"></p-calendar>
-          </div>
-
-          <div class="flex flex-column gap-1" style="min-width:180px;">
-            <label for="dateReferenceJusqua" class="flex align-items-center gap-1">
-              Date de référence — jusqu'au
-              <i class="pi pi-info-circle text-xs cursor-help"
-                 [pTooltip]="dateReferenceHelp" tooltipPosition="top" aria-hidden="true"></i>
-            </label>
-            <p-calendar inputId="dateReferenceJusqua" formControlName="dateReferenceJusqua"
-                        placeholder="Fin du mois en cours" dateFormat="dd/mm/yy"
-                        [showClear]="true" [showButtonBar]="true" appendTo="body"
-                        styleClass="w-full"></p-calendar>
-          </div>
-
-          <span class="text-xs text-500 align-self-center" style="max-width:34rem;">
-            {{ dateReferenceHelp }}
-          </span>
-        </div>
+      @if (activeFilterCount > 0) {
+        <p-button label="Effacer" icon="pi pi-times" severity="secondary" size="small" [text]="true"
+                  (onClick)="clearSearch()" [style]="{'white-space':'nowrap'}"></p-button>
       }
-
     </form>
-  </div>
 
-  <!-- ── Indicateurs globaux (suivent les filtres globaux) ──────────────────── -->
-  <div class="recap-kpis">
-    <div class="recap-kpi">
-      <span class="recap-kpi__label">Total débit prévisionnel</span>
-      <span class="recap-kpi__value recap-kpi__value--debit">
-        {{ (globalView?.debit ?? 0) | number:'1.2-2' }} <small>MAD</small>
+    <div class="recap-bar__kpis">
+      <span class="recap-kpi" pTooltip="Total débit prévisionnel" tooltipPosition="bottom">
+        <span class="recap-kpi__label">Débit</span>
+        <span class="recap-kpi__value recap-kpi__value--debit">{{ (globalView?.debit ?? 0) | number:'1.2-2' }}</span>
       </span>
-    </div>
-    <div class="recap-kpi">
-      <span class="recap-kpi__label">Total crédit prévisionnel</span>
-      <span class="recap-kpi__value recap-kpi__value--credit">
-        {{ (globalView?.credit ?? 0) | number:'1.2-2' }} <small>MAD</small>
+      <span class="recap-kpi" pTooltip="Total crédit prévisionnel" tooltipPosition="bottom">
+        <span class="recap-kpi__label">Crédit</span>
+        <span class="recap-kpi__value recap-kpi__value--credit">{{ (globalView?.credit ?? 0) | number:'1.2-2' }}</span>
       </span>
-    </div>
-    <div class="recap-kpi">
-      <span class="recap-kpi__label">Opérations à valider</span>
-      <span class="recap-kpi__value">{{ (globalView?.count ?? 0) | number }}</span>
-    </div>
-    <div class="recap-kpi">
-      <span class="recap-kpi__label">Échues à ce jour</span>
-      <span class="recap-kpi__value" [class.recap-kpi__value--alert]="(globalView?.echues ?? 0) > 0">
-        {{ (globalView?.echues ?? 0) | number }}
+      <span class="recap-kpi" pTooltip="Opérations à valider" tooltipPosition="bottom">
+        <span class="recap-kpi__label">À valider</span>
+        <span class="recap-kpi__value">{{ (globalView?.count ?? 0) | number }}</span>
+      </span>
+      <span class="recap-kpi" pTooltip="Opérations dont la date de référence est atteinte à ce jour" tooltipPosition="bottom">
+        <span class="recap-kpi__label">Échues</span>
+        <span class="recap-kpi__value" [class.recap-kpi__value--alert]="(globalView?.echues ?? 0) > 0">
+          {{ (globalView?.echues ?? 0) | number }}
+        </span>
       </span>
     </div>
   </div>
@@ -167,14 +73,6 @@
           <div class="src-card__head">
             <span class="src-card__icon"><i [ngClass]="card.icon" aria-hidden="true"></i></span>
             <span class="src-card__name" [attr.title]="card.label">{{ card.label }}</span>
-            @if (card.echues > 0) {
-              <span class="src-card__echues"
-                    [pTooltip]="card.echues + ' opération(s) échue(s) : date de référence atteinte à ce jour'"
-                    tooltipPosition="top">
-                <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
-                {{ card.echues | number }}
-              </span>
-            }
             <span class="src-card__count" pTooltip="Opérations à valider" tooltipPosition="top">{{ card.count | number }}</span>
             <i class="pi pi-chevron-right src-card__arrow" aria-hidden="true"></i>
           </div>
@@ -187,242 +85,173 @@
               <span>Crédit</span>
               <b class="is-credit">{{ card.credit | number:'1.2-2' }}</b>
             </div>
+            <div class="src-card__split" aria-hidden="true"><i [style.width.%]="card.debitPct"></i></div>
           </div>
+          @if (card.echues > 0) {
+            <div class="src-card__foot">
+              <button type="button" class="src-card__echues"
+                      pTooltip="Ouvre la source filtrée sur ses opérations échues (date de référence atteinte à ce jour)"
+                      tooltipPosition="bottom"
+                      (click)="openSource(card.key, true); $event.stopPropagation()">
+                <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+                {{ card.echues | number }} {{ card.echues > 1 ? 'échues' : 'échue' }} · voir
+              </button>
+            </div>
+          }
         </section>
       }
     </div>
 
   } @else {
 
-    <!-- ── Vue focus : liste des sources à gauche, espace de travail de la source à droite ── -->
-    <div class="recap-focus">
-
-      <nav class="recap-rail" aria-label="Sources">
-        <div class="rail-card" role="button" tabindex="0"
-             (click)="closeSource()"
-             (keydown.enter)="closeSource()"
-             (keydown.space)="$event.preventDefault(); closeSource()">
-          <span class="rail-card__top">
-            <span class="src-card__icon"><i class="pi pi-th-large" aria-hidden="true"></i></span>
-            <span class="src-card__name">Vue d'ensemble</span>
-            <span class="src-card__count">{{ (globalView?.count ?? 0) | number }}</span>
-          </span>
-        </div>
-        @for (card of cardsView; track card.key) {
-          <div class="rail-card" role="button" tabindex="0"
-               [class.is-open]="openCard === card.key"
-               [attr.aria-current]="openCard === card.key ? 'true' : null"
-               (click)="openSource(card.key)"
-               (keydown.enter)="onCardKey($event, card.key)"
-               (keydown.space)="onCardKey($event, card.key)">
-            <span class="rail-card__top">
-              <span class="src-card__icon"><i [ngClass]="card.icon" aria-hidden="true"></i></span>
-              <span class="src-card__name" [attr.title]="card.label">{{ card.label }}</span>
-              @if (card.echues > 0) {
-                <span class="src-card__echues"
-                      [pTooltip]="card.echues + ' opération(s) échue(s) : date de référence atteinte à ce jour'"
-                      tooltipPosition="top">
-                  <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
-                  {{ card.echues | number }}
-                </span>
-              }
-              <span class="src-card__count">{{ card.count | number }}</span>
-            </span>
-            <span class="rail-card__amounts">
-              <span>D <b class="is-debit">{{ card.debit | number:'1.2-2' }}</b></span>
-              <span>C <b class="is-credit">{{ card.credit | number:'1.2-2' }}</b></span>
-            </span>
-          </div>
-        }
-      </nav>
-
-      <!-- Écran étroit : la liste devient une liste déroulante -->
-      <label class="recap-picker flex flex-column gap-1">
-        <span class="text-xs text-500">Source</span>
-        <select class="p-inputtext" (change)="onSourceSelect($event)">
-          <option value="">Vue d'ensemble</option>
-          @for (card of cardsView; track card.key) {
-            <option [value]="card.key" [selected]="openCard === card.key">{{ card.label }} — {{ card.count | number }}</option>
-          }
-        </select>
-      </label>
+    <!-- ── Vue focus : espace de travail de la source ouverte, pleine largeur ── -->
 
       <section class="recap-workspace" [attr.aria-label]="'Source ' + sourceLabel(openCard)">
 
+        <!-- En-tête : nom, indicateurs selon les filtres appliqués au tableau, actions -->
         <div class="recap-workspace__head">
-          <span class="src-card__icon"><i [ngClass]="sourceIcon(openCard)" aria-hidden="true"></i></span>
-          <h2 class="recap-workspace__title">{{ sourceLabel(openCard) }}</h2>
-          @if (openCardView; as card) {
-            <span class="src-card__count">{{ card.count | number }} à valider</span>
-          }
-          <span class="flex-auto"></span>
-
-          @if (canAjouterPour(openCard)) {
-            <button type="button" pButton pRipple label="Ajouter" icon="pi pi-plus"
-                    size="small" severity="success"
-                    pTooltip="Créer une opération pour cette source"
-                    tooltipPosition="left"
-                    (click)="ajouterPour(openCard)"></button>
-          } @else {
-            <button type="button" pButton pRipple label="Ajouter" icon="pi pi-plus"
-                    size="small" severity="secondary"
-                    pTooltip="Créer une nouvelle opération — ouvre la modale de choix de la source"
-                    tooltipPosition="left"
-                    (click)="openAjouterModal()"></button>
-          }
-
-          <button type="button" pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf"
-                  size="small" severity="secondary"
-                  pTooltip="Exporte exactement les lignes filtrées" tooltipPosition="left"
-                  [loading]="exporting" (click)="exportPdf()"></button>
-
-          <button type="button" pButton pRipple icon="pi pi-times"
-                  class="p-button-text p-button-secondary p-button-sm"
-                  aria-label="Revenir à la vue d'ensemble"
-                  pTooltip="Revenir à la vue d'ensemble" tooltipPosition="left"
+          <button type="button" pButton pRipple icon="pi pi-arrow-left"
+                  class="p-button-rounded p-button-text p-button-secondary"
+                  aria-label="Retour à la vue d'ensemble"
+                  pTooltip="Retour à la vue d'ensemble" tooltipPosition="bottom"
                   (click)="closeSource()"></button>
-        </div>
 
-        <!-- Indicateurs de la source, selon les filtres effectivement appliqués au tableau -->
-        <div class="recap-kpis">
-          <div class="recap-kpi">
+          <!-- Changer de source sans repasser par les cartes ; chaque entrée garde ses indicateurs -->
+          <p-dropdown [formControl]="sourceControl" [options]="cardsView"
+                      optionLabel="label" optionValue="key" ariaLabel="Source"
+                      [filter]="true" filterBy="label" appendTo="body"
+                      [style]="{'width': '17rem'}">
+            <ng-template pTemplate="selectedItem" let-option>
+              <span class="recap-source-opt">
+                <i [ngClass]="option.icon" aria-hidden="true"></i>
+                <span class="recap-source-opt__name">{{ option.label }}</span>
+                <span class="src-card__count">{{ option.count | number }}</span>
+              </span>
+            </ng-template>
+            <ng-template pTemplate="item" let-option>
+              <span class="recap-source-opt recap-source-opt--item">
+                <span class="recap-source-opt__line">
+                  <i [ngClass]="option.icon" aria-hidden="true"></i>
+                  <span class="recap-source-opt__name">{{ option.label }}</span>
+                  @if (option.echues > 0) {
+                    <span class="src-card__echues">
+                      <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>{{ option.echues | number }}
+                    </span>
+                  }
+                  <span class="src-card__count">{{ option.count | number }}</span>
+                </span>
+                <span class="recap-source-opt__amounts">
+                  D <b class="is-debit">{{ option.debit | number:'1.2-2' }}</b>
+                  · C <b class="is-credit">{{ option.credit | number:'1.2-2' }}</b>
+                </span>
+              </span>
+            </ng-template>
+          </p-dropdown>
+
+          <span class="recap-kpi" pTooltip="Total débit des opérations affichées" tooltipPosition="bottom">
             <span class="recap-kpi__label">Débit</span>
             <span class="recap-kpi__value recap-kpi__value--debit">{{ totalDebit | number:'1.2-2' }}</span>
-          </div>
-          <div class="recap-kpi">
+          </span>
+          <span class="recap-kpi" pTooltip="Total crédit des opérations affichées" tooltipPosition="bottom">
             <span class="recap-kpi__label">Crédit</span>
             <span class="recap-kpi__value recap-kpi__value--credit">{{ totalCredit | number:'1.2-2' }}</span>
-          </div>
-          <div class="recap-kpi">
-            <span class="recap-kpi__label">Net (crédit − débit)</span>
+          </span>
+          <span class="recap-kpi" pTooltip="Crédit moins débit" tooltipPosition="bottom">
+            <span class="recap-kpi__label">Net</span>
             <span class="recap-kpi__value"
                   [class.recap-kpi__value--debit]="totalCredit - totalDebit < 0"
                   [class.recap-kpi__value--credit]="totalCredit - totalDebit >= 0">
               {{ totalCredit - totalDebit | number:'1.2-2' }}
             </span>
-          </div>
-          <div class="recap-kpi">
-            <span class="recap-kpi__label">Opérations (filtres appliqués)</span>
-            <span class="recap-kpi__value">{{ totalRecords | number }}</span>
-          </div>
-        </div>
-
-        <!-- ── Filtres propres à la source : un critère renseigné ici remplace son équivalent global ── -->
-        <div class="recap-source-filters">
-          <div class="recap-scope">
-            <i class="pi pi-filter" aria-hidden="true"></i>
-            <span class="font-semibold">Filtres {{ sourceLabel(openCard) }}</span>
-            <span class="text-500">— uniquement pour cette source</span>
-            <span class="flex-auto"></span>
-            @if (activeSourceFilterCount > 0) {
-              <p-button label="Effacer les filtres de la source" icon="pi pi-times" severity="secondary"
-                        size="small" [text]="true" (onClick)="clearSourceFilters()"></p-button>
-            }
-          </div>
-
-          <form [formGroup]="sourceFilterForm" class="flex flex-wrap gap-3 align-items-end">
-
-            @if (motifOptionsSource.length > 0) {
-              <div class="flex flex-column gap-1" style="min-width:210px;">
-                <label for="srcMotif">{{ openCard === TransactionSource.COMMISSION ? 'Motif Commission' : 'Motif Impôt/Taxe' }}</label>
-                <p-dropdown inputId="srcMotif" formControlName="motif"
-                            [options]="motifOptionsSource"
-                            optionLabel="label" optionValue="value"
-                            placeholder="Tous les motifs" [showClear]="true" [filter]="true"
-                            appendTo="body" styleClass="w-full"></p-dropdown>
-              </div>
-            }
-
-            <div class="flex flex-column gap-1 flex-1" style="min-width:210px;">
-              <label for="srcLibelle">Libellé / Observation</label>
-              <span class="p-input-icon-left w-full">
-                <i class="pi pi-search"></i>
-                <input id="srcLibelle" pInputText type="text" formControlName="libelleOuObservation"
-                       placeholder="Rechercher..." class="w-full" />
-              </span>
-            </div>
-
-            @if (filtreNumeroDisponible) {
-              <div class="flex flex-column gap-1" style="min-width:140px;">
-                <label for="srcNumero" class="flex align-items-center gap-1">
-                  N° de pièce
-                  <i class="pi pi-info-circle text-xs cursor-help"
-                     [pTooltip]="numeroHelp" tooltipPosition="top" aria-hidden="true"></i>
-                </label>
-                <input id="srcNumero" pInputText type="text" formControlName="numero"
-                       placeholder="Ex. 616298" class="w-full" />
-              </div>
-            }
-
-            <div class="flex flex-column gap-1" style="min-width:130px;">
-              <label for="srcMontant">Montant exact</label>
-              <input id="srcMontant" pInputText type="number" formControlName="montant"
-                     placeholder="0,00" class="w-full" />
-            </div>
-
-            @if (filtreSensDisponible) {
-              <div class="flex flex-column gap-1" style="min-width:150px;">
-                <label for="srcSens">Sens</label>
-                <p-dropdown inputId="srcSens" formControlName="sens" [options]="sensOptions"
-                            optionLabel="label" optionValue="value"
-                            appendTo="body" styleClass="w-full"></p-dropdown>
-              </div>
-            }
-
-            <div class="flex-shrink-0">
-              <button pButton pRipple type="button"
-                      [label]="activeSourceDateFilterCount > 0 ? 'Période (' + activeSourceDateFilterCount + ')' : 'Période'"
-                      icon="pi pi-calendar"
-                      [class]="activeSourceDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
-                      (click)="toggleSourceDatePanel()"></button>
-            </div>
-
-            @if (showSourceDatePanel) {
-              <div class="recap-dates flex flex-wrap gap-3 align-items-end">
-                <div class="flex flex-column gap-1" style="min-width:180px;">
-                  <label for="srcDepuis">Date de référence — depuis</label>
-                  <p-calendar inputId="srcDepuis" formControlName="dateReferenceDepuis"
-                              placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
-                              [showClear]="true" [showButtonBar]="true" appendTo="body"
-                              styleClass="w-full"></p-calendar>
-                </div>
-                <div class="flex flex-column gap-1" style="min-width:180px;">
-                  <label for="srcJusqua">Date de référence — jusqu'au</label>
-                  <p-calendar inputId="srcJusqua" formControlName="dateReferenceJusqua"
-                              placeholder="Fin du mois en cours" dateFormat="dd/mm/yy"
-                              [showClear]="true" [showButtonBar]="true" appendTo="body"
-                              styleClass="w-full"></p-calendar>
-                </div>
-              </div>
-            }
-          </form>
-
-          @if (surchargesActives.length > 0) {
-            <span class="recap-chip">
-              <i class="pi pi-info-circle" aria-hidden="true"></i>
-              Remplace le filtre global pour cette source : {{ surchargesActives.join(', ') }}
-            </span>
-          }
-          @if (filtresAbsents) {
-            <span class="text-xs text-500">{{ filtresAbsents }}</span>
-          }
-        </div>
-
-        @if (sortParDefaut) {
-          <span class="text-xs text-500"
-                pTooltip="La date de référence est la date de rattachement au mois : échéance pour le leasing, le CMT et les LCN, émission pour les autres sources. Cliquez un en-tête pour trier autrement."
-                tooltipPosition="top">
-            <i class="pi pi-sort-amount-down text-xs" aria-hidden="true"></i>
-            Trié par date de référence, la plus récente d'abord
           </span>
-        }
+          <span class="recap-kpi" pTooltip="Opérations correspondant aux filtres" tooltipPosition="bottom">
+            <span class="recap-kpi__label">Opérations</span>
+            <span class="recap-kpi__value">{{ totalRecords | number }}</span>
+          </span>
+
+          @if (sortParDefaut) {
+            <i class="pi pi-sort-amount-down text-500 cursor-help"
+               pTooltip="Trié par date de référence, la plus récente d'abord. La date de référence est la date de rattachement au mois : échéance pour le leasing, le CMT et les LCN, émission pour les autres sources. Cliquez un en-tête pour trier autrement."
+               tooltipPosition="bottom" aria-hidden="true"></i>
+          }
+
+          <span class="flex-auto"></span>
+
+          @if (canAjouterPour(openCard)) {
+            <button type="button" pButton pRipple label="Ajouter" icon="pi pi-plus"
+                    size="small" severity="success"
+                    [pTooltip]="'Créer une opération — ' + sourceLabel(openCard)"
+                    tooltipPosition="bottom"
+                    (click)="ajouterPour(openCard)"></button>
+          }
+
+          <button type="button" pButton pRipple label="PDF" icon="pi pi-file-pdf"
+                  size="small" severity="secondary"
+                  pTooltip="Exporte exactement les lignes filtrées" tooltipPosition="bottom"
+                  [loading]="exporting" (click)="exportPdf()"></button>
+
+        </div>
+
+        <!-- Filtres propres à la source ouverte : une seule ligne -->
+        <form [formGroup]="sourceFilterForm" class="recap-source-filters">
+          <i class="pi pi-filter text-500" aria-hidden="true"></i>
+
+          @if (motifOptionsSource.length > 0) {
+            <p-dropdown inputId="srcMotif" formControlName="motif"
+                        [options]="motifOptionsSource"
+                        optionLabel="label" optionValue="value" ariaLabel="Motif"
+                        [placeholder]="openCard === TransactionSource.COMMISSION ? 'Motif Commission' : 'Motif Impôt/Taxe'"
+                        [showClear]="true" [filter]="true"
+                        appendTo="body" [style]="{'width': '14rem'}"></p-dropdown>
+          }
+
+          <span class="p-input-icon-left recap-source-filters__text">
+            <i class="pi pi-search"></i>
+            <input id="srcLibelle" pInputText type="text" formControlName="libelleOuObservation"
+                   aria-label="Libellé ou observation"
+                   placeholder="Libellé / observation" class="w-full" />
+          </span>
+
+          @if (filtreNumeroDisponible) {
+            <input id="srcNumero" pInputText type="text" formControlName="numero"
+                   aria-label="N° de pièce" [pTooltip]="numeroHelp" tooltipPosition="bottom"
+                   placeholder="N° de pièce" class="recap-source-filters__small" />
+          }
+
+          <input id="srcMontant" pInputText type="number" formControlName="montant"
+                 aria-label="Montant exact" placeholder="Montant exact" class="recap-source-filters__small" />
+
+          <button pButton pRipple type="button"
+                  [label]="activeSourceDateFilterCount > 0 ? 'Période (' + activeSourceDateFilterCount + ')' : 'Période'"
+                  icon="pi pi-calendar"
+                  [class]="activeSourceDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+                  (click)="toggleSourceDatePanel()"></button>
+
+          @if (activeSourceFilterCount > 0) {
+            <p-button label="Effacer" icon="pi pi-times" severity="secondary" size="small" [text]="true"
+                      pTooltip="Efface les filtres de cette source" tooltipPosition="bottom"
+                      (onClick)="clearSourceFilters()" [style]="{'white-space':'nowrap'}"></p-button>
+          }
+
+          @if (showSourceDatePanel) {
+            <p-calendar inputId="srcDepuis" formControlName="dateReferenceDepuis"
+                        placeholder="Depuis" ariaLabel="Date de référence, depuis" dateFormat="dd/mm/yy"
+                        [showClear]="true" [showButtonBar]="true" appendTo="body"
+                        [style]="{'width': '9.5rem'}"></p-calendar>
+            <p-calendar inputId="srcJusqua" formControlName="dateReferenceJusqua"
+                        placeholder="Jusqu'au (fin du mois)" ariaLabel="Date de référence, jusqu'au" dateFormat="dd/mm/yy"
+                        [showClear]="true" [showButtonBar]="true" appendTo="body"
+                        [style]="{'width': '12rem'}"></p-calendar>
+            <i class="pi pi-info-circle text-500 cursor-help"
+               [pTooltip]="dateReferenceHelp" tooltipPosition="bottom" aria-hidden="true"></i>
+          }
+        </form>
 
         <!-- Le tableau est recréé à chaque changement de source ou de restauration (cf. tableGeneration) -->
         @for (generation of [tableGeneration]; track generation) {
           <ng-container *ngTemplateOutlet="tableTpl"></ng-container>
         }
       </section>
-    </div>
   }
 
 </div>
@@ -491,10 +320,6 @@
             Observations
             <p-sortIcon field="observation"></p-sortIcon>
           </th>
-          <th pSortableColumn="id.sourceType" class="white-space-nowrap">
-            Source
-            <p-sortIcon field="id.sourceType"></p-sortIcon>
-          </th>
           <th pSortableColumn="montant" class="text-right white-space-nowrap"
               pTooltip="Tri par montant, tous sens confondus" tooltipPosition="top">
             Débit
@@ -545,9 +370,6 @@
           <td>
             <span class="text-700">{{ item.observations }}</span>
           </td>
-          <td class="white-space-nowrap">
-            <app-source-badge [source]="item.source"></app-source-badge>
-          </td>
           <td class="text-right white-space-nowrap">
             @if (item.debit) {
               <span class="amount-badge debit-badge">{{ item.debit | number:'1.2-2' }} MAD</span>
@@ -594,7 +416,7 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="11" class="text-center p-4">
+          <td colspan="10" class="text-center p-4">
             <div class="flex flex-column align-items-center gap-3">
               <i class="pi pi-inbox text-4xl text-400"></i>
               <div class="text-700 font-semibold">Aucune opération trouvée</div>
@@ -612,7 +434,7 @@
 
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td colspan="11" class="text-center p-4">
+          <td colspan="10" class="text-center p-4">
             <div class="flex flex-column align-items-center gap-3">
               <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
               <div class="text-700 font-semibold">Chargement du récapitulatif...</div>
@@ -761,39 +583,4 @@
       </div>
     </form>
   }
-</p-dialog>
-
-<!-- ============ Modale « Ajouter » — grille centrée avec recherche ============ -->
-<p-dialog header="Ajouter une opération" [(visible)]="displayAjouterModal"
-          [modal]="true" [style]="{width: '64vw'}"
-          [draggable]="false" [resizable]="false"
-          (onShow)="onAjouterModalShow()"
-          (visibleChange)="!$event && closeAjouterModal()">
-  <div class="flex flex-column gap-3">
-    <span class="p-input-icon-left w-full">
-      <i class="pi pi-search"></i>
-      <input #ajouterSearchInput type="text" pInputText class="w-full"
-             placeholder="Rechercher une source (virement, chèque, factoring…)"
-             [(ngModel)]="ajouterSearchTerm" autocomplete="off"
-             (keydown.enter)="onAjouterEnter()">
-    </span>
-
-    <div class="ajouter-grid">
-      @for (item of filteredAjouterItems; track item.source) {
-        <button type="button" pButton pRipple
-                class="p-button-text ajouter-card"
-                [class.is-unavailable]="!item.route"
-                [disabled]="!item.route"
-                (click)="choisirAjouter(item)">
-          <span class="ajouter-card__icon"><i [class]="item.icon"></i></span>
-          <span class="ajouter-card__label">{{ item.label }}</span>
-          @if (!item.route) {
-            <span class="ajouter-card__hint">Création indisponible</span>
-          }
-        </button>
-      } @empty {
-        <p class="text-500 text-center py-4 m-0 col-12">Aucune source ne correspond à « {{ ajouterSearchTerm }} ».</p>
-      }
-    </div>
-  </div>
 </p-dialog>

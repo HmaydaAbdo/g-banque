@@ -5092,15 +5092,14 @@ nom du type, le nombre d'opérations à valider, le total débit et le total cr�
 opérations sont échues, un repère d'alerte avec leur nombre. Au-dessus des cartes, quatre
 **indicateurs globaux** résument l'ensemble : total débit prévisionnel, total crédit prévisionnel,
 nombre d'opérations à valider, nombre d'opérations échues à ce jour. Les cartes et les indicateurs
-suivent toujours les **filtres globaux**. Un clic sur une carte ouvre la **vue focus** de ce type :
-l'écran se concentre sur lui, avec ses propres filtres, tout en gardant visibles, dans une liste à
-gauche, les indicateurs de tous les autres types.
+suivent toujours les **filtres globaux**. Cette grille de cartes, appelée **vue d'ensemble**, est
+l'écran d'arrivée. Un clic sur une carte ouvre la **vue focus** de ce type : l'écran se concentre sur lui,
+sur toute la largeur, avec ses propres filtres.
 
-**Filtres globaux et filtres d'un type** : les filtres globaux s'appliquent à tous les types ; chaque type
-ouvert dispose en plus de **ses propres filtres**, qui ne concernent que lui. Quand un même critère
-(par exemple le libellé) est renseigné à la fois en global et dans le type ouvert, **le filtre du type
-remplace le filtre global pour ce type seulement** ; une pastille l'indique. Les cartes et la liste des
-types restent calculées avec les seuls filtres globaux.
+**Filtres globaux et filtres d'un type** : seuls le **sens** et le **type de transaction** sont globaux ;
+ils s'appliquent aux indicateurs, aux cartes et au tableau du type ouvert. Tous les autres critères
+(libellé / observation, N° de pièce, montant, période, motif) sont **propres à chaque type** : ils
+ne concernent que le tableau du type ouvert, jamais les cartes ni les autres types.
 
 **Échue à ce jour** : opération dont la date de référence est atteinte (ou dépassée) à la date du jour.
 
@@ -5207,54 +5206,47 @@ Se compose de :
 
 #### Écran Récapitulatifs
 
-*Filtres globaux.* Une barre de filtres, toujours visible, s'applique à la fois aux indicateurs, aux
-cartes, à la liste des types et au tableau du type ouvert. Critères, tous combinables :
+*Filtres globaux.* Une barre compacte, toujours visible, réunit deux filtres et les indicateurs globaux :
 - **Sens** (Tous par défaut, Encaissement, Décaissement) ;
 - **Type de transaction** (un ou plusieurs types, avec recherche) ;
+- à droite, les indicateurs globaux (débit, crédit, opérations à valider, échues).
+Le bouton **Effacer** réinitialise les deux filtres. Lorsqu'aucune opération ne correspond, un message
+l'indique et propose d'effacer les filtres.
+
+*Vue d'ensemble.* À l'arrivée sur l'écran, une carte par type d'opération présent, avec son nom, son
+nombre d'opérations à valider, son total débit, son total crédit, une **barre de répartition** débit
+(rouge) / crédit (vert) et, s'il y en a, un lien **« N échues · voir »**. Un clic sur la carte (ou la
+touche Entrée / Espace) ouvre la vue focus du type ; un clic sur « échues · voir » l'ouvre déjà
+filtrée sur ses opérations échues (date de référence au plus tard aujourd'hui).
+
+*Vue focus.* Une seule zone, sur toute la largeur de l'écran. Son en-tête réunit, de gauche à droite :
+- une **flèche de retour** vers la vue d'ensemble ;
+- le **sélecteur de source** : une liste déroulante avec recherche qui permet de passer à un autre type
+  sans repasser par les cartes ; chaque entrée rappelle le nombre d'opérations, le repère d'échues et les
+  totaux débit et crédit du type ;
+- quatre indicateurs (débit, crédit, net crédit − débit, nombre d'opérations) **selon les filtres
+  réellement appliqués au tableau**, et une icône rappelant le tri par défaut ;
+- les boutons **Ajouter** (seulement pour les types qui peuvent être créés depuis cet écran) et
+  **PDF**.
+Viennent ensuite la ligne de filtres du type, puis le tableau et la barre de validation en lot.
+Changer de type remet le tableau à la première page, avec son tri par défaut, et efface les filtres
+du type précédent.
+
+*Filtres d'un type.* Une seule ligne, sous l'en-tête :
 - **Libellé / Observation** : un seul champ, qui cherche le terme à la fois dans le libellé et dans
   l'observation, sans tenir compte des majuscules ni des accents. Il cherche aussi le nom de
   l'émetteur (virement, virement international, chèque, LCN, mise à disposition) et celui de
   l'organisme (leasing) ;
-- **N° de pièce** : numéro du chèque, du LCN, du virement, de la mise à disposition, de l'impayé, du
-  marché (préfinancement, factoring, droit constaté, décompte) ou du contrat (leasing) — les autres
-  types n'en ont pas ;
-- **Montant exact** ;
-- **Période** : bornes « Date de référence — depuis » et « jusqu'au » (la date de référence est
-  l'échéance pour le leasing, le CMT et les LCN, l'émission pour les autres types ; si aucune
-  borne haute n'est choisie, elle reste la fin du mois en cours). Le bouton affiche le nombre de bornes actives.
-
-Le bouton **Effacer** réinitialise tous les filtres globaux. Lorsqu'aucune opération ne correspond, un
-message l'indique et propose d'effacer les filtres.
-
-*Vue d'ensemble.* À l'arrivée sur l'écran, une carte par type d'opération présent, avec ses
-indicateurs (nombre, total débit, total crédit, repère d'échues). Un clic sur une carte (ou la touche
-Entrée / Espace) ouvre la vue focus de ce type.
-
-*Vue focus.* Deux zones :
-- à gauche, la **liste des types**, qui reprend pour chacun son nom, son nombre d'opérations à valider,
-  son repère d'échues, son total débit et son total crédit ; la rubrique **Vue d'ensemble**, en tête,
-  ramène à la grille de cartes. Sur un écran étroit, cette liste devient une liste déroulante ;
-- à droite, l'**espace de travail du type** : son nom, les boutons **Ajouter**, **Exporter PDF** et de
-  retour à la vue d'ensemble, quatre indicateurs (débit, crédit, net crédit − débit et nombre
-  d'opérations, **selon les filtres réellement appliqués au tableau**), la barre des filtres du type,
-  puis le tableau et la barre de validation en lot.
-Changer de type remet le tableau à la première page, avec son tri par défaut, et efface les filtres
-du type précédent.
-
-*Filtres d'un type.* Dans l'espace de travail, une barre « Filtres [type] — uniquement pour cette
-source » propose :
-- **Libellé / Observation**, **Montant exact** et **Période** (mêmes règles que les filtres globaux) :
-  pour tous les types ;
 - **N° de pièce** : seulement pour les types qui en portent un (leasing, chèque, LCN, virement, mise à
-  disposition, préfinancement, factoring, droit constaté, décompte, impayé) ;
-- **Sens** : seulement pour les types dont les opérations peuvent être des encaissements comme des
-  décaissements (chèque, virement, virement international, mise à disposition, préfinancement,
-  factoring, droit constaté, impayé, provision) ;
-- **Motif** : seulement pour Commission (**Motif Commission**) et Impôt/Taxe (**Motif Impôt/Taxe**).
-Un message rappelle les filtres non proposés pour le type ouvert, et pourquoi. Un critère renseigné ici
-remplace son équivalent global pour ce type (pastille « Remplace le filtre global pour cette source »).
-Le bouton **Effacer les filtres de la source** réinitialise uniquement cette barre ; le message
-« aucune opération » du tableau propose d'effacer tous les filtres, globaux et du type.
+  disposition, préfinancement, factoring, droit constaté, décompte, impayé) — numéro du chèque, du LCN,
+  du virement, de la mise à disposition, de l'impayé, du marché ou du contrat ;
+- **Montant exact** ;
+- **Motif** : seulement pour Commission (**Motif Commission**) et Impôt/Taxe (**Motif Impôt/Taxe**) ;
+- **Période** : un bouton qui ouvre, dans la même ligne, les bornes « depuis » et « jusqu'au » de la date
+  de référence (échéance pour le leasing, le CMT et les LCN, émission pour les autres types ; sans borne
+  haute, la fin du mois en cours). Le bouton affiche le nombre de bornes actives.
+Le bouton **Effacer** réinitialise uniquement cette ligne ; le message « aucune opération » du tableau
+propose d'effacer tous les filtres, globaux et du type.
 
 *État de l'écran.* Le type ouvert, les filtres globaux, les filtres du type, la page, le nombre de
 lignes et le tri du tableau sont conservés dans l'adresse de la page. Ils sont donc retrouvés au retour
@@ -5265,8 +5257,8 @@ dernière page si la sienne n'existe plus) ; si le type n'a plus aucune opérati
 revient à la vue d'ensemble.
 
 *Tableau d'un type.* Colonnes : sens (pastille Décaissement/Encaissement), date d'émission, date
-d'échéance (« — » si le type n'en porte pas), libellé, observations, source, débit, crédit,
-identifiant source, actions. Paginé (5, 10, 25 ou 50 lignes, 10 par défaut) et triable ; par défaut,
+d'échéance (« — » si le type n'en porte pas), libellé, observations, débit, crédit, identifiant
+source, actions (la colonne Actions reste à l'écran sans défilement horizontal sur un écran courant). Paginé (5, 10, 25 ou 50 lignes, 10 par défaut) et triable ; par défaut,
 trié par date de référence, de la plus récente à la plus ancienne (une mention l'indique tant qu'aucun
 en-tête n'a été cliqué). Le bouton **Exporter PDF** de l'espace de travail exporte exactement les lignes
 filtrées, filtres du type compris.
@@ -5285,10 +5277,10 @@ boutons **Effacer la sélection** et **Valider en lot**. La fenêtre de lot dema
 date de valeur et la date de l'opération, rappelle le type, le sens, le nombre d'opérations et le
 montant total, et affiche un récapitulatif à confirmer avant exécution.
 
-*Ajouter.* Le bouton **Ajouter** (en haut de l'écran, et dans l'espace de travail d'un type) ouvre, selon
-le cas, directement l'écran de création du type ouvert, ou une fenêtre de choix : une grille
-de types d'opérations avec un champ de recherche qui ignore majuscules et accents. Les types dont la
-création n'est pas possible depuis cet écran sont affichés grisés (« Création indisponible »).
+*Ajouter.* Il n'y a **pas** de bouton « Ajouter » au niveau global : l'ajout se fait **par type**, avec le
+bouton **Ajouter** de l'en-tête de la vue focus, qui ouvre directement l'écran de création du type
+ouvert. Ce bouton n'est pas proposé pour les types qui ne se créent pas depuis cet écran (leasing, CMT,
+mises à disposition, cautions).
 
 #### Écran Rapprochement
 
@@ -5342,14 +5334,14 @@ Les règles et leurs limites sont décrites aux chapitres 21 (Transactions) et 3
    les LCN en décaissement, avec deux nuances — pour les virements et les chèques, uniquement pour les
    encaissements ; pour les échéances de leasing et de CMT, uniquement par un administrateur système, et
    seulement tant que l'échéance est « prévue ».
-11. Création depuis le Récapitulatif : proposée pour tous les types sauf le leasing, le CMT, les mises à
-    disposition et les cautions, dont les opérations ne se créent pas depuis cet écran.
+11. Création depuis le Récapitulatif : par type (bouton **Ajouter** de la vue focus), pour tous les types
+    sauf le leasing, le CMT, les mises à disposition et les cautions, dont les opérations ne se créent pas
+    depuis cet écran. Aucun bouton « Ajouter » n'existe au niveau global.
 12. Un type sans opération à valider n'a pas de carte ; si aucun encours ne correspond aux filtres,
     l'écran l'indique.
-13. Les filtres globaux s'appliquent à tous les types ; les filtres d'un type ne s'appliquent qu'à lui.
-    Un critère renseigné dans les deux est pris dans le filtre du type pour ce type seulement. Les
-    indicateurs des cartes et de la liste des types ne tiennent compte que des filtres globaux ; les
-    indicateurs de l'espace de travail et le tableau tiennent compte des deux.
+13. Seuls le sens et le type de transaction sont des filtres globaux ; ils alimentent les cartes et le
+    tableau. Libellé / observation, N° de pièce, montant, période et motif sont propres au type ouvert et ne
+    touchent que son tableau.
 14. Le Récapitulatif retrouve, au retour d'un écran d'ajout ou d'édition, le type ouvert, les filtres, la
     page et le tri qu'il avait au départ ; la ligne éditée est surlignée si elle figure sur la page
     affichée.

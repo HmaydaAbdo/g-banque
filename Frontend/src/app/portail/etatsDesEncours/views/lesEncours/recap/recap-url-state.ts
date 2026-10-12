@@ -6,7 +6,7 @@ import { parseLocalDate, toLocalDateString } from '../../../../global/types/date
 
 /**
  * État de l'écran Récapitulatif porté par l'adresse (queryParams) : source ouverte, filtres
- * globaux, filtres propres à la source, page / tri du tableau et ligne à surligner.
+ * globaux (sens, types), filtres propres à la source, page / tri du tableau et ligne à surligner.
  *
  * Les formulaires d'ajout et d'édition se ferment par un retour arrière du navigateur : l'écran
  * est alors reconstruit, et c'est l'adresse (écrite en `replaceUrl`, donc sans entrée d'historique
@@ -25,21 +25,16 @@ const CHAMPS_TRI = [
   'id.sourceType', 'montant', 'id.entityId',
 ];
 
+/** Filtres globaux : communs à toutes les sources, ils alimentent aussi les cartes et la liste des sources. */
 export interface RecapFiltresGlobaux {
   transactionSources: TransactionSource[];
-  libelleOuObservation: string;
-  numero: string;
   sens: SensOperation | null;
-  dateReferenceDepuis: Date | null;
-  dateReferenceJusqua: Date | null;
-  montant: number | null;
 }
 
-/** Filtres de la source ouverte : chacun, une fois renseigné, remplace son équivalent global. */
+/** Filtres de la source ouverte : ils ne s'appliquent qu'au tableau de cette source. */
 export interface RecapFiltresSource {
   libelleOuObservation: string;
   numero: string;
-  sens: SensOperation | null;
   dateReferenceDepuis: Date | null;
   dateReferenceJusqua: Date | null;
   montant: number | null;
@@ -64,22 +59,13 @@ export interface RecapEtatUrl {
 }
 
 export function filtresGlobauxVides(): RecapFiltresGlobaux {
-  return {
-    transactionSources: [],
-    libelleOuObservation: '',
-    numero: '',
-    sens: null,
-    dateReferenceDepuis: null,
-    dateReferenceJusqua: null,
-    montant: null,
-  };
+  return { transactionSources: [], sens: null };
 }
 
 export function filtresSourceVides(): RecapFiltresSource {
   return {
     libelleOuObservation: '',
     numero: '',
-    sens: null,
     dateReferenceDepuis: null,
     dateReferenceJusqua: null,
     montant: null,
@@ -109,13 +95,6 @@ export function etatVersQueryParams(etat: RecapEtatUrl): Params {
   const g = etat.globaux;
   if (g.transactionSources.length > 0) params['types'] = g.transactionSources.join(',');
   if (g.sens) params['sens'] = g.sens;
-  if (g.libelleOuObservation) params['q'] = g.libelleOuObservation;
-  if (g.numero) params['numero'] = g.numero;
-  if (g.montant !== null) params['montant'] = g.montant;
-  const du = toLocalDateString(g.dateReferenceDepuis);
-  if (du) params['du'] = du;
-  const au = toLocalDateString(g.dateReferenceJusqua);
-  if (au) params['au'] = au;
 
   if (!etat.source) {
     return params;
@@ -123,15 +102,14 @@ export function etatVersQueryParams(etat: RecapEtatUrl): Params {
   params['source'] = etat.source;
 
   const s = etat.locaux;
-  if (s.libelleOuObservation) params['s.q'] = s.libelleOuObservation;
-  if (s.numero) params['s.numero'] = s.numero;
-  if (s.montant !== null) params['s.montant'] = s.montant;
-  if (s.sens) params['s.sens'] = s.sens;
-  const sdu = toLocalDateString(s.dateReferenceDepuis);
-  if (sdu) params['s.du'] = sdu;
-  const sau = toLocalDateString(s.dateReferenceJusqua);
-  if (sau) params['s.au'] = sau;
-  if (s.motif) params['s.motif'] = s.motif;
+  if (s.libelleOuObservation) params['q'] = s.libelleOuObservation;
+  if (s.numero) params['numero'] = s.numero;
+  if (s.montant !== null) params['montant'] = s.montant;
+  const du = toLocalDateString(s.dateReferenceDepuis);
+  if (du) params['du'] = du;
+  const au = toLocalDateString(s.dateReferenceJusqua);
+  if (au) params['au'] = au;
+  if (s.motif) params['motif'] = s.motif;
 
   const t = etat.tableau;
   if (t.first > 0) params['page'] = Math.floor(t.first / t.rows) + 1;
@@ -152,12 +130,7 @@ export function queryParamsVersEtat(map: ParamMap): RecapEtatUrl {
     transactionSources: (map.get('types') ?? '')
       .split(',')
       .filter((v): v is TransactionSource => (Object.values(TransactionSource) as string[]).includes(v)),
-    libelleOuObservation: map.get('q') ?? '',
-    numero: map.get('numero') ?? '',
     sens: enumValide<SensOperation>(map.get('sens'), Object.values(SensOperation)),
-    dateReferenceDepuis: parseLocalDate(map.get('du')),
-    dateReferenceJusqua: parseLocalDate(map.get('au')),
-    montant: nombre(map.get('montant')),
   };
 
   if (!source) {
@@ -165,13 +138,12 @@ export function queryParamsVersEtat(map: ParamMap): RecapEtatUrl {
   }
 
   const locaux: RecapFiltresSource = {
-    libelleOuObservation: map.get('s.q') ?? '',
-    numero: map.get('s.numero') ?? '',
-    sens: enumValide<SensOperation>(map.get('s.sens'), Object.values(SensOperation)),
-    dateReferenceDepuis: parseLocalDate(map.get('s.du')),
-    dateReferenceJusqua: parseLocalDate(map.get('s.au')),
-    montant: nombre(map.get('s.montant')),
-    motif: enumValide(map.get('s.motif'), motifsValides(source)),
+    libelleOuObservation: map.get('q') ?? '',
+    numero: map.get('numero') ?? '',
+    dateReferenceDepuis: parseLocalDate(map.get('du')),
+    dateReferenceJusqua: parseLocalDate(map.get('au')),
+    montant: nombre(map.get('montant')),
+    motif: enumValide(map.get('motif'), motifsValides(source)),
   };
 
   const rowsBrut = Number(map.get('rows'));

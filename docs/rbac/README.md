@@ -2744,14 +2744,17 @@ relus à chaque chargement et jamais interprétés comme des droits ; une valeur
 neutre, et le tri n'accepte qu'une liste blanche de colonnes. Les endpoints appelés sont les mêmes
 (`GET /recapitulatif/banque/{banqueId}`, `…/par-source`, `…/export/pdf`) avec le même `@PreAuthorize`. Le bouton
 « Ajouter » transmet désormais `?banqueId=` à l'écran de création (présélection de la banque) : les écrans
-et endpoints de création restent protégés par leurs propres gardes, inchangés.
+et endpoints de création restent protégés par leurs propres gardes, inchangés. Le bouton « Ajouter » n'existe
+plus au niveau global : il est dans l'en-tête de chaque source (même condition d'affichage qu'avant, une route de
+création déclarée pour la source — `RecapitulatifComponent.CREATE_ROUTE`) ; le lien « échues · voir » d'une carte
+n'ajoute qu'un critère de lecture (borne haute de la date de référence).
 
 **Ajouter / Éditer (20/09/2026) — conditionnées par (source, sens), pas par un rôle.**
 `RecapitulatifComponent` route désormais vers l'écran dédié de création/édition de chaque source
 (mêmes pages, mêmes gardes `departmentGuard('Finance')` et mêmes endpoints `@PreAuthorize` que
 documentés dans le chapitre RBAC de chaque source — aucun nouvel endpoint, aucune autorisation
 modifiée) plutôt que de reconstruire un formulaire dans le récap. Le bouton « Éditer » par ligne et
-les entrées du menu « Ajouter » ne s'affichent que pour les combinaisons `(source, sens)` listées
+le bouton « Ajouter » de l'en-tête de chaque source ne s'affiche que pour les combinaisons `(source, sens)` listées
 ci-dessous (`RecapitulatifComponent.CREATE_EDIT_ELIGIBILITY`/`CREATE_ROUTE`/`EDIT_ROUTE`) — matrice
 figée le 20/09/2026, reprise à l'identique du comportement des anciens écrans séparés par source :
 
@@ -2760,7 +2763,7 @@ figée le 20/09/2026, reprise à l'identique du comportement des anciens écrans
 | Virement | Encaissement uniquement | `/portail/Virements/new` | `/portail/Virements/edit/:id` |
 | Chèque | Encaissement uniquement | `/portail/Cheques/new` | `/portail/Cheques/edit/:id` |
 | LCN Encaissement | Les deux sens (nature imposée par le formulaire, pas par le récap) | `/portail/LCN/new` | `/portail/LCN/edit/:id` |
-| LCN Escompte (21/09/2026) | Les deux sens — même formulaire/id-space que LCN Encaissement (`LcnFormComponent`, contrôle `natureLcn`) | — (une seule carte « LCN » dans la modale Ajouter, `CREATE_ROUTE` n'a pas d'entrée dédiée puisque la route serait identique) | `/portail/LCN/edit/:id` |
+| LCN Escompte (21/09/2026) | Les deux sens — même formulaire/id-space que LCN Encaissement (`LcnFormComponent`, contrôle `natureLcn`) | — (`CREATE_ROUTE` n'a pas d'entrée dédiée pour LCN Escompte : même route que LCN Encaissement, `/portail/LCN/new`) | `/portail/LCN/edit/:id` |
 | Virement international | Les deux sens | `/portail/virements-internationaux/new` | `/portail/virements-internationaux/edit/:id` |
 | Préfinancement | Les deux sens | `/portail/préfinancements/new` | `/portail/préfinancements/edit/:id` |
 | Droit constaté | Les deux sens | `/portail/droits-constate/new` | `/portail/droits-constate/edit/:id` |

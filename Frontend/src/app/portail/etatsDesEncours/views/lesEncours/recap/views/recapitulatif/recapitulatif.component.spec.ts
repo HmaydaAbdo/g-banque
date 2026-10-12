@@ -39,43 +39,48 @@ describe('RecapitulatifComponent', () => {
     expect(creer()).toBeTruthy();
   });
 
-  it('démarre sur la vue d\'ensemble quand l\'adresse ne porte aucune source', () => {
+  it("démarre sur la vue d'ensemble quand l'adresse ne porte aucune source", () => {
     expect(creer().openCard).toBeNull();
   });
 
-  it('rouvre la source, les filtres et la page portés par l\'adresse (retour d\'un formulaire)', () => {
-    const c = creer({ source: 'CHEQUE', q: 'loyer', 's.numero': '616298', page: '3', sort: 'montant,asc' });
+  it("rouvre la source, les filtres et la page portés par l'adresse (retour d'un formulaire)", () => {
+    const c = creer({ source: 'CHEQUE', sens: 'ENCAISSEMENT', numero: '616298', page: '3', sort: 'montant,asc' });
     expect(c.openCard).toBe(TransactionSource.CHEQUE);
-    expect(c.searchForm.value.libelleOuObservation).toBe('loyer');
+    expect(c.searchForm.value.sens).toBe(SensOperation.ENCAISSEMENT);
     expect(c.sourceFilterForm.value.numero).toBe('616298');
     expect(c.tableauInitial).toEqual({ first: 20, rows: 10, sortField: 'montant', sortOrder: 1 });
     expect(c.sortParDefaut).toBeFalse();
   });
 
-  it('le filtre de la source remplace le filtre global équivalent, les autres restent globaux', () => {
-    const c = creer({ source: 'CHEQUE', q: 'loyer', sens: 'ENCAISSEMENT', 's.q': 'remise' });
-    expect(dto(c).libelleOuObservation).toBe('remise');
+  it('le tableau combine le sens et les types globaux avec les filtres de la source', () => {
+    const c = creer({ source: 'CHEQUE', sens: 'ENCAISSEMENT', q: 'remise', montant: '120' });
     expect(dto(c).sens).toBe(SensOperation.ENCAISSEMENT);
+    expect(dto(c).libelleOuObservation).toBe('remise');
+    expect(dto(c).montant).toBe(120);
     expect(dto(c).transactionSources).toEqual([TransactionSource.CHEQUE]);
-    expect(c.surchargesActives).toEqual(['Libellé / Observation']);
+  });
+
+  it('les cartes ne tiennent compte que des filtres globaux (sens, types)', () => {
+    const c = creer({ source: 'CHEQUE', sens: 'ENCAISSEMENT', q: 'remise' });
+    const cartes = (c as any).buildFilterDto();
+    expect(cartes.sens).toBe(SensOperation.ENCAISSEMENT);
+    expect(cartes.libelleOuObservation).toBe('');
   });
 
   it('envoie le motif de la source vers le bon critère', () => {
-    const impot = creer({ source: 'IMPOT_TAXE', 's.motif': 'TVA' });
+    const impot = creer({ source: 'IMPOT_TAXE', motif: 'TVA' });
     expect(dto(impot).impotEtTaxeMotif).toBe('TVA');
     expect(dto(impot).commissionOperation).toBeUndefined();
   });
 
-  it('ne propose N° de pièce et Sens que pour les sources qui en ont', () => {
+  it('ne propose N° de pièce que pour les sources qui en ont, et le motif que pour Commission / Impôt', () => {
     const cheque = creer({ source: 'CHEQUE' });
     expect(cheque.filtreNumeroDisponible).toBeTrue();
-    expect(cheque.filtreSensDisponible).toBeTrue();
-    expect(cheque.filtresAbsents).toBe('');
+    expect(cheque.motifOptionsSource.length).toBe(0);
 
     TestBed.resetTestingModule();
     const commission = creer({ source: 'COMMISSION' });
     expect(commission.filtreNumeroDisponible).toBeFalse();
-    expect(commission.filtreSensDisponible).toBeFalse();
     expect(commission.motifOptionsSource.length).toBeGreaterThan(0);
   });
 });
@@ -100,7 +105,7 @@ describe('RecapitulatifComponent — adresse (routeur réel)', () => {
     return { harness, component, router: TestBed.inject(Router) };
   }
 
-  it('écrit la source ouverte dans l\'adresse, sans ajouter d\'entrée d\'historique, et reconnaît sa propre écriture', async () => {
+  it("écrit la source ouverte dans l'adresse, sans ajouter d'entrée d'historique, et reconnaît sa propre écriture", async () => {
     const { harness, component, router } = await ouvrir('/b/1/recap');
     const entreesAvant = history.length;
 
@@ -117,8 +122,8 @@ describe('RecapitulatifComponent — adresse (routeur réel)', () => {
     expect(router.url).not.toContain('CHEQUE');
   });
 
-  it('revient à la vue d\'ensemble et vide les paramètres de source', async () => {
-    const { harness, component, router } = await ouvrir('/b/1/recap?source=CHEQUE&page=2&s.q=remise');
+  it("revient à la vue d'ensemble et vide les paramètres de source", async () => {
+    const { harness, component, router } = await ouvrir('/b/1/recap?source=CHEQUE&page=2&q=remise');
     expect(component.openCard).toBe(TransactionSource.CHEQUE);
 
     component.closeSource();
@@ -126,10 +131,10 @@ describe('RecapitulatifComponent — adresse (routeur réel)', () => {
 
     expect(component.openCard).toBeNull();
     expect(router.url).not.toContain('source=');
-    expect(router.url).not.toContain('s.q');
+    expect(router.url).not.toContain('q=remise');
   });
 
-  it('relit l\'état quand l\'adresse change de l\'extérieur (menu latéral, historique)', async () => {
+  it("relit l'état quand l'adresse change de l'extérieur (menu latéral, historique)", async () => {
     const { harness, component, router } = await ouvrir('/b/1/recap?source=CHEQUE');
     await router.navigateByUrl('/b/1/recap');
     harness.detectChanges();

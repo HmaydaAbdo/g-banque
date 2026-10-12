@@ -33,18 +33,15 @@ describe('recap-url-state', () => {
     const etat: RecapEtatUrl = {
       source: TransactionSource.CHEQUE,
       globaux: {
-        ...filtresGlobauxVides(),
         transactionSources: [TransactionSource.CHEQUE, TransactionSource.Virement],
-        libelleOuObservation: 'loyer',
         sens: SensOperation.ENCAISSEMENT,
-        dateReferenceDepuis: new Date(2026, 9, 1),
       },
       locaux: {
         ...filtresSourceVides(),
         libelleOuObservation: 'remise',
         numero: '616298',
         montant: 1250.5,
-        sens: SensOperation.DECAISSEMENT,
+        dateReferenceDepuis: new Date(2026, 9, 1),
         dateReferenceJusqua: new Date(2026, 9, 31),
       },
       tableau: { first: 20, rows: 10, sortField: 'montant', sortOrder: 1 },
@@ -66,9 +63,10 @@ describe('recap-url-state', () => {
     expect(params).toEqual({ source: 'COMMISSION' });
   });
 
-  it('ignore les paramètres de source quand aucune source n\'est ouverte', () => {
-    const etat = queryParamsVersEtat(convertToParamMap({ 's.q': 'x', page: '4', sort: 'montant,asc' }));
+  it('ignore les filtres et le tableau d\'une source quand aucune source n\'est ouverte', () => {
+    const etat = queryParamsVersEtat(convertToParamMap({ q: 'x', montant: '5', page: '4', sort: 'montant,asc', sens: 'DECAISSEMENT' }));
     expect(etat.source).toBeNull();
+    expect(etat.globaux.sens).toBe(SensOperation.DECAISSEMENT);
     expect(etat.locaux).toEqual(filtresSourceVides());
     expect(etat.tableau).toEqual(tableauParDefaut());
   });
@@ -82,21 +80,21 @@ describe('recap-url-state', () => {
       rows: '7',
       page: '-3',
       sort: 'password,asc',
-      's.motif': 'TVA',
+      motif: 'TVA',
     }));
     expect(etat.globaux.sens).toBeNull();
     expect(etat.globaux.transactionSources).toEqual([TransactionSource.CHEQUE]);
-    expect(etat.globaux.montant).toBeNull();
+    expect(etat.locaux.montant).toBeNull();
     expect(etat.tableau).toEqual(tableauParDefaut());
     expect(etat.locaux.motif).toBeNull();
   });
 
   it('n\'accepte un motif que pour Commission et Impôt/Taxe', () => {
-    const impot = queryParamsVersEtat(convertToParamMap({ source: 'IMPOT_TAXE', 's.motif': 'TVA' }));
+    const impot = queryParamsVersEtat(convertToParamMap({ source: 'IMPOT_TAXE', motif: 'TVA' }));
     expect(impot.locaux.motif).toBe('TVA');
-    const commission = queryParamsVersEtat(convertToParamMap({ source: 'COMMISSION', 's.motif': 'CHEQUE' }));
+    const commission = queryParamsVersEtat(convertToParamMap({ source: 'COMMISSION', motif: 'CHEQUE' }));
     expect(commission.locaux.motif).toBe('CHEQUE');
-    const autre = queryParamsVersEtat(convertToParamMap({ source: 'CHEQUE', 's.motif': 'TVA' }));
+    const autre = queryParamsVersEtat(convertToParamMap({ source: 'CHEQUE', motif: 'TVA' }));
     expect(autre.locaux.motif).toBeNull();
   });
 

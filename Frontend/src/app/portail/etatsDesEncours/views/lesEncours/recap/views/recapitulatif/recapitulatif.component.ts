@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
@@ -7,7 +7,7 @@ import { Table } from 'primeng/table';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Observable, Subscription } from 'rxjs';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
@@ -23,7 +23,6 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { RecapService } from "../../services/recap.service";
 import { RecaputilatifItem } from "../../dtos/RecaputilatifItem";
 import { TransactionSource, TransactionSourceLabels } from "../../../../../../transactions/dtos/TransactionSource";
-import { SourceBadgeComponent } from "../../../../../../global/shared-components/source-badge/source-badge.component";
 import { SensOperation } from "../../../../../../transactions/dtos/SensOperation";
 import { RecapitulatifSearchDto } from "../../dtos/RecapitulatifSearchDto";
 import { AgregatedRecapDto } from "../../dtos/AgregatedRecapDto";
@@ -180,6 +179,8 @@ interface RecapCardView {
   debit: number;
   credit: number;
   echues: number;
+  /** Part du débit dans (débit + crédit), en % — alimente la barre de répartition de la carte. */
+  debitPct: number;
 }
 
 /** Totaux tous sources confondues — alimentent uniquement les indicateurs globaux de la page. */
@@ -211,9 +212,7 @@ interface RecapGlobalView {
     DialogModule,
     DividerModule,
     ConfirmDialogModule,
-    SourceBadgeComponent,
     TvaInputComponent,
-    FormsModule,
   ],
   templateUrl: './recapitulatif.component.html',
   styleUrl: './recapitulatif.component.scss',
@@ -224,6 +223,8 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
 
   // ── Groupement par source (cartes) ───────────────────────────────────
   cardsView: RecapCardView[] = [];
+  /** Sélecteur de source de l'en-tête de la source ouverte. Resynchronisé par `afficherSource`. */
+  readonly sourceControl = new FormControl<string>('', { nonNullable: true });
   cardsLoading = true;
   /**
    * Source ouverte (vue focus) ou null (vue d'ensemble : grille de cartes). Reflétée dans l'adresse
@@ -232,7 +233,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
   openCard: RecapCardKey | null = null;
   /** Totaux de toutes les sources — portent les indicateurs globaux de la page (plus de carte dédiée). */
   globalView?: RecapGlobalView;
-  /** Icônes des sources absentes de AJOUTER_ICON — purement visuel. */
+  /** Icônes des sources absentes de MODULE_ICON — purement visuel. */
   private static readonly CARD_ICON: Partial<Record<TransactionSource, string>> = {
     [TransactionSource.LEASING]: 'pi pi-car',
     [TransactionSource.CMT]: 'pi pi-building',
@@ -250,7 +251,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
 
   sourceIcon(source: TransactionSource): string {
     return RecapitulatifComponent.CARD_ICON[source]
-      ?? RecapitulatifComponent.AJOUTER_ICON[source]
+      ?? RecapitulatifComponent.MODULE_ICON[source]
       ?? 'pi pi-folder';
   }
 
@@ -305,15 +306,12 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     return this.tableauCourant.sortField === RECAP_TRI_PAR_DEFAUT && this.tableauCourant.sortOrder === -1;
   }
 
-  /** Panneau des bornes de date global, replie par defaut pour laisser la place au tableau. */
-  showDatePanel = false;
-
   // ── Filtres propres à la source ouverte ─────────────────────────────────
 
   /**
-   * Filtres de la source ouverte (vue focus). Règle du 12/10/2026 : un critère renseigné ici
-   * REMPLACE son équivalent global pour cette source seulement (voir `buildSearchDto`) ; les
-   * cartes et les indicateurs de la liste de gauche restent calculés avec les filtres globaux.
+   * Filtres de la source ouverte (vue focus) : libellé / observation, N° de pièce, montant, période,
+   * motif. Ils ne concernent que le tableau de la source ; le sens et les types, eux, sont globaux
+   * (cartes et liste des sources comprises).
    */
   sourceFilterForm!: FormGroup;
   showSourceDatePanel = false;
@@ -332,19 +330,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     TransactionSource.DROIT_CONSTATE,
     TransactionSource.DECOMPTES,
     TransactionSource.IMPAYEE,
-  ]);
-
-  /** Sources dont les opérations peuvent être des encaissements comme des décaissements. */
-  private static readonly SOURCES_DEUX_SENS: ReadonlySet<TransactionSource> = new Set<TransactionSource>([
-    TransactionSource.CHEQUE,
-    TransactionSource.Virement,
-    TransactionSource.VIREMENT_INTERNATIONAL,
-    TransactionSource.MiseADisposition,
-    TransactionSource.PREFINANCEMENT,
-    TransactionSource.FACTORING,
-    TransactionSource.DROIT_CONSTATE,
-    TransactionSource.IMPAYEE,
-    TransactionSource.PROVISION,
   ]);
 
   // ── État du tableau, de l'adresse et de la ligne à surligner ──────────────
@@ -621,6 +606,9 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
               debit: c.totalDebit,
               credit: c.totalCredit,
               echues: c.echuesCount,
+              debitPct: c.totalDebit + c.totalCredit > 0
+                ? (c.totalDebit / (c.totalDebit + c.totalCredit)) * 100
+                : 0,
             }));
             this.cardsLoading = false;
             // La source ouverte n'a plus d'encours (tout validé, ou filtres) : on referme la carte.
@@ -636,13 +624,19 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     );
   }
 
-  /** Ouvre la vue focus d'une source : page 1, tri par défaut, filtres propres vierges. */
-  openSource(key: RecapCardKey): void {
+  /**
+   * Ouvre la vue focus d'une source : page 1, tri par défaut, filtres propres vierges.
+   * `echuesSeulement` l'ouvre déjà filtrée sur les opérations échues — date de référence au plus tard
+   * aujourd'hui, c'est la définition des « échues » des cartes.
+   */
+  openSource(key: RecapCardKey, echuesSeulement = false): void {
     if (this.openCard === key) {
       return;
     }
-    this.sourceFilterForm.reset(filtresSourceVides(), { emitEvent: false });
-    this.showSourceDatePanel = false;
+    this.sourceFilterForm.reset(
+      { ...filtresSourceVides(), dateReferenceJusqua: echuesSeulement ? new Date() : null },
+      { emitEvent: false });
+    this.showSourceDatePanel = echuesSeulement;
     this.afficherSource(key, tableauParDefaut(this.tableauCourant.rows));
     this.syncUrl();
   }
@@ -671,6 +665,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     this.totalCredit = 0;
     this.loading = key !== null;
     this.openCard = key;
+    this.sourceControl.setValue(key ?? '', { emitEvent: false });
     this.tableauInitial = tableau;
     this.tableauCourant = { ...tableau };
     this.tableGeneration++;
@@ -683,21 +678,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     }
     event.preventDefault();
     this.openSource(key);
-  }
-
-  /** Choix d'une source dans la liste déroulante de l'écran étroit (vide = vue d'ensemble). */
-  onSourceSelect(event: Event): void {
-    const valeur = (event.target as HTMLSelectElement).value;
-    if (valeur) {
-      this.openSource(valeur as RecapCardKey);
-    } else {
-      this.closeSource();
-    }
-  }
-
-  /** Carte de la source ouverte dans les indicateurs par source — absente si elle n'a plus d'encours. */
-  get openCardView(): RecapCardView | undefined {
-    return this.cardsView.find(c => c.key === this.openCard);
   }
 
   /** Vrai si la source de la carte ouverte a un formulaire de création dédié. */
@@ -1230,7 +1210,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     this.syncUrl(item.compositeKey).then(() => this.router.navigate(buildRoute(item.id)));
   }
 
-  private static readonly AJOUTER_ICON: Partial<Record<TransactionSource, string>> = {
+  private static readonly MODULE_ICON: Partial<Record<TransactionSource, string>> = {
     [TransactionSource.Virement]: 'pi pi-sync',
     [TransactionSource.CHEQUE]: 'pi pi-money-bill',
     [TransactionSource.LCN_ENCAISSEMENT]: 'pi pi-file',
@@ -1248,84 +1228,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     [TransactionSource.OPERATION_ERRONE]: 'pi pi-exclamation-circle',
     [TransactionSource.IMPOT_TAXE]: 'pi pi-book',
   };
-
-  /** Sources masquées dans la modale « Ajouter » (pas de création depuis le récapitulatif). */
-  private static readonly AJOUTER_EXCLUDED: ReadonlySet<TransactionSource> = new Set<TransactionSource>([
-    TransactionSource.LEASING,
-    TransactionSource.CMT,
-    TransactionSource.MiseADisposition,
-    TransactionSource.CAUTION,
-  ]);
-
-  /** Minuscules + sans accents : « Chèque » se trouve en tapant « cheque ». */
-  private static normalize(text: string): string {
-    return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  }
-
-  /**
-   * Modale « Ajouter » : TOUTES les sources de l'énumération, pas seulement celles qui ont une route
-   * de création. Une source sans entrée dans CREATE_ROUTE reste visible mais non cliquable
-   * (`route: null`) — il suffit d'ajouter sa route dans CREATE_ROUTE pour l'activer, sans toucher ici.
-   */
-  readonly ajouterItems: {
-    source: TransactionSource;
-    label: string;
-    icon: string;
-    route: any[] | null;
-    searchText: string;
-  }[] = (Object.values(TransactionSource) as TransactionSource[])
-    .filter(source => !RecapitulatifComponent.AJOUTER_EXCLUDED.has(source))
-    .map(source => {
-      const label = TransactionSourceLabels[source] ?? source;
-      return {
-        source,
-        label,
-        icon: this.sourceIcon(source),
-        route: RecapitulatifComponent.CREATE_ROUTE[source] ?? null,
-        searchText: RecapitulatifComponent.normalize(`${label} ${source}`),
-      };
-    })
-    .sort((a, b) => a.label.localeCompare(b.label, 'fr'));
-
-  displayAjouterModal = false;
-  ajouterSearchTerm = '';
-
-  @ViewChild('ajouterSearchInput') private ajouterSearchInputRef?: ElementRef<HTMLInputElement>;
-
-  get filteredAjouterItems() {
-    const terme = RecapitulatifComponent.normalize(this.ajouterSearchTerm.trim());
-    if (!terme) return this.ajouterItems;
-    return this.ajouterItems.filter(item => item.searchText.includes(terme));
-  }
-
-  openAjouterModal(): void {
-    this.ajouterSearchTerm = '';
-    this.displayAjouterModal = true;
-  }
-
-  closeAjouterModal(): void {
-    this.displayAjouterModal = false;
-  }
-
-  onAjouterModalShow(): void {
-    this.ajouterSearchInputRef?.nativeElement.focus();
-  }
-
-  choisirAjouter(item: { route: any[] | null }): void {
-    if (!item.route) {
-      return;
-    }
-    this.closeAjouterModal();
-    this.router.navigate(item.route, { queryParams: { banqueId: this.banqueIdFromRoute } });
-  }
-
-  /** Entrée dans le champ de recherche : ouvre la première source créable de la liste filtrée. */
-  onAjouterEnter(): void {
-    const premiere = this.filteredAjouterItems.find(item => item.route);
-    if (premiere) {
-      this.choisirAjouter(premiere);
-    }
-  }
 
   openUnitValidation(item: RecaputilatifItem): void {
     const config = this.unitValidationConfigs.get(item.source);
@@ -1482,6 +1384,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     this.populateTransactionSourceOptions();
 
     this.subscriptions.push(
+      this.sourceControl.valueChanges.subscribe(key => this.openSource(key as RecapCardKey)),
       this.route.parent!.paramMap.subscribe(params => {
         const id = params.get('banqueId');
         if (id) {
@@ -1502,12 +1405,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
   initSearchForm(): void {
     this.searchForm = this.fb.group({
       transactionSources: [[]],
-      libelleOuObservation: [''],
-      numero: [''],
       sens: [null],
-      dateReferenceDepuis: [null],
-      dateReferenceJusqua: [null],
-      montant: [null],
     });
 
     this.subscriptions.push(
@@ -1521,7 +1419,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     this.sourceFilterForm = this.fb.group({
       libelleOuObservation: [''],
       numero: [''],
-      sens: [null],
       dateReferenceDepuis: [null],
       dateReferenceJusqua: [null],
       montant: [null],
@@ -1555,7 +1452,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
 
     this.searchForm.reset(etat.globaux, { emitEvent: false });
     this.sourceFilterForm.reset(etat.locaux, { emitEvent: false });
-    this.showDatePanel = !!(etat.globaux.dateReferenceDepuis || etat.globaux.dateReferenceJusqua);
     this.showSourceDatePanel = !!(etat.locaux.dateReferenceDepuis || etat.locaux.dateReferenceJusqua);
 
     this.afficherSource(etat.source, etat.tableau);
@@ -1578,15 +1474,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
 
   private filtresGlobaux(): RecapFiltresGlobaux {
     const v = this.searchForm.value;
-    return {
-      transactionSources: v.transactionSources ?? [],
-      libelleOuObservation: v.libelleOuObservation ?? '',
-      numero: v.numero ?? '',
-      sens: v.sens ?? null,
-      dateReferenceDepuis: v.dateReferenceDepuis ?? null,
-      dateReferenceJusqua: v.dateReferenceJusqua ?? null,
-      montant: v.montant ?? null,
-    };
+    return { transactionSources: v.transactionSources ?? [], sens: v.sens ?? null };
   }
 
   private filtresLocaux(): RecapFiltresSource {
@@ -1594,7 +1482,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     return {
       libelleOuObservation: v.libelleOuObservation ?? '',
       numero: v.numero ?? '',
-      sens: v.sens ?? null,
       dateReferenceDepuis: v.dateReferenceDepuis ?? null,
       dateReferenceJusqua: v.dateReferenceJusqua ?? null,
       montant: v.montant ?? null,
@@ -1711,15 +1598,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
   }
 
   clearSearch(): void {
-    this.searchForm.reset({
-      transactionSources: [],
-      libelleOuObservation: '',
-      numero: '',
-      sens: null,
-      dateReferenceDepuis: null,
-      dateReferenceJusqua: null,
-      montant: null
-    });
+    this.searchForm.reset({ transactionSources: [], sens: null });
   }
 
   clearSourceFilters(): void {
@@ -1733,66 +1612,20 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
   }
 
   hasActiveFilters(): boolean {
-    if (!this.searchForm) {
-      return false;
-    }
-    const value = this.searchForm.value;
-    return !!(value.libelleOuObservation || value.numero || value.sens || value.montant
-      || value.dateReferenceDepuis || value.dateReferenceJusqua
-      || (value.transactionSources && value.transactionSources.length > 0));
+    return this.activeFilterCount > 0;
   }
 
-  get activeFilterChips(): string[] {
-    if (!this.searchForm) {
-      return [];
-    }
-    const value = this.searchForm.value;
-    const chips: string[] = [];
-
-    if (value.sens) {
-      const option = this.sensOptions.find(o => o.value === value.sens);
-      chips.push('Sens : ' + (option ? option.label : value.sens));
-    }
-    if (value.transactionSources && value.transactionSources.length > 0) {
-      chips.push(value.transactionSources.length === 1
-        ? 'Type : ' + (TransactionSourceLabels[value.transactionSources[0] as TransactionSource]
-        ?? value.transactionSources[0])
-        : 'Types : ' + value.transactionSources.length);
-    }
-    if (value.libelleOuObservation) {
-      chips.push('Libellé / Observation : ' + value.libelleOuObservation);
-    }
-    if (value.numero) {
-      chips.push('N° : ' + value.numero);
-    }
-    if (value.montant !== null && value.montant !== undefined && value.montant !== '') {
-      chips.push('Montant : ' + value.montant);
-    }
-    if (this.activeDateFilterCount > 0) {
-      chips.push('Période : ' + this.activeDateFilterCount
-        + (this.activeDateFilterCount > 1 ? ' bornes' : ' borne'));
-    }
-    return chips;
-  }
-
+  /** Nombre de filtres globaux actifs (sens, types) — affiche ou non le bouton « Effacer ». */
   get activeFilterCount(): number {
-    return this.activeFilterChips.length;
-  }
-
-  toggleDatePanel(): void {
-    this.showDatePanel = !this.showDatePanel;
+    if (!this.searchForm) {
+      return 0;
+    }
+    const g = this.filtresGlobaux();
+    return (g.sens ? 1 : 0) + (g.transactionSources.length > 0 ? 1 : 0);
   }
 
   toggleSourceDatePanel(): void {
     this.showSourceDatePanel = !this.showSourceDatePanel;
-  }
-
-  get activeDateFilterCount(): number {
-    if (!this.searchForm) {
-      return 0;
-    }
-    const value = this.searchForm.value;
-    return (value.dateReferenceDepuis ? 1 : 0) + (value.dateReferenceJusqua ? 1 : 0);
   }
 
   // ==================== Filtres propres à la source ouverte ====================
@@ -1800,11 +1633,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
   /** Le filtre « N° de pièce » n'a de sens que pour les sources dont la vue porte un numéro. */
   get filtreNumeroDisponible(): boolean {
     return !!this.openCard && RecapitulatifComponent.SOURCES_AVEC_NUMERO.has(this.openCard);
-  }
-
-  /** Le filtre « Sens » n'a de sens que pour les sources à deux sens (les autres n'en ont qu'un). */
-  get filtreSensDisponible(): boolean {
-    return !!this.openCard && RecapitulatifComponent.SOURCES_DEUX_SENS.has(this.openCard);
   }
 
   /** Options du filtre « Motif » de la source ouverte — vide hors Commission et Impôt/Taxe. */
@@ -1818,17 +1646,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     return [];
   }
 
-  /** Explique pourquoi certains filtres ne sont pas proposés pour la source ouverte. */
-  get filtresAbsents(): string {
-    if (!this.openCard) {
-      return '';
-    }
-    const absents: string[] = [];
-    if (!this.filtreNumeroDisponible) absents.push("« N° de pièce » (cette source n'en porte pas)");
-    if (!this.filtreSensDisponible) absents.push("« Sens » (cette source n'a qu'un seul sens)");
-    return absents.length > 0 ? 'Filtres non proposés pour cette source : ' + absents.join(', ') + '.' : '';
-  }
-
   get activeSourceDateFilterCount(): number {
     const v = this.sourceFilterForm?.value;
     return v ? (v.dateReferenceDepuis ? 1 : 0) + (v.dateReferenceJusqua ? 1 : 0) : 0;
@@ -1839,49 +1656,20 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       return 0;
     }
     const v = this.filtresLocaux();
-    return (v.libelleOuObservation ? 1 : 0) + (v.numero ? 1 : 0) + (v.sens ? 1 : 0)
+    return (v.libelleOuObservation ? 1 : 0) + (v.numero ? 1 : 0)
       + (v.montant !== null && String(v.montant) !== '' ? 1 : 0) + (v.motif ? 1 : 0)
       + this.activeSourceDateFilterCount;
   }
 
-  /**
-   * Critères renseignés à la fois en global et dans la source : le filtre de la source l'emporte
-   * pour cette source (pastille d'information dans la barre de filtres de la source).
-   */
-  get surchargesActives(): string[] {
-    if (!this.openCard) {
-      return [];
-    }
-    const g = this.filtresGlobaux();
-    const l = this.filtresLocaux();
-    const surcharges: string[] = [];
-    if (l.libelleOuObservation && g.libelleOuObservation) surcharges.push('Libellé / Observation');
-    if (l.numero && g.numero) surcharges.push('N° de pièce');
-    if (l.sens && g.sens) surcharges.push('Sens');
-    if (l.montant !== null && g.montant !== null) surcharges.push('Montant');
-    if (l.dateReferenceDepuis && g.dateReferenceDepuis) surcharges.push('Date de référence — depuis');
-    if (l.dateReferenceJusqua && g.dateReferenceJusqua) surcharges.push('Date de référence — jusqu\'au');
-    return surcharges;
-  }
-
-  /** Critères du formulaire global seuls — alimentent les cartes (aucune restriction de source). */
+  /** Filtres globaux seuls (sens, types) — alimentent les cartes et la liste des sources. */
   private buildFilterDto(): RecapitulatifSearchDto {
     const g = this.filtresGlobaux();
-    return {
-      transactionSources: g.transactionSources,
-      libelleOuObservation: g.libelleOuObservation,
-      numero: g.numero,
-      sens: g.sens,
-      dateReferenceDepuis: g.dateReferenceDepuis,
-      dateReferenceJusqua: g.dateReferenceJusqua,
-      montant: g.montant,
-    };
+    return { transactionSources: g.transactionSources, libelleOuObservation: '', sens: g.sens };
   }
 
   /**
-   * Critères du tableau et de l'export : les filtres globaux, restreints à la source ouverte, où
-   * chaque critère renseigné dans les filtres de la source remplace son équivalent global.
-   * Partagé entre chargement et export — l'export PDF reflète donc la source ouverte telle
+   * Critères du tableau et de l'export : le sens global, la source ouverte et les filtres de cette
+   * source. Partagé entre chargement et export — l'export PDF reflète donc la source ouverte telle
    * qu'affichée.
    */
   private buildSearchDto(): RecapitulatifSearchDto {
@@ -1894,7 +1682,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       ...dto,
       ...(l.libelleOuObservation ? { libelleOuObservation: l.libelleOuObservation } : {}),
       ...(l.numero ? { numero: l.numero } : {}),
-      ...(l.sens ? { sens: l.sens } : {}),
       ...(l.montant !== null ? { montant: l.montant } : {}),
       ...(l.dateReferenceDepuis ? { dateReferenceDepuis: l.dateReferenceDepuis } : {}),
       ...(l.dateReferenceJusqua ? { dateReferenceJusqua: l.dateReferenceJusqua } : {}),
