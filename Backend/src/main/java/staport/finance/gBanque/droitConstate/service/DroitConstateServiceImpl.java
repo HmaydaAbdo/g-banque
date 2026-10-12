@@ -225,6 +225,7 @@ public class DroitConstateServiceImpl implements IDroitConstateService {
 
     @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = DroitConstate.class)
     public DroitConstateResponseDto toggleStatus(Long id) {
         log.info("Changement du statut du droit constaté ID: {}", id);
 

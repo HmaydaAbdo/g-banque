@@ -221,6 +221,7 @@ public class FactoringServiceImpl implements IFactoringService {
 
     @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Factoring.class)
     public FactoringResponseDto toggleStatus(Long id) {
         log.info("Changement du statut du factoring ID: {}", id);
 

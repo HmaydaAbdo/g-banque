@@ -205,6 +205,7 @@ public class DecompteServiceImpl implements IDecompteService {
 
     @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Decompte.class)
     public DecompteResponseDto toggleStatus(Long id) {
         log.info("Changement du statut du décompte ID: {}", id);
 

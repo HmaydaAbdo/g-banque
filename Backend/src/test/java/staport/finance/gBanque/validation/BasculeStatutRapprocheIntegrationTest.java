@@ -83,6 +83,17 @@ class BasculeStatutRapprocheIntegrationTest extends AbstractIntegrationTest {
         );
     }
 
+    /** Classe d'entité enregistrée dans le journal d'audit pour chaque table. */
+    private static final Map<String, String> ENTITES = Map.ofEntries(
+            Map.entry("agios", "Agios"), Map.entry("commission", "Commission"), Map.entry("decompte", "Decompte"),
+            Map.entry("droit_constate", "DroitConstate"), Map.entry("factoring", "Factoring"),
+            Map.entry("frais_bancaire", "FraisBancaire"), Map.entry("impayee", "Impayee"),
+            Map.entry("impot_et_taxe", "ImpotEtTaxe"), Map.entry("operation_errone", "OperationErrone"),
+            Map.entry("prefinancement", "Prefinancement"), Map.entry("prelevement", "Prelevement"),
+            Map.entry("provision", "Provision"), Map.entry("restitution", "Restitution"), Map.entry("cheques", "Cheque"),
+            Map.entry("lcns", "Lcn"), Map.entry("mises_a_disposition", "MiseADisposition"), Map.entry("virements", "Virement"),
+            Map.entry("virements_internationaux", "VirementInternational"));
+
     @Autowired private MockMvc mockMvc;
     @Autowired private JdbcTemplate jdbc;
     @Autowired private UserRepository userRepository;
@@ -140,6 +151,32 @@ class BasculeStatutRapprocheIntegrationTest extends AbstractIntegrationTest {
         basculer(c, id).andExpect(status().is2xxSuccessful());
 
         assertThat(statut(c, id)).isEqualTo(c.valide());
+    }
+
+    @ParameterizedTest(name = "{0} : la bascule est tracée dans l'audit")
+    @MethodSource("cas")
+    @DisplayName("Audit de la bascule")
+    void bascule_estTraceeDansLAudit(Cas c) throws Exception {
+        long id = ligne(c, c.initial(), nouvelleBanque());
+
+        basculer(c, id).andExpect(status().is2xxSuccessful());
+
+        assertThat(compter("log", "entity_name = '" + ENTITES.get(c.table()) + "' AND entity_id = " + id))
+                .as("entrée du journal d'audit pour %s n° %d", c.nom(), id).isPositive();
+    }
+
+    @ParameterizedTest(name = "{0} : la suppression de la transaction liée est tracée dans l'audit")
+    @MethodSource("cas")
+    @DisplayName("Audit de la transaction supprimée")
+    void retourEnCours_traceLaSuppressionDeLaTransaction(Cas c) throws Exception {
+        long banque = nouvelleBanque();
+        long id = ligne(c, c.valide(), banque);
+        long transaction = transaction(c, id, banque, "EN_COURS");
+
+        basculer(c, id).andExpect(status().is2xxSuccessful());
+
+        assertThat(compter("log", "entity_name = 'Transaction' AND entity_id = " + transaction))
+                .as("suppression de la transaction %d tracée", transaction).isPositive();
     }
 
     // ── Accès ──────────────────────────────────────────────────────────────────

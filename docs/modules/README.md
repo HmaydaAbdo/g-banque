@@ -1773,11 +1773,10 @@ Détail technique (endpoints, guards Angular, sidebar) : `docs/rbac/decomptes.md
 Les actions suivantes sont historisées avec l'auteur et la date, et restent consultables
 ultérieurement pour toute vérification :
 
-- création, modification ou suppression d'un décompte.
+- création, modification ou suppression d'un décompte ;
+- changement du statut Prévu/Payé (avec la suppression de la transaction liée quand il remet l'opération « Prévu », voir chapitre 31).
 
-La consultation seule (liste, export PDF) n'est pas historisée. Le changement de statut
-Prévu/Payé n'est pas historisé (action réversible, sans effet sur les données du décompte
-lui-même).
+La consultation seule (liste, export PDF) n'est pas historisée.
 
 ---
 
@@ -1933,11 +1932,10 @@ Détail technique (endpoints, guards Angular, sidebar) : `docs/rbac/prefinanceme
 Les actions suivantes sont historisées avec l'auteur et la date, et restent consultables
 ultérieurement pour toute vérification :
 
-- création, modification ou suppression d'un préfinancement.
+- création, modification ou suppression d'un préfinancement ;
+- changement du statut Prévu/Payé (avec la suppression de la transaction liée quand il remet le mouvement « Prévu », voir chapitre 31).
 
-La consultation seule (liste, suivi de ligne) n'est pas historisée. Le changement de
-statut Prévu/Payé n'est pas historisé (action réversible, sans effet sur les données du mouvement
-lui-même).
+La consultation seule (liste, suivi de ligne) n'est pas historisée.
 
 ---
 
@@ -2092,11 +2090,10 @@ Détail technique (endpoints, guards Angular, sidebar) : `docs/rbac/factoring.md
 Les actions suivantes sont historisées avec l'auteur et la date, et restent consultables
 ultérieurement pour toute vérification :
 
-- création, modification ou suppression d'un factoring.
+- création, modification ou suppression d'un factoring ;
+- changement du statut Prévu/Payé (avec la suppression de la transaction liée quand il remet le mouvement « Prévu », voir chapitre 31).
 
-La consultation seule (liste, suivi de ligne) n'est pas historisée. Le changement de
-statut Prévu/Payé n'est pas historisé (action réversible, sans effet sur les données du mouvement
-lui-même).
+La consultation seule (liste, suivi de ligne) n'est pas historisée.
 
 ---
 
@@ -2268,11 +2265,10 @@ Détail technique (endpoints, guards Angular, sidebar) : `docs/rbac/droits-const
 Les actions suivantes sont historisées avec l'auteur et la date, et restent consultables
 ultérieurement pour toute vérification :
 
-- création, modification ou suppression d'un droit constaté.
+- création, modification ou suppression d'un droit constaté ;
+- changement du statut Prévu/Payé (avec la suppression de la transaction liée quand il remet le mouvement « Prévu », voir chapitre 31).
 
-La consultation seule (liste, suivi de ligne) n'est pas historisée. Le changement de
-statut Prévu/Payé n'est pas historisé (action réversible, sans effet sur les données du mouvement
-lui-même).
+La consultation seule (liste, suivi de ligne) n'est pas historisée.
 
 ---
 

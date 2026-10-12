@@ -60,8 +60,8 @@ Ensuite seulement : en-tête `Strict-Transport-Security`, et cadrer une CSP ngin
 
 ### Chantier — Stratégie de tests, tous niveaux, tous modules (demandé le 09/10/2026)
 
-État au 11/10/2026 : backend ~100 tests (session, migrations V4 et V5, 404, génération PDF, commission « Importation », et la
-bascule de statut sur 19 types d'opération × 4 scénarios) ; frontend 72 tests verts (couverture lignes ~37 %, surtout des tests
+État au 11/10/2026 : backend 134 tests (session, migrations V4 et V5, 404, génération PDF, commission « Importation », et la
+bascule de statut sur 19 types d'opération × 6 scénarios, audit compris) ; frontend 72 tests verts (couverture lignes ~37 %, surtout des tests
 « should create »). Le schéma de test est construit par Flyway et validé par Hibernate. Reste notamment : tests de la bascule des échéances
 de leasing et de CMT (graphe de dépendances lourd à fabriquer), `@PreAuthorize` (allowed/denied) de chaque contrôleur, calculs financiers.
 

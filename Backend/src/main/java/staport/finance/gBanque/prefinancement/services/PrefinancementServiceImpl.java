@@ -228,6 +228,7 @@ public class PrefinancementServiceImpl implements IPrefinancementService {
 
     @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Prefinancement.class)
     public PrefinancementResponseDTO toggleStatus(Long id) {
         log.info("Début de basculement du statut pour le préfinancement ID: {}", id);
 
