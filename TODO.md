@@ -9,9 +9,9 @@ Serveur Windows, dossier `C:\apps\G-Banque` (`docker-compose.yml` + `.env`, imag
 restaurée depuis la sauvegarde du 10/10 et passée dans le volume nommé `gbanque-postgres-data` (contrôle conforme : 104 tables,
 2 vues, Flyway 2, 55 407 lignes).
 
-**Prochain déploiement (images `:latest` du 11/10/2026 et suivantes).** Le backend applique au démarrage les migrations **V3** (transaction
-4956 réaffectée à l'opération erronée 12), **V4** (`rapprochement.date_rapprochement` en vraie date) et **V5** (dates du virement 1814).
-Vérifier d'abord la sauvegarde du jour (`./backups/postgres`), puis dans les logs : « Successfully applied … now at version v5 ».
+**Prochain déploiement (images `:latest` du 12/10/2026 et suivantes).** La production est en V5 (V3, V4, V5 appliquées). Le backend applique au
+démarrage la migration **V6** (transaction 5727 réaffectée du droit constaté 81 au décompte 61, DC 81 supprimé).
+Vérifier d'abord la sauvegarde du jour (`./backups/postgres`), puis dans les logs : « Successfully applied … now at version v6 ».
 
 **Reste à faire :**
 1. Supprimer sur le serveur l'ancien dossier `docker-data\postgres` et `gbanque-init.sql.gz` (contrôle du volume validé).
