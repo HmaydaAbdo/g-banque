@@ -710,6 +710,8 @@ Les deux seuils d'alerte ne sont pas des valeurs figées : un administrateur sys
 | **Échéances** — modifier manuellement (si PRÉVUE) | ✅ | ❌ | ❌ |
 | **Batch main levée** — déclencher manuellement | ✅ | ❌ | ❌ |
 
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
+
 ---
 
 ### 8. Audit
@@ -1188,6 +1190,8 @@ La valeur résiduelle, le taux de TVA et les deux seuils d'alerte ne sont plus d
 | **Batch main levée** — déclencher manuellement | ✅ | ❌ | ❌ |
 | **Configuration leasing** — consulter, modifier | ✅ | ❌ | ❌ |
 | **Export PDF** (organismes, contrats cadres, contrats, tableau d'amortissement) | ✅ | ✅ | ✅ |
+
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
 
 ---
 
@@ -1700,6 +1704,8 @@ librement à la saisie et peut différer de la banque associée au marché lui-m
 | Prévu | Le décompte est saisi mais pas encore réglé. |
 | Payé | Le décompte a été réglé (basculement manuel). |
 
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
+
 ---
 
 ### 3. Cycle de vie complet
@@ -1730,7 +1736,7 @@ librement à la saisie et peut différer de la banque associée au marché lui-m
 
 - **Créer** un décompte.
 - **Modifier** un décompte existant.
-- **Basculer le statut** Prévu/Payé — réservé à l'administrateur système.
+- **Basculer le statut** Prévu/Payé — réservé à l'administrateur système. Le retour à « Prévu » d'une opération déjà rapprochée supprime sa transaction (chapitre 31).
 - **Supprimer** définitivement un décompte — réservé à l'administrateur système, refusé si le
   décompte est déjà Payé.
 - **Exporter en PDF** la liste des décomptes selon les filtres appliqués.
@@ -1837,6 +1843,8 @@ mouvement (contrairement au module Décomptes, où il est saisi librement).
 | Prévu | Le mouvement est saisi mais pas encore réglé. |
 | Payé | Le mouvement a été réglé (basculement manuel). |
 
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
+
 **Ligne fonctionnelle Préfinancement active** : ligne fonctionnelle (spécifique au marché en
 priorité, sinon générale liée au marché) de nature "PREFINANCEMENT", à laquelle chaque mouvement de
 préfinancement est rattaché. Un marché sans ligne Préfinancement active ne peut pas recevoir de
@@ -1877,7 +1885,7 @@ re-résolue pour le nouveau marché.
 
 - **Créer** un préfinancement.
 - **Modifier** un préfinancement existant.
-- **Basculer le statut** Prévu/Payé — réservé à l'administrateur système.
+- **Basculer le statut** Prévu/Payé — réservé à l'administrateur système. Le retour à « Prévu » d'une opération déjà rapprochée supprime sa transaction (chapitre 31).
 - **Supprimer** définitivement un préfinancement — réservé à l'administrateur système, refusé si le
   préfinancement est déjà Payé.
 - **Valider** un mouvement « Prévu » depuis le Récapitulatif des États des encours (chapitre 31).
@@ -1995,6 +2003,8 @@ mouvement.
 | Prévu | Le mouvement est saisi mais pas encore réglé. |
 | Payé | Le mouvement a été réglé (basculement manuel). |
 
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
+
 **Ligne fonctionnelle Factoring active** : ligne fonctionnelle (spécifique au marché en priorité,
 sinon générale liée au marché) de nature "FACTORING", à laquelle chaque mouvement de factoring est
 rattaché. Un marché sans ligne Factoring active ne peut pas recevoir de nouveau factoring.
@@ -2034,7 +2044,7 @@ pour le nouveau marché.
 
 - **Créer** un factoring.
 - **Modifier** un factoring existant.
-- **Basculer le statut** Prévu/Payé — réservé à l'administrateur système.
+- **Basculer le statut** Prévu/Payé — réservé à l'administrateur système. Le retour à « Prévu » d'une opération déjà rapprochée supprime sa transaction (chapitre 31).
 - **Supprimer** définitivement un factoring — réservé à l'administrateur système, refusé si le
   factoring est déjà Payé.
 - **Valider** un mouvement « Prévu » depuis le Récapitulatif des États des encours (chapitre 31).
@@ -2156,6 +2166,8 @@ le type de mouvement.
 | Prévu | Le mouvement est saisi mais pas encore réglé. |
 | Payé | Le mouvement a été réglé (basculement manuel). |
 
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
+
 **Banque du droit constaté** : banque sur laquelle transite le mouvement. À la création, l'écran de
 saisie pré-remplit ce champ avec la banque du marché sélectionné dès que celui-ci est choisi, mais
 l'utilisateur peut la remplacer par une autre banque avant validation. Une fois enregistrée, la
@@ -2203,7 +2215,7 @@ choisie sur le formulaire, qu'il y ait ou non changement de marché.
 
 - **Créer** un droit constaté.
 - **Modifier** un droit constaté existant.
-- **Basculer le statut** Prévu/Payé — réservé à l'administrateur système.
+- **Basculer le statut** Prévu/Payé — réservé à l'administrateur système. Le retour à « Prévu » d'une opération déjà rapprochée supprime sa transaction (chapitre 31).
 - **Supprimer** définitivement un droit constaté — réservé à l'administrateur système, refusé si le
   droit constaté est déjà Payé.
 - **Valider** un mouvement « Prévu » depuis le Récapitulatif des États des encours (chapitre 31).
@@ -2391,6 +2403,8 @@ Les deux écrans de liste du module (encaissements, décaissements) disposent ch
 | Exporter en PDF (liste ou encours) | Équipe Finance (membres et directeur), Administrateur système |
 | Basculer le statut / supprimer un chèque | Administrateur système uniquement |
 
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
+
 ---
 
 ### 7. Audit
@@ -2529,6 +2543,8 @@ Chaque ligne fonctionnelle d'escompte commercial dispose d'un écran de suivi d�
 | Exporter en PDF (liste ou encours) | Équipe Finance (membres et directeur), Administrateur système |
 | Basculer le statut / supprimer un LCN | Administrateur système uniquement |
 
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
+
 ---
 
 ### 8. Audit
@@ -2658,6 +2674,8 @@ Les deux écrans de liste du module (encaissements, décaissements) disposent ch
 | Consulter / créer / modifier un virement | Équipe Finance (membres et directeur), Administrateur système |
 | Exporter en PDF (liste ou encours) | Équipe Finance (membres et directeur), Administrateur système |
 | Basculer le statut / supprimer un virement | Administrateur système uniquement |
+
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
 
 ---
 
@@ -2797,6 +2815,8 @@ affichée.
 | Exporter en PDF (liste ou encours) | Équipe Finance (membres et directeur), Administrateur système |
 | Basculer le statut / supprimer un virement international | Administrateur système uniquement |
 
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
+
 ---
 
 ### 7. Audit
@@ -2914,6 +2934,8 @@ la page affichée.
 | Consulter la liste, la détailler | Équipe Finance (membres et directeur), Administrateur système |
 | Exporter en PDF | Équipe Finance (membres et directeur), Administrateur système |
 | Basculer le statut | Administrateur système uniquement |
+
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
 
 ---
 
@@ -3126,6 +3148,8 @@ l'écran, pas seulement la page affichée.
 | Exporter en PDF (liste ou encours) | Équipe Finance (membres et directeur), Administrateur système |
 | Basculer le statut / supprimer un prélèvement | Administrateur système uniquement |
 
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
+
 ---
 
 ### 7. Audit
@@ -3268,7 +3292,7 @@ produite par la validation d'une opération dans son module source.
 4. Une transaction peut être corrigée avec les mêmes champs que lors de sa validation : date de valeur, date d'opération, libellé, observation et TVA (un taux ou un montant, jamais les deux). Le montant, la banque et la date d'émission ne sont jamais modifiables. Chaque correction est répercutée automatiquement sur l'opération source dont elle provient (échéance, moyen de paiement, etc.), afin que les deux restent toujours cohérentes ; la TVA est recalculée sur le montant, inchangé, de la transaction.
 5. Une transaction sans opération source synchronisable (pas de référent) peut être modifiée sans
    répercussion — seule la transaction elle-même est mise à jour.
-6. L'annulation (suppression) d'une transaction remet l'opération source dans son statut de départ (elle redevient « à valider ») et efface ses dates de valeur et d'opération ; elle est interdite si son rapprochement est en clôture définitive — c'est le statut du rapprochement, et non le rôle de l'utilisateur, qui protège une
+6. Le retour « en cours » manuel d'une opération rapprochée (administrateur système) a le même effet que l'annulation de sa transaction (chapitre 31). L'annulation (suppression) d'une transaction remet l'opération source dans son statut de départ (elle redevient « à valider ») et efface ses dates de valeur et d'opération ; elle est interdite si son rapprochement est en clôture définitive — c'est le statut du rapprochement, et non le rôle de l'utilisateur, qui protège une
    période définitivement arrêtée. Tant que le rapprochement est en cours ou en clôture
    provisoire, l'équipe Finance peut annuler elle-même une transaction erronée, sans intervention
    d'un administrateur système.
@@ -3459,6 +3483,8 @@ L'écran de liste principal dispose d'un **export PDF** (nouveau, 22/07/2026) : 
 | Consulter / créer / modifier un frais bancaire | Équipe Finance (membres et directeur), Administrateur système |
 | Exporter en PDF la liste des frais bancaires | Équipe Finance (membres et directeur), Administrateur système |
 | Basculer le statut / supprimer un frais bancaire | Administrateur système uniquement |
+
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
 
 ---
 
@@ -3904,6 +3930,8 @@ administrables via l'écran Administration → Charges fixes bancaires (voir
 | Clôturer un trimestre | Équipe Finance (membres et directeur), Administrateur système |
 | Basculer manuellement le statut | Administrateur système uniquement (correction exceptionnelle) |
 
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
+
 ---
 
 ### 13. Dépendances fonctionnelles entre modules
@@ -4061,6 +4089,8 @@ L'écran **Impôts et Taxes**, ainsi que l'écran **TVA sur cautions** du module
 | Consulter / créer / modifier / fusionner un impôt/taxe | Équipe Finance (membres et directeur), Administrateur système |
 | Exporter en PDF (liste ou encours) | Équipe Finance (membres et directeur), Administrateur système |
 | Basculer le statut / supprimer un impôt/taxe | Administrateur système uniquement |
+
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
 
 ---
 
@@ -4286,6 +4316,8 @@ L'écran **Commissions** dispose d'un bouton **Exporter PDF**. Le document gén�
 | Consulter les règles de commission | Administrateur système uniquement |
 | Créer / modifier / supprimer une règle | Administrateur système uniquement |
 
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
+
 Détail technique des accès (endpoints, guards, sidebar) : `docs/rbac/commission.md`.
 
 ---
@@ -4421,6 +4453,8 @@ L'écran **Impayées** dispose d'un bouton **Exporter PDF** (nouveau, 23/07/2026
 | Exporter en PDF (liste ou encours) | Équipe Finance (membres et directeur), Administrateur système |
 | Basculer le statut / supprimer une impayée | Administrateur système uniquement |
 
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
+
 ---
 
 ### 7. Audit
@@ -4542,6 +4576,8 @@ L'écran **Opérations Erronées** dispose d'un bouton **Exporter PDF** (nouveau
 | Consulter / créer / modifier une opération erronée | Équipe Finance (membres et directeur), Administrateur système |
 | Basculer le statut / supprimer une opération erronée | Administrateur système uniquement |
 | Exporter la liste ou l'encours en PDF | Équipe Finance (membres et directeur), Administrateur système |
+
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
 
 ---
 
@@ -4680,6 +4716,8 @@ seulement la page affichée, ainsi que le montant total cumulé.
 | Basculer le statut / supprimer une provision | Administrateur système uniquement |
 | Exporter la liste ou l'encours en PDF | Équipe Finance (membres et directeur), Administrateur système |
 
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
+
 ---
 
 ### 8. Audit
@@ -4795,6 +4833,8 @@ L'écran **Restitutions** dispose d'un bouton **Exporter PDF** (nouveau, 23/07/2
 | Consulter / créer / modifier une restitution | Équipe Finance (membres et directeur), Administrateur système |
 | Basculer le statut / supprimer une restitution | Administrateur système uniquement |
 | Exporter la liste ou l'encours en PDF | Équipe Finance (membres et directeur), Administrateur système |
+
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
 
 ---
 
@@ -5091,6 +5131,8 @@ d'opération, libellé, observation, TVA (taux ou montant). Le montant, la banqu
 d'émission ne sont jamais modifiables. Chaque correction est répercutée automatiquement sur
 l'opération d'origine, pour que les deux restent cohérentes (voir chapitre 21).
 
+**Retour « en cours » d'une opération rapprochée** : dans le module de chaque type d'opération, l'administrateur système peut basculer à la main le statut d'une opération (en cours ↔ réglée, prévu ↔ payé). Remettre « en cours » ou « prévu » une opération dont la transaction figure dans un rapprochement **supprime cette transaction** : c'est exactement l'annulation décrite ci-dessus — l'opération redevient à valider, ses dates de valeur et d'opération sont effacées, les soldes sont recalculés. C'est refusé si le rapprochement est clôturé définitivement, ou si plusieurs transactions pointent sur la même opération (cas ambigu, à traiter depuis le rapprochement). Une opération réglée à la main, sans transaction, garde la bascule libre (correction exceptionnelle). Le passage « en cours » → « réglée » n'est pas modifié : il ne crée pas de transaction.
+
 **Ajouter / Éditer** : depuis le Récapitulatif, l'utilisateur peut créer une nouvelle opération
 (bouton **Ajouter**) ou corriger une opération en attente (bouton **Éditer** de la ligne) sans repasser
 par le menu du module concerné. Ces actions ouvrent l'écran de saisie ou de modification du module
@@ -5197,7 +5239,7 @@ exporte exactement les lignes filtrées.
   libellé et l'observation (tous obligatoires, la TVA pouvant valoir 0). La validation crée la
   transaction dans le rapprochement affiché et retire l'opération de l'écran.
 - **Éditer** (crayon) : ouvre l'écran de modification du module d'origine ; le bouton est grisé, avec une
-  explication au survol, quand l'édition n'est pas possible depuis le Récapitulatif (voir règle 9).
+  explication au survol, quand l'édition n'est pas possible depuis le Récapitulatif (voir règle 10).
 
 *Validation en lot.* Cocher une ou plusieurs lignes (la case d'en-tête coche la page) fait
 apparaître une barre indiquant le nombre d'opérations sélectionnées et leur montant total, avec les
@@ -5257,13 +5299,14 @@ Les règles et leurs limites sont décrites aux chapitres 21 (Transactions) et 3
 8. Corriger une transaction validée met à jour l'opération d'origine (dates, libellé, observation) ;
    la TVA est recalculée sur le montant de la transaction, qui ne change pas. C'est refusé si le
    rapprochement est clôturé définitivement.
-9. Édition depuis le Récapitulatif : possible pour tous les types sauf les mises à disposition et
+9. Retour « en cours » : la bascule manuelle d'une opération validée (administrateur système) supprime la transaction liée, avec les mêmes effets et les mêmes refus que l'annulation (règle 7) ; sans transaction liée, elle reste libre. La bascule inverse (vers « réglée ») ne crée jamais de transaction.
+10. Édition depuis le Récapitulatif : possible pour tous les types sauf les mises à disposition et
    les LCN en décaissement, avec deux nuances — pour les virements et les chèques, uniquement pour les
    encaissements ; pour les échéances de leasing et de CMT, uniquement par un administrateur système, et
    seulement tant que l'échéance est « prévue ».
-10. Création depuis le Récapitulatif : proposée pour tous les types sauf le leasing, le CMT, les mises à
+11. Création depuis le Récapitulatif : proposée pour tous les types sauf le leasing, le CMT, les mises à
     disposition et les cautions, dont les opérations ne se créent pas depuis cet écran.
-11. Un type sans opération à valider n'a pas de carte ; si aucun encours ne correspond aux filtres,
+12. Un type sans opération à valider n'a pas de carte ; si aucun encours ne correspond aux filtres,
     l'écran l'indique.
 
 ---
@@ -5277,8 +5320,11 @@ Les règles et leurs limites sont décrites aux chapitres 21 (Transactions) et 3
 | Valider un encours (individuel ou en lot) | ✅ | ✅ | ✅ |
 | Ajouter / Éditer une opération depuis le Récapitulatif | ✅ | ✅ | ✅ |
 | Éditer une échéance de leasing ou de CMT | ✅ | ❌ | ❌ |
+| Basculer à la main le statut d'une opération (y compris son retour « en cours », qui supprime la transaction liée) | ✅ | ❌ | ❌ |
 | Modifier ou annuler une transaction validée (rapprochement non clôturé définitivement) | ✅ | ✅ | ✅ |
 | Télécharger un récapitulatif ou un récapitulatif général détaillé (PDF) | ✅ | ✅ | ✅ |
+
+> **Retour « en cours » d'une opération déjà rapprochée** : la bascule manuelle (administrateur système) supprime alors sa transaction de rapprochement, au lieu de seulement changer le statut — voir chapitre 31.
 
 Hors édition des échéances de leasing et de CMT, aucune action de ce module n'est réservée à un rôle en
 particulier au-delà de l'appartenance au département Finance (ou `SYSTEM_ADMIN`, qui a un accès

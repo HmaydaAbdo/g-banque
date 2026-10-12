@@ -1,5 +1,8 @@
 package staport.finance.gBanque.moyensDePaiements.virementInternational.service;
 
+import java.util.Set;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -58,13 +61,16 @@ public class VirementInternationalService {
     private final VirementInternationalMapper virementInternationalMapper;
     private final VirementInternationalMetrics virementInternationalMetrics;
     private final StaportPdfReportService staportPdfReportService;
+    private final ReverseTransactionService reverseTransactionService;
 
     public VirementInternationalService(
             VirementInternationalRepository virementInternationalRepository,
             IBanqueService banqueService,
             VirementInternationalMapper virementInternationalMapper,
             VirementInternationalMetrics virementInternationalMetrics,
-            StaportPdfReportService staportPdfReportService) {
+            StaportPdfReportService staportPdfReportService,
+            ReverseTransactionService reverseTransactionService) {
+        this.reverseTransactionService = reverseTransactionService;
         this.virementInternationalRepository = virementInternationalRepository;
         this.banqueService = banqueService;
         this.virementInternationalMapper = virementInternationalMapper;
@@ -175,6 +181,12 @@ public class VirementInternationalService {
         if (virement.getStatut() == StatutMoyenPaiement.ANNULE) {
             log.warn("Tentative de basculement du statut d'un virement international annulé, ID={}", id);
             throw new VirementInternationalBusinessException("Impossible de basculer le statut d'un virement international annulé (ID=" + id + ").");
+        }
+        // Retour « en cours » d'une opération déjà rapprochée : sa transaction est annulée (même effet que l'annulation
+        // de la validation) ; sans transaction liée, la bascule reste libre (correction manuelle).
+        if (virement.getStatut() == StatutMoyenPaiement.REGLE
+                && reverseTransactionService.annulerSiRapproche(Set.of(TransactionSource.VIREMENT_INTERNATIONAL), id).effectuee()) {
+            return virementInternationalMapper.toDto(virement);
         }
         virement.setStatut(virement.getStatut() == StatutMoyenPaiement.ENCOURS ? StatutMoyenPaiement.REGLE : StatutMoyenPaiement.ENCOURS);
         virement = virementInternationalRepository.save(virement);

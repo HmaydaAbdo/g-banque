@@ -1,5 +1,8 @@
 package staport.finance.gBanque.moyensDePaiements.cheques.services;
 
+import java.util.Set;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -53,9 +56,12 @@ public class ChequeService {
     private final ChequeMapper chequeMapper;
     private final ChequeMetrics chequeMetrics;
     private final StaportPdfReportService staportPdfReportService;
+    private final ReverseTransactionService reverseTransactionService;
 
     public ChequeService(ChequeRepository chequeRepository, IBanqueService banqueService, ChequeMapper chequeMapper,
-                          ChequeMetrics chequeMetrics, StaportPdfReportService staportPdfReportService) {
+                          ChequeMetrics chequeMetrics, StaportPdfReportService staportPdfReportService,
+                          ReverseTransactionService reverseTransactionService) {
+        this.reverseTransactionService = reverseTransactionService;
         this.chequeRepository = chequeRepository;
         this.banqueService = banqueService;
         this.chequeMapper = chequeMapper;
@@ -212,6 +218,12 @@ public class ChequeService {
             throw new ChequeBusinessException("Impossible de basculer le statut d'un chèque annulé (id: " + id + ").");
         }
 
+        // Retour « en cours » d'une opération déjà rapprochée : sa transaction est annulée (même effet que l'annulation
+        // de la validation) ; sans transaction liée, la bascule reste libre (correction manuelle).
+        if (cheque.getStatut() == StatutMoyenPaiement.REGLE
+                && reverseTransactionService.annulerSiRapproche(Set.of(TransactionSource.CHEQUE), id).effectuee()) {
+            return toDto(cheque);
+        }
         cheque.setStatut(cheque.getStatut() == StatutMoyenPaiement.ENCOURS ? StatutMoyenPaiement.REGLE : StatutMoyenPaiement.ENCOURS);
         cheque = chequeRepository.save(cheque);
         if (cheque.getStatut() == StatutMoyenPaiement.REGLE) {

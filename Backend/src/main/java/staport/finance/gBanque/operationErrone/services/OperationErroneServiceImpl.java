@@ -1,5 +1,7 @@
 package staport.finance.gBanque.operationErrone.services;
 
+import java.util.Set;
+import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -55,11 +57,14 @@ public class OperationErroneServiceImpl implements IOperationErroneService {
     private final IBanqueService banqueService;
     private final OperationErroneMapper operationErroneMapper;
     private final StaportPdfReportService staportPdfReportService;
+    private final ReverseTransactionService reverseTransactionService;
 
     public OperationErroneServiceImpl(OperationErroneRepository operationErroneRepository,
                                        IBanqueService banqueService,
                                        OperationErroneMapper operationErroneMapper,
-                                       StaportPdfReportService staportPdfReportService) {
+                                       StaportPdfReportService staportPdfReportService,
+                                       ReverseTransactionService reverseTransactionService) {
+        this.reverseTransactionService = reverseTransactionService;
         this.operationErroneRepository = operationErroneRepository;
         this.banqueService = banqueService;
         this.operationErroneMapper = operationErroneMapper;
@@ -162,6 +167,12 @@ public class OperationErroneServiceImpl implements IOperationErroneService {
         OperationErrone operationErrone = operationErroneRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Opération erronée non trouvée avec l'ID: " + id));
 
+        // Retour « en cours » d'une opération déjà rapprochée : sa transaction est annulée (même effet que l'annulation
+        // de la validation) ; sans transaction liée, la bascule reste libre (correction manuelle).
+        if (operationErrone.getStatus() == Status.PAYE
+                && reverseTransactionService.annulerSiRapproche(Set.of(TransactionSource.OPERATION_ERRONE), id).effectuee()) {
+            return operationErroneMapper.toResponseDto(operationErrone);
+        }
         Status oldStatus = operationErrone.getStatus();
         Status newStatus = oldStatus == Status.PAYE ? Status.PREVU : Status.PAYE;
 

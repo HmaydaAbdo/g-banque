@@ -1,5 +1,7 @@
     package staport.finance.gBanque.leasing.echeancesLeasing.services;
 
+import java.util.Set;
+import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import staport.finance.gBanque.reports.utils.MontantFormatter;
 
     import com.lowagie.text.Chunk;
@@ -74,13 +76,16 @@ import java.math.BigDecimal;
         private final EcheanceLeasingRepository echeanceLeasingRepository;
         private final EcheanceLeasingMapper echeanceLeasingMapper;
         private final StaportPdfReportService staportPdfReportService;
+        private final ReverseTransactionService reverseTransactionService;
         private static final int SCALE = 2;
 
         public EcheanceLeasingService(ICommissionService commissionService,
                                       ICommissionConfigService commissionConfigService,
                                       EcheanceLeasingRepository echeanceLeasingRepository,
                                       EcheanceLeasingMapper echeanceLeasingMapper,
-                                      StaportPdfReportService staportPdfReportService) {
+                                      StaportPdfReportService staportPdfReportService,
+                                      ReverseTransactionService reverseTransactionService) {
+            this.reverseTransactionService = reverseTransactionService;
             this.commissionService       = commissionService;
             this.commissionConfigService = commissionConfigService;
             this.echeanceLeasingRepository = echeanceLeasingRepository;
@@ -382,6 +387,12 @@ import java.math.BigDecimal;
                         return new ResourceNotFoundException("EcheanceLeasing with ID " + echeanceId + " not found.");
                     });
 
+            // Retour « en cours » d'une opération déjà rapprochée : sa transaction est annulée (même effet que l'annulation
+            // de la validation) ; sans transaction liée, la bascule reste libre (correction manuelle).
+            if (echeance.getStatutPaiement() == StatutEcheanceLeasing.PAYE
+                    && reverseTransactionService.annulerSiRapproche(Set.of(TransactionSource.LEASING), echeanceId).effectuee()) {
+                return echeanceLeasingMapper.toDto(echeance);
+            }
             StatutEcheanceLeasing newStatus = echeance.getStatutPaiement() == StatutEcheanceLeasing.PAYE
                     ? StatutEcheanceLeasing.PREVU
                     : StatutEcheanceLeasing.PAYE;

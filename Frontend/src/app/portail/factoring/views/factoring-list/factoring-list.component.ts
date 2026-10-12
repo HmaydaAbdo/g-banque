@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild, inject } from "@angular/core";
+import { AVERTISSEMENT_RETOUR_EN_COURS } from '../../../global/utils/bascule-statut.utils';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from "@angular/forms";
 import { CommonModule, DatePipe, DecimalPipe } from "@angular/common";
 import { RouterLink } from "@angular/router";
@@ -208,7 +209,7 @@ export class FactoringListComponent implements OnInit {
 
   confirmToggleStatus(factoring: any) {
     this.confirmationService.confirm({
-      message: `Changer le statut de ce factoring ?`,
+      message: `Changer le statut de ce factoring ?${factoring.status === Status.PAYE ? ' ' + AVERTISSEMENT_RETOUR_EN_COURS : ''}`,
       header: `Confirmation`,
       icon: 'pi pi-exclamation-triangle',
       accept: () => {

@@ -1,5 +1,8 @@
 package staport.finance.gBanque.fraisBancaires.service;
 
+import java.util.Set;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import com.lowagie.text.Chunk;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.Element;
@@ -66,11 +69,14 @@ public class FraisBancaireServiceImpl implements IFraisBancaireService {
     private final IBanqueService banqueService;
     private final FraisBancaireMapper fraisBancaireMapper;
     private final StaportPdfReportService staportPdfReportService;
+    private final ReverseTransactionService reverseTransactionService;
 
     public FraisBancaireServiceImpl(FraisBancaireRepository fraisBancaireRepository,
                                      IBanqueService banqueService,
                                      FraisBancaireMapper fraisBancaireMapper,
-                                     StaportPdfReportService staportPdfReportService) {
+                                     StaportPdfReportService staportPdfReportService,
+                                     ReverseTransactionService reverseTransactionService) {
+        this.reverseTransactionService = reverseTransactionService;
         this.fraisBancaireRepository = fraisBancaireRepository;
         this.banqueService = banqueService;
         this.fraisBancaireMapper = fraisBancaireMapper;
@@ -187,6 +193,12 @@ public class FraisBancaireServiceImpl implements IFraisBancaireService {
         FraisBancaire fraisBancaire = fraisBancaireRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Frais bancaire non trouvé avec l'ID: " + id));
 
+        // Retour « en cours » d'une opération déjà rapprochée : sa transaction est annulée (même effet que l'annulation
+        // de la validation) ; sans transaction liée, la bascule reste libre (correction manuelle).
+        if (fraisBancaire.getStatus() == Status.PAYE
+                && reverseTransactionService.annulerSiRapproche(Set.of(TransactionSource.FRAIS_BANCAIRE), id).effectuee()) {
+            return fraisBancaireMapper.toResponseDto(fraisBancaire);
+        }
         Status oldStatus = fraisBancaire.getStatus();
         Status newStatus = oldStatus == Status.PAYE ? Status.PREVU : Status.PAYE;
         fraisBancaire.setStatus(newStatus);

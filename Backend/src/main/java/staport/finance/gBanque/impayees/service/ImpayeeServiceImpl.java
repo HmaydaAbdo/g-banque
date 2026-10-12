@@ -1,6 +1,8 @@
 package staport.finance.gBanque.impayees.service;
 
 
+import java.util.Set;
+import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
@@ -53,9 +55,12 @@ public class ImpayeeServiceImpl implements IImpayeeService {
     private final IBanqueService banqueService;
     private final ImpayeeMapper impayeeMapper;
     private final StaportPdfReportService staportPdfReportService;
+    private final ReverseTransactionService reverseTransactionService;
 
     public ImpayeeServiceImpl(ImpayeeRepository impayeeRepository, IBanqueService banqueService, ImpayeeMapper impayeeMapper,
-                               StaportPdfReportService staportPdfReportService) {
+                               StaportPdfReportService staportPdfReportService,
+                               ReverseTransactionService reverseTransactionService) {
+        this.reverseTransactionService = reverseTransactionService;
         this.impayeeRepository = impayeeRepository;
         this.banqueService = banqueService;
         this.impayeeMapper = impayeeMapper;
@@ -180,6 +185,12 @@ public class ImpayeeServiceImpl implements IImpayeeService {
                     return new ResourceNotFoundException("Impayée introuvable avec l'ID: " + id);
                 });
 
+        // Retour « en cours » d'une opération déjà rapprochée : sa transaction est annulée (même effet que l'annulation
+        // de la validation) ; sans transaction liée, la bascule reste libre (correction manuelle).
+        if (impayee.getStatus() == Status.PAYE
+                && reverseTransactionService.annulerSiRapproche(Set.of(TransactionSource.IMPAYEE), id).effectuee()) {
+            return impayeeMapper.toResponseDto(impayee);
+        }
         Status oldStatus = impayee.getStatus();
         Status newStatus = (oldStatus == Status.PAYE) ? Status.PREVU : Status.PAYE;
 

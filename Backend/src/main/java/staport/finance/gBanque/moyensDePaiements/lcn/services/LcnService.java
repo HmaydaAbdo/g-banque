@@ -1,5 +1,8 @@
 package staport.finance.gBanque.moyensDePaiements.lcn.services;
 
+import java.util.Set;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -58,10 +61,13 @@ public class LcnService {
     private final LcnMapper lcnMapper;
     private final LcnMetrics lcnMetrics;
     private final StaportPdfReportService staportPdfReportService;
+    private final ReverseTransactionService reverseTransactionService;
 
     public LcnService(LcnRepository lcnRepository, IBanqueService banqueService,
                        LigneFonctionnelleReader ligneFonctionnelleReader, LcnMapper lcnMapper, LcnMetrics lcnMetrics,
-                       StaportPdfReportService staportPdfReportService) {
+                       StaportPdfReportService staportPdfReportService,
+                       ReverseTransactionService reverseTransactionService) {
+        this.reverseTransactionService = reverseTransactionService;
         this.lcnRepository = lcnRepository;
         this.banqueService = banqueService;
         this.ligneFonctionnelleReader = ligneFonctionnelleReader;
@@ -295,6 +301,12 @@ public class LcnService {
             throw new LcnBusinessException("Impossible de basculer le statut d'un LCN annulé (ID=" + id + ").");
         }
 
+        // Retour « en cours » d'une opération déjà rapprochée : sa transaction est annulée (même effet que l'annulation
+        // de la validation) ; sans transaction liée, la bascule reste libre (correction manuelle).
+        if (lcn.getStatut() == StatutMoyenPaiement.REGLE
+                && reverseTransactionService.annulerSiRapproche(Set.of(TransactionSource.LCN_DECAISSEMENT, TransactionSource.LCN_ENCAISSEMENT, TransactionSource.LCN_ESCOMPTE), id).effectuee()) {
+            return toDto(lcn);
+        }
         lcn.setStatut(lcn.getStatut() == StatutMoyenPaiement.ENCOURS ? StatutMoyenPaiement.REGLE : StatutMoyenPaiement.ENCOURS);
         lcn = lcnRepository.save(lcn);
         if (lcn.getStatut() == StatutMoyenPaiement.REGLE) {

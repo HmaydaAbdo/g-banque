@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
+import { AVERTISSEMENT_RETOUR_EN_COURS } from '../../../global/utils/bascule-statut.utils';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { MessageService, ConfirmationService, MenuItem, PrimeTemplate } from 'primeng/api';
 import { CommonModule, DatePipe, DecimalPipe, NgClass, NgFor, NgIf } from '@angular/common';
@@ -245,7 +246,7 @@ export class FraisBancaireListComponent implements OnInit {
    */
   toggleFraisBancaireStatus(frais: FraisBancaireResponseDto) {
     const message = frais.status === Status.PAYE
-      ? 'Voulez-vous marquer ce frais bancaire comme prévu ?'
+      ? 'Voulez-vous marquer ce frais bancaire comme prévu  ?' + ' ' + AVERTISSEMENT_RETOUR_EN_COURS
       : 'Voulez-vous marquer ce frais bancaire comme réalisé ?';
 
     this.confirmationService.confirm({

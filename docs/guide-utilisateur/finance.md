@@ -136,6 +136,8 @@ Depuis la liste des crédits → cliquer sur l'icône **Tableau d'Amortissement*
 
 > **Basculer le statut d'une échéance** (colonne Actions du tableau d'amortissement) : action réservée à l'administrateur système, pour corriger une anomalie sans passer par le rapprochement.
 
+> **Retour « en cours » d'une opération déjà rapprochée.** Si la transaction de cette opération figure dans un rapprochement, la remettre « en cours » (ou « prévu ») **supprime cette transaction** : l'opération redevient à valider et les soldes du rapprochement sont recalculés. Une fenêtre de confirmation le rappelle. Voir « Remettre une opération rapprochée en cours » dans le « Module États des encours ».
+
 > **Modifier une échéance** *(réservé à l'administrateur système)* : tant qu'une échéance est au statut **Prévu**, un bouton crayon de la colonne Actions du tableau d'amortissement ouvre une page dédiée de modification (voir « Modifier une échéance de leasing ou de CMT » dans le guide Administrateur). Les mêmes échéances sont aussi modifiables depuis **États des encours → Récapitulatifs** (bouton **Éditer**).
 
 ### Exporter en PDF
@@ -351,6 +353,10 @@ Sur le **Tableau d'amortissement**, le bouton **Période** ouvre un panneau à t
 ### Consulter le tableau d'amortissement
 
 Depuis la liste des contrats → cliquer sur un contrat → **Tableau d'amortissement**. Affiche toutes les échéances, les montants HT/TVA/TTC, et les totaux (payé, restant). Filtrable par numéro d'échéance, statut, et plages de dates (échéance, opération, valeur) via le bouton **Période**.
+
+> **Basculer le statut d'une échéance** (colonne Actions du tableau d'amortissement) : action réservée à l'administrateur système.
+
+> **Retour « en cours » d'une opération déjà rapprochée.** Si la transaction de cette opération figure dans un rapprochement, la remettre « en cours » (ou « prévu ») **supprime cette transaction** : l'opération redevient à valider et les soldes du rapprochement sont recalculés. Une fenêtre de confirmation le rappelle. Voir « Remettre une opération rapprochée « en cours » » dans le « Module États des encours ».
 
 > **Modifier une échéance** *(réservé à l'administrateur système)* : tant qu'une échéance est au statut **Prévu**, un bouton crayon de la colonne Actions du tableau d'amortissement ouvre une page dédiée de modification (voir « Modifier une échéance de leasing ou de CMT » dans le guide Administrateur). Les mêmes échéances sont aussi modifiables depuis **États des encours → Récapitulatifs** (bouton **Éditer**).
 
@@ -599,6 +605,8 @@ Bouton crayon depuis la liste. Tous les champs sont modifiables.
 
 Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur système**.
 
+> **Retour « en cours » d'une opération déjà rapprochée.** Si la transaction de cette opération figure dans un rapprochement, la remettre « en cours » (ou « prévu ») **supprime cette transaction** : l'opération redevient à valider et les soldes du rapprochement sont recalculés. Une fenêtre de confirmation le rappelle. Voir « Remettre une opération rapprochée en cours » dans le « Module États des encours ».
+
 ### Supprimer un décompte
 
 Bouton corbeille — **réservé à l'administrateur système**. Refusé si le décompte est déjà Payé.
@@ -642,6 +650,8 @@ une nouvelle recherche de la ligne fonctionnelle Préfinancement active du nouve
 ### Changer le statut d'un préfinancement
 
 Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur système**.
+
+> **Retour « en cours » d'une opération déjà rapprochée.** Si la transaction de cette opération figure dans un rapprochement, la remettre « en cours » (ou « prévu ») **supprime cette transaction** : l'opération redevient à valider et les soldes du rapprochement sont recalculés. Une fenêtre de confirmation le rappelle. Voir « Remettre une opération rapprochée en cours » dans le « Module États des encours ».
 
 ### Supprimer un préfinancement
 
@@ -692,6 +702,8 @@ une nouvelle recherche de la ligne fonctionnelle Factoring active du nouveau mar
 ### Changer le statut d'un factoring
 
 Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur système**.
+
+> **Retour « en cours » d'une opération déjà rapprochée.** Si la transaction de cette opération figure dans un rapprochement, la remettre « en cours » (ou « prévu ») **supprime cette transaction** : l'opération redevient à valider et les soldes du rapprochement sont recalculés. Une fenêtre de confirmation le rappelle. Voir « Remettre une opération rapprochée en cours » dans le « Module États des encours ».
 
 ### Supprimer un factoring
 
@@ -745,6 +757,8 @@ fonctionnelle Droit Constaté active du nouveau marché.
 ### Changer le statut d'un droit constaté
 
 Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur système**.
+
+> **Retour « en cours » d'une opération déjà rapprochée.** Si la transaction de cette opération figure dans un rapprochement, la remettre « en cours » (ou « prévu ») **supprime cette transaction** : l'opération redevient à valider et les soldes du rapprochement sont recalculés. Une fenêtre de confirmation le rappelle. Voir « Remettre une opération rapprochée en cours » dans le « Module États des encours ».
 
 ### Supprimer un droit constaté
 
@@ -819,6 +833,8 @@ réglé n'est plus modifiable.
 Interrupteur En cours/Réglé dans la liste — **réservé à l'administrateur système**. Désactivé si le
 chèque est Annulé.
 
+> **Retour « en cours » d'une opération déjà rapprochée.** Si la transaction de cette opération figure dans un rapprochement, la remettre « en cours » (ou « prévu ») **supprime cette transaction** : l'opération redevient à valider et les soldes du rapprochement sont recalculés. Une fenêtre de confirmation le rappelle. Voir « Remettre une opération rapprochée en cours » dans le « Module États des encours ».
+
 ### Supprimer un chèque
 
 Bouton corbeille — **réservé à l'administrateur système**. Désactivé si le chèque est déjà Réglé.
@@ -885,6 +901,8 @@ Bouton crayon depuis l'une ou l'autre liste. **Désactivé si le LCN est déjà 
 ### Changer le statut d'un LCN
 
 Interrupteur En cours/Réglé dans la liste — **réservé à l'administrateur système**. Désactivé si le LCN est Annulé.
+
+> **Retour « en cours » d'une opération déjà rapprochée.** Si la transaction de cette opération figure dans un rapprochement, la remettre « en cours » (ou « prévu ») **supprime cette transaction** : l'opération redevient à valider et les soldes du rapprochement sont recalculés. Une fenêtre de confirmation le rappelle. Voir « Remettre une opération rapprochée en cours » dans le « Module États des encours ».
 
 ### Supprimer un LCN
 
@@ -953,6 +971,8 @@ Bouton crayon depuis la liste Encaissements. **Désactivé si le virement est d�
 
 Interrupteur En cours/Réglé dans la liste — **réservé à l'administrateur système**. Désactivé si le virement est Annulé.
 
+> **Retour « en cours » d'une opération déjà rapprochée.** Si la transaction de cette opération figure dans un rapprochement, la remettre « en cours » (ou « prévu ») **supprime cette transaction** : l'opération redevient à valider et les soldes du rapprochement sont recalculés. Une fenêtre de confirmation le rappelle. Voir « Remettre une opération rapprochée en cours » dans le « Module États des encours ».
+
 ### Supprimer un virement
 
 Bouton corbeille — **réservé à l'administrateur système**. Désactivé si le virement est déjà Réglé.
@@ -1017,6 +1037,8 @@ Bouton crayon depuis la liste. **Désactivé si déjà Réglé.** Contrairement 
 
 Interrupteur En cours/Réglé dans la liste — **réservé à l'administrateur système**.
 
+> **Retour « en cours » d'une opération déjà rapprochée.** Si la transaction de cette opération figure dans un rapprochement, la remettre « en cours » (ou « prévu ») **supprime cette transaction** : l'opération redevient à valider et les soldes du rapprochement sont recalculés. Une fenêtre de confirmation le rappelle. Voir « Remettre une opération rapprochée en cours » dans le « Module États des encours ».
+
 ### Supprimer un virement international
 
 Bouton corbeille — **réservé à l'administrateur système**. Désactivé si déjà Réglé.
@@ -1059,6 +1081,8 @@ Statuts possibles : **En cours**, **Réglé**, **Annulé**.
 ### Changer le statut d'une mise à disposition
 
 Interrupteur En cours/Réglé dans la liste — **réservé à l'administrateur système**. Désactivé si Annulée.
+
+> **Retour « en cours » d'une opération déjà rapprochée.** Si la transaction de cette opération figure dans un rapprochement, la remettre « en cours » (ou « prévu ») **supprime cette transaction** : l'opération redevient à valider et les soldes du rapprochement sont recalculés. Une fenêtre de confirmation le rappelle. Voir « Remettre une opération rapprochée en cours » dans le « Module États des encours ».
 
 ### Supprimer une mise à disposition
 
@@ -1141,6 +1165,8 @@ Bouton crayon depuis la liste. **Désactivé si le prélèvement est déjà Pay�
 ### Changer le statut d'un prélèvement
 
 Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur système**.
+
+> **Retour « en cours » d'une opération déjà rapprochée.** Si la transaction de cette opération figure dans un rapprochement, la remettre « en cours » (ou « prévu ») **supprime cette transaction** : l'opération redevient à valider et les soldes du rapprochement sont recalculés. Une fenêtre de confirmation le rappelle. Voir « Remettre une opération rapprochée en cours » dans le « Module États des encours ».
 
 ### Supprimer un prélèvement
 
@@ -1249,6 +1275,8 @@ Bouton crayon depuis la liste, accessible quel que soit le statut du frais banca
 
 Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur système**.
 
+> **Retour « en cours » d'une opération déjà rapprochée.** Si la transaction de cette opération figure dans un rapprochement, la remettre « en cours » (ou « prévu ») **supprime cette transaction** : l'opération redevient à valider et les soldes du rapprochement sont recalculés. Une fenêtre de confirmation le rappelle. Voir « Remettre une opération rapprochée en cours » dans le « Module États des encours ».
+
 ### Supprimer un frais bancaire
 
 Bouton corbeille — **réservé à l'administrateur système**. Refusé si le frais bancaire est déjà Payé :
@@ -1318,7 +1346,9 @@ Il est possible de basculer manuellement un agios entre **À payer** et **Payé*
 1. Sur la ligne de l'agios, cliquer sur le bouton de statut (icône en forme de bascule).
 2. Confirmer le changement.
 
-> Cette action est réservée aux corrections manuelles. Pour une validation normale, utiliser la vue **Encours** (voir ci-dessous).
+> Cette action est réservée aux corrections manuelles. Pour une validation normale, utiliser **États des encours → Récapitulatifs**, carte **Agios** (voir « Module États des encours » ci-dessous).
+
+> **Retour « en cours » d'une opération déjà rapprochée.** Si la transaction de cette opération figure dans un rapprochement, la remettre « en cours » (ou « prévu ») **supprime cette transaction** : l'opération redevient à valider et les soldes du rapprochement sont recalculés. Une fenêtre de confirmation le rappelle. Voir « Remettre une opération rapprochée en cours » dans le « Module États des encours ».
 
 ### Supprimer un agios
 
@@ -1430,6 +1460,8 @@ n'est plus modifiable.
 
 Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur système**.
 
+> **Retour « en cours » d'une opération déjà rapprochée.** Si la transaction de cette opération figure dans un rapprochement, la remettre « en cours » (ou « prévu ») **supprime cette transaction** : l'opération redevient à valider et les soldes du rapprochement sont recalculés. Une fenêtre de confirmation le rappelle. Voir « Remettre une opération rapprochée en cours » dans le « Module États des encours ».
+
 ### Supprimer un impôt/taxe
 
 Bouton corbeille — **réservé à l'administrateur système**. **Désactivé si l'impôt/taxe est déjà
@@ -1491,6 +1523,8 @@ recalculée automatiquement sur le nouveau montant.
 ### Changer le statut d'une commission
 
 Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur système**.
+
+> **Retour « en cours » d'une opération déjà rapprochée.** Si la transaction de cette opération figure dans un rapprochement, la remettre « en cours » (ou « prévu ») **supprime cette transaction** : l'opération redevient à valider et les soldes du rapprochement sont recalculés. Une fenêtre de confirmation le rappelle. Voir « Remettre une opération rapprochée en cours » dans le « Module États des encours ».
 
 ### Supprimer une commission
 
@@ -1561,6 +1595,8 @@ suit la même règle qu'à la création (obligatoire selon le motif choisi).
 
 Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur système**.
 
+> **Retour « en cours » d'une opération déjà rapprochée.** Si la transaction de cette opération figure dans un rapprochement, la remettre « en cours » (ou « prévu ») **supprime cette transaction** : l'opération redevient à valider et les soldes du rapprochement sont recalculés. Une fenêtre de confirmation le rappelle. Voir « Remettre une opération rapprochée en cours » dans le « Module États des encours ».
+
 ### Supprimer une impayée
 
 Bouton corbeille — **réservé à l'administrateur système**. Refusé si l'impayée est déjà Payée : une
@@ -1603,6 +1639,8 @@ Bouton crayon depuis la liste, accessible quel que soit le statut de l'opératio
 ### Changer le statut d'une opération erronée
 
 Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur système**.
+
+> **Retour « en cours » d'une opération déjà rapprochée.** Si la transaction de cette opération figure dans un rapprochement, la remettre « en cours » (ou « prévu ») **supprime cette transaction** : l'opération redevient à valider et les soldes du rapprochement sont recalculés. Une fenêtre de confirmation le rappelle. Voir « Remettre une opération rapprochée en cours » dans le « Module États des encours ».
 
 ### Supprimer une opération erronée
 
@@ -1648,6 +1686,8 @@ Bouton crayon depuis la liste, accessible quel que soit le statut de la provisio
 
 Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur système**.
 
+> **Retour « en cours » d'une opération déjà rapprochée.** Si la transaction de cette opération figure dans un rapprochement, la remettre « en cours » (ou « prévu ») **supprime cette transaction** : l'opération redevient à valider et les soldes du rapprochement sont recalculés. Une fenêtre de confirmation le rappelle. Voir « Remettre une opération rapprochée en cours » dans le « Module États des encours ».
+
 ### Supprimer une provision
 
 Bouton corbeille — **réservé à l'administrateur système**. Refusé si la provision est déjà Payée :
@@ -1690,6 +1730,8 @@ Bouton crayon depuis la liste, accessible quel que soit le statut de la restitut
 ### Changer le statut d'une restitution
 
 Interrupteur Prévu/Payé dans la liste — **réservé à l'administrateur système**.
+
+> **Retour « en cours » d'une opération déjà rapprochée.** Si la transaction de cette opération figure dans un rapprochement, la remettre « en cours » (ou « prévu ») **supprime cette transaction** : l'opération redevient à valider et les soldes du rapprochement sont recalculés. Une fenêtre de confirmation le rappelle. Voir « Remettre une opération rapprochée en cours » dans le « Module États des encours ».
 
 ### Supprimer une restitution
 
@@ -1964,6 +2006,15 @@ Dans l'écran **Rapprochement**, deux boutons existent à la fin de chaque trans
 > **Impossible si le rapprochement est clôturé définitivement** : ni modification ni annulation — un
 > message d'erreur l'indique. Tant que la période est En cours ou en Clôture provisoire, ces deux
 > actions sont possibles.
+
+### Remettre une opération rapprochée « en cours » (administrateur système)
+
+Dans la liste de chaque type d'opération (Chèques, Virements, Agios, Commissions, etc., ainsi que les tableaux d'amortissement du leasing et du CMT), l'interrupteur de statut réservé à l'administrateur système permet de corriger un statut à la main.
+
+- **Vers « réglée » / « payé »** : le statut change, sans créer de transaction (correction exceptionnelle).
+- **Vers « en cours » / « prévu »** : une fenêtre de confirmation rappelle que, **si l'opération est rapprochée**, sa transaction sera supprimée et les soldes du rapprochement recalculés. Après confirmation, l'opération redevient à valider (ses dates de valeur et d'opération sont effacées) et réapparaît dans **Récapitulatifs** — exactement comme après la suppression de la transaction dans l'écran **Rapprochement**. Si l'opération n'a pas de transaction (marquée réglée à la main), seul le statut change.
+
+> **Refusé** avec un message d'erreur si le rapprochement est **clôturé définitivement**, ou si plusieurs transactions pointent sur la même opération : dans ce cas, annuler les transactions depuis l'écran **Rapprochement**.
 
 ### Consulter et corriger le rapprochement en cours
 

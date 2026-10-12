@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
+import { AVERTISSEMENT_RETOUR_EN_COURS } from '../../../global/utils/bascule-statut.utils';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { MessageService, ConfirmationService, MenuItem, PrimeTemplate } from 'primeng/api';
 import { CommonModule, DatePipe, DecimalPipe, NgClass } from '@angular/common';
@@ -180,7 +181,7 @@ export class PrelevementListComponent implements OnInit {
    */
   togglePrelevementStatus(prelevement: PrelevementResponseDto) {
     const message = prelevement.status === Status.PAYE
-      ? 'Voulez-vous marquer ce prélèvement comme prévu ?'
+      ? 'Voulez-vous marquer ce prélèvement comme prévu  ?' + ' ' + AVERTISSEMENT_RETOUR_EN_COURS
       : 'Voulez-vous marquer ce prélèvement comme payé ?';
 
     this.confirmationService.confirm({

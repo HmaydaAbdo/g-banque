@@ -1,4 +1,6 @@
 import {Component, OnDestroy, OnInit, ViewChild, inject} from '@angular/core';
+import { AVERTISSEMENT_RETOUR_EN_COURS } from '../../../global/utils/bascule-statut.utils';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import {CommonModule} from '@angular/common';
 import {ActivatedRoute, Router} from '@angular/router';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
@@ -10,7 +12,7 @@ import {ToastModule} from 'primeng/toast';
 import {TagModule} from 'primeng/tag';
 import {TooltipModule} from 'primeng/tooltip';
 import {DropdownModule} from 'primeng/dropdown';
-import {MenuItem, MessageService} from 'primeng/api';
+import {ConfirmationService, MenuItem, MessageService} from 'primeng/api';
 import {ProgressSpinnerModule} from "primeng/progressspinner";
 import {DividerModule} from "primeng/divider";
 import {InputNumberModule} from "primeng/inputnumber";
@@ -49,11 +51,12 @@ import {CalendarModule} from "primeng/calendar";
     InputNumberModule,
     InputSwitchModule,
     RippleModule,
+    ConfirmDialogModule,
     FormsModule,
     BreadcrumbModule,
     CalendarModule
   ],
-  providers: [MessageService]
+  providers: [MessageService, ConfirmationService]
 })
 export class TableauAmortissementComponent implements OnInit, OnDestroy {
 
@@ -78,6 +81,7 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly echeanceCmtService = inject(EcheanceCmtService);
   private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
 
@@ -271,7 +275,24 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
     return this.authService.isSystemAdmin()
   }
 
+  /** Le retour « prévu » d'une échéance payée peut supprimer sa transaction de rapprochement : confirmation explicite. */
   onStatutChange(echeance: EcheanceCMTResponseDto): void {
+    if (echeance.statutPaiement !== StatutEcheanceCMT.PAYE) {
+      this.basculerStatut(echeance);
+      return;
+    }
+    this.confirmationService.confirm({
+      message: 'Voulez-vous remettre cette échéance à « prévu » ? ' + AVERTISSEMENT_RETOUR_EN_COURS,
+      header: 'Confirmation',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Oui',
+      rejectLabel: 'Non',
+      accept: () => this.basculerStatut(echeance),
+      reject: () => this.loadEcheances(this.lastLazyLoadEvent)
+    });
+  }
+
+  private basculerStatut(echeance: EcheanceCMTResponseDto): void {
     this.loading = true; // Set general loading indicator or use a specific one
     this.echeanceCmtService.toggleStatus(echeance.id).pipe(
       finalize(() => {

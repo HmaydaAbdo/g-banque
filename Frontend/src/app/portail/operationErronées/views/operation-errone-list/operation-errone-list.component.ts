@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
+import { AVERTISSEMENT_RETOUR_EN_COURS } from '../../../global/utils/bascule-statut.utils';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { MessageService, ConfirmationService, MenuItem, PrimeTemplate } from 'primeng/api';
 import { CommonModule, DatePipe, DecimalPipe, NgClass, NgFor, NgIf } from '@angular/common';
@@ -243,7 +244,7 @@ export class OperationErroneListComponent implements OnInit {
 
   toggleOperationStatus(operation: OperationErroneResponseDto) {
     const message = operation.status === Status.PAYE
-      ? 'Voulez-vous marquer cette opération erronée comme prévue ?'
+      ? 'Voulez-vous marquer cette opération erronée comme prévue  ?' + ' ' + AVERTISSEMENT_RETOUR_EN_COURS
       : 'Voulez-vous marquer cette opération erronée comme payée ?';
 
     this.confirmationService.confirm({

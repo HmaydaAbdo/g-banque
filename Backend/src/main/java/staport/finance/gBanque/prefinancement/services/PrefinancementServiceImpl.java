@@ -1,5 +1,8 @@
 package staport.finance.gBanque.prefinancement.services;
 
+import java.util.Set;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -86,6 +89,7 @@ public class PrefinancementServiceImpl implements IPrefinancementService {
     private final INatureLigneFonctionnelleService natureLigneFonctionnelleService;
     private final LigneFonctionnelleReader ligneFonctionnelleReader;
     private final StaportPdfReportService staportPdfReportService;
+    private final ReverseTransactionService reverseTransactionService;
 
     public PrefinancementServiceImpl(
             PrefinancementRepository prefinancementRepository,
@@ -95,7 +99,9 @@ public class PrefinancementServiceImpl implements IPrefinancementService {
             LigneFonctionnelleSpecifiqueReader ligneFonctionnelleSpecifiqueReader,
             INatureLigneFonctionnelleService natureLigneFonctionnelleService,
             LigneFonctionnelleReader ligneFonctionnelleReader,
-            StaportPdfReportService staportPdfReportService) {
+            StaportPdfReportService staportPdfReportService,
+            ReverseTransactionService reverseTransactionService) {
+        this.reverseTransactionService = reverseTransactionService;
         this.prefinancementRepository = prefinancementRepository;
         this.marcheService = marcheService;
         this.banqueService = banqueService;
@@ -231,6 +237,12 @@ public class PrefinancementServiceImpl implements IPrefinancementService {
                     return new ResourceNotFoundException("Prefinancement not found with ID: " + id);
                 });
 
+        // Retour « en cours » d'une opération déjà rapprochée : sa transaction est annulée (même effet que l'annulation
+        // de la validation) ; sans transaction liée, la bascule reste libre (correction manuelle).
+        if (prefinancement.getStatus() == Status.PAYE
+                && reverseTransactionService.annulerSiRapproche(Set.of(TransactionSource.PREFINANCEMENT), id).effectuee()) {
+            return prefinancementMapper.toDto(prefinancement);
+        }
         Status existingStatus = prefinancement.getStatus();
         Status newStatus = existingStatus == Status.PAYE ? Status.PREVU : Status.PAYE;
 

@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { AVERTISSEMENT_RETOUR_EN_COURS } from '../../../global/utils/bascule-statut.utils';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -250,7 +251,7 @@ export class PrefinancementsListComponent implements OnInit {
 
   confirmToggleStatus(pref: PrefinancementResponseDTO) {
     this.confirmationService.confirm({
-      message: `Êtes-vous sûr de vouloir changer le statut de ce préfinancement ?`,
+      message: `Êtes-vous sûr de vouloir changer le statut de ce préfinancement ?${pref.status === Status.PAYE ? ' ' + AVERTISSEMENT_RETOUR_EN_COURS : ''}`,
       header: 'Confirmation',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {

@@ -1,4 +1,5 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
+import { AVERTISSEMENT_RETOUR_EN_COURS } from '../../../global/utils/bascule-statut.utils';
 import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
 import {ConfirmationService, MenuItem, MessageService, PrimeTemplate} from 'primeng/api';
 import {CommonModule, DatePipe, DecimalPipe, NgClass, NgFor, NgIf} from '@angular/common';
@@ -227,7 +228,7 @@ export class CommissionListComponent implements OnInit {
 
   toggleCommissionStatus(commission: CommissionResponseDto): void {
     const message = commission.status === Status.PAYE
-      ? 'Voulez-vous marquer cette commission comme prévu ?'
+      ? 'Voulez-vous marquer cette commission comme prévu  ?' + ' ' + AVERTISSEMENT_RETOUR_EN_COURS
       : 'Voulez-vous marquer cette commission comme payée ?';
 
     this.confirmationService.confirm({

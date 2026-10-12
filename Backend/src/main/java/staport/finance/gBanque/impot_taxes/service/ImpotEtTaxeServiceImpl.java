@@ -1,5 +1,8 @@
 package staport.finance.gBanque.impot_taxes.service;
 
+import java.util.Set;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -88,12 +91,15 @@ public class ImpotEtTaxeServiceImpl implements IImpotEtTaxeService {
     /** @Lazy : casse le cycle de bean avec CommissionService, qui injecte IImpotEtTaxeService en retour. */
     private final ICommissionService commissionService;
     private final StaportPdfReportService staportPdfReportService;
+    private final ReverseTransactionService reverseTransactionService;
 
     public ImpotEtTaxeServiceImpl(ImpotEtTaxeRepository impotEtTaxeRepository,
                               IBanqueService banqueService,
                               ImpotEtTaxeMapper impotEtTaxeMapper,
                               @Lazy ICommissionService commissionService,
-                              StaportPdfReportService staportPdfReportService) {
+                              StaportPdfReportService staportPdfReportService,
+                              ReverseTransactionService reverseTransactionService) {
+        this.reverseTransactionService = reverseTransactionService;
         this.impotEtTaxeRepository = impotEtTaxeRepository;
         this.banqueService = banqueService;
         this.impotEtTaxeMapper = impotEtTaxeMapper;
@@ -429,6 +435,12 @@ public class ImpotEtTaxeServiceImpl implements IImpotEtTaxeService {
         ImpotEtTaxe impotEtTaxe = impotEtTaxeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Impôt/taxe introuvable avec l'id: " + id));
 
+        // Retour « en cours » d'une opération déjà rapprochée : sa transaction est annulée (même effet que l'annulation
+        // de la validation) ; sans transaction liée, la bascule reste libre (correction manuelle).
+        if (impotEtTaxe.getStatus() == Status.PAYE
+                && reverseTransactionService.annulerSiRapproche(Set.of(TransactionSource.IMPOT_TAXE), id).effectuee()) {
+            return impotEtTaxeMapper.toDto(impotEtTaxe);
+        }
         Status oldStatus = impotEtTaxe.getStatus();
         Status newStatus = (oldStatus == Status.PAYE) ? Status.PREVU : Status.PAYE;
 

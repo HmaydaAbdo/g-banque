@@ -1,4 +1,5 @@
 import {Component, inject, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import { AVERTISSEMENT_RETOUR_EN_COURS } from '../../../global/utils/bascule-statut.utils';
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import {Button} from "primeng/button";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
@@ -248,7 +249,7 @@ export class LcnEncaissementsListComponent implements OnInit, OnDestroy {
     const resync = () => sw.writeValue(lcn.statut === StatutMoyenPaiement.ENCOURS);
     const toRegle = lcn.statut === StatutMoyenPaiement.ENCOURS;
     this.confirmationService.confirm({
-      message: `Êtes-vous sûr de vouloir ${toRegle ? 'régler' : 'remettre en cours'} le LCN ID ${lcn.id} ?`,
+      message: `Êtes-vous sûr de vouloir ${toRegle ? 'régler' : 'remettre en cours'} le LCN ID ${lcn.id} ?${toRegle ? '' : ' ' + AVERTISSEMENT_RETOUR_EN_COURS}`,
       header: 'Confirmation',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Oui',

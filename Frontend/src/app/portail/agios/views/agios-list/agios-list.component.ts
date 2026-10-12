@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, ViewChild } from '@angular/core';
+import { AVERTISSEMENT_RETOUR_EN_COURS } from '../../../global/utils/bascule-statut.utils';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ConfirmationService, MenuItem, MessageService, PrimeTemplate } from 'primeng/api';
 import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
@@ -221,7 +222,7 @@ export class AgiosListComponent implements OnInit {
 
   toggleAgiosStatus(agios: AgiosResponseDto): void {
     const message = agios.status === Status.PAYE
-      ? 'Voulez-vous marquer cet agios comme prévu ?'
+      ? 'Voulez-vous marquer cet agios comme prévu  ?' + ' ' + AVERTISSEMENT_RETOUR_EN_COURS
       : 'Voulez-vous marquer cet agios comme payé ?';
 
     this.confirmationService.confirm({

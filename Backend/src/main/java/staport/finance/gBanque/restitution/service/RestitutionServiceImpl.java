@@ -1,5 +1,8 @@
 package staport.finance.gBanque.restitution.service;
 
+import java.util.Set;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
@@ -56,9 +59,12 @@ public class RestitutionServiceImpl implements IRestitutionService {
     private final IBanqueService banqueService;
     private final RestitutionMapper restitutionMapper;
     private final StaportPdfReportService staportPdfReportService;
+    private final ReverseTransactionService reverseTransactionService;
 
     public RestitutionServiceImpl(RestitutionRepository restitutionRepository, IBanqueService banqueService,
-                                   RestitutionMapper restitutionMapper, StaportPdfReportService staportPdfReportService) {
+                                   RestitutionMapper restitutionMapper, StaportPdfReportService staportPdfReportService,
+                                   ReverseTransactionService reverseTransactionService) {
+        this.reverseTransactionService = reverseTransactionService;
         this.restitutionRepository = restitutionRepository;
         this.banqueService = banqueService;
         this.restitutionMapper = restitutionMapper;
@@ -159,6 +165,12 @@ public class RestitutionServiceImpl implements IRestitutionService {
         Restitution restitution = restitutionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Restitution introuvable avec l'id: " + id));
 
+        // Retour « en cours » d'une opération déjà rapprochée : sa transaction est annulée (même effet que l'annulation
+        // de la validation) ; sans transaction liée, la bascule reste libre (correction manuelle).
+        if (restitution.getStatus() == Status.PAYE
+                && reverseTransactionService.annulerSiRapproche(Set.of(TransactionSource.RESTITUTION), id).effectuee()) {
+            return restitutionMapper.toResponseDto(restitution);
+        }
         Status oldStatus = restitution.getStatus();
         Status newStatus = oldStatus == Status.PAYE ? Status.PREVU : Status.PAYE;
 

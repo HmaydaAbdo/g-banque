@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
+import { AVERTISSEMENT_RETOUR_EN_COURS } from '../../../global/utils/bascule-statut.utils';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { MessageService, ConfirmationService, MenuItem } from 'primeng/api';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
@@ -210,7 +211,7 @@ export class RestitutionListComponent implements OnInit {
 
   toggleRestitutionStatus(restitution: RestitutionResponseDto) {
     this.confirmationService.confirm({
-      message: 'Modifier le statut de cette restitution ?',
+      message: 'Modifier le statut de cette restitution ?' + (restitution.status === Status.PAYE ? ' ' + AVERTISSEMENT_RETOUR_EN_COURS : ''),
       header: 'Confirmation',
       icon: 'pi pi-info-circle',
       accept: () => {

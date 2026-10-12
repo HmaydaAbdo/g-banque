@@ -1,4 +1,5 @@
 import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import { AVERTISSEMENT_RETOUR_EN_COURS } from '../../../global/utils/bascule-statut.utils';
 import {Subscription} from 'rxjs';
 import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
@@ -229,7 +230,7 @@ export class MiseADispositionDecaissementListComponent implements OnInit, OnDest
     const resync = () => sw.writeValue(mad.statut === StatutMoyenPaiement.ENCOURS);
     const toRegle = mad.statut === StatutMoyenPaiement.ENCOURS;
     this.confirmationService.confirm({
-      message: `Êtes-vous sûr de vouloir ${toRegle ? 'régler' : 'remettre en cours'} la mise à disposition N° ${mad.numero} ?`,
+      message: `Êtes-vous sûr de vouloir ${toRegle ? 'régler' : 'remettre en cours'} la mise à disposition N° ${mad.numero} ?${toRegle ? '' : ' ' + AVERTISSEMENT_RETOUR_EN_COURS}`,
       header: 'Confirmation',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Oui',

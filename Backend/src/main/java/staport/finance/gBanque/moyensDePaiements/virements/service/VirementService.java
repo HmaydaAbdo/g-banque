@@ -1,5 +1,8 @@
 package staport.finance.gBanque.moyensDePaiements.virements.service;
 
+import java.util.Set;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -52,10 +55,13 @@ public class VirementService {
     private final VirementMapper virementMapper;
     private final VirementMetrics virementMetrics;
     private final StaportPdfReportService staportPdfReportService;
+    private final ReverseTransactionService reverseTransactionService;
 
     public VirementService(VirementRepository virementRepository, IBanqueService banqueService,
                             VirementMapper virementMapper, VirementMetrics virementMetrics,
-                            StaportPdfReportService staportPdfReportService) {
+                            StaportPdfReportService staportPdfReportService,
+                            ReverseTransactionService reverseTransactionService) {
+        this.reverseTransactionService = reverseTransactionService;
         this.virementRepository = virementRepository;
         this.banqueService = banqueService;
         this.virementMapper = virementMapper;
@@ -152,6 +158,12 @@ public class VirementService {
         if (virement.getStatut() == StatutMoyenPaiement.ANNULE) {
             log.warn("Tentative de basculement du statut d'un virement annulé, ID={}", id);
             throw new VirementBusinessException("Impossible de basculer le statut d'un virement annulé (ID=" + id + ").");
+        }
+        // Retour « en cours » d'une opération déjà rapprochée : sa transaction est annulée (même effet que l'annulation
+        // de la validation) ; sans transaction liée, la bascule reste libre (correction manuelle).
+        if (virement.getStatut() == StatutMoyenPaiement.REGLE
+                && reverseTransactionService.annulerSiRapproche(Set.of(TransactionSource.Virement), id).effectuee()) {
+            return toDto(virement);
         }
         virement.setStatut(virement.getStatut() == StatutMoyenPaiement.ENCOURS ? StatutMoyenPaiement.REGLE : StatutMoyenPaiement.ENCOURS);
         virement = virementRepository.save(virement);

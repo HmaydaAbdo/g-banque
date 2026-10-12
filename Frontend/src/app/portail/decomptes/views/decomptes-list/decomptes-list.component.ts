@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { AVERTISSEMENT_RETOUR_EN_COURS } from '../../../global/utils/bascule-statut.utils';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -225,6 +226,23 @@ export class DecomptesListComponent implements OnInit {
       error: () => {
         this.exporting = false;
       }
+    });
+  }
+
+  /** Le retour « prévu » d'un décompte payé peut supprimer sa transaction : confirmation explicite. */
+  confirmToggleStatus(decompte: DecompteResponseDto) {
+    if (decompte.status !== Status.PAYE) {
+      this.toggleStatus(decompte);
+      return;
+    }
+    this.confirmationService.confirm({
+      message: 'Voulez-vous marquer ce décompte comme prévu ? ' + AVERTISSEMENT_RETOUR_EN_COURS,
+      header: 'Confirmation',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Oui',
+      rejectLabel: 'Non',
+      accept: () => this.toggleStatus(decompte),
+      reject: () => this.table.reset()
     });
   }
 

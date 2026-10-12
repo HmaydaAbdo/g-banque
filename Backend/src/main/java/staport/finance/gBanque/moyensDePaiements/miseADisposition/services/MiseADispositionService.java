@@ -1,5 +1,8 @@
 package staport.finance.gBanque.moyensDePaiements.miseADisposition.services;
 
+import java.util.Set;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -50,10 +53,13 @@ public class MiseADispositionService {
     private final MiseADispositionMapper miseADispositionMapper;
     private final MiseADispositionMetrics miseADispositionMetrics;
     private final StaportPdfReportService staportPdfReportService;
+    private final ReverseTransactionService reverseTransactionService;
 
     public MiseADispositionService(MiseADispositionRepository miseADispositionRepository,
                                     MiseADispositionMapper miseADispositionMapper, MiseADispositionMetrics miseADispositionMetrics,
-                                    StaportPdfReportService staportPdfReportService) {
+                                    StaportPdfReportService staportPdfReportService,
+                                    ReverseTransactionService reverseTransactionService) {
+        this.reverseTransactionService = reverseTransactionService;
         this.miseADispositionRepository = miseADispositionRepository;
         this.miseADispositionMapper = miseADispositionMapper;
         this.miseADispositionMetrics = miseADispositionMetrics;
@@ -88,6 +94,12 @@ public class MiseADispositionService {
         if (miseADisposition.getStatut() == StatutMoyenPaiement.ANNULE) {
             log.warn("Tentative de basculement du statut d'une mise à disposition annulée, ID={}", id);
             throw new MiseADispositionBusinessException("Impossible de basculer le statut d'une mise à disposition annulée (ID=" + id + ").");
+        }
+        // Retour « en cours » d'une opération déjà rapprochée : sa transaction est annulée (même effet que l'annulation
+        // de la validation) ; sans transaction liée, la bascule reste libre (correction manuelle).
+        if (miseADisposition.getStatut() == StatutMoyenPaiement.REGLE
+                && reverseTransactionService.annulerSiRapproche(Set.of(TransactionSource.MiseADisposition), id).effectuee()) {
+            return toDto(miseADisposition);
         }
         miseADisposition.setStatut(miseADisposition.getStatut() == StatutMoyenPaiement.ENCOURS ? StatutMoyenPaiement.REGLE : StatutMoyenPaiement.ENCOURS);
         miseADisposition = miseADispositionRepository.save(miseADisposition);

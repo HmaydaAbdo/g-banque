@@ -1,5 +1,8 @@
 package staport.finance.gBanque.decomptes.service;
 
+import java.util.Set;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -70,10 +73,13 @@ public class DecompteServiceImpl implements IDecompteService {
     private final IMarcheService marcheService;
     private final IBanqueService banqueService;
     private final StaportPdfReportService staportPdfReportService;
+    private final ReverseTransactionService reverseTransactionService;
 
     public DecompteServiceImpl(DecompteRepository decompteRepository, DecompteMapper decompteMapper,
                                 IMarcheService marcheService, IBanqueService banqueService,
-                                StaportPdfReportService staportPdfReportService) {
+                                StaportPdfReportService staportPdfReportService,
+                                ReverseTransactionService reverseTransactionService) {
+        this.reverseTransactionService = reverseTransactionService;
         this.decompteRepository = decompteRepository;
         this.decompteMapper = decompteMapper;
         this.marcheService = marcheService;
@@ -208,6 +214,12 @@ public class DecompteServiceImpl implements IDecompteService {
                     return new ResourceNotFoundException("Décompte non trouvé avec l'ID: " + id);
                 });
 
+        // Retour « en cours » d'une opération déjà rapprochée : sa transaction est annulée (même effet que l'annulation
+        // de la validation) ; sans transaction liée, la bascule reste libre (correction manuelle).
+        if (decompte.getStatus() == Status.PAYE
+                && reverseTransactionService.annulerSiRapproche(Set.of(TransactionSource.DECOMPTES), id).effectuee()) {
+            return decompteMapper.toDto(decompte);
+        }
         Status existingStatus = decompte.getStatus();
         Status newStatus = existingStatus == Status.PAYE ? Status.PREVU : Status.PAYE;
 

@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { AVERTISSEMENT_RETOUR_EN_COURS } from '../../../global/utils/bascule-statut.utils';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { MessageService, ConfirmationService, MenuItem, PrimeTemplate } from 'primeng/api';
 import { CommonModule, DatePipe, DecimalPipe, NgClass } from '@angular/common';
@@ -253,7 +254,7 @@ export class ImpotEtTaxeListComponent implements OnInit {
 
   toggleStatus(impotEtTaxe: ImpotEtTaxeResponseDto) {
     const message = impotEtTaxe.status === Status.PAYE
-      ? 'Voulez-vous marquer cet impôt comme prévu ?'
+      ? 'Voulez-vous marquer cet impôt comme prévu  ?' + ' ' + AVERTISSEMENT_RETOUR_EN_COURS
       : 'Voulez-vous marquer cet impôt comme payé ?';
 
     this.confirmationService.confirm({

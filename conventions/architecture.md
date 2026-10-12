@@ -250,6 +250,14 @@ seulement d'ajouter une implémentation de `TransactionReversalHandler` dans le 
 source (migration du 19/09/2026 : remplace un `switch` de 20 cas et une vingtaine de repositories
 injectés directement dans le service).
 
+**Retour « en cours » manuel (bascule de statut).** Les ~20 méthodes `toggle…Status` (administrateur système) ne basculent jamais
+l'état d'une opération déjà rapprochée sans traiter sa transaction : avant de repasser `REGLE`/`PAYE` à `ENCOURS`/`PREVU`, elles appellent
+`ReverseTransactionService.annulerSiRapproche(sources, id)` — un seul point d'entrée, qui retrouve la transaction par
+`(transactionSource, referent)`, la supprime par le même chemin que l'annulation (handler de la source, cascade des soldes, audit) et
+refuse si le rapprochement est définitivement clôturé ou si plusieurs transactions pointent sur l'opération. Sans transaction liée,
+la bascule reste libre. Toute nouvelle méthode de bascule de statut d'une source qui produit des transactions doit appeler ce point d'entrée
+(les types qui n'ont pas de handler d'annulation n'ont pas de transaction à traiter).
+
 ---
 
 ## Règle 2 — Synchronisation Transaction ↔ Entité source

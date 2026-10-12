@@ -7,6 +7,7 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
+import { AVERTISSEMENT_RETOUR_EN_COURS } from '../../../global/utils/bascule-statut.utils';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {CommonModule, CurrencyPipe, DatePipe, DecimalPipe} from '@angular/common';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
@@ -358,7 +359,7 @@ export class TvaCautionListComponent implements OnInit {
     this.confirmationService.confirm({
       message: versPaye
         ? `Marquer la TVA <strong>${libelleEchappe}</strong> comme payée ?`
-        : `Repasser la TVA <strong>${libelleEchappe}</strong> en prévu ?`,
+        : `Repasser la TVA <strong>${libelleEchappe}</strong> en prévu ? ${AVERTISSEMENT_RETOUR_EN_COURS}`,
       header: 'Confirmer',
       icon: 'pi pi-info-circle',
       acceptLabel: versPaye ? 'Marquer payée' : 'Repasser en prévu',

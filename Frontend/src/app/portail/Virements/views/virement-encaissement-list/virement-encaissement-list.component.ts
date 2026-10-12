@@ -1,4 +1,5 @@
 import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import { AVERTISSEMENT_RETOUR_EN_COURS } from '../../../global/utils/bascule-statut.utils';
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import {Button, ButtonDirective} from "primeng/button";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
@@ -226,7 +227,7 @@ export class VirementEncaissementListComponent implements OnInit, OnDestroy {
     const resync = () => sw.writeValue(virement.statut === StatutMoyenPaiement.ENCOURS);
     const toRegle = virement.statut === StatutMoyenPaiement.ENCOURS;
     this.confirmationService.confirm({
-      message: `Êtes-vous sûr de vouloir ${toRegle ? 'régler' : 'remettre en cours'} le virement ID ${virement.id} ?`,
+      message: `Êtes-vous sûr de vouloir ${toRegle ? 'régler' : 'remettre en cours'} le virement ID ${virement.id} ?${toRegle ? '' : ' ' + AVERTISSEMENT_RETOUR_EN_COURS}`,
       header: 'Confirmation',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Oui',

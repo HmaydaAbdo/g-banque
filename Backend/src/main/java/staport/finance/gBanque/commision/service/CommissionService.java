@@ -1,6 +1,8 @@
 package staport.finance.gBanque.commision.service;
 
 
+import java.util.Set;
+import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -74,6 +76,7 @@ public class CommissionService implements ICommissionService {
     private final ICommissionConfigService  commissionConfigService;
     private final INatureLigneFonctionnelleService natureService;
     private final StaportPdfReportService   staportPdfReportService;
+    private final ReverseTransactionService reverseTransactionService;
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -83,7 +86,9 @@ public class CommissionService implements ICommissionService {
                              IImpotEtTaxeService impotEtTaxeService,
                              ICommissionConfigService commissionConfigService,
                              INatureLigneFonctionnelleService natureService,
-                             StaportPdfReportService staportPdfReportService) {
+                             StaportPdfReportService staportPdfReportService,
+                             ReverseTransactionService reverseTransactionService) {
+        this.reverseTransactionService = reverseTransactionService;
         this.commissionRepository   = commissionRepository;
         this.banqueService          = banqueService;
         this.commissionMapper       = commissionMapper;
@@ -559,6 +564,12 @@ public class CommissionService implements ICommissionService {
                 });
 
         log.info("Commission avec l'id {} trouvée. Statut actuel : {}", commissionId, commission.getStatus());
+        // Retour « en cours » d'une opération déjà rapprochée : sa transaction est annulée (même effet que l'annulation
+        // de la validation) ; sans transaction liée, la bascule reste libre (correction manuelle).
+        if (commission.getStatus() == Status.PAYE
+                && reverseTransactionService.annulerSiRapproche(Set.of(TransactionSource.COMMISSION), commissionId).effectuee()) {
+            return;
+        }
         commission.setStatus(commission.getStatus() == Status.PAYE ? Status.PREVU : Status.PAYE);
 
         log.info("Statut de la commission avec l'id {} mis à jour. Nouveau statut : {}", commissionId, commission.getStatus());

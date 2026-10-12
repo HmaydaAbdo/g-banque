@@ -5,11 +5,16 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import staport.finance.gBanque.transactions.entities.Transaction;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long>, JpaSpecificationExecutor<Transaction> {
+
+    /** Transactions de rapprochement issues de l'opération source {@code referent} (une seule en situation normale). */
+    List<Transaction> findByTransactionSourceInAndReferent(Collection<TransactionSource> sources, Long referent);
 
     /**
      * Computes the live balance for a bank account:

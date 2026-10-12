@@ -1,6 +1,9 @@
 package staport.finance.gBanque.cmt.echeances.services;
 
 
+import java.util.Set;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import com.lowagie.text.Chunk;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.Element;
@@ -64,10 +67,13 @@ public class EcheanceCMTService implements IEcheanceCMTService {
     private final EcheanceCMTRepository echeanceCmtRepository;
     private final EcheanceCMTMapper echeanceCmtMapper;
     private final StaportPdfReportService staportPdfReportService;
+    private final ReverseTransactionService reverseTransactionService;
 
     public EcheanceCMTService(EcheanceCMTRepository echeanceCmtRepository,
                               EcheanceCMTMapper echeanceCmtMapper,
-                              StaportPdfReportService staportPdfReportService) {
+                              StaportPdfReportService staportPdfReportService,
+                              ReverseTransactionService reverseTransactionService) {
+        this.reverseTransactionService = reverseTransactionService;
         this.echeanceCmtRepository = echeanceCmtRepository;
         this.echeanceCmtMapper = echeanceCmtMapper;
         this.staportPdfReportService = staportPdfReportService;
@@ -117,6 +123,12 @@ public class EcheanceCMTService implements IEcheanceCMTService {
         EcheanceCMT echeance = echeanceCmtRepository.findById(echeanceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Echeance avec l'ID " + echeanceId + " introuvable."));
 
+        // Retour « en cours » d'une opération déjà rapprochée : sa transaction est annulée (même effet que l'annulation
+        // de la validation) ; sans transaction liée, la bascule reste libre (correction manuelle).
+        if (echeance.getStatutPaiement() == StatutEcheanceCMT.PAYE
+                && reverseTransactionService.annulerSiRapproche(Set.of(TransactionSource.CMT), echeanceId).effectuee()) {
+            return echeanceCmtMapper.toResponseDto(echeance);
+        }
         StatutEcheanceCMT newStatus = echeance.getStatutPaiement() == StatutEcheanceCMT.PAYE
                 ? StatutEcheanceCMT.PREVU
                 : StatutEcheanceCMT.PAYE;

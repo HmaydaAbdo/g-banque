@@ -6,9 +6,12 @@
 
 Serveur Windows, dossier `C:\apps\G-Banque` (`docker-compose.yml` + `.env`, images Docker Hub `:latest`).
 **Fait le 10/10/2026 :** ancienne stack MySQL arrêtée (données MySQL conservées pour retour arrière), base PostgreSQL
-restaurée depuis la sauvegarde locale du 10/10 (export de production de 04h12 migré) : Flyway en version 2,
-5 713 transactions, 5 621 commissions, 3 utilisateurs. Base passée dans le volume nommé `gbanque-postgres-data`,
-contrôle conforme (104 tables, 2 vues, Flyway 2, 55 407 lignes).
+restaurée depuis la sauvegarde du 10/10 et passée dans le volume nommé `gbanque-postgres-data` (contrôle conforme : 104 tables,
+2 vues, Flyway 2, 55 407 lignes).
+
+**Prochain déploiement (images `:latest` du 11/10/2026 et suivantes).** Le backend applique au démarrage les migrations **V3** (transaction
+4956 réaffectée à l'opération erronée 12), **V4** (`rapprochement.date_rapprochement` en vraie date) et **V5** (dates du virement 1814).
+Vérifier d'abord la sauvegarde du jour (`./backups/postgres`), puis dans les logs : « Successfully applied … now at version v5 ».
 
 **Reste à faire :**
 1. Supprimer sur le serveur l'ancien dossier `docker-data\postgres` et `gbanque-init.sql.gz` (contrôle du volume validé).
@@ -57,8 +60,10 @@ Ensuite seulement : en-tête `Strict-Transport-Security`, et cadrer une CSP ngin
 
 ### Chantier — Stratégie de tests, tous niveaux, tous modules (demandé le 09/10/2026)
 
-État au 10/10/2026 : backend 9 tests (contexte + 8 tests de session), frontend 72 tests verts (couverture lignes ~37 %,
-surtout des tests « should create »). Le schéma de test est construit par Flyway et validé par Hibernate.
+État au 11/10/2026 : backend ~100 tests (session, migrations V4 et V5, 404, génération PDF, commission « Importation », et la
+bascule de statut sur 19 types d'opération × 4 scénarios) ; frontend 72 tests verts (couverture lignes ~37 %, surtout des tests
+« should create »). Le schéma de test est construit par Flyway et validé par Hibernate. Reste notamment : tests de la bascule des échéances
+de leasing et de CMT (graphe de dépendances lourd à fabriquer), `@PreAuthorize` (allowed/denied) de chaque contrôleur, calculs financiers.
 
 1. Écrire les tests **de tous les niveaux pour tous les modules**, backend et frontend, selon `conventions/testing.md`
    (unitaire, intégration, composant, bout en bout), module par module dans l'ordre du chapitrage de la doc :
@@ -187,20 +192,6 @@ Le code (20 sources, ~30 écrans, modal de lot) est terminé et le build de prod
 **Reste à faire par HMAYDA :** un test fonctionnel bout-en-bout d'au moins une source par famille de comportement
 (XOR strict taux/montant, TVA optionnelle CMT/Leasing, saisie en lot interdite). Détail : historique git et mémoire
 `project_gbanque_tva_saisie_libre`.
-
-### Bascule du statut — retour « en cours » d'un élément déjà rapproché (décision HMAYDA du 11/10/2026, à confirmer avant le code)
-
-**État des données (copie de production du 10/10/2026).** Le virement 1814 est `REGLE` ; ses dates vides sont reprises de la
-transaction 250 par la migration V5 (faite le 11/10/2026). Aucun autre écart sur 7 types de moyens de paiement.
-
-**Cause.** Une quarantaine de méthodes `toggle…Status` (un par type d'opération) bascule `REGLE`/`ENCOURS` (ou `PAYE`/`PREVU`)
-sans regarder si une transaction de rapprochement pointe sur l'élément.
-
-**Décision.** Garde-fou pour tous les types (un seul contrôle partagé). HMAYDA propose que, pour l'administrateur système, le retour
-`REGLE` → `ENCOURS` d'un élément **rapproché** supprime la transaction liée et remette l'élément « en cours » (au lieu de refuser).
-Points à confirmer avec lui avant de coder : confirmation explicite à l'écran (montant, rapprochement concerné), refus si le
-rapprochement est clôturé définitivement, recalcul des soldes en cascade, audit de la suppression ; l'élément sans transaction
-(`REGLE` posé à la main) garde la bascule libre. Puis documenter (`docs/modules`, `docs/guide-utilisateur`, `docs/rbac`).
 
 ### Refonte visuelle — écrans États des encours (reporté le 20/09/2026)
 

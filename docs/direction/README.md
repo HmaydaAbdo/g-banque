@@ -1015,7 +1015,8 @@ opérations en attente d'une banque donnée, quel que soit leur type d'origine.
   chaque carte et dans les indicateurs globaux, pour qu'aucune échéance ne passe inaperçue.
 - **Corrections maîtrisées après validation** : une transaction validée peut être corrigée ou annulée
   tant que le mois n'est pas définitivement clôturé ; l'opération d'origine reste toujours cohérente
-  avec la transaction, sans ressaisie.
+  avec la transaction, sans ressaisie. Le retour « en cours » manuel d'une opération rapprochée (réservé à l'administrateur système)
+  supprime proprement sa transaction : plus aucune opération « en cours » ne reste liée à une écriture bancaire.
 - **Prévisionnel et réalisé jamais confondus** : chaque écran indique explicitement s'il présente
   des opérations *attendues* (pas encore passées en banque) ou *réalisées* (déjà passées sur le
   compte). Les totaux de chaque nature sont affichés là où ils sont produits, et nulle part

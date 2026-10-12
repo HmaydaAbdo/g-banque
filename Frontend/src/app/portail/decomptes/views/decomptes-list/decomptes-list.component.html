@@ -184,7 +184,7 @@
             <div class="flex gap-2 align-items-center justify-content-center">
               @if (isAdmin) {
                 <p-inputSwitch [ngModel]="d.status === Status.PAYE"
-                               (onChange)="toggleStatus(d)"
+                               (onChange)="confirmToggleStatus(d)"
                                pTooltip="Changer statut"></p-inputSwitch>
               }
               <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary"

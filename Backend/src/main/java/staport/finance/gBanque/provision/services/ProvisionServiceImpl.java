@@ -1,5 +1,8 @@
 package staport.finance.gBanque.provision.services;
 
+import java.util.Set;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -55,11 +58,14 @@ public class ProvisionServiceImpl implements IProvisionService {
     private final IBanqueService banqueService;
     private final ProvisionMapper provisionMapper;
     private final StaportPdfReportService staportPdfReportService;
+    private final ReverseTransactionService reverseTransactionService;
 
     public ProvisionServiceImpl(ProvisionRepository provisionRepository,
                                  IBanqueService banqueService,
                                  ProvisionMapper provisionMapper,
-                                 StaportPdfReportService staportPdfReportService) {
+                                 StaportPdfReportService staportPdfReportService,
+                                 ReverseTransactionService reverseTransactionService) {
+        this.reverseTransactionService = reverseTransactionService;
         this.provisionRepository = provisionRepository;
         this.banqueService = banqueService;
         this.provisionMapper = provisionMapper;
@@ -164,6 +170,12 @@ public class ProvisionServiceImpl implements IProvisionService {
         Provision provision = provisionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Provision non trouvée avec l'ID: " + id));
 
+        // Retour « en cours » d'une opération déjà rapprochée : sa transaction est annulée (même effet que l'annulation
+        // de la validation) ; sans transaction liée, la bascule reste libre (correction manuelle).
+        if (provision.getStatus() == Status.PAYE
+                && reverseTransactionService.annulerSiRapproche(Set.of(TransactionSource.PROVISION), id).effectuee()) {
+            return provisionMapper.toResponseDto(provision);
+        }
         Status oldStatus = provision.getStatus();
         Status newStatus = oldStatus == Status.PAYE ? Status.PREVU : Status.PAYE;
 

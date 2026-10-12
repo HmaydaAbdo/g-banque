@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { AVERTISSEMENT_RETOUR_EN_COURS } from '../../../global/utils/bascule-statut.utils';
 import { CommonModule, DatePipe, DecimalPipe } from "@angular/common";
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from "@angular/forms";
 import { RouterLink } from '@angular/router';
@@ -210,7 +211,7 @@ export class DroitConstateListComponent implements OnInit {
   confirmToggleStatus(dc: DroitConstateResponseDto){
     const toPrevu = dc.status === Status.PAYE;
     this.confirmationService.confirm({
-      message: `Êtes-vous sûr de vouloir marquer ce droit constaté comme ${toPrevu ? 'prévu' : 'payé'} ?`,
+      message: `Êtes-vous sûr de vouloir marquer ce droit constaté comme ${toPrevu ? 'prévu' : 'payé'} ?${toPrevu ? ' ' + AVERTISSEMENT_RETOUR_EN_COURS : ''}`,
       header: 'Confirmation',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Oui',

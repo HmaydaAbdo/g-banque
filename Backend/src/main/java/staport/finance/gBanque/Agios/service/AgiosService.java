@@ -1,5 +1,8 @@
 package staport.finance.gBanque.Agios.service;
 
+import java.util.Set;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import com.lowagie.text.Chunk;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.Element;
@@ -57,11 +60,14 @@ public class AgiosService implements IAgiosService {
     private final IBanqueService banqueService;
     private final AgiosMapper agiosMapper;
     private final StaportPdfReportService staportPdfReportService;
+    private final ReverseTransactionService reverseTransactionService;
 
     public AgiosService(AgiosRepository agiosRepository,
                         IBanqueService banqueService,
                         AgiosMapper agiosMapper,
-                        StaportPdfReportService staportPdfReportService) {
+                        StaportPdfReportService staportPdfReportService,
+                        ReverseTransactionService reverseTransactionService) {
+        this.reverseTransactionService = reverseTransactionService;
         this.agiosRepository = agiosRepository;
         this.banqueService   = banqueService;
         this.agiosMapper     = agiosMapper;
@@ -170,6 +176,12 @@ public class AgiosService implements IAgiosService {
         log.info("Basculement du statut de l'agios — id: {}", id);
 
         Agios agios     = findAgiosOuLeverException(id);
+        // Retour « en cours » d'une opération déjà rapprochée : sa transaction est annulée (même effet que l'annulation
+        // de la validation) ; sans transaction liée, la bascule reste libre (correction manuelle).
+        if (agios.getStatus() == Status.PAYE
+                && reverseTransactionService.annulerSiRapproche(Set.of(TransactionSource.AGIOS), id).effectuee()) {
+            return agiosMapper.toResponseDto(agios);
+        }
         Status newStatus = agios.getStatus() == Status.PAYE ? Status.PREVU : Status.PAYE;
         agios.setStatus(newStatus);
 

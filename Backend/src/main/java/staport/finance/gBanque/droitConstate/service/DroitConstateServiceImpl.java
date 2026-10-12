@@ -1,5 +1,8 @@
 package staport.finance.gBanque.droitConstate.service;
 
+import java.util.Set;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -81,6 +84,7 @@ public class DroitConstateServiceImpl implements IDroitConstateService {
     private final LigneFonctionnelleSpecifiqueReader ligneFonctionnelleSpecifiqueReader;
     private final LigneFonctionnelleReader ligneFonctionnelleReader;
     private final StaportPdfReportService staportPdfReportService;
+    private final ReverseTransactionService reverseTransactionService;
 
     public DroitConstateServiceImpl(DroitConstateRepository droitConstateRepository,
                                      DroitConstateMapper droitConstateMapper,
@@ -89,7 +93,9 @@ public class DroitConstateServiceImpl implements IDroitConstateService {
                                      INatureLigneFonctionnelleService natureLigneFonctionnelleService,
                                      LigneFonctionnelleSpecifiqueReader ligneFonctionnelleSpecifiqueReader,
                                      LigneFonctionnelleReader ligneFonctionnelleReader,
-                                     StaportPdfReportService staportPdfReportService) {
+                                     StaportPdfReportService staportPdfReportService,
+                                     ReverseTransactionService reverseTransactionService) {
+        this.reverseTransactionService = reverseTransactionService;
         this.droitConstateRepository = droitConstateRepository;
         this.droitConstateMapper = droitConstateMapper;
         this.marcheService = marcheService;
@@ -228,6 +234,12 @@ public class DroitConstateServiceImpl implements IDroitConstateService {
                     return new ResourceNotFoundException("Droit constate not found with ID: " + id);
                 });
 
+        // Retour « en cours » d'une opération déjà rapprochée : sa transaction est annulée (même effet que l'annulation
+        // de la validation) ; sans transaction liée, la bascule reste libre (correction manuelle).
+        if (droitConstate.getStatus() == Status.PAYE
+                && reverseTransactionService.annulerSiRapproche(Set.of(TransactionSource.DROIT_CONSTATE), id).effectuee()) {
+            return droitConstateMapper.toDto(droitConstate);
+        }
         Status existingStatus = droitConstate.getStatus();
         Status newStatus = existingStatus == Status.PAYE ? Status.PREVU : Status.PAYE;
 
