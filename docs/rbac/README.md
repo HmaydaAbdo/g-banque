@@ -2009,21 +2009,21 @@ Toutes les routes du module (Agios ponctuel et Calcul automatique) héritent du 
 |---|---|---|
 | Bouton "Supprimer" (agios ponctuel) | `isSystemAdmin()` | `AgiosListComponent` |
 | Bouton bascule de statut (toggle PREVU ↔ PAYE) | `isSystemAdmin()` | `AgiosListComponent` |
-| Bouton "Recalculer" (ligne, période OUVERT) | `isAdmin()` | `AgiosCalculDashboardComponent` |
+| Bouton "Recalculer" (ligne, période OUVERT) | `trim.statut === OUVERT` — visible à toute l'équipe Finance (route sous `departmentGuard('Finance')`) | `AgiosCalculDashboardComponent` |
 | Bouton "Clôturer" (ligne, période OUVERT) | `isAdmin()` | `AgiosCalculDashboardComponent` |
 | Bouton "Clôturer" (vue détail) | `isAdmin() && trimestreInfo.statut === OUVERT` | `AgiosCalculDetailComponent` |
 | Bouton "Recalculer tout" (global) | Aucune condition — visible à toute l'équipe Finance | `AgiosCalculDashboardComponent` |
 
 ---
 
-### Divergence assumée — recalcul ciblé et clôture restreints à l'admin en UI
+### Divergence assumée — clôture restreinte à l'admin en UI
 
 Le backend autorise `FINANCE_OR_ADMIN` sur les trois actions d'écriture du calcul automatique (`recalculer`, `recalculer/{trim}/{annee}`, `cloturer/{trim}/{annee}`). Le frontend, lui, distingue :
 
-- **"Recalculer tout"** (action globale, idempotente, sans effet financier direct — elle ne fait que rejouer le calcul du jour) : visible à toute l'équipe Finance, cohérent avec le backend.
-- **"Recalculer" une période précise et "Clôturer"** (actions ciblées ; la clôture est irréversible et génère un agios définitif à payer) : boutons masqués sauf pour `SYSTEM_ADMIN`, restriction plus stricte que le backend.
+- **"Recalculer tout"** et **"Recalculer"** une période précise (actions idempotentes, sans effet financier direct — elles ne font que rejouer le calcul) : visibles à toute l'équipe Finance (décision du 12/10/2026 pour le recalcul ciblé), cohérent avec le backend.
+- **"Clôturer"** (action irréversible, qui génère un agios définitif à payer) : bouton masqué sauf pour `SYSTEM_ADMIN`, restriction plus stricte que le backend.
 
-Cette divergence est intentionnelle et préexistante (documentée dans `docs/guide-utilisateur/finance.md` avant ce sweep) : elle restreint en interface une action financière sensible et irréversible à l'administrateur système, tout en laissant le backend ouvert à `FINANCE_OR_ADMIN` par cohérence avec le reste du module. Une restriction UI plus stricte que le backend est acceptable ; l'inverse ne le serait pas.
+Cette divergence est intentionnelle : elle restreint en interface une action financière sensible et irréversible à l'administrateur système, tout en laissant le backend ouvert à `FINANCE_OR_ADMIN` par cohérence avec le reste du module. Une restriction UI plus stricte que le backend est acceptable ; l'inverse ne le serait pas.
 
 ---
 

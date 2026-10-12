@@ -203,12 +203,14 @@
                       (click)="voirDetail(trim)">
               </button>
 
-              @if (isAdmin() && trim.statut === StatutTrimestre.OUVERT) {
+              @if (trim.statut === StatutTrimestre.OUVERT) {
                 <button pButton pRipple icon="pi pi-refresh"
                         class="p-button-rounded p-button-text p-button-warning p-button-sm"
                         pTooltip="Recalculer" tooltipPosition="top"
                         (click)="recalculerParBanque(trim, dt)">
                 </button>
+              }
+              @if (isAdmin() && trim.statut === StatutTrimestre.OUVERT) {
                 <button pButton pRipple icon="pi pi-lock"
                         class="p-button-rounded p-button-text p-button-danger p-button-sm"
                         pTooltip="Clôturer" tooltipPosition="top"
