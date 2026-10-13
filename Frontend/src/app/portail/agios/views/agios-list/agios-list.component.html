@@ -143,6 +143,7 @@
              [loading]="loading" [rowsPerPageOptions]="[10, 25, 50]" [lazy]="true" [sortField]="'id'" [sortOrder]="-1"
              responsiveLayout="scroll" [scrollable]="true" scrollHeight="flex" (onLazyLoad)="loadAgios($event)"
              [columns]="[
+              {field: 'id',      header: 'Id',           sortable: true},
                {field: 'libelle',      header: 'Libellé',          sortable: true},
                {field: 'banque.nom',    header: 'Banque',            sortable: true},
                {field: 'montant',      header: 'Montant',           sortable: true},
@@ -172,6 +173,7 @@
 
       <ng-template pTemplate="body" let-agios>
         <tr>
+          <td>{{ agios.id }}</td>
           <td>{{ agios.libelle }}</td>
           <td>{{ agios.banqueNom }}</td>
           <td>{{ agios.montant | number:'1.2-2' }} MAD</td>
