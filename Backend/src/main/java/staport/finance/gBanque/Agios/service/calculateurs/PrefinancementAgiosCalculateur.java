@@ -14,6 +14,7 @@ import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.Lign
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services.LigneFonctionnelleSpecifiqueReader;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.service.IMarcheService;
+import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.enums.Type;
 import staport.finance.gBanque.prefinancement.services.PrefinancementReader;
 
@@ -103,7 +104,7 @@ public class PrefinancementAgiosCalculateur implements AgiosCalculateurMultiMarc
 
     /**
      * Une banque est éligible si elle possède au moins un marché avec une ligne
-     * préfinancement active (spécifique ou générale).
+     * préfinancement active (spécifique ou générale) ET au moins une opération de préfinancement payée.
      * Produit un log INFO détaillant la répartition des marchés (avec/sans ligne).
      */
     @Override
@@ -123,14 +124,16 @@ public class PrefinancementAgiosCalculateur implements AgiosCalculateurMultiMarc
         // Pré-chauffe le cache et classe chaque marché
         List<String> avecLigne = new ArrayList<>();
         List<String> sansLigne = new ArrayList<>();
+        List<String> sansOperation = new ArrayList<>();
         for (Marche m : marches) {
-            if (resoudreTaux(m).isPresent()) avecLigne.add(m.getNom() + " #" + m.getId());
-            else                              sansLigne.add(m.getNom() + " #" + m.getId());
+            if (resoudreTaux(m).isEmpty())       sansLigne.add(m.getNom() + " #" + m.getId());
+            else if (!aDesOperationsPayees(m))   sansOperation.add(m.getNom() + " #" + m.getId());
+            else                                 avecLigne.add(m.getNom() + " #" + m.getId());
         }
 
         if (avecLigne.isEmpty()) {
-            log.info("PREFI — {} : {}/{} marchés, aucune ligne PREFI active → banque ignorée | sans ligne : {}",
-                    banque.getNom(), marches.size(), marches.size(), sansLigne);
+            log.info("PREFI — {} : {} marchés, aucun avec ligne PREFI active ET opération payée → banque ignorée | sans ligne : {} | sans opération payée : {}",
+                    banque.getNom(), marches.size(), sansLigne, sansOperation);
             return false;
         }
 
@@ -285,6 +288,15 @@ public class PrefinancementAgiosCalculateur implements AgiosCalculateurMultiMarc
     // ─────────────────────────────────────────────────────────────────────────
     //  Calcul de l'encours
     // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Un marché ne produit des agios de préfinancement que s'il a au moins une opération payée : sans elle, l'encours est
+     * nul à tout moment et la période calculée serait vide (0 jour, 0 MAD).
+     */
+    private boolean aDesOperationsPayees(Marche marche) {
+        return prefinancementReader.findByMarche(marche).stream()
+                .anyMatch(o -> o.getStatus() == Status.PAYE);
+    }
 
     /**
      * Encours préfinancement au jour J pour un marché :

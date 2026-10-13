@@ -16,6 +16,7 @@ import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services.Lign
 import staport.finance.gBanque.factoring.service.FactoringReader;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.service.IMarcheService;
+import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.enums.Type;
 
 import java.math.BigDecimal;
@@ -99,7 +100,7 @@ public class FactoringAgiosCalculateur implements AgiosCalculateurMultiMarche {
 
     /**
      * Une banque est éligible si au moins un de ses marchés possède une ligne
-     * Factoring active (spécifique ou générale).
+     * Factoring active (spécifique ou générale) ET au moins une opération de factoring payée.
      * Produit un log INFO avec la répartition marchés avec/sans ligne.
      */
     @Override
@@ -119,14 +120,16 @@ public class FactoringAgiosCalculateur implements AgiosCalculateurMultiMarche {
         // Pré-chauffe le cache et classe chaque marché
         List<String> avecLigne = new ArrayList<>();
         List<String> sansLigne = new ArrayList<>();
+        List<String> sansOperation = new ArrayList<>();
         for (Marche m : marches) {
-            if (resoudreTaux(m).isPresent()) avecLigne.add(m.getNom() + " #" + m.getId());
-            else                              sansLigne.add(m.getNom() + " #" + m.getId());
+            if (resoudreTaux(m).isEmpty())       sansLigne.add(m.getNom() + " #" + m.getId());
+            else if (!aDesOperationsPayees(m))   sansOperation.add(m.getNom() + " #" + m.getId());
+            else                                 avecLigne.add(m.getNom() + " #" + m.getId());
         }
 
         if (avecLigne.isEmpty()) {
-            log.info("FACTORING — {} : {}/{} marchés, aucune ligne Factoring active → banque ignorée | sans ligne : {}",
-                    banque.getNom(), marches.size(), marches.size(), sansLigne);
+            log.info("FACTORING — {} : {} marchés, aucun avec ligne Factoring active ET opération payée → banque ignorée | sans ligne : {} | sans opération payée : {}",
+                    banque.getNom(), marches.size(), sansLigne, sansOperation);
             return false;
         }
 
@@ -256,6 +259,15 @@ public class FactoringAgiosCalculateur implements AgiosCalculateurMultiMarche {
     // ─────────────────────────────────────────────────────────────────────────
     //  Calcul de l'encours
     // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Un marché ne produit des agios de factoring que s'il a au moins une opération payée : sans elle, l'encours est
+     * nul à tout moment et la période calculée serait vide (0 jour, 0 MAD).
+     */
+    private boolean aDesOperationsPayees(Marche marche) {
+        return factoringReader.findByMarche(marche).stream()
+                .anyMatch(o -> o.getStatus() == Status.PAYE);
+    }
 
     /**
      * Encours factoring au jour J pour un marché :
