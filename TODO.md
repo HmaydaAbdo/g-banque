@@ -9,9 +9,11 @@ Serveur Windows, dossier `C:\apps\G-Banque` (`docker-compose.yml` + `.env`, imag
 restaurée depuis la sauvegarde du 10/10 et passée dans le volume nommé `gbanque-postgres-data` (contrôle conforme : 104 tables,
 2 vues, Flyway 2, 55 407 lignes).
 
-**Prochain déploiement (images `:latest` du 12/10/2026 et suivantes).** La production est en V5 (V3, V4, V5 appliquées). Le backend applique au
-démarrage la migration **V6** (transaction 5727 réaffectée du droit constaté 81 au décompte 61, DC 81 supprimé).
-Vérifier d'abord la sauvegarde du jour (`./backups/postgres`), puis dans les logs : « Successfully applied … now at version v6 ».
+**Prochain déploiement (images `:latest` du 13/10/2026 et suivantes).** La production est en V6. Le backend applique au
+démarrage les migrations **V7** (transaction 63 rattachée à l'agios 16), **V8** (liens `agios_definitif_id` orphelins mis à NULL),
+**V9** (remboursement de préfinancement 34 scindé : capital 3 979 764,15 + agios 13 376,45 validé), **V10** (dates des
+préfinancements 36 et 38 alignées sur leur transaction) et **V11** (dates de 8 agios alignées sur leur transaction).
+Vérifier d'abord la sauvegarde du jour (`./backups/postgres`), puis dans les logs : « Successfully applied … now at version v11 ».
 
 **Reste à faire :**
 1. Supprimer sur le serveur l'ancien dossier `docker-data\postgres` et `gbanque-init.sql.gz` (contrôle du volume validé).
