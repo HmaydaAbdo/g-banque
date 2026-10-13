@@ -1390,6 +1390,8 @@ Le tableau de bord de calcul affiche les périodes d'agios calculées automatiqu
 - **OUVERT** : calculs provisoires, mis à jour chaque nuit automatiquement.
 - **CLOTURÉ** : montants définitifs, agios créé automatiquement.
 
+> Pour le Préfinancement, les Droits Constatés et le Factoring, une banque n'apparaît dans le tableau qu'à partir de sa **première opération payée** de ce type : tant qu'elle n'en a aucune, aucune période n'est créée.
+
 > Pour la Facilité de Caisse, le Préfinancement et les Droits Constatés, la période est un **trimestre** (T1 à T4). Pour le Factoring, la période est un **mois** — le tableau affiche alors "M1" à "M12" dans la colonne correspondante.
 
 **Filtrer le tableau :**

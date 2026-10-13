@@ -3752,6 +3752,10 @@ Le taux Factoring est résolu dans le même ordre de priorité que le PREFI et l
 2. **Ligne générale** : ligne fonctionnelle générale de la banque incluant ce marché dans son périmètre, de nature Factoring, active à la date du calcul.
 3. **Aucune ligne** : le marché est ignoré pour ce mois — aucun agios calculé, aucune erreur.
 
+#### Banques et marchés calculés (Préfinancement, Droits Constatés, Factoring)
+
+Un marché n'est calculé pour un de ces trois types que s'il remplit **deux conditions** : il a une ligne fonctionnelle active du type (voir ci-dessus) **et** au moins une opération payée de ce type. Une banque est calculée dès qu'un de ses marchés remplit les deux conditions. Sans opération payée, l'encours est nul à tout moment : aucune période n'est créée (plus de périodes vides à 0 jour et 0 MAD dans le tableau de bord). Dès la première opération payée, la période en cours est créée et calculée depuis son premier jour. Une banque qui a déjà des opérations payées reste calculée même si son encours est redevenu nul (période à 0 MAD, normale).
+
 ---
 
 ### 7. Cycle de vie d'un agios
