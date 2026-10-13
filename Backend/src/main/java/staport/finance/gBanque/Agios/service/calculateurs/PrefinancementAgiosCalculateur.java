@@ -261,7 +261,7 @@ public class PrefinancementAgiosCalculateur implements AgiosCalculateurMultiMarc
 
             // 1. Ligne spécifique — via la façade de lecture cross-domaine
             Optional<LigneFonctionnelleSpecifique> specifique =
-                    ligneSpecifiqueReader.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(
+                    ligneSpecifiqueReader.findActiveSansVerrou(
                             marche, nature);
 
             if (specifique.isPresent()) {
@@ -272,7 +272,7 @@ public class PrefinancementAgiosCalculateur implements AgiosCalculateurMultiMarc
 
             // 2. Ligne générale — via la façade de lecture cross-domaine
             Optional<LigneFonctionnelle> generale =
-                    ligneFonctionnelleReader.findActiveLineForMarche(id, nature.getId());
+                    ligneFonctionnelleReader.findActiveLineForMarcheSansVerrou(id, nature.getId());
 
             if (generale.isPresent()) {
                 log.debug("Marché {} — ligne générale PREFI id={} taux={}",

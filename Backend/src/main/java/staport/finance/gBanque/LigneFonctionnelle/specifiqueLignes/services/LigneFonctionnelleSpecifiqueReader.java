@@ -34,4 +34,13 @@ public class LigneFonctionnelleSpecifiqueReader {
             Marche marche, NatureLigneFonctionnelle nature) {
         return ligneFonctionnelleSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(marche, nature);
     }
+
+    /**
+     * Ligne spécifique active pour un marché et une nature, <b>sans verrou</b> : lecture pure (calcul des agios), utilisable
+     * dans une transaction en lecture seule ou sans transaction englobante.
+     */
+    @Transactional(readOnly = true)
+    public Optional<LigneFonctionnelleSpecifique> findActiveSansVerrou(Marche marche, NatureLigneFonctionnelle nature) {
+        return ligneFonctionnelleSpecifiqueRepository.findActiveSansVerrou(marche, nature);
+    }
 }

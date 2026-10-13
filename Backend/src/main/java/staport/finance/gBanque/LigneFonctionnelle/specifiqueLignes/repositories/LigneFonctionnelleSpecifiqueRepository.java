@@ -9,6 +9,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
@@ -29,6 +31,14 @@ public interface LigneFonctionnelleSpecifiqueRepository extends JpaRepository<Li
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<LigneFonctionnelleSpecifique> findByMarcheAndNatureLigneFonctionnelleAndActifTrue(Marche marche, NatureLigneFonctionnelle nature);
+
+    /**
+     * Même recherche que {@link #findByMarcheAndNatureLigneFonctionnelleAndActifTrue}, <b>sans verrou</b> : pour les
+     * simples lectures (calcul des agios). PostgreSQL refuse un {@code SELECT ... FOR UPDATE} dans une transaction en lecture
+     * seule ; le verrou n'a de sens que pour la création de lignes.
+     */
+    @Query("SELECT l FROM LigneFonctionnelleSpecifique l WHERE l.marche = :marche AND l.natureLigneFonctionnelle = :nature AND l.actif = true")
+    Optional<LigneFonctionnelleSpecifique> findActiveSansVerrou(@Param("marche") Marche marche, @Param("nature") NatureLigneFonctionnelle nature);
 
 
     Page<LigneFonctionnelleSpecifique> findAll(Specification<LigneFonctionnelleSpecifique> spec, Pageable pageable);

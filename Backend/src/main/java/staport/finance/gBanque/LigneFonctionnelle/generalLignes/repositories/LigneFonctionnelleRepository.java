@@ -75,6 +75,13 @@ public interface LigneFonctionnelleRepository extends JpaRepository<LigneFonctio
     @Query("SELECT l FROM LigneFonctionnelle l JOIN l.marches m WHERE m.id = :marcheId AND l.natureLigneFonctionnelle.id = :natureId AND l.actif = true")
     Optional<LigneFonctionnelle> findActiveLineForMarche(@Param("marcheId") Long marcheId, @Param("natureId") Long natureId);
 
+    /**
+     * Même recherche que {@link #findActiveLineForMarche}, <b>sans verrou</b> : pour les simples lectures (calcul des
+     * agios). PostgreSQL refuse un {@code SELECT ... FOR UPDATE} dans une transaction en lecture seule.
+     */
+    @Query("SELECT l FROM LigneFonctionnelle l JOIN l.marches m WHERE m.id = :marcheId AND l.natureLigneFonctionnelle.id = :natureId AND l.actif = true")
+    Optional<LigneFonctionnelle> findActiveLineForMarcheSansVerrou(@Param("marcheId") Long marcheId, @Param("natureId") Long natureId);
+
 
 
 

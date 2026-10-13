@@ -234,7 +234,7 @@ public class FactoringAgiosCalculateur implements AgiosCalculateurMultiMarche {
 
             // 1. Ligne spécifique
             Optional<LigneFonctionnelleSpecifique> specifique =
-                    ligneSpecifiqueReader.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(
+                    ligneSpecifiqueReader.findActiveSansVerrou(
                             marche, nature);
             if (specifique.isPresent()) {
                 log.debug("Marché {} — ligne spécifique FACTORING id={} taux={}",
@@ -244,7 +244,7 @@ public class FactoringAgiosCalculateur implements AgiosCalculateurMultiMarche {
 
             // 2. Ligne générale
             Optional<LigneFonctionnelle> generale =
-                    ligneFonctionnelleReader.findActiveLineForMarche(id, nature.getId());
+                    ligneFonctionnelleReader.findActiveLineForMarcheSansVerrou(id, nature.getId());
             if (generale.isPresent()) {
                 log.debug("Marché {} — ligne générale FACTORING id={} taux={}",
                         id, generale.get().getId(), generale.get().getTaux());

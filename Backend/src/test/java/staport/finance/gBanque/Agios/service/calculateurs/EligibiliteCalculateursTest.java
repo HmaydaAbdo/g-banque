@@ -53,14 +53,14 @@ class EligibiliteCalculateursTest {
         NatureLigneFonctionnelle nature = mock(NatureLigneFonctionnelle.class);
         when(nature.getId()).thenReturn(5L);
         when(natureService.findByCode(anyString())).thenReturn(Optional.of(nature));
-        when(generaleReader.findActiveLineForMarche(any(), any())).thenReturn(Optional.empty());
+        when(generaleReader.findActiveLineForMarcheSansVerrou(any(), any())).thenReturn(Optional.empty());
     }
 
     /** Active (ou non) une ligne spécifique à 5 % sur le marché pour la nature résolue. */
     private void ligneActive(boolean active) {
         LigneFonctionnelleSpecifique ligne = mock(LigneFonctionnelleSpecifique.class);
         when(ligne.getTaux()).thenReturn(new BigDecimal("5.00"));
-        when(specifiqueReader.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(any(), any()))
+        when(specifiqueReader.findActiveSansVerrou(any(), any()))
                 .thenReturn(active ? Optional.of(ligne) : Optional.empty());
     }
 

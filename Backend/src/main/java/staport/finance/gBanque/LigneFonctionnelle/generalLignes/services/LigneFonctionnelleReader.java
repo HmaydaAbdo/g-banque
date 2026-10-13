@@ -40,6 +40,15 @@ public class LigneFonctionnelleReader {
     }
 
     /**
+     * Ligne active qui inclut le marché donné pour la nature spécifiée, <b>sans verrou</b> : lecture pure (calcul des
+     * agios), utilisable dans une transaction en lecture seule ou sans transaction englobante.
+     */
+    @Transactional(readOnly = true)
+    public Optional<LigneFonctionnelle> findActiveLineForMarcheSansVerrou(Long marcheId, Long natureId) {
+        return ligneFonctionnelleRepository.findActiveLineForMarcheSansVerrou(marcheId, natureId);
+    }
+
+    /**
      * Ligne active pour une banque et une nature donnée (utilisé par Lcn pour l'association
      * automatique Escompte Commercial).
      */

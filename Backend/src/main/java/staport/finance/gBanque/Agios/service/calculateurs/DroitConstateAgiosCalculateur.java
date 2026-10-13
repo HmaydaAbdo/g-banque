@@ -234,7 +234,7 @@ public class DroitConstateAgiosCalculateur implements AgiosCalculateurMultiMarch
 
             // 1. Ligne spécifique
             Optional<LigneFonctionnelleSpecifique> specifique =
-                    ligneSpecifiqueReader.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(
+                    ligneSpecifiqueReader.findActiveSansVerrou(
                             marche, nature);
 
             if (specifique.isPresent()) {
@@ -245,7 +245,7 @@ public class DroitConstateAgiosCalculateur implements AgiosCalculateurMultiMarch
 
             // 2. Ligne générale
             Optional<LigneFonctionnelle> generale =
-                    ligneFonctionnelleReader.findActiveLineForMarche(id, nature.getId());
+                    ligneFonctionnelleReader.findActiveLineForMarcheSansVerrou(id, nature.getId());
 
             if (generale.isPresent()) {
                 log.debug("Marché {} — ligne générale DC id={} taux={}",
