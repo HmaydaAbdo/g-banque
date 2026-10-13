@@ -2009,7 +2009,8 @@ Il y a deux façons de créer une opération depuis le récapitulatif :
   toutes les sources avec un champ de recherche (les majuscules et les accents sont ignorés : « cheque »
   trouve « Chèque » ; Entrée ouvre la première source de la liste). Cliquer sur une source ouvre son écran
   de création. Les sources dont la création n'est pas possible depuis ici sont grisées, avec la mention
-  « Création indisponible » (c'est le cas du leasing, du CMT, des mises à disposition et des cautions).
+  « Création indisponible » (c'est le cas du leasing, du CMT, des mises à disposition et des cautions). « Importation » n'apparaît pas
+  dans la liste : c'est un simple motif de commission, pas un type d'opération.
 - **Pour la source ouverte** : le bouton vert **Ajouter** de l'en-tête de la vue d'une source ouvre
   directement l'écran de création de ce type. Il n'est pas proposé pour les types qui ne se créent pas
   d'ici.

@@ -1219,6 +1219,8 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     TransactionSource.CMT,
     TransactionSource.MiseADisposition,
     TransactionSource.CAUTION,
+    // Simple motif de commission, pas un type d'opération à créer.
+    TransactionSource.Importation,
   ]);
 
   /**

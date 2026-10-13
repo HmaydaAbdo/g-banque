@@ -67,6 +67,12 @@ describe('RecapitulatifComponent', () => {
     expect(cartes.libelleOuObservation).toBe('');
   });
 
+  it("la fenêtre « Ajouter » ne propose pas Importation (simple motif de commission)", () => {
+    const sources = creer().ajouterItems.map(i => i.source);
+    expect(sources).not.toContain(TransactionSource.Importation);
+    expect(sources).toContain(TransactionSource.COMMISSION);
+  });
+
   it('envoie le motif de la source vers le bon critère', () => {
     const impot = creer({ source: 'IMPOT_TAXE', motif: 'TVA' });
     expect(dto(impot).impotEtTaxeMotif).toBe('TVA');

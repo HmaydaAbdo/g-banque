@@ -5341,7 +5341,8 @@ Les règles et leurs limites sont décrites aux chapitres 21 (Transactions) et 3
    seulement tant que l'échéance est « prévue ».
 11. Création depuis le Récapitulatif : par le bouton **Ajouter** de la barre du haut (toutes les sources)
     ou par celui de la vue focus (le type ouvert), pour tous les types sauf le leasing, le CMT, les mises à
-    disposition et les cautions, dont les opérations ne se créent pas depuis cet écran.
+    disposition et les cautions, dont les opérations ne se créent pas depuis cet écran. « Importation »
+    n'est jamais proposé : c'est un simple motif de commission, pas un type d'opération.
 12. Un type sans opération à valider n'a pas de carte ; si aucun encours ne correspond aux filtres,
     l'écran l'indique.
 13. Seuls le sens et le type de transaction sont des filtres globaux ; ils alimentent les cartes et le
