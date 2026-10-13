@@ -41,7 +41,9 @@ import java.util.concurrent.ConcurrentHashMap;
  *       </ol>
  *   </li>
  *   <li>Reconstituer l'encours jour J :
- *       {@code Encours_j = Σ(DEBLOCAGE.montant | PAYE, dateValeur ≤ j) − Σ(REMBOURSEMENT.montant | PAYE, dateValeur ≤ j)}</li>
+ *       {@code Encours_j = Σ(DEBLOCAGE.montant | PAYE, dateValeur ≤ j) − Σ(REMBOURSEMENT.montant | PAYE, dateValeur ≤ j − 1)}</li>
+ *       <li>Un remboursement n'agit que le lendemain de sa date de valeur : le jour de remboursement est encore facturé
+ *           sur l'ancien encours (règle du 13/10/2026). Les déblocages agissent dès leur date de valeur.</li>
  *   <li>Si {@code Encours_j > 0} :
  *       {@code AgiosHT_j = Encours_j × (Taux / 100) / 360}</li>
  * </ol>
@@ -273,11 +275,14 @@ public class DroitConstateAgiosCalculateur implements AgiosCalculateurMultiMarch
 
     /**
      * Encours droits constatés au jour J pour un marché :
-     * {@code Encours_j = Σ(DEBLOCAGE PAYE, dateValeur ≤ j) − Σ(REMBOURSEMENT PAYE, dateValeur ≤ j)}
+     * {@code Encours_j = Σ(DEBLOCAGE PAYE, dateValeur ≤ j) − Σ(REMBOURSEMENT PAYE, dateValeur ≤ j − 1)}
+     *
+     * <p>Le jour d'un remboursement est donc encore facturé : le remboursement n'agit que le lendemain de sa date
+     * de valeur. Les déblocages, eux, agissent dès leur date de valeur.</p>
      */
     private BigDecimal calculerEncours(Marche marche, LocalDate jour) {
         BigDecimal totalDeblocages = droitConstateReader.sumMontantPaye(marche, Type.DEBLOCAGE, jour);
-        BigDecimal totalRemboursements = droitConstateReader.sumMontantPaye(marche, Type.REMBOURSEMENT, jour);
+        BigDecimal totalRemboursements = droitConstateReader.sumMontantPaye(marche, Type.REMBOURSEMENT, jour.minusDays(1));
 
         return totalDeblocages.subtract(totalRemboursements);
     }

@@ -3542,8 +3542,8 @@ Le module Agios couvre deux périmètres distincts :
 **Encours de préfinancement** : montant encore dû à la banque pour un marché à une date donnée. Il est reconstitué comme suit :
 
 ```
-Encours au jour J = total des déblocages payés jusqu'au jour J
-                  − total des remboursements payés jusqu'au jour J
+Encours au jour J = total des déblocages payés jusqu'au jour J (date de valeur ≤ J)
+                  − total des remboursements payés jusqu'à la veille du jour J (date de valeur ≤ J − 1)
 ```
 
 Seules les opérations effectivement payées (statut PAYE) sont prises en compte. Les opérations prévues n'ont pas d'effet sur l'encours.
@@ -3553,8 +3553,8 @@ Seules les opérations effectivement payées (statut PAYE) sont prises en compte
 **Encours de factoring** : montant encore dû à la banque pour un marché à une date donnée. Il est reconstitué comme suit :
 
 ```
-Encours au jour J = total des déblocages payés jusqu'au jour J
-                  − total des remboursements payés jusqu'au jour J
+Encours au jour J = total des déblocages payés jusqu'au jour J (date de valeur ≤ J)
+                  − total des remboursements payés jusqu'à la veille du jour J (date de valeur ≤ J − 1)
 ```
 
 Seules les opérations effectivement payées (statut PAYE) sont prises en compte.
@@ -3572,6 +3572,8 @@ Seules les opérations effectivement payées (statut PAYE) sont prises en compte
 | T4 | 1er octobre — 31 décembre |
 
 **Date valeur** : date à laquelle une opération financière prend effet comptablement. C'est cette date (et non la date de saisie) qui est utilisée pour reconstituer les soldes et encours.
+
+**Jour de remboursement** (Préfinancement, Droits Constatés, Factoring ; règle du 13/10/2026) : un remboursement n'agit sur l'encours que **le lendemain** de sa date de valeur, donc le jour du remboursement est encore facturé sur l'ancien encours (comme dans l'échelle d'intérêts d'une banque qui compte le jour de remboursement). Un déblocage, lui, agit dès son jour de valeur. La Facilité de Caisse n'est pas concernée : elle part du solde comptable. Une période déjà clôturée n'est pas recalculée ; une période ouverte prend la règle au prochain recalcul.
 
 **Ligne fonctionnelle** : paramétrage négocié avec la banque qui définit le type de financement, le plafond autorisé, le taux, et les dates de validité. Une ligne peut être générale (applicable à la banque entière) ou spécifique (applicable à un marché précis).
 
@@ -3643,7 +3645,7 @@ Applicable uniquement si l'encours du marché au jour J est positif.
 
 ```
 Encours au jour J     = Σ(déblocages PAYE, date valeur ≤ J)
-                      − Σ(remboursements PAYE, date valeur ≤ J)
+                      − Σ(remboursements PAYE, date valeur ≤ J − 1)
 
 Agios HT du jour      = (Encours × Taux PREFI / 100) / 360
 
