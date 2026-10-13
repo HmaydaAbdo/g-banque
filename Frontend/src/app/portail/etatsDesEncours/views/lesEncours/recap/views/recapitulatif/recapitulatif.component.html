@@ -84,39 +84,7 @@
     <!-- ── Vue d'ensemble : une carte par source, avec ses indicateurs ─────────── -->
     <div class="src-grid">
       @for (card of cardsView; track card.key) {
-        <section class="src-card" role="button" tabindex="0"
-                 (click)="openSource(card.key)"
-                 (keydown.enter)="onCardKey($event, card.key)"
-                 (keydown.space)="onCardKey($event, card.key)">
-          <div class="src-card__head">
-            <span class="src-card__icon"><i [ngClass]="card.icon" aria-hidden="true"></i></span>
-            <span class="src-card__name" [attr.title]="card.label">{{ card.label }}</span>
-            <span class="src-card__count" pTooltip="Opérations à valider" tooltipPosition="top">{{ card.count | number }}</span>
-            <i class="pi pi-chevron-right src-card__arrow" aria-hidden="true"></i>
-          </div>
-          <div class="src-card__kpis">
-            <div class="src-card__line">
-              <span>Débit</span>
-              <b class="is-debit">{{ card.debit | number:'1.2-2' }}</b>
-            </div>
-            <div class="src-card__line">
-              <span>Crédit</span>
-              <b class="is-credit">{{ card.credit | number:'1.2-2' }}</b>
-            </div>
-            <div class="src-card__split" aria-hidden="true"><i [style.width.%]="card.debitPct"></i></div>
-          </div>
-          @if (card.echues > 0) {
-            <div class="src-card__foot">
-              <button type="button" class="src-card__echues"
-                      pTooltip="Ouvre la source filtrée sur ses opérations échues (date de référence atteinte à ce jour)"
-                      tooltipPosition="bottom"
-                      (click)="openSource(card.key, true); $event.stopPropagation()">
-                <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
-                {{ card.echues | number }} {{ card.echues > 1 ? 'échues' : 'échue' }} · voir
-              </button>
-            </div>
-          }
-        </section>
+        <app-recap-source-card [card]="card" (ouvrir)="openSource(card.key, $event)"></app-recap-source-card>
       }
     </div>
 
@@ -143,7 +111,7 @@
               <span class="recap-source-opt">
                 <i [ngClass]="option.icon" aria-hidden="true"></i>
                 <span class="recap-source-opt__name">{{ option.label }}</span>
-                <span class="src-card__count">{{ option.count | number }}</span>
+                <span class="recap-source-opt__count">{{ option.count | number }}</span>
               </span>
             </ng-template>
             <ng-template pTemplate="item" let-option>
@@ -152,11 +120,11 @@
                   <i [ngClass]="option.icon" aria-hidden="true"></i>
                   <span class="recap-source-opt__name">{{ option.label }}</span>
                   @if (option.echues > 0) {
-                    <span class="src-card__echues">
+                    <span class="recap-source-opt__echues">
                       <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>{{ option.echues | number }}
                     </span>
                   }
-                  <span class="src-card__count">{{ option.count | number }}</span>
+                  <span class="recap-source-opt__count">{{ option.count | number }}</span>
                 </span>
                 <span class="recap-source-opt__amounts">
                   D <b class="is-debit">{{ option.debit | number:'1.2-2' }}</b>
@@ -290,8 +258,8 @@
 
   <!-- Barre de sélection multi-lignes — n'apparaît que si au moins une ligne est cochée -->
   @if (selectedCount > 0) {
-    <div class="flex justify-content-end align-items-center gap-2 mb-2">
-    <span class="text-sm text-500 mr-2">
+    <div class="recap-selection">
+    <span class="text-sm">
       <strong>{{ selectedCount }}</strong> opération(s) sélectionnée(s) —
       {{ montantTotalSelection | number:'1.2-2' }} MAD
     </span>
@@ -302,8 +270,7 @@
     </div>
   }
 
-  <div class="pg-table">
-    <p-table
+  <p-table
       #dt
       [value]="recapItems"
       dataKey="compositeKey"
@@ -362,7 +329,7 @@
             ID source
             <p-sortIcon field="id.entityId"></p-sortIcon>
           </th>
-          <th style="width: 8rem;">Actions</th>
+          <th class="col-actions">Actions</th>
         </tr>
       </ng-template>
 
@@ -417,8 +384,8 @@
               {{ item.id }}
             </span>
           </td>
-          <td>
-            <div class="flex align-items-center gap-1">
+          <td class="col-actions">
+            <div class="flex align-items-center justify-content-center gap-1">
               <button
                 type="button" pButton pRipple icon="pi pi-pencil"
                 class="p-button-rounded p-button-info"
@@ -444,16 +411,15 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="10" class="text-center p-4">
-            <div class="flex flex-column align-items-center gap-3">
-              <i class="pi pi-inbox text-4xl text-400"></i>
-              <div class="text-700 font-semibold">Aucune opération trouvée</div>
+          <td colspan="10">
+            <div class="recap-empty">
+              <span class="recap-empty__icon"><i class="pi pi-search" aria-hidden="true"></i></span>
+              <b>Aucune opération trouvée</b>
               @if (hasActiveFilters() || activeSourceFilterCount > 0) {
-                <div class="text-500 text-sm">Aucune opération ne correspond aux filtres actifs.</div>
-                <p-button label="Effacer les filtres" icon="pi pi-times" severity="secondary"
-                          size="small" (onClick)="clearAllFilters()"></p-button>
+                <span>Les filtres actuels ne laissent aucune opération. Élargissez la recherche ou effacez les filtres.</span>
+                <p-button label="Effacer les filtres" size="small" (onClick)="clearAllFilters()"></p-button>
               } @else {
-                <div class="text-500 text-sm">Il n'y a aucun encaissement ni décaissement pour les critères sélectionnés.</div>
+                <span>Il n'y a aucun encaissement ni décaissement pour les critères sélectionnés.</span>
               }
             </div>
           </td>
@@ -461,18 +427,22 @@
       </ng-template>
 
       <ng-template pTemplate="loadingbody">
-        <tr>
-          <td colspan="10" class="text-center p-4">
-            <div class="flex flex-column align-items-center gap-3">
-              <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
-              <div class="text-700 font-semibold">Chargement du récapitulatif...</div>
-              <div class="text-500 text-sm">Veuillez patienter</div>
-            </div>
-          </td>
-        </tr>
+        @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+          <tr>
+            <td><p-skeleton width="1rem" height="1rem"></p-skeleton></td>
+            <td><p-skeleton width="6rem" height="1.4rem" borderRadius="var(--radius-md)"></p-skeleton></td>
+            <td><p-skeleton width="5.5rem" height="1rem"></p-skeleton></td>
+            <td><p-skeleton width="5.5rem" height="1rem"></p-skeleton></td>
+            <td><p-skeleton width="9rem" height="1rem"></p-skeleton></td>
+            <td><p-skeleton width="8rem" height="1rem"></p-skeleton></td>
+            <td><p-skeleton width="5rem" height="1rem" styleClass="ml-auto"></p-skeleton></td>
+            <td><p-skeleton width="3rem" height="1rem" styleClass="ml-auto"></p-skeleton></td>
+            <td><p-skeleton width="3rem" height="1rem" styleClass="ml-auto"></p-skeleton></td>
+            <td class="col-actions"><p-skeleton width="4.5rem" height="2rem" borderRadius="var(--radius-md)"></p-skeleton></td>
+          </tr>
+        }
       </ng-template>
-    </p-table>
-  </div>
+  </p-table>
 
 </ng-template>
 

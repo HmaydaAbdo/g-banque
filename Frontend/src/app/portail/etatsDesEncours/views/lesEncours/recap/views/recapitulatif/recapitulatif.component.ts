@@ -15,6 +15,7 @@ import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
+import { SkeletonModule } from 'primeng/skeleton';
 import { DialogModule } from 'primeng/dialog';
 import { DividerModule } from 'primeng/divider';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -83,6 +84,7 @@ import { OperationErroneService } from "../../../../../../operationErronées/ser
 import { OperationErroneResponseDto } from "../../../../../../operationErronées/dtos/OperationErroneResponseDto";
 import { parseLocalDate } from '../../../../../../global/types/date.utils';
 import { RecapSourceDto } from "../../dtos/RecapSourceDto";
+import { RecapCardView, RecapSourceCardComponent } from "../recap-source-card/recap-source-card.component";
 import { AjouterItem, AjouterOperationDialogComponent } from "../../../shared/ajouter-operation-dialog/ajouter-operation-dialog.component";
 import {
   etatVersQueryParams,
@@ -171,19 +173,6 @@ interface UnitValidationConfig<TDetail = any> {
 /** Clé d'une carte : une source précise (il n'y a plus de carte « toutes les opérations »). */
 type RecapCardKey = TransactionSource;
 
-/** Données d'affichage d'une carte du groupement par source. */
-interface RecapCardView {
-  key: RecapCardKey;
-  label: string;
-  icon: string;
-  count: number;
-  debit: number;
-  credit: number;
-  echues: number;
-  /** Part du débit dans (débit + crédit), en % — alimente la barre de répartition de la carte. */
-  debitPct: number;
-}
-
 /** Totaux tous sources confondues — alimentent uniquement les indicateurs globaux de la page. */
 interface RecapGlobalView {
   count: number;
@@ -215,6 +204,8 @@ interface RecapGlobalView {
     ConfirmDialogModule,
     TvaInputComponent,
     AjouterOperationDialogComponent,
+    RecapSourceCardComponent,
+    SkeletonModule,
   ],
   templateUrl: './recapitulatif.component.html',
   styleUrl: './recapitulatif.component.scss',
@@ -671,15 +662,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     this.tableauInitial = tableau;
     this.tableauCourant = { ...tableau };
     this.tableGeneration++;
-  }
-
-  /** Ouverture au clavier (Entrée / Espace) uniquement quand le focus est sur la carte elle-même. */
-  onCardKey(event: Event, key: RecapCardKey): void {
-    if (event.target !== event.currentTarget) {
-      return;
-    }
-    event.preventDefault();
-    this.openSource(key);
   }
 
   /** Vrai si la source de la carte ouverte a un formulaire de création dédié. */

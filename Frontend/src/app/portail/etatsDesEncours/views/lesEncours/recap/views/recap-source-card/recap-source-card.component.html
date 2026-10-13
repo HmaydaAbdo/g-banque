@@ -1,0 +1,27 @@
+<section class="card" role="button" tabindex="0"
+         (click)="ouvrir.emit(false)"
+         (keydown.enter)="onKey($event)"
+         (keydown.space)="onKey($event)">
+  <div class="card__head">
+    <span class="card__icon"><i [ngClass]="card.icon" aria-hidden="true"></i></span>
+    <span class="card__name" [attr.title]="card.label">{{ card.label }}</span>
+    <span class="card__count" pTooltip="Opérations à valider" tooltipPosition="top">{{ card.count | number }}</span>
+  </div>
+
+  <div class="card__amounts">
+    <div><span>Débit</span><b class="is-debit">{{ card.debit | number:'1.2-2' }}</b></div>
+    <div><span>Crédit</span><b class="is-credit">{{ card.credit | number:'1.2-2' }}</b></div>
+  </div>
+
+  <div class="card__split" aria-hidden="true"><i [style.width.%]="card.debitPct"></i></div>
+
+  @if (card.echues > 0) {
+    <button type="button" class="card__echues"
+            pTooltip="Ouvre la source filtrée sur ses opérations échues (date de référence atteinte à ce jour)"
+            tooltipPosition="bottom"
+            (click)="$event.stopPropagation(); ouvrir.emit(true)">
+      <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+      {{ card.echues | number }} {{ card.echues > 1 ? 'échues' : 'échue' }} · voir
+    </button>
+  }
+</section>
