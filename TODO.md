@@ -54,8 +54,9 @@ Ensuite seulement : en-tête `Strict-Transport-Security`, et cadrer une CSP ngin
 
 ### Avertissements du build de production frontend
 
-Aucun au 12/10/2026 : `recapitulatif.component.scss` est repassé sous le budget de 6 ko avec la suppression de la
-modale « Ajouter » globale et de la liste latérale (9,59 ko le 10/10/2026, avant le retrait des règles mortes).
+Aucun au 12/10/2026 : `recapitulatif.component.scss` est repassé sous le budget de 6 ko avec l'extraction de la
+modale « Ajouter » dans son propre composant (`AjouterOperationDialogComponent`) et la suppression de la liste
+latérale (9,59 ko le 10/10/2026, avant le retrait des règles mortes).
 
 ### Chantier — Stratégie de tests, tous niveaux, tous modules (demandé le 09/10/2026)
 

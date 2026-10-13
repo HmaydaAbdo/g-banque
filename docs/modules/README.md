@@ -5209,7 +5209,8 @@ Se compose de :
 *Filtres globaux.* Une barre compacte, toujours visible, réunit deux filtres et les indicateurs globaux :
 - **Sens** (Tous par défaut, Encaissement, Décaissement) ;
 - **Type de transaction** (un ou plusieurs types, avec recherche) ;
-- à droite, les indicateurs globaux (débit, crédit, opérations à valider, échues).
+- à droite, les indicateurs globaux (débit, crédit, opérations à valider, échues) puis le bouton vert
+  **Ajouter** (voir « Ajouter » ci-dessous).
 Le bouton **Effacer** réinitialise les deux filtres. Lorsqu'aucune opération ne correspond, un message
 l'indique et propose d'effacer les filtres.
 
@@ -5277,10 +5278,14 @@ boutons **Effacer la sélection** et **Valider en lot**. La fenêtre de lot dema
 date de valeur et la date de l'opération, rappelle le type, le sens, le nombre d'opérations et le
 montant total, et affiche un récapitulatif à confirmer avant exécution.
 
-*Ajouter.* Il n'y a **pas** de bouton « Ajouter » au niveau global : l'ajout se fait **par type**, avec le
-bouton **Ajouter** de l'en-tête de la vue focus, qui ouvre directement l'écran de création du type
-ouvert. Ce bouton n'est pas proposé pour les types qui ne se créent pas depuis cet écran (leasing, CMT,
-mises à disposition, cautions).
+*Ajouter.* Deux façons de créer une opération :
+- le bouton **Ajouter** de la barre du haut (vue d'ensemble comme vue focus) ouvre la fenêtre
+  « Ajouter une opération » : une grille de **toutes** les sources, avec un champ de recherche qui ignore
+  majuscules et accents (Entrée ouvre la première source créable de la liste). Les sources dont la
+  création n'est pas possible depuis cet écran sont affichées grisées (« Création indisponible ») ;
+- le bouton **Ajouter** de l'en-tête de la vue focus ouvre directement l'écran de création du type
+  ouvert. Il n'est pas proposé pour les types qui ne se créent pas depuis cet écran (leasing, CMT, mises
+  à disposition, cautions).
 
 #### Écran Rapprochement
 
@@ -5334,9 +5339,9 @@ Les règles et leurs limites sont décrites aux chapitres 21 (Transactions) et 3
    les LCN en décaissement, avec deux nuances — pour les virements et les chèques, uniquement pour les
    encaissements ; pour les échéances de leasing et de CMT, uniquement par un administrateur système, et
    seulement tant que l'échéance est « prévue ».
-11. Création depuis le Récapitulatif : par type (bouton **Ajouter** de la vue focus), pour tous les types
-    sauf le leasing, le CMT, les mises à disposition et les cautions, dont les opérations ne se créent pas
-    depuis cet écran. Aucun bouton « Ajouter » n'existe au niveau global.
+11. Création depuis le Récapitulatif : par le bouton **Ajouter** de la barre du haut (toutes les sources)
+    ou par celui de la vue focus (le type ouvert), pour tous les types sauf le leasing, le CMT, les mises à
+    disposition et les cautions, dont les opérations ne se créent pas depuis cet écran.
 12. Un type sans opération à valider n'a pas de carte ; si aucun encours ne correspond aux filtres,
     l'écran l'indique.
 13. Seuls le sens et le type de transaction sont des filtres globaux ; ils alimentent les cartes et le

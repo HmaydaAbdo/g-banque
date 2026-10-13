@@ -1862,9 +1862,10 @@ ouvert un type d'opération).
 
 **La barre du haut** est la même dans les deux cas. Elle contient deux filtres — **Sens** (Tous,
 Encaissement, Décaissement) et **Type de transaction** (un ou plusieurs types, avec recherche) — et, à
-droite, quatre indicateurs qui suivent ces filtres : **Débit**, **Crédit**, **À valider** (nombre
-d'opérations) et **Échues** (en rouge dès qu'au moins une opération est arrivée à échéance). Le bouton
-**Effacer** apparaît dès qu'un de ces filtres est actif.
+droite, quatre indicateurs présentés en petites cartes colorées qui suivent ces filtres : **Débit** (rouge), **Crédit** (vert), **À valider** (nombre
+d'opérations) et **Échues** (la carte passe en orange dès qu'au moins une opération est arrivée à échéance), puis le bouton
+vert **Ajouter** (voir « Ajouter une opération »). Le bouton **Effacer** apparaît dès qu'un des deux filtres
+est actif.
 
 #### La vue d'ensemble
 
@@ -1891,7 +1892,7 @@ Le type ouvert occupe toute la largeur de l'écran. Son en-tête contient, de ga
 - le **sélecteur de source** (« Virement ▾ ») : une liste déroulante, avec recherche, pour passer à un
   autre type sans repasser par les cartes. Chaque entrée rappelle le nombre d'opérations du type, le
   repère d'échues et ses totaux **D** (débit) et **C** (crédit) ;
-- quatre indicateurs — **Débit**, **Crédit**, **Net** (crédit − débit) et **Opérations** — qui suivent
+- quatre indicateurs en petites cartes — **Débit**, **Crédit**, **Net** (crédit − débit, vert ou rouge selon son signe) et **Opérations** — qui suivent
   les filtres réellement appliqués au tableau. Une petite icône de tri rappelle que le tableau est trié
   par date de référence (survol : explication) ;
 - le bouton **Ajouter** (voir « Ajouter une opération ») et le bouton **PDF** ;
@@ -2001,14 +2002,21 @@ concerné pour ses cas particuliers.
 
 ### Ajouter une opération
 
-L'ajout se fait **par type d'opération** : il n'y a pas de bouton « Ajouter » global. Ouvrez d'abord le
-type voulu, puis cliquez sur le bouton vert **Ajouter** de son en-tête : l'écran de création de ce type
-s'ouvre, avec la banque dont vous consultez le récapitulatif déjà sélectionnée (dans les écrans qui
-demandent une banque). À l'enregistrement — comme à l'annulation — vous revenez au récapitulatif, sur le
-même type, avec les mêmes filtres et la même page.
+Il y a deux façons de créer une opération depuis le récapitulatif :
 
-Le bouton n'est pas proposé pour les types qui ne se créent pas depuis le récapitulatif : le leasing, le
-CMT, les mises à disposition et les cautions.
+- **Pour n'importe quelle source** : le bouton vert **Ajouter** de la barre du haut (présent dans la vue
+  d'ensemble comme dans la vue d'une source) ouvre la fenêtre **« Ajouter une opération »** : une grille de
+  toutes les sources avec un champ de recherche (les majuscules et les accents sont ignorés : « cheque »
+  trouve « Chèque » ; Entrée ouvre la première source de la liste). Cliquer sur une source ouvre son écran
+  de création. Les sources dont la création n'est pas possible depuis ici sont grisées, avec la mention
+  « Création indisponible » (c'est le cas du leasing, du CMT, des mises à disposition et des cautions).
+- **Pour la source ouverte** : le bouton vert **Ajouter** de l'en-tête de la vue d'une source ouvre
+  directement l'écran de création de ce type. Il n'est pas proposé pour les types qui ne se créent pas
+  d'ici.
+
+Dans les deux cas, la banque dont vous consultez le récapitulatif est déjà sélectionnée dans les écrans de
+création qui demandent une banque. À l'enregistrement — comme à l'annulation — vous revenez au récapitulatif,
+sur le même type, avec les mêmes filtres et la même page.
 
 ### Éditer une opération en attente
 

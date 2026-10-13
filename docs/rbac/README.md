@@ -2744,9 +2744,11 @@ relus à chaque chargement et jamais interprétés comme des droits ; une valeur
 neutre, et le tri n'accepte qu'une liste blanche de colonnes. Les endpoints appelés sont les mêmes
 (`GET /recapitulatif/banque/{banqueId}`, `…/par-source`, `…/export/pdf`) avec le même `@PreAuthorize`. Le bouton
 « Ajouter » transmet désormais `?banqueId=` à l'écran de création (présélection de la banque) : les écrans
-et endpoints de création restent protégés par leurs propres gardes, inchangés. Le bouton « Ajouter » n'existe
-plus au niveau global : il est dans l'en-tête de chaque source (même condition d'affichage qu'avant, une route de
-création déclarée pour la source — `RecapitulatifComponent.CREATE_ROUTE`) ; le lien « échues · voir » d'une carte
+et endpoints de création restent protégés par leurs propres gardes, inchangés. Le bouton « Ajouter » existe
+à deux niveaux — barre du haut (fenêtre « Ajouter une opération », composant `AjouterOperationDialogComponent`,
+toutes les sources sauf leasing, CMT, mises à disposition et cautions ; une source sans route de création est
+grisée) et en-tête de chaque source (affiché seulement si une route de création est déclarée,
+`RecapitulatifComponent.CREATE_ROUTE`) ; aucune règle d'autorisation propre : seule la route cible compte. Le lien « échues · voir » d'une carte
 n'ajoute qu'un critère de lecture (borne haute de la date de référence).
 
 **Ajouter / Éditer (20/09/2026) — conditionnées par (source, sens), pas par un rôle.**

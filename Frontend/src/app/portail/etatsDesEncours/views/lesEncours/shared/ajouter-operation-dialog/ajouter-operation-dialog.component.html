@@ -1,0 +1,33 @@
+<p-dialog header="Ajouter une opération" [visible]="visible"
+          [modal]="true" [style]="{width: '64vw'}"
+          [draggable]="false" [resizable]="false"
+          (onShow)="onShow()"
+          (visibleChange)="!$event && fermer()">
+  <div class="flex flex-column gap-3">
+    <span class="p-input-icon-left w-full">
+      <i class="pi pi-search"></i>
+      <input #champ type="text" pInputText class="w-full"
+             placeholder="Rechercher une source (virement, chèque, factoring…)"
+             [formControl]="recherche" autocomplete="off"
+             (keydown.enter)="onEntree()">
+    </span>
+
+    <div class="ajouter-grid">
+      @for (item of itemsFiltres; track item.source) {
+        <button type="button" pButton pRipple
+                class="p-button-text ajouter-card"
+                [class.is-unavailable]="!item.route"
+                [disabled]="!item.route"
+                (click)="choisirItem(item)">
+          <span class="ajouter-card__icon"><i [class]="item.icon"></i></span>
+          <span class="ajouter-card__label">{{ item.label }}</span>
+          @if (!item.route) {
+            <span class="ajouter-card__hint">Création indisponible</span>
+          }
+        </button>
+      } @empty {
+        <p class="text-500 text-center py-4 m-0 col-12">Aucune source ne correspond à « {{ recherche.value }} ».</p>
+      }
+    </div>
+  </div>
+</p-dialog>

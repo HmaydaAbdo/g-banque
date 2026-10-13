@@ -1015,8 +1015,8 @@ opérations en attente d'une banque donnée, quel que soit leur type d'origine.
   création.
 - **Des filtres à deux niveaux, sans surcharge** : deux filtres globaux seulement (sens et type de
   transaction) pour la vue d'ensemble, et des filtres propres à chaque type (libellé, numéro de pièce,
-  montant, période, motif) pour aller droit à l'opération cherchée. L'ajout d'une opération se fait par
-  type, depuis l'écran de ce type.
+  montant, période, motif) pour aller droit à l'opération cherchée. L'ajout d'une opération se fait depuis
+  la barre du haut (toutes les sources, avec recherche) ou directement depuis l'écran du type.
 - **Les mêmes gestes pour tous les types** : valider une opération, valider un lot, créer une
   opération, corriger une opération en attente — la démarche et les champs sont identiques quel que
   soit le type, ce qui réduit le temps de prise en main, les erreurs de saisie et la dépendance à une

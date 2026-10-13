@@ -83,6 +83,7 @@ import { OperationErroneService } from "../../../../../../operationErronées/ser
 import { OperationErroneResponseDto } from "../../../../../../operationErronées/dtos/OperationErroneResponseDto";
 import { parseLocalDate } from '../../../../../../global/types/date.utils';
 import { RecapSourceDto } from "../../dtos/RecapSourceDto";
+import { AjouterItem, AjouterOperationDialogComponent } from "../../../shared/ajouter-operation-dialog/ajouter-operation-dialog.component";
 import {
   etatVersQueryParams,
   filtresSourceVides,
@@ -213,6 +214,7 @@ interface RecapGlobalView {
     DividerModule,
     ConfirmDialogModule,
     TvaInputComponent,
+    AjouterOperationDialogComponent,
   ],
   templateUrl: './recapitulatif.component.html',
   styleUrl: './recapitulatif.component.scss',
@@ -1228,6 +1230,44 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     [TransactionSource.OPERATION_ERRONE]: 'pi pi-exclamation-circle',
     [TransactionSource.IMPOT_TAXE]: 'pi pi-book',
   };
+
+  /** Sources absentes de la fenêtre « Ajouter » (pas de création depuis le récapitulatif). */
+  private static readonly AJOUTER_EXCLUDED: ReadonlySet<TransactionSource> = new Set<TransactionSource>([
+    TransactionSource.LEASING,
+    TransactionSource.CMT,
+    TransactionSource.MiseADisposition,
+    TransactionSource.CAUTION,
+  ]);
+
+  /**
+   * Fenêtre « Ajouter » globale : TOUTES les sources de l'énumération (sauf celles ci-dessus), pas
+   * seulement celles qui ont une route de création. Une source sans entrée dans CREATE_ROUTE reste
+   * visible mais non cliquable (`route: null`) — il suffit d'ajouter sa route dans CREATE_ROUTE pour
+   * l'activer, sans toucher ici.
+   */
+  readonly ajouterItems: AjouterItem[] = (Object.values(TransactionSource) as TransactionSource[])
+    .filter(source => !RecapitulatifComponent.AJOUTER_EXCLUDED.has(source))
+    .map(source => ({
+      source,
+      label: TransactionSourceLabels[source] ?? source,
+      icon: this.sourceIcon(source),
+      route: RecapitulatifComponent.CREATE_ROUTE[source] ?? null,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, 'fr'));
+
+  displayAjouterModal = false;
+
+  openAjouterModal(): void {
+    this.displayAjouterModal = true;
+  }
+
+  choisirAjouter(item: AjouterItem): void {
+    if (!item.route) {
+      return;
+    }
+    this.displayAjouterModal = false;
+    this.router.navigate(item.route, { queryParams: { banqueId: this.banqueIdFromRoute } });
+  }
 
   openUnitValidation(item: RecaputilatifItem): void {
     const config = this.unitValidationConfigs.get(item.source);

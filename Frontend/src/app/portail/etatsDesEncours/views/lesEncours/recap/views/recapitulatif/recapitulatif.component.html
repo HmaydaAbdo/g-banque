@@ -26,24 +26,42 @@
     </form>
 
     <div class="recap-bar__kpis">
-      <span class="recap-kpi" pTooltip="Total débit prévisionnel" tooltipPosition="bottom">
-        <span class="recap-kpi__label">Débit</span>
-        <span class="recap-kpi__value recap-kpi__value--debit">{{ (globalView?.debit ?? 0) | number:'1.2-2' }}</span>
-      </span>
-      <span class="recap-kpi" pTooltip="Total crédit prévisionnel" tooltipPosition="bottom">
-        <span class="recap-kpi__label">Crédit</span>
-        <span class="recap-kpi__value recap-kpi__value--credit">{{ (globalView?.credit ?? 0) | number:'1.2-2' }}</span>
-      </span>
-      <span class="recap-kpi" pTooltip="Opérations à valider" tooltipPosition="bottom">
-        <span class="recap-kpi__label">À valider</span>
-        <span class="recap-kpi__value">{{ (globalView?.count ?? 0) | number }}</span>
-      </span>
-      <span class="recap-kpi" pTooltip="Opérations dont la date de référence est atteinte à ce jour" tooltipPosition="bottom">
-        <span class="recap-kpi__label">Échues</span>
-        <span class="recap-kpi__value" [class.recap-kpi__value--alert]="(globalView?.echues ?? 0) > 0">
-          {{ (globalView?.echues ?? 0) | number }}
+      <span class="kpi kpi--debit" pTooltip="Total débit prévisionnel" tooltipPosition="bottom">
+        <i class="pi pi-arrow-circle-down" aria-hidden="true"></i>
+        <span class="kpi__body">
+          <span class="kpi__label">Débit</span>
+          <span class="kpi__value">{{ (globalView?.debit ?? 0) | number:'1.2-2' }}</span>
         </span>
       </span>
+      <span class="kpi kpi--credit" pTooltip="Total crédit prévisionnel" tooltipPosition="bottom">
+        <i class="pi pi-arrow-circle-up" aria-hidden="true"></i>
+        <span class="kpi__body">
+          <span class="kpi__label">Crédit</span>
+          <span class="kpi__value">{{ (globalView?.credit ?? 0) | number:'1.2-2' }}</span>
+        </span>
+      </span>
+      <span class="kpi" pTooltip="Opérations à valider" tooltipPosition="bottom">
+        <i class="pi pi-list" aria-hidden="true"></i>
+        <span class="kpi__body">
+          <span class="kpi__label">À valider</span>
+          <span class="kpi__value">{{ (globalView?.count ?? 0) | number }}</span>
+        </span>
+      </span>
+      <span class="kpi" [class.kpi--alert]="(globalView?.echues ?? 0) > 0"
+            pTooltip="Opérations dont la date de référence est atteinte à ce jour" tooltipPosition="bottom">
+        <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+        <span class="kpi__body">
+          <span class="kpi__label">Échues</span>
+          <span class="kpi__value">{{ (globalView?.echues ?? 0) | number }}</span>
+        </span>
+      </span>
+
+      <!-- Ajouter une opération de n'importe quelle source, sans l'ouvrir d'abord -->
+      <button type="button" pButton pRipple label="Ajouter" icon="pi pi-plus"
+              class="p-button-sm p-button-success"
+              pTooltip="Créer une opération — choix de la source dans une liste avec recherche"
+              tooltipPosition="bottom"
+              (click)="openAjouterModal()"></button>
     </div>
   </div>
 
@@ -148,25 +166,35 @@
             </ng-template>
           </p-dropdown>
 
-          <span class="recap-kpi" pTooltip="Total débit des opérations affichées" tooltipPosition="bottom">
-            <span class="recap-kpi__label">Débit</span>
-            <span class="recap-kpi__value recap-kpi__value--debit">{{ totalDebit | number:'1.2-2' }}</span>
-          </span>
-          <span class="recap-kpi" pTooltip="Total crédit des opérations affichées" tooltipPosition="bottom">
-            <span class="recap-kpi__label">Crédit</span>
-            <span class="recap-kpi__value recap-kpi__value--credit">{{ totalCredit | number:'1.2-2' }}</span>
-          </span>
-          <span class="recap-kpi" pTooltip="Crédit moins débit" tooltipPosition="bottom">
-            <span class="recap-kpi__label">Net</span>
-            <span class="recap-kpi__value"
-                  [class.recap-kpi__value--debit]="totalCredit - totalDebit < 0"
-                  [class.recap-kpi__value--credit]="totalCredit - totalDebit >= 0">
-              {{ totalCredit - totalDebit | number:'1.2-2' }}
+          <span class="kpi kpi--debit" pTooltip="Total débit des opérations affichées" tooltipPosition="bottom">
+            <i class="pi pi-arrow-circle-down" aria-hidden="true"></i>
+            <span class="kpi__body">
+              <span class="kpi__label">Débit</span>
+              <span class="kpi__value">{{ totalDebit | number:'1.2-2' }}</span>
             </span>
           </span>
-          <span class="recap-kpi" pTooltip="Opérations correspondant aux filtres" tooltipPosition="bottom">
-            <span class="recap-kpi__label">Opérations</span>
-            <span class="recap-kpi__value">{{ totalRecords | number }}</span>
+          <span class="kpi kpi--credit" pTooltip="Total crédit des opérations affichées" tooltipPosition="bottom">
+            <i class="pi pi-arrow-circle-up" aria-hidden="true"></i>
+            <span class="kpi__body">
+              <span class="kpi__label">Crédit</span>
+              <span class="kpi__value">{{ totalCredit | number:'1.2-2' }}</span>
+            </span>
+          </span>
+          <span class="kpi" [class.kpi--debit]="totalCredit - totalDebit < 0"
+                [class.kpi--credit]="totalCredit - totalDebit >= 0"
+                pTooltip="Crédit moins débit" tooltipPosition="bottom">
+            <i class="pi pi-chart-bar" aria-hidden="true"></i>
+            <span class="kpi__body">
+              <span class="kpi__label">Net</span>
+              <span class="kpi__value">{{ totalCredit - totalDebit | number:'1.2-2' }}</span>
+            </span>
+          </span>
+          <span class="kpi" pTooltip="Opérations correspondant aux filtres" tooltipPosition="bottom">
+            <i class="pi pi-list" aria-hidden="true"></i>
+            <span class="kpi__body">
+              <span class="kpi__label">Opérations</span>
+              <span class="kpi__value">{{ totalRecords | number }}</span>
+            </span>
           </span>
 
           @if (sortParDefaut) {
@@ -345,11 +373,11 @@
           </td>
           <td class="text-center white-space-nowrap">
             @if (item.sens === SensOperation.DECAISSEMENT) {
-              <span class="sens-badge sens-decaissement" pTooltip="Sortie de trésorerie">
+              <span class="sens-badge debit-badge" pTooltip="Sortie de trésorerie">
                 <i class="pi pi-arrow-circle-down"></i> Décaissement
               </span>
             } @else {
-              <span class="sens-badge sens-encaissement" pTooltip="Entrée de trésorerie">
+              <span class="sens-badge credit-badge" pTooltip="Entrée de trésorerie">
                 <i class="pi pi-arrow-circle-up"></i> Encaissement
               </span>
             }
@@ -584,3 +612,7 @@
     </form>
   }
 </p-dialog>
+
+<app-ajouter-operation-dialog [items]="ajouterItems"
+                              [(visible)]="displayAjouterModal"
+                              (choisir)="choisirAjouter($event)"></app-ajouter-operation-dialog>
