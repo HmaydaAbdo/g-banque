@@ -1156,6 +1156,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     [TransactionSource.FRAIS_BANCAIRE]: id => ['/portail/frais-bancaire/edit', id],
     [TransactionSource.OPERATION_ERRONE]: id => ['/portail/operations/errones/edit', id],
     [TransactionSource.IMPOT_TAXE]: id => ['/portail/impots-taxes/edit', id],
+    [TransactionSource.AGIOS]: id => ['/portail/agios/edit', id],
   };
 
   private static readonly CREATE_ROUTE: Partial<Record<TransactionSource, any[]>> = {
@@ -1179,7 +1180,6 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     [TransactionSource.FRAIS_BANCAIRE]: ['/portail/frais-bancaire/new'],
     [TransactionSource.OPERATION_ERRONE]: ['/portail/operations/errones/new'],
     [TransactionSource.IMPOT_TAXE]: ['/portail/impots-taxes/new'],
-    // TODO: route supposée — à vérifier dans le routing de l'application.
     [TransactionSource.AGIOS]: ['/portail/agios/new'],
   };
 
