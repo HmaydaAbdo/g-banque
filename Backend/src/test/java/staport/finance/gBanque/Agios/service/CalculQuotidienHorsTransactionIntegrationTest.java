@@ -56,7 +56,7 @@ class CalculQuotidienHorsTransactionIntegrationTest extends AbstractIntegrationT
             try (Statement st = c.createStatement()) {
                 st.execute("SET session_replication_role = replica");
                 st.execute("INSERT INTO banque (id, date_creation, date_modification, numero_compte, agence, nom, address, devise, logo_data) "
-                        + "VALUES (" + BANQUE + ", now(), now(), '000', 'AGENCE', 'BANQUE CALCUL', 'ADRESSE', 'MAD', decode('00', 'hex'))");
+                        + "VALUES (" + BANQUE + ", now(), now(), 'IT-CALCUL-" + BANQUE + "', 'AGENCE', 'BANQUE CALCUL', 'ADRESSE', 'MAD', decode('00', 'hex'))");
                 st.execute("INSERT INTO marches (id, banque_id, actif, created_at, modified_at, montant, numero, maitre_douvrage, nom) "
                         + "VALUES (" + MARCHE + ", " + BANQUE + ", true, now(), now(), 10000000.00, 'M-CALCUL', 'MO', 'MARCHE CALCUL')");
                 for (String[] nature : new String[][]{
