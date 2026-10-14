@@ -163,4 +163,29 @@ describe('RecapitulatifComponent — adresse (routeur réel)', () => {
     harness.detectChanges();
     expect(component.openCard).toBeNull();
   });
+
+  // Régression : AGIOS était éditable (bouton actif) sans route d'édition, le clic ne faisait rien.
+  describe('Éditer depuis le récapitulatif', () => {
+    const tables = RecapitulatifComponent as any;
+
+    it("toute source éditable a une route d'édition, et toute route d'édition correspond à une source éditable", () => {
+      const editables = Object.keys(tables.CREATE_EDIT_ELIGIBILITY);
+      const routes = Object.keys(tables.EDIT_ROUTE);
+
+      expect(editables.filter(s => !routes.includes(s))).toEqual([]);
+      expect(routes.filter(s => !editables.includes(s))).toEqual([]);
+    });
+
+    it("la route d'édition d'un agios ouvre /portail/agios/edit/:id", () => {
+      expect(tables.EDIT_ROUTE[TransactionSource.AGIOS](42)).toEqual(['/portail/agios/edit', 42]);
+    });
+
+    it("toute route d'édition porte l'identifiant de la ligne en dernier segment", () => {
+      for (const [source, construire] of Object.entries<(id: number) => any[]>(tables.EDIT_ROUTE)) {
+        const route = construire(7);
+        expect(route[route.length - 1]).withContext(source).toBe(7);
+        expect(String(route[0])).withContext(source).toMatch(/^\/portail\/.+\/edit$/);
+      }
+    });
+  });
 });
