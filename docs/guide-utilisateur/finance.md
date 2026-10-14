@@ -35,10 +35,10 @@ Le tableau de bord affiche en temps réel la situation de chaque compte bancaire
 ### Choisir l'horizon de la prévision (fin de mois / fin de trimestre)
 
 Chaque carte de banque a deux tuiles : **Aujourd'hui** (situation du jour) et une tuile de **prévision**.
-Le sélecteur **Fin de mois | Fin de trimestre**, en haut à droite du tableau de bord, règle cette tuile
-pour toutes les cartes à la fois :
+La liste déroulante d'horizon (**Fin de mois** ou **Fin de trimestre**), en haut à droite du tableau de bord,
+règle cette tuile pour toutes les cartes à la fois :
 
-1. Cliquer sur **Fin de mois** (choix par défaut) ou sur **Fin de trimestre**.
+1. Ouvrir la liste et choisir **Fin de mois** (choix par défaut) ou **Fin de trimestre**.
 2. Les cartes se rechargent. Le titre de la tuile rappelle l'horizon et sa date (ex. « Fin de trimestre
    · 31/12 »). La tuile affiche les **encours entrées** et **encours sorties** encore à valider jusqu'à
    cette date, le **solde prévu** (solde actuel + entrées − sorties) et la **disponibilité** prévue
@@ -50,7 +50,7 @@ octobre-décembre). Votre choix est gardé si vous revenez sur le tableau de bor
 présélectionne la période du **Récap global** (voir ci-dessous).
 
 Pour aller plus loin :
-- le bouton **Trésorerie** (en haut) ouvre le plan de trésorerie de toutes les banques, sur le même horizon ;
+- le plan de trésorerie de toutes les banques s'ouvre depuis le menu latéral, rubrique **Trésorerie prévisionnelle** ;
 - l'icône de **courbe** au pied d'une carte ouvre le plan de trésorerie de cette banque seulement.
 Voir « Trésorerie prévisionnelle » ci-dessous.
 
@@ -82,8 +82,8 @@ Pour récupérer les données depuis le système de paiement externe :
 
 ## Trésorerie prévisionnelle
 
-*Accès : sidebar → Trésorerie prévisionnelle, ou tableau de bord → bouton **Trésorerie** (toutes les
-banques) ou icône de courbe d'une carte (une banque). Droits : membres et directeurs Finance,
+*Accès : sidebar → Trésorerie prévisionnelle (toutes les banques), ou tableau de bord → icône de courbe
+d'une carte (une banque). Droits : membres et directeurs Finance,
 administrateur système.*
 
 Cet écran montre le **plan de trésorerie** : à partir du solde actuel, les entrées et sorties encore à
@@ -93,7 +93,7 @@ c'est une consultation, toujours à jour.
 ### Régler l'écran
 
 En haut à droite :
-- **Fin de mois | Fin de trimestre** : l'horizon du plan. Fin de mois = une colonne par semaine (lundi
+- **Horizon** (liste déroulante **Fin de mois** / **Fin de trimestre**) : l'horizon du plan. Fin de mois = une colonne par semaine (lundi
   au dimanche) ; fin de trimestre = une colonne par mois.
 - **Banque** : « Toutes les banques » (vue consolidée, par défaut) ou une banque précise.
 - **Exporter PDF** : télécharge le plan affiché (voir plus bas).

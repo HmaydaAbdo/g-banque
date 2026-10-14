@@ -26,14 +26,10 @@
 
     <div class="dash-header__actions">
       <!-- Horizon des cartes « prévision » et des récaps détaillés -->
-      <p-selectButton [formControl]="horizonControl" [options]="horizonOptions"
-                      optionLabel="label" optionValue="value" [allowEmpty]="false"
-                      styleClass="p-button-sm"
-                      pTooltip="Horizon de la prévision des cartes et du récap détaillé" tooltipPosition="bottom"/>
-      <p-button label="Trésorerie" icon="pi pi-chart-line" size="small"
-                routerLink="/portail/tresorerie-previsionnelle"
-                [queryParams]="{ horizon: horizon === 'FIN_DE_TRIMESTRE' ? horizon : null }"
-                pTooltip="Plan de trésorerie prévisionnel, toutes banques" tooltipPosition="bottom"/>
+      <p-dropdown [formControl]="horizonControl" [options]="horizonOptions"
+                  optionLabel="label" optionValue="value" ariaLabel="Horizon de la prévision"
+                  appendTo="body" [style]="{'width': '10.5rem'}"
+                  pTooltip="Horizon de la prévision des cartes et du récap détaillé" tooltipPosition="bottom"/>
       <p-button label="Synchroniser" icon="pi pi-sync" size="small" [outlined]="true"
                 (onClick)="synchronizePayments()" [loading]="isLoading" [disabled]="isLoading"/>
       <p-button label="Récap global" icon="pi pi-file-pdf" size="small" [outlined]="true"

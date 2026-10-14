@@ -7,10 +7,9 @@
        Ils s'appliquent aux cartes, à la liste des sources et au tableau de la source ouverte. -->
   <div class="recap-bar">
     <form id="recap-filters-panel" [formGroup]="searchForm" class="recap-bar__filters">
-      <p-selectButton formControlName="periode" [options]="horizonOptions" optionLabel="label"
-                      optionValue="value" [allowEmpty]="false"
-                      styleClass="p-button-sm"
-                      [pTooltip]="'Opérations à valider ' + libelleHorizon" tooltipPosition="bottom"></p-selectButton>
+      <p-dropdown inputId="periode" formControlName="periode" [options]="horizonOptions" optionLabel="label"
+                  optionValue="value" ariaLabel="Horizon" appendTo="body" [style]="{'width': '10.5rem'}"
+                  [pTooltip]="'Opérations à valider ' + libelleHorizon" tooltipPosition="bottom"></p-dropdown>
       <p-dropdown inputId="sens" formControlName="sens" [options]="sensOptions"
                   optionLabel="label" optionValue="value" ariaLabel="Sens"
                   appendTo="body" [style]="{'width': '10rem'}"></p-dropdown>

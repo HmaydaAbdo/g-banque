@@ -7,7 +7,6 @@ import { MenuItem } from 'primeng/api';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
-import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TooltipModule } from 'primeng/tooltip';
 import {
@@ -33,7 +32,7 @@ import { CourbeTresorerieComponent } from '../courbe-tresorerie/courbe-tresoreri
   standalone: true,
   imports: [
     DatePipe, DecimalPipe, NgClass, ReactiveFormsModule, RouterLink,
-    BreadcrumbModule, ButtonModule, DropdownModule, SelectButtonModule, SkeletonModule, TooltipModule,
+    BreadcrumbModule, ButtonModule, DropdownModule, SkeletonModule, TooltipModule,
     PlanTresorerieTableComponent, CourbeTresorerieComponent,
   ],
   templateUrl: './tresorerie-previsionnelle.component.html',

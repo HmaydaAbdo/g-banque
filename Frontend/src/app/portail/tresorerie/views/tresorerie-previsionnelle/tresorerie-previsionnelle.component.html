@@ -20,8 +20,8 @@
     </div>
 
     <div class="treso__controls">
-      <p-selectButton [formControl]="horizonControl" [options]="horizonOptions" optionLabel="label"
-                      optionValue="value" [allowEmpty]="false" styleClass="p-button-sm"/>
+      <p-dropdown [formControl]="horizonControl" [options]="horizonOptions" optionLabel="label"
+                  optionValue="value" ariaLabel="Horizon" appendTo="body" [style]="{'width': '10.5rem'}"/>
       <p-dropdown [formControl]="banqueControl" [options]="banqueOptions" optionLabel="label"
                   optionValue="value" ariaLabel="Banque" appendTo="body" [style]="{'min-width':'14rem'}"/>
       <p-button label="Exporter PDF" icon="pi pi-file-pdf" size="small" [outlined]="true"

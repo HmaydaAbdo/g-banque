@@ -2753,8 +2753,8 @@ sélection du rapprochement actif).
 |---|---|---|
 | Trésorerie prévisionnelle (14/10/2026) | `['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR']` (`SYSTEM_ADMIN` voit toujours tout) | `/portail/tresorerie-previsionnelle` |
 
-Le tableau de bord Finance mène aussi à cet écran (bouton « Trésorerie » d'en-tête, icône de courbe de
-chaque carte) : mêmes conditions, puisque le tableau de bord est lui-même réservé à Finance.
+Le tableau de bord Finance mène aussi à cet écran (icône de courbe de chaque carte ; il n'y a plus de
+bouton « Trésorerie » dans l'en-tête, l'accès général passe par le menu latéral) : mêmes conditions, puisque le tableau de bord est lui-même réservé à Finance.
 
 ---
 
@@ -2763,7 +2763,7 @@ chaque carte) : mêmes conditions, puisque le tableau de bord est lui-même rés
 Consultation, validation individuelle ou en lot, clôture, téléchargement PDF : disponibles à tout
 utilisateur ayant passé le `departmentGuard('Finance')`, sans condition de rôle supplémentaire.
 
-**Horizon fin de mois / fin de trimestre (14/10/2026) — aucune autorisation modifiée.** Le sélecteur
+**Horizon fin de mois / fin de trimestre (14/10/2026) — aucune autorisation modifiée.** La liste déroulante
 d'horizon (tableau de bord, Récapitulatifs, Trésorerie prévisionnelle) ne fait qu'ajouter un paramètre de
 lecture `periode` aux endpoints existants, et `?horizon=` à l'adresse des écrans ; il est proposé à tout
 utilisateur qui a accès à l'écran, sans condition de rôle.

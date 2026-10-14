@@ -5216,7 +5216,7 @@ journée est négatif (couvert ou non par la facilité de caisse).
         → écran « Rapprochement » : transactions déjà validées de la période
 
 [1] Tableau de bord Finance (ou menu latéral « Trésorerie prévisionnelle »)
-        ↓ bouton « Trésorerie » (toutes les banques) ou icône de courbe d'une carte (cette banque)
+        ↓ menu latéral « Trésorerie prévisionnelle » (toutes les banques) ou icône de courbe d'une carte (cette banque)
 [4] Écran « Trésorerie prévisionnelle » : plan de trésorerie jusqu'à la fin du mois ou du trimestre
         ↓ « Voir les encours » (vue d'une banque)
 [2] Écran de sélection du rapprochement actif de cette banque
@@ -5348,15 +5348,15 @@ Les règles et leurs limites sont décrites aux chapitres 21 (Transactions) et 3
 
 #### Tableau de bord Finance : horizon des cartes
 
-L'en-tête du tableau de bord porte un sélecteur **Fin de mois / Fin de trimestre** (fin de mois par
-défaut). Il règle, pour toutes les cartes de banque à la fois, la tuile de prévision (« Fin de mois ·
+L'en-tête du tableau de bord porte une liste déroulante d'horizon, **Fin de mois / Fin de trimestre** (fin de
+mois par défaut ; une liste plutôt que deux boutons, pour gagner de la place). Il règle, pour toutes les cartes de banque à la fois, la tuile de prévision (« Fin de mois ·
 31/10 » ou « Fin de trimestre · 31/12 ») : encours entrées et sorties jusqu'à l'horizon, solde prévu
 (solde actuel + encours entrées − encours sorties) et disponibilité prévue (solde prévu + facilité de
 caisse). La tuile « Aujourd'hui » ne change pas. Le choix est conservé dans l'adresse de la page
 (retour arrière, rechargement). Il sert aussi aux deux téléchargements « Récap détaillé » et
-présélectionne la période du « Récap global ». Le bouton **Trésorerie** de l'en-tête ouvre l'écran
-Trésorerie prévisionnelle (toutes les banques) sur le même horizon ; l'icône de courbe au pied de chaque
-carte l'ouvre directement sur cette banque.
+présélectionne la période du « Récap global ». L'écran Trésorerie prévisionnelle (toutes les banques) est un
+élément du menu latéral, plus un bouton du tableau de bord ; l'icône de courbe au pied de chaque carte
+l'ouvre directement sur cette banque, avec le même horizon.
 
 #### Téléchargements PDF (depuis le tableau de bord Finance)
 
@@ -5371,9 +5371,9 @@ carte l'ouvre directement sur cette banque.
 
 #### Écran Trésorerie prévisionnelle
 
-Écran à part, hors de l'espace de travail d'une banque (menu latéral « Trésorerie prévisionnelle »,
-bouton « Trésorerie » ou icône de courbe du tableau de bord). De haut en bas :
-- **En-tête** : sélecteur **Fin de mois / Fin de trimestre**, liste **Banque** (« Toutes les banques »
+Écran à part, hors de l'espace de travail d'une banque (menu latéral « Trésorerie prévisionnelle »
+ou icône de courbe du tableau de bord). De haut en bas :
+- **En-tête** : liste d'horizon **Fin de mois / Fin de trimestre**, liste **Banque** (« Toutes les banques »
   par défaut, puis chaque banque) et bouton **Exporter PDF**. Une phrase rappelle le périmètre, la date
   du calcul et la date de l'horizon. L'horizon et la banque choisis sont conservés dans l'adresse ;
 - **Indicateurs** : solde actuel (avec la facilité de caisse), solde prévu à l'horizon (avec sa

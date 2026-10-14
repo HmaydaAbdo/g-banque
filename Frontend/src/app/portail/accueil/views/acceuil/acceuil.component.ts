@@ -23,6 +23,7 @@ import {Subscription, throwError} from "rxjs";
 import {FormControl, ReactiveFormsModule} from "@angular/forms";
 import {DialogModule} from "primeng/dialog";
 import {SelectButtonModule} from "primeng/selectbutton";
+import {DropdownModule} from "primeng/dropdown";
 
 @Component({
   selector: 'app-accueil',
@@ -38,7 +39,8 @@ import {SelectButtonModule} from "primeng/selectbutton";
     ProgressBarModule,
     ReactiveFormsModule,
     DialogModule,
-    SelectButtonModule
+    SelectButtonModule,
+    DropdownModule
   ],
   templateUrl: './acceuil.component.html',
   styleUrl: './acceuil.component.scss',
