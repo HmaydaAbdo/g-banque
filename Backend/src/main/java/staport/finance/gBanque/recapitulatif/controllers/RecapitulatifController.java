@@ -33,9 +33,10 @@ import java.util.Locale;
 /**
  * REST Controller du récapitulatif des encours prévisionnels.
  * Expose un endpoint paginé et triable donnant une vue consolidée des encaissements et
- * décaissements attendus du mois en cours pour une banque, ainsi que son export PDF.
+ * décaissements attendus jusqu'à l'horizon choisi (fin de mois par défaut, ou fin de trimestre)
+ * pour une banque, ainsi que son export PDF.
  */
-@Tag(name = "Récapitulatif", description = "Vue consolidée des décaissements/encaissements prévisionnels du mois par banque")
+@Tag(name = "Récapitulatif", description = "Vue consolidée des décaissements/encaissements prévisionnels par banque, jusqu'à fin de mois ou fin de trimestre")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/recapitulatif")
@@ -65,7 +66,8 @@ public class RecapitulatifController {
             description = "Le paramètre de requête `sens` est optionnel : absent, les deux sens " +
                     "sont retournés entrelacés ; ENCAISSEMENT ou DECAISSEMENT ne retourne que ce " +
                     "sens. Les totaux débit et crédit retournés suivent toujours les critères " +
-                    "appliqués — le total du sens exclu vaut donc zéro.")
+                    "appliqués — le total du sens exclu vaut donc zéro. `periode` (FIN_DE_MOIS par " +
+                    "défaut, FIN_DE_TRIMESTRE) fixe l'horizon quand `dateReferenceJusqua` est absent.")
     @GetMapping("/banque/{banqueId}")
     public ResponseEntity<AgregatedRecapDto> getRecapitulatif(
             @PageableDefault(sort = "dateReference", direction = Sort.Direction.DESC) Pageable pageable,
@@ -118,7 +120,8 @@ public class RecapitulatifController {
 
     @Operation(summary = "Télécharger le récapitulatif global (PDF)",
             description = "periode=A_CE_JOUR limite aux encours déjà échus/émis ; periode=FIN_DE_MOIS " +
-                    "(défaut) inclut les encours jusqu'à la fin du mois en cours.")
+                    "(défaut) inclut les encours jusqu'à la fin du mois en cours ; periode=FIN_DE_TRIMESTRE " +
+                    "jusqu'à la fin du trimestre civil en cours.")
     @ApiResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_PDF_VALUE))
     @GetMapping("/{banqueId}/pdf")
     public ResponseEntity<byte[]> getGlobalRecapReport(
@@ -154,7 +157,8 @@ public class RecapitulatifController {
 
     @Operation(summary = "Télécharger le récapitulatif global consolidé (PDF, toutes banques)",
             description = "periode=A_CE_JOUR limite aux encours déjà échus/émis ; periode=FIN_DE_MOIS " +
-                    "(défaut) inclut les encours jusqu'à la fin du mois en cours.")
+                    "(défaut) inclut les encours jusqu'à la fin du mois en cours ; periode=FIN_DE_TRIMESTRE " +
+                    "jusqu'à la fin du trimestre civil en cours.")
     @ApiResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_PDF_VALUE))
     @ApiResponse(responseCode = "204", description = "Aucune banque à récapituler")
     @GetMapping("/global/pdf")

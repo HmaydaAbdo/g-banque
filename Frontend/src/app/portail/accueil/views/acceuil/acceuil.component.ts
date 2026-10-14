@@ -1,4 +1,4 @@
-import {Component, inject, OnInit} from '@angular/core';
+import {Component, inject, OnDestroy, OnInit} from '@angular/core';
 import {Button} from "primeng/button";
 import {RecapitulatifCompte} from "../../dtos/RecapitulatifCompte";
 import {TooltipModule} from "primeng/tooltip";
@@ -7,14 +7,19 @@ import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
 import {MenuItem, MessageService} from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import {RouterLink, RouterLinkActive} from "@angular/router";
+import {ActivatedRoute, Router, RouterLink, RouterLinkActive} from "@angular/router";
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import {ProgressBarModule} from "primeng/progressbar";
 import {FunPaymentService} from "../../../FunPaimentService/FunPaymentService";
 import {RecapService} from "../../../etatsDesEncours/views/lesEncours/recap/services/recap.service";
-import {PeriodeRecap} from "../../../etatsDesEncours/views/lesEncours/recap/dtos/PeriodeRecap";
+import {
+  HORIZON_OPTIONS,
+  HorizonPrevision,
+  horizonDepuisParam,
+  PeriodeRecap
+} from "../../../etatsDesEncours/views/lesEncours/recap/dtos/PeriodeRecap";
 import {catchError, finalize} from "rxjs/operators";
-import {throwError} from "rxjs";
+import {Subscription, throwError} from "rxjs";
 import {FormControl, ReactiveFormsModule} from "@angular/forms";
 import {DialogModule} from "primeng/dialog";
 import {SelectButtonModule} from "primeng/selectbutton";
@@ -39,7 +44,7 @@ import {SelectButtonModule} from "primeng/selectbutton";
   styleUrl: './acceuil.component.scss',
   providers: [MessageService, provideAnimations(), DatePipe]
 })
-export class AcceuilComponent implements OnInit {
+export class AcceuilComponent implements OnInit, OnDestroy {
 
   recapitulatifComptes: RecapitulatifCompte[] = [];
   items: MenuItem[] | undefined;
@@ -49,12 +54,18 @@ export class AcceuilComponent implements OnInit {
   recapDetailleAllLoading: boolean = false;
   recapDetailleBanqueLoadingMap: Map<number, boolean> = new Map();
 
+  // ── Horizon des cartes et des rapports détaillés : fin de mois (défaut) ou fin de trimestre ──
+  // Porté par l'adresse (?horizon=FIN_DE_TRIMESTRE) pour survivre au retour arrière et au F5.
+  readonly horizonOptions = HORIZON_OPTIONS;
+  horizonControl = new FormControl<HorizonPrevision>('FIN_DE_MOIS', { nonNullable: true });
+
   // ── Choix de la période du Récap global (retour utilisateur du 31/08/2026) ──
   showRecapGlobalPeriodeModal: boolean = false;
   periodeControl = new FormControl<PeriodeRecap | null>('FIN_DE_MOIS');
   periodeOptions: { label: string; value: PeriodeRecap }[] = [
     { label: 'À ce jour', value: 'A_CE_JOUR' },
-    { label: "Jusqu'à fin de mois", value: 'FIN_DE_MOIS' }
+    { label: "Fin de mois", value: 'FIN_DE_MOIS' },
+    { label: "Fin de trimestre", value: 'FIN_DE_TRIMESTRE' }
   ];
 
   private banqueService      = inject(BanqueService);
@@ -62,24 +73,46 @@ export class AcceuilComponent implements OnInit {
   private recapService       = inject(RecapService);
   private funPaymentService  = inject(FunPaymentService);
   private datePipe           = inject(DatePipe);
+  private route              = inject(ActivatedRoute);
+  private router             = inject(Router);
+  private subscriptions: Subscription[] = [];
 
   ngOnInit(): void {
     this.items = [{ icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" } ]
+    this.horizonControl.setValue(horizonDepuisParam(this.route.snapshot.queryParamMap.get('horizon')), { emitEvent: false });
+    this.subscriptions.push(
+      this.horizonControl.valueChanges.subscribe(horizon => {
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { horizon: horizon === 'FIN_DE_TRIMESTRE' ? horizon : null },
+          replaceUrl: true,
+        });
+        this.fetchAccueilBankInfo();
+      })
+    );
     this.fetchAccueilBankInfo();
   }
 
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(s => s.unsubscribe());
+  }
+
+  get horizon(): HorizonPrevision {
+    return this.horizonControl.value;
+  }
+
+  /** Titre de la tuile de prévision des cartes. */
+  get titrePrevision(): string {
+    return this.horizon === 'FIN_DE_TRIMESTRE' ? 'Fin de trimestre' : 'Fin de mois';
+  }
+
   fetchAccueilBankInfo(): void {
-    this.banqueService.getAccueilBankInfo().subscribe({
+    this.banqueService.getAccueilBankInfo(this.horizon).subscribe({
       next: (data) => {
         this.recapitulatifComptes = data;
       },
       error: () => {}
     });
-  }
-
-  /** Écart entre la disponibilité de fin de mois et celle d'aujourd'hui. */
-  deltaDisponibilite(account: RecapitulatifCompte): number {
-    return account.disponibiliteFinDeMois - account.disponibiliteFC;
   }
 
   /**
@@ -107,9 +140,9 @@ export class AcceuilComponent implements OnInit {
   }
 
 
-  /** Ouvre le choix de période avant de télécharger le Récap global. */
+  /** Ouvre le choix de période avant de télécharger le Récap global (présélection : l'horizon des cartes). */
   openRecapGlobalPeriodeModal(): void {
-    this.periodeControl.setValue('FIN_DE_MOIS');
+    this.periodeControl.setValue(this.horizon);
     this.showRecapGlobalPeriodeModal = true;
   }
 
@@ -141,7 +174,8 @@ export class AcceuilComponent implements OnInit {
 
           // 2. Déterminer le nom de fichier
           const date = this.datePipe.transform(new Date(), 'dd/MM/yyyy');
-          const suffixePeriode = periode === 'A_CE_JOUR' ? 'A_ce_jour' : 'Fin_de_mois';
+          const suffixePeriode = periode === 'A_CE_JOUR' ? 'A_ce_jour'
+            : periode === 'FIN_DE_TRIMESTRE' ? 'Fin_de_trimestre' : 'Fin_de_mois';
           const filename = `Récapitulatif_Global_${suffixePeriode}_${date}.pdf`;
 
           // 3. Créer un élément <a> invisible
@@ -173,7 +207,7 @@ export class AcceuilComponent implements OnInit {
   downloadRecapGeneralDetailleAll(): void {
     this.recapDetailleAllLoading = true;
 
-    this.recapService.downloadRecapGeneralDetailleAllBanquesPdf()
+    this.recapService.downloadRecapGeneralDetailleAllBanquesPdf(this.horizon)
       .pipe(
         catchError(() => {
           return throwError(() => new Error('Download failed'));
@@ -204,7 +238,7 @@ export class AcceuilComponent implements OnInit {
   downloadRecapGeneralDetaillePourBanque(banqueId: number): void {
     this.recapDetailleBanqueLoadingMap.set(banqueId, true);
 
-    this.recapService.downloadRecapGeneralDetaillePdf(banqueId)
+    this.recapService.downloadRecapGeneralDetaillePdf(banqueId, this.horizon)
       .pipe(
         catchError(() => {
           return throwError(() => new Error('Download failed'));

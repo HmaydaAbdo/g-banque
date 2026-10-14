@@ -1,0 +1,30 @@
+import { inject, Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment';
+import { HorizonPrevision } from '../../etatsDesEncours/views/lesEncours/recap/dtos/PeriodeRecap';
+import { PlanTresorerie } from '../dtos/PlanTresorerie';
+
+/** Accès au backend de la Trésorerie prévisionnelle (/tresorerie-previsionnelle). */
+@Injectable({
+  providedIn: 'root'
+})
+export class TresorerieService {
+
+  private readonly baseUrl = `${environment.apiUrl}tresorerie-previsionnelle`;
+  private readonly http = inject(HttpClient);
+
+  /** Plan de toutes les banques (détail par banque + consolidé) jusqu'à l'horizon demandé. */
+  getPlan(periode: HorizonPrevision): Observable<PlanTresorerie> {
+    return this.http.get<PlanTresorerie>(this.baseUrl, { params: new HttpParams().set('periode', periode) });
+  }
+
+  /** PDF du plan : toutes banques consolidées si `banqueId` est nul, sinon la banque demandée. */
+  exportPdf(periode: HorizonPrevision, banqueId: number | null): Observable<Blob> {
+    let params = new HttpParams().set('periode', periode);
+    if (banqueId !== null) {
+      params = params.set('banqueId', banqueId);
+    }
+    return this.http.get(`${this.baseUrl}/pdf`, { params, responseType: 'blob' });
+  }
+}

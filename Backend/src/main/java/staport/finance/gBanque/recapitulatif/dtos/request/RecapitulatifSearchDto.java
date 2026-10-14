@@ -2,6 +2,7 @@ package staport.finance.gBanque.recapitulatif.dtos.request;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import staport.finance.gBanque.impot_taxes.enums.Motif;
+import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
 import staport.finance.gBanque.transactions.enums.SensOperation;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
@@ -30,8 +31,12 @@ import java.util.List;
  * (date d'émission pour certaines sources, date d'échéance pour d'autres, etc.), donc filtrer
  * dessus revient à filtrer chaque ligne sur SA colonne de référence métier, sans qu'on ait à
  * connaître ce mapping ici. {@code dateReferenceDepuis} n'a pas de valeur par défaut (absente =
- * aucune borne basse). Si {@code dateReferenceJusqua} est {@code null}, le Service retombe sur la
- * fin du mois en cours (comportement historique, inchangé par l'ajout de la borne basse).</p>
+ * aucune borne basse). Si {@code dateReferenceJusqua} est {@code null}, le Service retombe sur
+ * l'horizon {@code periode}.</p>
+ *
+ * <p>{@code periode} : horizon de l'écran (fin de mois par défaut, ou fin de trimestre — voir
+ * {@link PeriodeRecap}). {@code null} vaut fin de mois. Une borne {@code dateReferenceJusqua}
+ * saisie dans les filtres d'une source prime sur l'horizon.</p>
  *
  * <p>{@code montant} : filtre optionnel sur le montant exact de l'opération (égalité stricte,
  * pas une plage) — permet par exemple de retrouver directement une échéance dont le montant est
@@ -62,6 +67,7 @@ public record RecapitulatifSearchDto(
         LocalDate dateReferenceJusqua,
         BigDecimal montant,
         TransactionSource commissionOperation,
-        Motif impotEtTaxeMotif
+        Motif impotEtTaxeMotif,
+        PeriodeRecap periode
 ) {
 }

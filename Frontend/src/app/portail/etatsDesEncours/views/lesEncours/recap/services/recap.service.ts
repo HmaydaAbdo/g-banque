@@ -4,7 +4,7 @@ import {HttpClient, HttpParams} from "@angular/common/http";
 import {Observable} from "rxjs";
 import {RecapitulatifSearchDto} from "../dtos/RecapitulatifSearchDto";
 import {AgregatedRecapDto} from "../dtos/AgregatedRecapDto";
-import {PeriodeRecap} from "../dtos/PeriodeRecap";
+import {HORIZON_PAR_DEFAUT, HorizonPrevision, PeriodeRecap} from "../dtos/PeriodeRecap";
 import {RecapSourceDto} from "../dtos/RecapSourceDto";
 
 @Injectable({
@@ -71,7 +71,7 @@ export class RecapService {
    * Downloads the global summary report (PDF) for a specific bank.
    *
    * @param banqueId The ID of the bank.
-   * @param periode 'A_CE_JOUR' (encours déjà échus/émis) ou 'FIN_DE_MOIS' (défaut backend).
+   * @param periode 'A_CE_JOUR' (encours déjà échus/émis), 'FIN_DE_MOIS' (défaut backend) ou 'FIN_DE_TRIMESTRE'.
    * @returns Observable<Blob> An observable of the PDF file as a Blob.
    */
   downloadRecapGlobalByBank(banqueId: number, periode: PeriodeRecap = 'FIN_DE_MOIS'): Observable<Blob> {
@@ -83,7 +83,7 @@ export class RecapService {
   /**
    * Downloads the consolidated global summary report (PDF) for all banks.
    *
-   * @param periode 'A_CE_JOUR' (encours déjà échus/émis) ou 'FIN_DE_MOIS' (défaut backend).
+   * @param periode 'A_CE_JOUR' (encours déjà échus/émis), 'FIN_DE_MOIS' (défaut backend) ou 'FIN_DE_TRIMESTRE'.
    * @returns Observable<Blob> An observable of the PDF file as a Blob.
    */
   downloadGlobalRecapForAllBanks(periode: PeriodeRecap = 'FIN_DE_MOIS'): Observable<Blob> {
@@ -93,19 +93,22 @@ export class RecapService {
   }
 
   /**
-   * Télécharge le PDF du Récap Général Détaillé pour une banque.
+   * Télécharge le PDF du Récap Général Détaillé pour une banque, la partie « à venir » allant
+   * jusqu'à l'horizon demandé (fin de mois par défaut, ou fin de trimestre).
    */
-  downloadRecapGeneralDetaillePdf(banqueId: number): Observable<Blob> {
+  downloadRecapGeneralDetaillePdf(banqueId: number, periode: HorizonPrevision = HORIZON_PAR_DEFAUT): Observable<Blob> {
     const url = `${environment.apiUrl}recap-general-detaille/banque/${banqueId}/pdf`;
-    return this.http.get(url, { responseType: 'blob' });
+    const params = new HttpParams().set('periode', periode);
+    return this.http.get(url, { params, responseType: 'blob' });
   }
 
   /**
-   * Télécharge le PDF du Récap Général Détaillé pour toutes les banques.
+   * Télécharge le PDF du Récap Général Détaillé pour toutes les banques, jusqu'à l'horizon demandé.
    */
-  downloadRecapGeneralDetailleAllBanquesPdf(): Observable<Blob> {
+  downloadRecapGeneralDetailleAllBanquesPdf(periode: HorizonPrevision = HORIZON_PAR_DEFAUT): Observable<Blob> {
     const url = `${environment.apiUrl}recap-general-detaille/all/pdf`;
-    return this.http.get(url, { responseType: 'blob' });
+    const params = new HttpParams().set('periode', periode);
+    return this.http.get(url, { params, responseType: 'blob' });
   }
 
   /**
@@ -150,6 +153,10 @@ export class RecapService {
 
     if (searchDto.impotEtTaxeMotif) {
       params = params.append('impotEtTaxeMotif', searchDto.impotEtTaxeMotif);
+    }
+
+    if (searchDto.periode) {
+      params = params.append('periode', searchDto.periode);
     }
 
     return params;

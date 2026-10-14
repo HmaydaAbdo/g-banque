@@ -112,8 +112,8 @@ Cookies `Secure`, `SameSite=Strict`.
 | POST | `/banques` | `FINANCE_OR_ADMIN` (`SYSTEM_ADMIN`, `DEPT_Finance:MEMBER`, `DEPT_Finance:DIRECTOR`) | Création réservée à l'équipe Finance ou à l'admin système. |
 | GET | `/banques/{id}` | `isAuthenticated()` | Donnée de référence consommée par d'autres modules indépendants (dropdowns : Agios, Commissions, Droits constatés, Leasing...). |
 | GET | `/banques` | `isAuthenticated()` | Idem — liste de référence, pas de donnée sensible exposée (le logo et le solde ne sont pas filtrés par rôle). |
-| GET | `/banques/accueil-info` | `FINANCE_OR_ADMIN` | Tableau de bord Finance — solde, plafond FC, échus. Réservé Finance/admin. |
-| GET | `/banques/accueil-info/{banqueId}` | `FINANCE_OR_ADMIN` | Idem, restreint à une banque. |
+| GET | `/banques/accueil-info` | `FINANCE_OR_ADMIN` | Tableau de bord Finance — solde, plafond FC, échus, projection jusqu'à `?periode=FIN_DE_MOIS` (défaut) \| `FIN_DE_TRIMESTRE` (paramètre de lecture, sans effet sur les droits). Réservé Finance/admin. |
+| GET | `/banques/accueil-info/{banqueId}` | `FINANCE_OR_ADMIN` | Idem, restreint à une banque (même paramètre `periode`). |
 | PUT | `/banques/{id}` | `FINANCE_OR_ADMIN` | Modification réservée à l'équipe Finance ou à l'admin système. |
 | DELETE | `/banques/{id}` | `SYSTEM_ADMIN` | Règle transverse (`conventions/security.md`, "Suppression") : suppression toujours réservée à `SYSTEM_ADMIN`. |
 
@@ -2689,10 +2689,10 @@ static final String FINANCE_OR_ADMIN =
 | Méthode | URL | Description |
 |---|---|---|
 | GET | `/recapitulatif/banque/{banqueId}/par-source` | Indicateurs par source (nombre d'opérations, total débit, total crédit, nombre d'échues), mêmes critères que l'endpoint ci-dessous, sans pagination — alimente les cartes de la vue d'ensemble et la liste des sources de la vue focus de l'écran Récapitulatifs. |
-| GET | `/recapitulatif/banque/{banqueId}` | Encaissements **et** décaissements prévisionnels du mois, entrelacés, paginés/triés/filtrés — alimente l'écran unique Récapitulatifs. Le sens est un critère optionnel (`?sens=ENCAISSEMENT` \| `DECAISSEMENT`) : absent, les deux sens sont retournés. |
+| GET | `/recapitulatif/banque/{banqueId}` | Encaissements **et** décaissements prévisionnels jusqu'à l'horizon, entrelacés, paginés/triés/filtrés — alimente l'écran unique Récapitulatifs. Le sens est un critère optionnel (`?sens=ENCAISSEMENT` \| `DECAISSEMENT`) : absent, les deux sens sont retournés. L'horizon est un critère optionnel (`?periode=FIN_DE_MOIS` par défaut \| `FIN_DE_TRIMESTRE`, 14/10/2026). |
 | GET | `/recapitulatif/banque/{banqueId}/export/pdf` | Export PDF du récapitulatif, mêmes critères que l'endpoint ci-dessus (filtre de sens compris), sans pagination. |
 | GET | `/recapitulatif/{banqueId}/pdf` | Récapitulatif global (PDF) d'une banque. **Aucun déclencheur dans l'UI actuellement** — `RecapService.downloadRecapGlobalByBank()` existe côté frontend mais n'est appelé par aucun composant ; endpoint disponible via Swagger uniquement. |
-| GET | `/recapitulatif/global/pdf` | Récapitulatif global consolidé (PDF, toutes banques) — bouton "Récap global" du tableau de bord Finance. |
+| GET | `/recapitulatif/global/pdf` | Récapitulatif global consolidé (PDF, toutes banques) — bouton "Récap global" du tableau de bord Finance. `?periode=A_CE_JOUR` \| `FIN_DE_MOIS` (défaut) \| `FIN_DE_TRIMESTRE`. |
 
 > **Rupture de contrat (06/09/2026).** Les quatre endpoints
 > `/recapitulatif/{decaissement,encaissement}/banque/{banqueId}` et leurs variantes `/export/pdf`
@@ -2713,6 +2713,24 @@ static final String FINANCE_OR_ADMIN =
 | GET | `/recap-general-detaille/banque/{banqueId}/pdf` | Récapitulatif général détaillé (PDF) d'une banque — bouton "Récap détaillé" sur la carte de la banque, tableau de bord Finance. |
 | GET | `/recap-general-detaille/all/pdf` | Récapitulatif général détaillé (PDF), toutes banques — bouton "Récap détaillé" d'en-tête, tableau de bord Finance. |
 
+Les quatre endpoints acceptent `?periode=FIN_DE_MOIS` (défaut) \| `FIN_DE_TRIMESTRE` (14/10/2026) : simple
+paramètre de lecture, même `@PreAuthorize`.
+
+---
+
+### Endpoints — `TresoreriePrevisionnelleController` (base `/tresorerie-previsionnelle`, 14/10/2026)
+
+`@PreAuthorize(FINANCE_OR_ADMIN)` posé au niveau classe — couvre les 2 endpoints. Lecture seule : aucun
+endpoint d'écriture.
+
+| Méthode | URL | Description |
+|---|---|---|
+| GET | `/tresorerie-previsionnelle` | Plan de trésorerie prévisionnel (JSON) : détail par banque + vue consolidée, `?periode=FIN_DE_MOIS` (défaut) \| `FIN_DE_TRIMESTRE` — écran Trésorerie prévisionnelle. |
+| GET | `/tresorerie-previsionnelle/pdf` | Export PDF du plan, `?periode=…` et `?banqueId=` facultatif (absent = toutes banques ; banque inconnue = 404) — bouton « Exporter PDF » de l'écran. |
+
+Couverture de test : `TresoreriePrevisionnelleIntegrationTest` (administrateur → 200 sur les deux endpoints ;
+utilisateur hors Finance → 403 sur les deux ; banque inconnue → 404).
+
 ---
 
 ### Guards Angular
@@ -2721,14 +2739,22 @@ static final String FINANCE_OR_ADMIN =
 |---|---|---|
 | `/portail/etats-des-encours/:banqueId` (parent — s'applique à `select` et à `:rapprochementId` avec tous ses enfants) | `departmentGuard('Finance')` | `DEPT_Finance:MEMBER` ou `DEPT_Finance:DIRECTOR`. `SYSTEM_ADMIN` passe toujours (accès transversal). |
 | `/portail/etats-des-encours/:banqueId/:rapprochementId` | `rapprochementActifGuard` | Ne vérifie aucun rôle — s'assure que `rapprochementId` est un identifiant numérique valide dans l'URL ; sinon redirige vers l'écran de sélection (`/select`), ou vers l'accueil si `banqueId` est lui-même introuvable. Garde de navigation, pas de sécurité d'accès. |
+| `/portail/tresorerie-previsionnelle` (14/10/2026) | `departmentGuard('Finance')` | `DEPT_Finance:MEMBER` ou `DEPT_Finance:DIRECTOR`. `SYSTEM_ADMIN` passe toujours. Les paramètres d'adresse `?horizon=` et `?banque=` ne sont que des critères de lecture (valeur inconnue → fin de mois / toutes les banques). |
 
 ---
 
 ### Visibilité sidebar
 
-Aucune — ce module n'a pas d'entrée dans la barre latérale principale de l'application. Le point
+L'espace de travail États des encours n'a pas d'entrée dans la barre latérale principale : son point
 d'entrée est la carte d'une banque sur le tableau de bord Finance (route directe vers l'écran de
 sélection du rapprochement actif).
+
+| Item | `requiredAuthority` | Route |
+|---|---|---|
+| Trésorerie prévisionnelle (14/10/2026) | `['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR']` (`SYSTEM_ADMIN` voit toujours tout) | `/portail/tresorerie-previsionnelle` |
+
+Le tableau de bord Finance mène aussi à cet écran (bouton « Trésorerie » d'en-tête, icône de courbe de
+chaque carte) : mêmes conditions, puisque le tableau de bord est lui-même réservé à Finance.
 
 ---
 
@@ -2736,6 +2762,11 @@ sélection du rapprochement actif).
 
 Consultation, validation individuelle ou en lot, clôture, téléchargement PDF : disponibles à tout
 utilisateur ayant passé le `departmentGuard('Finance')`, sans condition de rôle supplémentaire.
+
+**Horizon fin de mois / fin de trimestre (14/10/2026) — aucune autorisation modifiée.** Le sélecteur
+d'horizon (tableau de bord, Récapitulatifs, Trésorerie prévisionnelle) ne fait qu'ajouter un paramètre de
+lecture `periode` aux endpoints existants, et `?horizon=` à l'adresse des écrans ; il est proposé à tout
+utilisateur qui a accès à l'écran, sans condition de rôle.
 
 **Vue focus, filtres par source, état dans l'adresse (12/10/2026) — aucune autorisation modifiée.**
 L'écran Récapitulatifs garde son état (source ouverte, filtres globaux et de la source, page, tri, ligne à
@@ -2808,6 +2839,7 @@ succès — aucun mécanisme de retour n'a été ajouté spécifiquement pour le
 | Consulter le Récapitulatif, tous sens confondus ou filtré (API) | Équipe Finance (membre ou directeur), `SYSTEM_ADMIN` |
 | Exporter en PDF le Rapprochement en cours, le Récapitulatif ou l'encours d'un type d'opération | Équipe Finance (membre ou directeur), `SYSTEM_ADMIN` — même niveau que la consultation correspondante |
 | Consulter ou télécharger le récapitulatif général détaillé (API) | Équipe Finance (membre ou directeur), `SYSTEM_ADMIN` |
+| Consulter la Trésorerie prévisionnelle et exporter son plan (Angular + API) | Équipe Finance (membre ou directeur), `SYSTEM_ADMIN` |
 | Valider un encours (individuel ou en lot) | Équipe Finance (membre ou directeur), `SYSTEM_ADMIN` — voir Chapitre 28 — Validation |
 
 *Les modules suivants sont transverses.*

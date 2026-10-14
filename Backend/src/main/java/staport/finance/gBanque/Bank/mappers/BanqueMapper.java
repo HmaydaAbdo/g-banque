@@ -6,8 +6,10 @@ import staport.finance.gBanque.Bank.dtos.request.BanqueRequest;
 import staport.finance.gBanque.Bank.dtos.response.BankAccueilResponse;
 import staport.finance.gBanque.Bank.dtos.response.BanqueResponse;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Base64;
 
 @Mapper(componentModel = "spring")
@@ -66,6 +68,9 @@ public interface BanqueMapper {
      * disponibles à cet appel, pas besoin d'un service supplémentaire. Null-safe : un plafond FC
      * absent (aucune ligne FC active pour la banque) compte pour 0 dans le calcul, sans changer
      * la valeur (potentiellement null) exposée dans le champ {@code plafondFC} lui-même.
+     *
+     * <p>{@code encoursPlus}/{@code encoursMoins} sont les encours jusqu'à {@code dateHorizon},
+     * l'horizon {@code periode} choisi sur l'accueil (fin de mois ou fin de trimestre).</p>
      */
     default BankAccueilResponse toAccueilDto(Banque banque,
                                              BigDecimal computedBalance,
@@ -73,6 +78,8 @@ public interface BanqueMapper {
                                              BigDecimal soldeDebut,
                                              long lcnsEchusCount,
                                              long virementsEchusCount,
+                                             PeriodeRecap periode,
+                                             LocalDate dateHorizon,
                                              BigDecimal encoursPlus,
                                              BigDecimal encoursMoins) {
         BigDecimal soldePourCalcul   = computedBalance != null ? computedBalance : BigDecimal.ZERO;
@@ -80,8 +87,8 @@ public interface BanqueMapper {
         BigDecimal plus  = encoursPlus  != null ? encoursPlus  : BigDecimal.ZERO;
         BigDecimal moins = encoursMoins != null ? encoursMoins : BigDecimal.ZERO;
 
-        // soldeFinDeMois = solde + encours+ - encours- ; disponibilité = soldeFinDeMois + plafond FC
-        BigDecimal soldeFinDeMois = soldePourCalcul.add(plus).subtract(moins);
+        // soldePrevu = solde + encours+ - encours- ; disponibilité prévue = soldePrevu + plafond FC
+        BigDecimal soldePrevu = soldePourCalcul.add(plus).subtract(moins);
 
         return new BankAccueilResponse(
                 banque.getId(),
@@ -94,10 +101,12 @@ public interface BanqueMapper {
                 banque.getDevise(),
                 lcnsEchusCount,
                 virementsEchusCount,
+                periode,
+                dateHorizon,
                 plus,
                 moins,
-                soldeFinDeMois,
-                soldeFinDeMois.add(plafondPourCalcul)
+                soldePrevu,
+                soldePrevu.add(plafondPourCalcul)
         );
     }
 }

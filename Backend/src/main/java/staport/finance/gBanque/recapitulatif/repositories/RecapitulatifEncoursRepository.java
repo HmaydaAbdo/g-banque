@@ -42,4 +42,15 @@ public interface RecapitulatifEncoursRepository
     @Query("SELECT v.banqueId, v.sens, SUM(v.montant) FROM RecapitulatifEncoursView v " +
             "WHERE v.dateReference <= :until GROUP BY v.banqueId, v.sens")
     List<Object[]> sumAllBanquesBySensUntil(@Param("until") LocalDate until);
+
+    /**
+     * Somme par (banque, source, sens, date de référence) pour toutes les banques jusqu'à une date
+     * — alimente le plan de trésorerie prévisionnel ({@code TresoreriePrevisionnelleServiceImpl}).
+     * Le nombre de lignes est borné par le nombre de couples (source, jour) qui portent un encours
+     * non validé, pas par le nombre d'encours.
+     */
+    @Query("SELECT v.banqueId, v.id.sourceType, v.sens, v.dateReference, SUM(v.montant) " +
+            "FROM RecapitulatifEncoursView v WHERE v.dateReference <= :until " +
+            "GROUP BY v.banqueId, v.id.sourceType, v.sens, v.dateReference")
+    List<Object[]> sumParBanqueSourceSensEtDateUntil(@Param("until") LocalDate until);
 }

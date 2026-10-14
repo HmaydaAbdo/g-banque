@@ -13,7 +13,8 @@ import staport.finance.gBanque.moyensDePaiements.lcn.services.LcnService;
 import staport.finance.gBanque.moyensDePaiements.virements.service.VirementService;
 import staport.finance.gBanque.rapprochement.entities.Rapprochement;
 import staport.finance.gBanque.rapprochement.services.IRapprochementService;
-import staport.finance.gBanque.recapitulatif.dtos.response.EncoursFinDeMoisDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.EncoursPrevusDto;
+import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
 import staport.finance.gBanque.recapitulatif.services.interfaces.IRecapitulatifService;
 import staport.finance.gBanque.transactions.service.ITransactionService;
 
@@ -77,8 +78,11 @@ public class BankAccueilAggregatorService {
         this.recapitulatifService = recapitulatifService;
     }
 
-    /** Cartes récapitulatives accueil pour TOUTES les banques. */
-    public List<BankAccueilResponse> getAccueilBankInfo() {
+    /**
+     * Cartes récapitulatives accueil pour TOUTES les banques, projetées jusqu'à l'horizon choisi
+     * (fin de mois ou fin de trimestre).
+     */
+    public List<BankAccueilResponse> getAccueilBankInfo(PeriodeRecap periode) {
         log.debug("Agrégation accueil — toutes les banques");
         List<Banque> banques = bankService.getAllBanqueEntities();
         List<Long> ids = banques.stream().map(Banque::getId).toList();
@@ -103,26 +107,29 @@ public class BankAccueilAggregatorService {
         virementService.countEchusGroupedByBanque(today)
                 .forEach(row -> virementCountMap.put((Long) row[0], (Long) row[1]));
 
-        Map<Long, EncoursFinDeMoisDto> encoursMap = recapitulatifService.getEncoursFinDeMoisParBanque();
+        Map<Long, EncoursPrevusDto> encoursMap = recapitulatifService.getEncoursPrevusParBanque(periode);
+        LocalDate dateHorizon = periode.horizon(today);
 
         return banques.stream()
                 .map(b -> {
                     Long bid = b.getId();
-                    EncoursFinDeMoisDto encours = encoursMap.getOrDefault(bid, EncoursFinDeMoisDto.ZERO);
+                    EncoursPrevusDto encours = encoursMap.getOrDefault(bid, EncoursPrevusDto.ZERO);
                     return banqueMapper.toAccueilDto(b,
                             balanceMap.get(bid),
                             plafondMap.get(bid),
                             soldeDebutMap.getOrDefault(bid, BigDecimal.ZERO),
                             lcnCountMap.getOrDefault(bid, 0L),
                             virementCountMap.getOrDefault(bid, 0L),
+                            periode,
+                            dateHorizon,
                             encours.encoursPlus(),
                             encours.encoursMoins());
                 })
                 .collect(Collectors.toList());
     }
 
-    /** Carte récapitulative accueil pour une seule banque. */
-    public BankAccueilResponse getAccueilBankInfoById(Long banqueId) {
+    /** Carte récapitulative accueil pour une seule banque, projetée jusqu'à l'horizon choisi. */
+    public BankAccueilResponse getAccueilBankInfoById(Long banqueId, PeriodeRecap periode) {
         log.debug("Agrégation accueil — banque ID: {}", banqueId);
         Banque banque = bankService.findOrThrow(banqueId);
         Long fcNatureId = natureLigneFonctionnelleService.findFaciliteDeCaisseNatureId();
@@ -140,10 +147,9 @@ public class BankAccueilAggregatorService {
         long lcnsCount      = lcnService.countEchusByBanqueId(banqueId, today);
         long virementsCount = virementService.countEchusByBanqueId(banqueId, today);
 
-        EncoursFinDeMoisDto encours = recapitulatifService.getEncoursFinDeMois(banqueId);
-
+        EncoursPrevusDto encours = recapitulatifService.getEncoursPrevus(banqueId, periode);
 
         return banqueMapper.toAccueilDto(banque, balance, plafond, soldeDebut, lcnsCount, virementsCount,
-                encours.encoursPlus(), encours.encoursMoins());
+                periode, periode.horizon(today), encours.encoursPlus(), encours.encoursMoins());
     }
 }

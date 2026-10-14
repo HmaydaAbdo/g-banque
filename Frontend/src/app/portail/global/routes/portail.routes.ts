@@ -175,6 +175,12 @@ export const PORTAIL_ROUTES: Routes = [
   },
 
   {
+    path: 'tresorerie-previsionnelle',
+    canActivate: [departmentGuard('Finance')],
+    loadChildren: () => import('../../tresorerie/tresorerie.routes').then(m => m.TRESORERIE_ROUTES)
+  },
+
+  {
     path: 'commissions',
     canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../commission/commission.routes').then(m => m.COMMISSION_ROUTES)

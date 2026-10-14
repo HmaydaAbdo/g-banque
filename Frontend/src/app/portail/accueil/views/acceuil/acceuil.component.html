@@ -25,6 +25,15 @@
     </div>
 
     <div class="dash-header__actions">
+      <!-- Horizon des cartes « prévision » et des récaps détaillés -->
+      <p-selectButton [formControl]="horizonControl" [options]="horizonOptions"
+                      optionLabel="label" optionValue="value" [allowEmpty]="false"
+                      styleClass="p-button-sm"
+                      pTooltip="Horizon de la prévision des cartes et du récap détaillé" tooltipPosition="bottom"/>
+      <p-button label="Trésorerie" icon="pi pi-chart-line" size="small"
+                routerLink="/portail/tresorerie-previsionnelle"
+                [queryParams]="{ horizon: horizon === 'FIN_DE_TRIMESTRE' ? horizon : null }"
+                pTooltip="Plan de trésorerie prévisionnel, toutes banques" tooltipPosition="bottom"/>
       <p-button label="Synchroniser" icon="pi pi-sync" size="small" [outlined]="true"
                 (onClick)="synchronizePayments()" [loading]="isLoading" [disabled]="isLoading"/>
       <p-button label="Récap global" icon="pi pi-file-pdf" size="small" [outlined]="true"
@@ -108,18 +117,18 @@
               </div>
             </div>
 
-            <!-- Tuile droite : prévision fin de mois -->
+            <!-- Tuile droite : prévision à l'horizon choisi (fin de mois ou fin de trimestre) -->
             <div class="bank-card__col bank-card__col--forecast">
               <div class="bank-card__col-title">
-                <i class="pi pi-forward"></i>Fin de mois
+                <i class="pi pi-forward"></i>{{ titrePrevision }} · {{ account.dateHorizon | date:'dd/MM' }}
               </div>
 
               <div class="bank-card__hero-label">Solde prévu</div>
               <div class="bank-card__hero"
-                   [class.bank-card__hero--pos]="account.soldeFinDeMois >= 0"
-                   [class.bank-card__hero--neg]="account.soldeFinDeMois < 0">
+                   [class.bank-card__hero--pos]="account.soldePrevu >= 0"
+                   [class.bank-card__hero--neg]="account.soldePrevu < 0">
                 <ng-container [ngTemplateOutlet]="montant"
-                              [ngTemplateOutletContext]="{ $implicit: account.soldeFinDeMois }"/>
+                              [ngTemplateOutletContext]="{ $implicit: account.soldePrevu }"/>
               </div>
 
               <div class="bank-card__line">
@@ -138,15 +147,15 @@
               </div>
               <div class="bank-card__line bank-card__line--total">
                 <span class="bank-card__line-label"
-                      [class.bank-card__label--pos]="account.disponibiliteFinDeMois >= 0"
-                      [class.bank-card__label--neg]="account.disponibiliteFinDeMois < 0">
-                  {{ account.disponibiliteFinDeMois < 0 ? 'Besoin' : 'Disponibilité' }}
+                      [class.bank-card__label--pos]="account.disponibilitePrevue >= 0"
+                      [class.bank-card__label--neg]="account.disponibilitePrevue < 0">
+                  {{ account.disponibilitePrevue < 0 ? 'Besoin' : 'Disponibilité' }}
                 </span>
                 <span class="bank-card__line-value"
-                      [class.bank-card__amount--pos]="account.disponibiliteFinDeMois >= 0"
-                      [class.bank-card__amount--neg]="account.disponibiliteFinDeMois < 0">
+                      [class.bank-card__amount--pos]="account.disponibilitePrevue >= 0"
+                      [class.bank-card__amount--neg]="account.disponibilitePrevue < 0">
                   <ng-container [ngTemplateOutlet]="montant"
-                                [ngTemplateOutletContext]="{ $implicit: account.disponibiliteFinDeMois }"/>
+                                [ngTemplateOutletContext]="{ $implicit: account.disponibilitePrevue }"/>
                 </span>
               </div>
             </div>
@@ -171,6 +180,16 @@
               </span>
             </div>
 
+            <p-button
+              icon="pi pi-chart-line"
+              size="small"
+              [rounded]="true"
+              [text]="true"
+              ariaLabel="Plan de trésorerie de la banque"
+              pTooltip="Plan de trésorerie"
+              tooltipPosition="left"
+              routerLink="/portail/tresorerie-previsionnelle"
+              [queryParams]="{ banque: account.banqueId, horizon: horizon === 'FIN_DE_TRIMESTRE' ? horizon : null }"/>
             <p-button
               icon="pi pi-download"
               size="small"
@@ -199,14 +218,15 @@
   [(visible)]="showRecapGlobalPeriodeModal"
   [modal]="true"
   [closable]="true"
-  [style]="{ width: '420px' }"
+  [style]="{ width: '480px' }"
   [draggable]="false">
 
   <div class="flex flex-column gap-3 p-3">
 
     <p class="text-color-secondary m-0">
-      "À ce jour" ne retient que les encaissements/décaissements déjà émis ou échus. "Jusqu'à fin
-      de mois" inclut en plus ceux qui restent prévus d'ici la fin du mois en cours.
+      "À ce jour" ne retient que les encaissements/décaissements déjà émis ou échus. "Fin de mois"
+      inclut en plus ceux qui restent prévus d'ici la fin du mois en cours, "Fin de trimestre" ceux
+      prévus d'ici la fin du trimestre en cours.
     </p>
 
     <p-selectButton

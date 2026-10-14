@@ -13,6 +13,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -84,6 +85,7 @@ import { OperationErroneService } from "../../../../../../operationErronées/ser
 import { OperationErroneResponseDto } from "../../../../../../operationErronées/dtos/OperationErroneResponseDto";
 import { parseLocalDate } from '../../../../../../global/types/date.utils';
 import { RecapSourceDto } from "../../dtos/RecapSourceDto";
+import { finHorizon, HORIZON_OPTIONS, HORIZON_PAR_DEFAUT } from "../../dtos/PeriodeRecap";
 import { RecapCardView, RecapSourceCardComponent } from "../recap-source-card/recap-source-card.component";
 import { AjouterItem, AjouterOperationDialogComponent } from "../../../shared/ajouter-operation-dialog/ajouter-operation-dialog.component";
 import {
@@ -197,6 +199,7 @@ interface RecapGlobalView {
     InputTextareaModule,
     CalendarModule,
     DropdownModule,
+    SelectButtonModule,
     ButtonModule,
     RippleModule,
     DialogModule,
@@ -264,6 +267,8 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     { label: 'Encaissement', value: SensOperation.ENCAISSEMENT },
     { label: 'Décaissement', value: SensOperation.DECAISSEMENT },
   ];
+  /** Horizon des encours affichés : fin de mois (défaut) ou fin de trimestre — filtre global. */
+  readonly horizonOptions = HORIZON_OPTIONS;
   readonly SensOperation = SensOperation;
   readonly TransactionSource = TransactionSource;
 
@@ -1428,6 +1433,7 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
 
   initSearchForm(): void {
     this.searchForm = this.fb.group({
+      periode: [HORIZON_PAR_DEFAUT],
       transactionSources: [[]],
       sens: [null],
     });
@@ -1498,7 +1504,11 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
 
   private filtresGlobaux(): RecapFiltresGlobaux {
     const v = this.searchForm.value;
-    return { transactionSources: v.transactionSources ?? [], sens: v.sens ?? null };
+    return {
+      periode: v.periode ?? HORIZON_PAR_DEFAUT,
+      transactionSources: v.transactionSources ?? [],
+      sens: v.sens ?? null,
+    };
   }
 
   private filtresLocaux(): RecapFiltresSource {
@@ -1621,8 +1631,9 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Efface le sens et les types ; l'horizon est un réglage de l'écran, il est conservé. */
   clearSearch(): void {
-    this.searchForm.reset({ transactionSources: [], sens: null });
+    this.searchForm.reset({ periode: this.filtresGlobaux().periode, transactionSources: [], sens: null });
   }
 
   clearSourceFilters(): void {
@@ -1685,10 +1696,17 @@ export class RecapitulatifComponent implements OnInit, OnDestroy {
       + this.activeSourceDateFilterCount;
   }
 
-  /** Filtres globaux seuls (sens, types) — alimentent les cartes et la liste des sources. */
+  /** Libellé de l'horizon pour les textes d'écran (« d'ici la fin du trimestre (31/12/2026) »). */
+  get libelleHorizon(): string {
+    const periode = this.searchForm ? this.filtresGlobaux().periode : HORIZON_PAR_DEFAUT;
+    const fin = finHorizon(periode).toLocaleDateString('fr-FR');
+    return (periode === 'FIN_DE_TRIMESTRE' ? "d'ici la fin du trimestre" : "d'ici la fin du mois") + ` (${fin})`;
+  }
+
+  /** Filtres globaux seuls (horizon, sens, types) — alimentent les cartes et la liste des sources. */
   private buildFilterDto(): RecapitulatifSearchDto {
     const g = this.filtresGlobaux();
-    return { transactionSources: g.transactionSources, libelleOuObservation: '', sens: g.sens };
+    return { transactionSources: g.transactionSources, libelleOuObservation: '', sens: g.sens, periode: g.periode };
   }
 
   /**

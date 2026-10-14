@@ -7,8 +7,9 @@ import java.util.function.Function;
 
 /**
  * Récapitulatif global d'une banque : informations banque, encaissements/décaissements
- * du mois, et totaux/soldes dérivés — calculés à la demande via des méthodes plutôt que
- * stockés (record immuable, pas de recalcul-sur-mutation).
+ * jusqu'à l'horizon choisi (à ce jour, fin de mois ou fin de trimestre), et totaux/soldes dérivés
+ * — calculés à la demande via des méthodes plutôt que stockés (record immuable, pas de
+ * recalcul-sur-mutation).
  */
 public record RecaputilatifGlobal(
         Long banqueId,
@@ -38,26 +39,26 @@ public record RecaputilatifGlobal(
     }
 
     /**
-     * Solde fin de mois = solde actuel + total encaissements - total décaissements.
+     * Solde prévu à l'horizon = solde actuel + total encaissements - total décaissements.
      */
     public BigDecimal soldefin() {
         return soldeActuel.add(totalEncaissements()).subtract(totalDecaissements());
     }
 
     /**
-     * Disponibilité sur la facilité de caisse projetée en fin de mois = solde fin de mois +
-     * plafond FC (plafond en positif, comme stocké en base). Positif = marge restante avant
-     * d'atteindre le plafond autorisé ; négatif = dépassement projeté du plafond.
+     * Disponibilité sur la facilité de caisse projetée à l'horizon = solde prévu + plafond FC
+     * (plafond en positif, comme stocké en base). Positif = marge restante avant d'atteindre le
+     * plafond autorisé ; négatif = dépassement projeté du plafond.
      *
      * <p>Même convention de signe que {@code ResumeSectionDto.disponibilite()}
      * (RecapGeneralDetailleServiceImpl : {@code soldeActuel + plafondLigne}), qui calcule la
-     * même chose sur le solde du jour plutôt que sur le solde projeté en fin de mois — les deux
+     * même chose sur le solde du jour plutôt que sur le solde projeté — les deux
      * rapports (Récapitulatif global et Récapitulatif général détaillé) reflètent ainsi la même
      * lecture de la disponibilité (retour utilisateur du 31/08/2026 : l'ancienne méthode
      * {@code reste()} négativait le plafond avant de le comparer au solde, ce qui inversait le
      * signe de cette marge par rapport à cette convention).</p>
      */
-    public BigDecimal disponibiliteFinDuMois() {
+    public BigDecimal disponibilitePrevue() {
         return soldefin().add(plafondFC);
     }
 

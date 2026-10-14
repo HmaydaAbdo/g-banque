@@ -3,7 +3,7 @@ package staport.finance.gBanque.recapitulatif.services.interfaces;
 import org.springframework.data.domain.Pageable;
 import staport.finance.gBanque.recapitulatif.dtos.request.RecapitulatifSearchDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.AgregatedRecapDto;
-import staport.finance.gBanque.recapitulatif.dtos.response.EncoursFinDeMoisDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.EncoursPrevusDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifGlobal;
 import staport.finance.gBanque.recapitulatif.dtos.response.SourceRecapDto;
 import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
@@ -37,20 +37,20 @@ public interface IRecapitulatifService {
     byte[] exportRecapitulatifPdf(RecapitulatifSearchDto searchDto, Long banqueId);
 
     /**
-     * @param periode horizon de calcul (à ce jour, ou jusqu'à fin de mois) — voir {@link PeriodeRecap}.
+     * @param periode horizon de calcul (à ce jour, fin de mois ou fin de trimestre) — voir {@link PeriodeRecap}.
      */
     RecaputilatifGlobal getRecapitulatifGlobal(Long banqueId, PeriodeRecap periode);
 
     /**
-     * @param periode horizon de calcul (à ce jour, ou jusqu'à fin de mois) — voir {@link PeriodeRecap}.
+     * @param periode horizon de calcul (à ce jour, fin de mois ou fin de trimestre) — voir {@link PeriodeRecap}.
      */
     List<RecaputilatifGlobal> getAllRecapitulatifsGlobaux(PeriodeRecap periode);
 
-    /** Encours prévisionnels (+/-) d'une banque jusqu'à la fin du mois en cours. */
-    EncoursFinDeMoisDto getEncoursFinDeMois(Long banqueId);
+    /** Encours prévisionnels (+/-) d'une banque jusqu'à l'horizon demandé (fin de mois ou de trimestre). */
+    EncoursPrevusDto getEncoursPrevus(Long banqueId, PeriodeRecap periode);
 
     /** Idem pour toutes les banques en une requête (banques sans encours absentes de la Map). */
-    Map<Long, EncoursFinDeMoisDto> getEncoursFinDeMoisParBanque();
+    Map<Long, EncoursPrevusDto> getEncoursPrevusParBanque(PeriodeRecap periode);
 
     /**
      * Indicateurs du récapitulatif ventilés par source (nombre d'encours, débit, crédit, échues

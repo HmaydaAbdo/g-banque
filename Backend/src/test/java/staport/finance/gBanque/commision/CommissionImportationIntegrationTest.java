@@ -50,7 +50,7 @@ class CommissionImportationIntegrationTest extends AbstractIntegrationTest {
             try (Statement st = c.createStatement()) {
                 st.execute("SET session_replication_role = replica");
                 st.execute("INSERT INTO banque (id, date_creation, date_modification, numero_compte, agence, nom, address, devise, logo_data) "
-                        + "VALUES (900001, now(), now(), '000', 'AGENCE', 'BANQUE ESSAI', 'ADRESSE', 'MAD', decode('00', 'hex'))");
+                        + "VALUES (900001, now(), now(), '900001', 'AGENCE', 'BANQUE ESSAI', 'ADRESSE', 'MAD', decode('00', 'hex'))");
                 try (var rs = st.executeQuery("INSERT INTO commission (banque_id, montant, operation, status, libelle, observation) "
                         + "VALUES (900001, 132.00, 'Importation', 'PAYE', 'FRAIS IMPORTATION', 'CREDOC') RETURNING id")) {
                     rs.next();

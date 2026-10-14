@@ -18,12 +18,18 @@ import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import staport.finance.gBanque.recapitulatif.dtos.response.CategorieAmountDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.ColonnePlanDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.LignePlanDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.PlanBanqueDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.PlanTresorerieDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecapGeneralDetailleAllBanquesDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecapGeneralDetailleDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.ResumeSectionDto;
@@ -318,8 +324,8 @@ public class StaportPdfReportService {
         table.setSpacingAfter(10);
         table.setHeaderRows(2);
 
-        String suffixSolde = periode == PeriodeRecap.A_CE_JOUR ? "Solde\nà ce jour" : "Solde\nfin du mois";
-        String suffixDispo = periode == PeriodeRecap.A_CE_JOUR ? "Disponibilité FC\nà ce jour" : "Disponibilité FC\nfin du mois";
+        String suffixSolde = "Solde\n" + periode.libelleCourt();
+        String suffixDispo = "Disponibilité FC\n" + periode.libelleCourt();
 
         table.addCell(createHeaderCell("Banque", TRANSACTION_HEADER_FONT, STAPORT_BLUE, Element.ALIGN_CENTER, 1, 2));
         table.addCell(createHeaderCell("Solde Actuel", TRANSACTION_HEADER_FONT, STAPORT_BLUE, Element.ALIGN_CENTER, 1, 2));
@@ -337,7 +343,7 @@ public class StaportPdfReportService {
             table.addCell(createAggregatedCell(formatCurrency(dto.totalDecaissements()), Element.ALIGN_RIGHT));
             table.addCell(createAggregatedCell(formatCurrency(dto.soldefin()), Element.ALIGN_RIGHT));
             table.addCell(createAggregatedCell(formatCurrency(dto.plafondFC()), Element.ALIGN_RIGHT));
-            table.addCell(createAggregatedCell(formatCurrency(dto.disponibiliteFinDuMois()), Element.ALIGN_RIGHT));
+            table.addCell(createAggregatedCell(formatCurrency(dto.disponibilitePrevue()), Element.ALIGN_RIGHT));
         }
 
         document.add(table);
@@ -419,12 +425,15 @@ public class StaportPdfReportService {
     }
 
     /**
-     * Libellé affiché dans les titres/en-têtes PDF pour indiquer l'horizon retenu — évite qu'un
-     * rapport imprimé (donc sans le contexte de l'écran d'où il vient) laisse planer une
+     * Libellé affiché dans les titres/en-têtes PDF pour indiquer l'horizon retenu, avec sa date —
+     * évite qu'un rapport imprimé (donc sans le contexte de l'écran d'où il vient) laisse planer une
      * ambiguïté sur ce qu'il couvre (retour utilisateur du 31/08/2026).
      */
     private String libelleHorizon(PeriodeRecap periode) {
-        return periode == PeriodeRecap.A_CE_JOUR ? "à ce jour" : "jusqu'à fin de mois";
+        if (periode == PeriodeRecap.A_CE_JOUR) {
+            return periode.libelle();
+        }
+        return periode.libelle() + " (" + DATETIME_FORMATTER.format(periode.horizon(LocalDate.now())) + ")";
     }
 
     public byte[] generateRecapGlobalReport(RecaputilatifGlobal dto, PeriodeRecap periode) throws DocumentException {
@@ -483,13 +492,13 @@ public class StaportPdfReportService {
 
         addSummaryDataCell(table, "Solde Actuel:", BOLD_FONT, Element.ALIGN_LEFT);
         addSummaryDataCell(table, formatCurrency(dto.soldeActuel()), DATA_FONT, Element.ALIGN_RIGHT);
-        addSummaryDataCell(table, (periode == PeriodeRecap.A_CE_JOUR ? "Solde à ce jour:" : "Solde Fin du mois:"), BOLD_FONT, Element.ALIGN_LEFT);
+        addSummaryDataCell(table, "Solde " + periode.libelleCourt() + ":", BOLD_FONT, Element.ALIGN_LEFT);
         addSummaryDataCell(table, formatCurrency(dto.soldefin()), DATA_FONT, Element.ALIGN_RIGHT);
 
         addSummaryDataCell(table, "Plafond FC:", BOLD_FONT, Element.ALIGN_LEFT);
         addSummaryDataCell(table, formatCurrency(dto.plafondFC()), DATA_FONT, Element.ALIGN_RIGHT);
-        addSummaryDataCell(table, (periode == PeriodeRecap.A_CE_JOUR ? "Disponibilité FC à ce jour:" : "Disponibilité FC fin du mois:"), BOLD_FONT, Element.ALIGN_LEFT);
-        addSummaryDataCell(table, formatCurrency(dto.disponibiliteFinDuMois()), DATA_FONT, Element.ALIGN_RIGHT);
+        addSummaryDataCell(table, "Disponibilité FC " + periode.libelleCourt() + ":", BOLD_FONT, Element.ALIGN_LEFT);
+        addSummaryDataCell(table, formatCurrency(dto.disponibilitePrevue()), DATA_FONT, Element.ALIGN_RIGHT);
 
         addSummaryDataCell(table, "Total Décaissements:", BOLD_FONT, Element.ALIGN_LEFT);
         addSummaryDataCell(table, formatCurrency(dto.totalDecaissements()), DATA_FONT, Element.ALIGN_RIGHT);
@@ -567,7 +576,8 @@ public class StaportPdfReportService {
      */
     public byte[] generateRecapGeneralDetailleReport(RecapGeneralDetailleDto dto) throws DocumentException {
         String today = dto.dateRecap().format(DATETIME_FORMATTER);
-        String reportTitle = "Récapitulation Générale Détaillée — " + dto.banqueNom() + " — " + today;
+        String reportTitle = "Récapitulation Générale Détaillée — " + dto.banqueNom() + " — " + today
+                + " — " + dto.periode().libelle();
 
         List<RecapGeneralDetailleDto> banques = List.of(dto);
 
@@ -579,7 +589,7 @@ public class StaportPdfReportService {
                 document.add(Chunk.NEWLINE);
                 document.add(title);
 
-                document.add(buildRecapConsolideTable(banques));
+                document.add(buildRecapConsolideTable(banques, dto.periode(), dto.dateHorizon()));
 
             } catch (DocumentException e) {
                 throw new RuntimeException("Erreur génération PDF recap détaillé.", e);
@@ -592,7 +602,8 @@ public class StaportPdfReportService {
      */
     public byte[] generateRecapGeneralDetailleAllBanquesReport(RecapGeneralDetailleAllBanquesDto dto) throws DocumentException {
         String today = dto.dateRecap().format(DATETIME_FORMATTER);
-        String reportTitle = "Récapitulation Générale Détaillée — Toutes Banques — " + today;
+        String reportTitle = "Récapitulation Générale Détaillée — Toutes Banques — " + today
+                + " — " + dto.periode().libelle();
         List<RecapGeneralDetailleDto> banques = dto.banques();
         int nbBanques = banques.size();
         Rectangle pageSize = nbBanques > 3 ? PageSize.A4.rotate() : PageSize.A4;
@@ -605,7 +616,7 @@ public class StaportPdfReportService {
                 document.add(Chunk.NEWLINE);
                 document.add(title);
 
-                document.add(buildRecapConsolideTable(banques));
+                document.add(buildRecapConsolideTable(banques, dto.periode(), dto.dateHorizon()));
 
             } catch (DocumentException e) {
                 throw new RuntimeException("Erreur génération PDF recap détaillé multi-banques.", e);
@@ -614,9 +625,11 @@ public class StaportPdfReportService {
     }
 
     /**
-     * Construit le tableau consolidé commun (mono ou multi-banques).
+     * Construit le tableau consolidé commun (mono ou multi-banques), la partie « à venir » allant
+     * du lendemain jusqu'à l'horizon choisi (fin de mois ou fin de trimestre).
      */
-    private PdfPTable buildRecapConsolideTable(List<RecapGeneralDetailleDto> banques) throws DocumentException {
+    private PdfPTable buildRecapConsolideTable(List<RecapGeneralDetailleDto> banques,
+                                               PeriodeRecap periode, LocalDate dateHorizon) throws DocumentException {
         int nbBanques = banques.size();
         int totalCols = 1 + nbBanques;
 
@@ -641,8 +654,10 @@ public class StaportPdfReportService {
         addRgdDataRow(table, "Encours -",     banques, b -> b.resume().encoursMoins(),  false);
         addRgdDataRow(table, "Solde Projeté", banques, b -> b.resume().soldeProjete(),  true);
 
-        // ── Récapitulatif Mensuel (J+1 → Fin de mois) ────────────────────────
-        addRgdSectionHeader(table, "Récapitulatif Mensuel (J+1 → Fin de mois)", totalCols, STAPORT_BLUE);
+        // ── Récapitulatif à venir (J+1 → horizon) ────────────────────────────
+        String horizon = periode == PeriodeRecap.FIN_DE_TRIMESTRE ? "Fin de trimestre" : "Fin de mois";
+        addRgdSectionHeader(table, "Récapitulatif (J+1 → " + horizon + " : "
+                + DATETIME_FORMATTER.format(dateHorizon) + ")", totalCols, STAPORT_BLUE);
 
         // Décaissements
         addRgdSectionHeader(table, "Décaissements", totalCols, Color.decode("#2e6da4"));
@@ -690,11 +705,117 @@ public class StaportPdfReportService {
             }
         }
 
-        // Solde fin du mois
-        addRgdDataRow(table, "Solde fin du mois", banques,
-                RecapGeneralDetailleDto::soldePrevisionnelFinMois, true);
+        // Solde prévisionnel à l'horizon
+        addRgdDataRow(table, "Solde " + periode.libelleCourt(), banques,
+                RecapGeneralDetailleDto::soldePrevisionnel, true);
 
         return table;
+    }
+
+    // ========================== PLAN DE TRÉSORERIE PRÉVISIONNEL ==========================
+
+    private static final Font PLAN_FONT = FontFactory.getFont(FontFactory.HELVETICA, 7, Color.BLACK);
+    private static final Font PLAN_BOLD_FONT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7, Color.BLACK);
+    private static final Font PLAN_NEG_FONT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7, Color.decode("#b91c1c"));
+    private static final Color PLAN_TOTAL_BG = Color.decode("#e8f0fe");
+    private static final Color PLAN_SECTION_BG = Color.decode("#2e6da4");
+
+    /**
+     * PDF A4 paysage du plan de trésorerie d'un périmètre (une banque ou toutes les banques
+     * consolidées) : une colonne par période du plan, lignes par catégorie, soldes de début et de
+     * fin, disponibilité, puis point bas et besoin de financement.
+     */
+    public byte[] generatePlanTresorerieReport(PlanTresorerieDto plan, PlanBanqueDto perimetre) throws DocumentException {
+        String reportTitle = "Plan de trésorerie prévisionnel — " + perimetre.banqueNom() + " — "
+                + plan.periode().libelle() + " (" + DATETIME_FORMATTER.format(plan.dateHorizon()) + ")";
+        List<ColonnePlanDto> colonnes = plan.colonnes();
+        int n = colonnes.size();
+
+        return generateReport(reportTitle, PageSize.A4.rotate(), (document, writer) -> {
+            try {
+                Paragraph title = new Paragraph(reportTitle, TITLE_FONT_BLACK);
+                title.setAlignment(Element.ALIGN_CENTER);
+                document.add(Chunk.NEWLINE);
+                document.add(title);
+                Paragraph sub = new Paragraph("Calculé le " + DATETIME_FORMATTER.format(plan.dateCalcul())
+                        + " à partir du solde actuel et des opérations non encore validées", PLAN_FONT);
+                sub.setAlignment(Element.ALIGN_CENTER);
+                sub.setSpacingAfter(10);
+                document.add(sub);
+
+                PdfPTable table = new PdfPTable(n + 2);
+                table.setWidthPercentage(100);
+                float[] widths = new float[n + 2];
+                widths[0] = 3.2f;
+                for (int i = 1; i < n + 2; i++) widths[i] = 2f;
+                table.setWidths(widths);
+                table.setHeaderRows(1);
+
+                table.addCell(createHeaderCell("", TRANSACTION_HEADER_FONT, STAPORT_BLUE, Element.ALIGN_LEFT, 1, 1));
+                for (ColonnePlanDto c : colonnes) {
+                    String libelle = c.du() == null ? c.libelle() + "\n(jusqu'au " + DATETIME_FORMATTER.format(c.au()) + ")"
+                            : c.libelle() + "\n" + DATETIME_FORMATTER.format(c.du()) + " → " + DATETIME_FORMATTER.format(c.au());
+                    table.addCell(createHeaderCell(libelle, TRANSACTION_HEADER_FONT, STAPORT_BLUE, Element.ALIGN_CENTER, 1, 1));
+                }
+                table.addCell(createHeaderCell("Total", TRANSACTION_HEADER_FONT, STAPORT_BLUE, Element.ALIGN_CENTER, 1, 1));
+
+                List<BigDecimal> soldesDebut = new ArrayList<>();
+                soldesDebut.add(perimetre.soldeActuel());
+                soldesDebut.addAll(perimetre.soldesFin().subList(0, n - 1));
+                addPlanRow(table, "Solde de début", soldesDebut, perimetre.soldeActuel(), true);
+
+                addRgdSectionHeader(table, "Encaissements", n + 2, PLAN_SECTION_BG);
+                for (LignePlanDto l : perimetre.encaissements()) addPlanRow(table, l.categorie(), l.montants(), l.total(), false);
+                addPlanRow(table, "Total encaissements", perimetre.totalEncaissements(), somme(perimetre.totalEncaissements()), true);
+
+                addRgdSectionHeader(table, "Décaissements", n + 2, PLAN_SECTION_BG);
+                for (LignePlanDto l : perimetre.decaissements()) addPlanRow(table, l.categorie(), l.montants(), l.total(), false);
+                addPlanRow(table, "Total décaissements", perimetre.totalDecaissements(), somme(perimetre.totalDecaissements()), true);
+
+                addPlanRow(table, "Solde de fin", perimetre.soldesFin(), perimetre.soldeFinal(), true);
+                addPlanRow(table, "Plafond facilité de caisse", Collections.nCopies(n, perimetre.plafondFC()), perimetre.plafondFC(), false);
+                addPlanRow(table, "Disponibilité", perimetre.disponibilites(), perimetre.disponibiliteFinale(), true);
+                document.add(table);
+
+                Paragraph synthese = new Paragraph();
+                synthese.setSpacingBefore(10);
+                synthese.add(new Phrase("Point bas : " + formatCurrency(perimetre.pointBas().solde())
+                        + " le " + DATETIME_FORMATTER.format(perimetre.pointBas().date())
+                        + "   •   Disponibilité au point bas : " + formatCurrency(perimetre.pointBas().disponibilite())
+                        + "   •   Besoin de financement : " + formatCurrency(perimetre.besoinFinancement())
+                        + "   •   Jours avec solde négatif : " + perimetre.joursSoldeNegatif(), PLAN_BOLD_FONT));
+                document.add(synthese);
+            } catch (DocumentException e) {
+                throw new RuntimeException("Erreur lors de la génération du contenu du plan de trésorerie.", e);
+            }
+        });
+    }
+
+    private void addPlanRow(PdfPTable table, String label, List<BigDecimal> montants, BigDecimal total, boolean highlighted) {
+        Color bg = highlighted ? PLAN_TOTAL_BG : Color.WHITE;
+        PdfPCell labelCell = new PdfPCell(new Phrase(label, highlighted ? PLAN_BOLD_FONT : PLAN_FONT));
+        labelCell.setBackgroundColor(bg);
+        labelCell.setPadding(3);
+        table.addCell(labelCell);
+        for (BigDecimal montant : montants) {
+            table.addCell(planValueCell(montant, highlighted, bg));
+        }
+        table.addCell(planValueCell(total, true, PLAN_TOTAL_BG));
+    }
+
+    private PdfPCell planValueCell(BigDecimal montant, boolean bold, Color bg) {
+        BigDecimal valeur = montant != null ? montant : BigDecimal.ZERO;
+        Font font = valeur.signum() < 0 ? PLAN_NEG_FONT : (bold ? PLAN_BOLD_FONT : PLAN_FONT);
+        PdfPCell cell = new PdfPCell(new Phrase(valeur.signum() == 0 ? "—" : formatCurrency(valeur), font));
+        cell.setBackgroundColor(bg);
+        cell.setPadding(3);
+        cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        cell.setNoWrap(true);
+        return cell;
+    }
+
+    private static BigDecimal somme(List<BigDecimal> montants) {
+        return montants.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     // ─── PRIVATE HELPERS : tableau consolidé multi-banques ───────────────────

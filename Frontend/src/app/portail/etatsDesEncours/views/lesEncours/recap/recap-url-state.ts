@@ -3,10 +3,12 @@ import { TransactionSource } from '../../../../transactions/dtos/TransactionSour
 import { SensOperation } from '../../../../transactions/dtos/SensOperation';
 import { Motif } from '../../../../impotEtTaxes/dtos/Motif';
 import { parseLocalDate, toLocalDateString } from '../../../../global/types/date.utils';
+import { HORIZON_PAR_DEFAUT, HorizonPrevision, horizonDepuisParam } from './dtos/PeriodeRecap';
 
 /**
  * État de l'écran Récapitulatif porté par l'adresse (queryParams) : source ouverte, filtres
- * globaux (sens, types), filtres propres à la source, page / tri du tableau et ligne à surligner.
+ * globaux (horizon, sens, types), filtres propres à la source, page / tri du tableau et ligne à
+ * surligner.
  *
  * Les formulaires d'ajout et d'édition se ferment par un retour arrière du navigateur : l'écran
  * est alors reconstruit, et c'est l'adresse (écrite en `replaceUrl`, donc sans entrée d'historique
@@ -27,6 +29,8 @@ const CHAMPS_TRI = [
 
 /** Filtres globaux : communs à toutes les sources, ils alimentent aussi les cartes et la liste des sources. */
 export interface RecapFiltresGlobaux {
+  /** Horizon des encours affichés : fin de mois (défaut) ou fin de trimestre. */
+  periode: HorizonPrevision;
   transactionSources: TransactionSource[];
   sens: SensOperation | null;
 }
@@ -59,7 +63,7 @@ export interface RecapEtatUrl {
 }
 
 export function filtresGlobauxVides(): RecapFiltresGlobaux {
-  return { transactionSources: [], sens: null };
+  return { periode: HORIZON_PAR_DEFAUT, transactionSources: [], sens: null };
 }
 
 export function filtresSourceVides(): RecapFiltresSource {
@@ -93,6 +97,7 @@ export function etatVersQueryParams(etat: RecapEtatUrl): Params {
   const params: Params = {};
 
   const g = etat.globaux;
+  if (g.periode !== HORIZON_PAR_DEFAUT) params['horizon'] = g.periode;
   if (g.transactionSources.length > 0) params['types'] = g.transactionSources.join(',');
   if (g.sens) params['sens'] = g.sens;
 
@@ -127,6 +132,7 @@ export function queryParamsVersEtat(map: ParamMap): RecapEtatUrl {
   const source = enumValide<TransactionSource>(map.get('source'), Object.values(TransactionSource));
 
   const globaux: RecapFiltresGlobaux = {
+    periode: horizonDepuisParam(map.get('horizon')),
     transactionSources: (map.get('types') ?? '')
       .split(',')
       .filter((v): v is TransactionSource => (Object.values(TransactionSource) as string[]).includes(v)),

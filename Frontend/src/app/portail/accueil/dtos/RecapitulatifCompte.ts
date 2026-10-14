@@ -1,4 +1,5 @@
 import {Devise} from "../../comptes-bancaire/enums/Devise";
+import {PeriodeRecap} from "../../etatsDesEncours/views/lesEncours/recap/dtos/PeriodeRecap";
 
 export interface RecapitulatifCompte {
   banqueId:   number;
@@ -14,13 +15,17 @@ export interface RecapitulatifCompte {
   virementsEchusCount: number;
 
 
-  // ── État prévisionnel de fin de mois (toujours renseignés par le backend) ──
-  /** Total prévisionnel des encaissements jusqu'à fin de mois. */
+  // ── Projection à l'horizon demandé (toujours renseignée par le backend) ──
+  /** Horizon de la projection : fin de mois (défaut) ou fin de trimestre. */
+  periode: PeriodeRecap;
+  /** Dernier jour inclus dans la projection (yyyy-MM-dd). */
+  dateHorizon: string;
+  /** Total prévisionnel des encaissements jusqu'à l'horizon. */
   encoursPlus:  number;
-  /** Total prévisionnel des décaissements jusqu'à fin de mois. */
+  /** Total prévisionnel des décaissements jusqu'à l'horizon. */
   encoursMoins: number;
   /** soldeActuel + encoursPlus − encoursMoins. */
-  soldeFinDeMois: number;
-  /** soldeFinDeMois + plafond FC. */
-  disponibiliteFinDeMois: number;
+  soldePrevu: number;
+  /** soldePrevu + plafond FC. */
+  disponibilitePrevue: number;
 }

@@ -67,6 +67,23 @@ describe('RecapitulatifComponent', () => {
     expect(cartes.libelleOuObservation).toBe('');
   });
 
+  it("l'horizon de l'adresse (fin de trimestre) part vers les cartes et le tableau ; fin de mois par défaut", () => {
+    const trimestre = creer({ source: 'CHEQUE', horizon: 'FIN_DE_TRIMESTRE' });
+    expect((trimestre as any).buildFilterDto().periode).toBe('FIN_DE_TRIMESTRE');
+    expect(dto(trimestre).periode).toBe('FIN_DE_TRIMESTRE');
+    expect(trimestre.libelleHorizon).toContain('fin du trimestre');
+
+    TestBed.resetTestingModule();
+    expect(dto(creer({ source: 'CHEQUE' })).periode).toBe('FIN_DE_MOIS');
+  });
+
+  it("« Effacer » vide le sens et les types mais garde l'horizon", () => {
+    const c = creer({ horizon: 'FIN_DE_TRIMESTRE', sens: 'ENCAISSEMENT' });
+    c.clearSearch();
+    expect(c.searchForm.value.sens).toBeNull();
+    expect(c.searchForm.value.periode).toBe('FIN_DE_TRIMESTRE');
+  });
+
   it("la fenêtre « Ajouter » ne propose pas Importation (simple motif de commission)", () => {
     const sources = creer().ajouterItems.map(i => i.source);
     expect(sources).not.toContain(TransactionSource.Importation);

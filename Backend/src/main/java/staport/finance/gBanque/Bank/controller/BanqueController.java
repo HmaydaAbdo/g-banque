@@ -24,6 +24,7 @@ import staport.finance.gBanque.Bank.exceptions.BanqueExceptionHandler;
 import staport.finance.gBanque.Bank.services.BankAccueilAggregatorService;
 import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.common.PageableUtils;
+import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
 import java.util.List;
 
 /**
@@ -115,12 +116,15 @@ public class BanqueController {
 
     @Operation(
             summary = "Tableau de bord Finance — toutes les banques",
-            description = "Agrège solde, transactions en attente, LCN et virements échus par banque. Réservé Finance / SYSTEM_ADMIN."
+            description = "Agrège solde, transactions en attente, LCN et virements échus par banque. " +
+                    "La projection (encours, solde prévu, disponibilité prévue) va jusqu'à l'horizon " +
+                    "`periode` : FIN_DE_MOIS (défaut) ou FIN_DE_TRIMESTRE. Réservé Finance / SYSTEM_ADMIN."
     )
     @GetMapping("/accueil-info")
     @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<List<BankAccueilResponse>> getAccueilBankInformation() {
-        return ResponseEntity.ok(accueilAggregatorService.getAccueilBankInfo());
+    public ResponseEntity<List<BankAccueilResponse>> getAccueilBankInformation(
+            @RequestParam(defaultValue = "FIN_DE_MOIS") PeriodeRecap periode) {
+        return ResponseEntity.ok(accueilAggregatorService.getAccueilBankInfo(periode));
     }
 
     @Operation(
@@ -133,8 +137,9 @@ public class BanqueController {
     @GetMapping("/accueil-info/{banqueId}")
     @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<BankAccueilResponse> getAccueilBankInformationById(
-            @PathVariable Long banqueId) {
-        return ResponseEntity.ok(accueilAggregatorService.getAccueilBankInfoById(banqueId));
+            @PathVariable Long banqueId,
+            @RequestParam(defaultValue = "FIN_DE_MOIS") PeriodeRecap periode) {
+        return ResponseEntity.ok(accueilAggregatorService.getAccueilBankInfoById(banqueId, periode));
     }
 
     // ── Update ───────────────────────────────────────────────────────────────

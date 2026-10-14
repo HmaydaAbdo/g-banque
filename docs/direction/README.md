@@ -1042,10 +1042,24 @@ opérations en attente d'une banque donnée, quel que soit leur type d'origine.
 - **Cohérence garantie avec le rapprochement** : chaque validation alimente automatiquement la
   bonne période de rapprochement de la banque concernée, sans ressaisie ni erreur d'affectation.
 - **Rapports prêts à l'emploi** : récapitulatif global, récapitulatif détaillé par catégorie et
-  projection du solde de fin de mois, générés en PDF à la demande, pour une banque donnée ou pour
-  l'ensemble du groupe ; export PDF des lignes filtrées depuis le Récapitulatif.
-- **Visibilité en temps réel** : à tout moment, projection du solde de fin de mois de chaque
-  banque, sans attendre la clôture de la période — élimine le risque d'opération oubliée.
+  projection du solde jusqu'à la fin du mois ou du trimestre, générés en PDF à la demande, pour une
+  banque donnée ou pour l'ensemble du groupe ; export PDF des lignes filtrées depuis le Récapitulatif.
+- **Visibilité en temps réel, au mois comme au trimestre** : à tout moment, projection du solde de
+  chaque banque à la fin du mois ou à la fin du trimestre, au choix, sans attendre la clôture de la
+  période — élimine le risque d'opération oubliée. Le même horizon s'applique d'un clic au tableau de
+  bord, au Récapitulatif et aux rapports : tous les chiffres d'une même lecture sont cohérents entre eux.
+- **Un plan de trésorerie prévisionnel trimestriel, sans tableur** : l'écran Trésorerie prévisionnelle
+  construit automatiquement, pour le groupe ou pour une banque, le plan de trésorerie semaine par semaine
+  jusqu'à la fin du mois, ou mois par mois jusqu'à la fin du trimestre, à partir des opérations déjà
+  saisies dans G-Banque. Il est toujours à jour, sans consolidation manuelle.
+- **Anticiper les tensions de trésorerie** : le plan signale le **point bas** de la période (le jour où
+  la trésorerie sera la plus basse), le **besoin de financement** éventuel au-delà de la facilité de
+  caisse et le nombre de jours à découvert, avec une alerte visible et une courbe du solde jour par jour.
+  La direction sait, plusieurs semaines à l'avance, quand et de combien solliciter une banque, et sur
+  quel compte, au lieu de le découvrir sur le relevé.
+- **Piloter le groupe et chaque banque** : vue consolidée de toutes les banques, comparaison banque par
+  banque (solde prévu, point bas, besoin) et accès direct au plan d'une banque puis à ses opérations ; le
+  plan s'exporte en PDF pour les comités et les échanges avec les banques.
 
 ---
 

@@ -33,6 +33,7 @@ describe('recap-url-state', () => {
     const etat: RecapEtatUrl = {
       source: TransactionSource.CHEQUE,
       globaux: {
+        periode: 'FIN_DE_TRIMESTRE',
         transactionSources: [TransactionSource.CHEQUE, TransactionSource.Virement],
         sens: SensOperation.ENCAISSEMENT,
       },
@@ -49,6 +50,7 @@ describe('recap-url-state', () => {
     };
 
     const params = etatVersQueryParams(etat);
+    expect(params['horizon']).toBe('FIN_DE_TRIMESTRE');
     expect(params['page']).toBe(3);
     expect(params['sort']).toBe('montant,asc');
     expect(params['du']).toBe('2026-10-01');
@@ -74,6 +76,7 @@ describe('recap-url-state', () => {
   it('retombe sur les valeurs neutres pour toute valeur inconnue ou illisible', () => {
     const etat = queryParamsVersEtat(convertToParamMap({
       source: 'CHEQUE',
+      horizon: 'A_CE_JOUR',
       sens: 'NIMPORTEQUOI',
       types: 'CHEQUE,INCONNU',
       montant: 'abc',
@@ -82,6 +85,7 @@ describe('recap-url-state', () => {
       sort: 'password,asc',
       motif: 'TVA',
     }));
+    expect(etat.globaux.periode).toBe('FIN_DE_MOIS');
     expect(etat.globaux.sens).toBeNull();
     expect(etat.globaux.transactionSources).toEqual([TransactionSource.CHEQUE]);
     expect(etat.locaux.montant).toBeNull();

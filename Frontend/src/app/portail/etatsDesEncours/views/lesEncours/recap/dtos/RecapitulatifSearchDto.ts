@@ -1,6 +1,7 @@
 import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 import {SensOperation} from "../../../../../transactions/dtos/SensOperation";
 import {Motif} from "../../../../../impotEtTaxes/dtos/Motif";
+import {PeriodeRecap} from "./PeriodeRecap";
 
 /**
  * Critères de recherche de l'écran Récapitulatif — encaissements et décaissements prévisionnels
@@ -32,9 +33,13 @@ export interface RecapitulatifSearchDto {
   /**
    * Borne supérieure optionnelle sur la date de référence de chaque opération (colonne
    * "dateReference" côté vue SQL — déjà mappée par source : date d'émission, date d'échéance...).
-   * Si non renseignée, le backend retombe sur la fin du mois en cours.
+   * Si non renseignée, le backend retombe sur l'horizon `periode`.
    */
   dateReferenceJusqua?: Date | null;
+  /**
+   * Horizon de l'écran : fin de mois (défaut backend si absent) ou fin de trimestre.
+   */
+  periode?: PeriodeRecap;
   /**
    * Filtre optionnel sur le montant exact de l'opération (égalité stricte, pas une plage).
    */

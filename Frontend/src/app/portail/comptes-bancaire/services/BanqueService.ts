@@ -7,6 +7,7 @@ import {BanqueResponse} from "../dtos/BanqueResponse";
 import {PageResponse} from "../../global/types/PageResponse";
 import {RecapitulatifCompte} from "../../accueil/dtos/RecapitulatifCompte";
 import {BanqueSearchCriteria} from "../dtos/BanqueSearchCriteria";
+import {HORIZON_PAR_DEFAUT, HorizonPrevision} from "../../etatsDesEncours/views/lesEncours/recap/dtos/PeriodeRecap";
 
 
 @Injectable({
@@ -98,10 +99,12 @@ export class BanqueService {
 
   /**
    * Récupère les informations récapitulatives des banques pour le composant d'accueil.
+   * @param periode horizon de la projection (fin de mois par défaut, ou fin de trimestre)
    * @returns Un Observable d'un tableau de RecapitulatifCompte.
    */
-  getAccueilBankInfo(): Observable<RecapitulatifCompte[]> {
-    return this.http.get<RecapitulatifCompte[]>(`${this.apiUrl}/accueil-info`);
+  getAccueilBankInfo(periode: HorizonPrevision = HORIZON_PAR_DEFAUT): Observable<RecapitulatifCompte[]> {
+    const params = new HttpParams().set('periode', periode);
+    return this.http.get<RecapitulatifCompte[]>(`${this.apiUrl}/accueil-info`, { params });
   }
 
 

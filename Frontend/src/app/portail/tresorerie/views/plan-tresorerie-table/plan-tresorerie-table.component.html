@@ -1,0 +1,34 @@
+<div class="plan-scroll">
+  <table class="plan" aria-label="Plan de trésorerie prévisionnel">
+    <thead>
+      <tr>
+        <th scope="col" class="plan__label">Montants en MAD</th>
+        @for (c of colonnes; track c.code) {
+          <th scope="col" [class.plan__echu]="!c.du"
+              [pTooltip]="c.du ? ('Du ' + (c.du | date:'dd/MM/yyyy') + ' au ' + (c.au | date:'dd/MM/yyyy'))
+                               : 'Opérations non validées dont la date est atteinte (au ' + (c.au | date:'dd/MM/yyyy') + ')'"
+              tooltipPosition="top">
+            {{ c.libelle }}
+            <span class="plan__dates">{{ c.du ? (c.du | date:'dd/MM') + ' → ' + (c.au | date:'dd/MM') : 'en retard' }}</span>
+          </th>
+        }
+        <th scope="col">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (l of lignes; track $index) {
+        @if (l.type === 'section') {
+          <tr class="plan__section"><th scope="rowgroup" [attr.colspan]="colonnes.length + 2">{{ l.libelle }}</th></tr>
+        } @else {
+          <tr [class.plan__solde]="l.type === 'solde'" [class.plan__total]="l.type === 'total'">
+            <th scope="row" class="plan__label">{{ l.libelle }}</th>
+            @for (v of l.valeurs; track $index) {
+              <td [class.neg]="v < 0" [class.plan__echu]="$index === 0">{{ v === 0 ? '—' : (v | number:'1.2-2') }}</td>
+            }
+            <td class="plan__col-total" [class.neg]="l.total < 0">{{ l.total === 0 ? '—' : (l.total | number:'1.2-2') }}</td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>

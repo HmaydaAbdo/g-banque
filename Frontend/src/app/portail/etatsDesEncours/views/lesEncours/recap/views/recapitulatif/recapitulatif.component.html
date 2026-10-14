@@ -3,10 +3,14 @@
 
 <div class="flex flex-column gap-2 w-full route-enter">
 
-  <!-- ── Filtres globaux (sens, types) + indicateurs : une seule barre compacte ──
+  <!-- ── Filtres globaux (horizon, sens, types) + indicateurs : une seule barre compacte ──
        Ils s'appliquent aux cartes, à la liste des sources et au tableau de la source ouverte. -->
   <div class="recap-bar">
     <form id="recap-filters-panel" [formGroup]="searchForm" class="recap-bar__filters">
+      <p-selectButton formControlName="periode" [options]="horizonOptions" optionLabel="label"
+                      optionValue="value" [allowEmpty]="false"
+                      styleClass="p-button-sm"
+                      [pTooltip]="'Opérations à valider ' + libelleHorizon" tooltipPosition="bottom"></p-selectButton>
       <p-dropdown inputId="sens" formControlName="sens" [options]="sensOptions"
                   optionLabel="label" optionValue="value" ariaLabel="Sens"
                   appendTo="body" [style]="{'width': '10rem'}"></p-dropdown>
@@ -74,7 +78,7 @@
         <p-button label="Effacer les filtres" icon="pi pi-times" severity="secondary"
                   size="small" (onClick)="clearSearch()"></p-button>
       } @else {
-        <div class="text-500 text-sm">Il n'y a aucun encaissement ni décaissement pour le mois en cours.</div>
+        <div class="text-500 text-sm">Il n'y a aucun encaissement ni décaissement {{ libelleHorizon }}.</div>
       }
     </div>
   }

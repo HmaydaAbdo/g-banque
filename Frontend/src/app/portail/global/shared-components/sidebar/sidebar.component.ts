@@ -58,6 +58,12 @@ export class SidebarComponent implements OnInit {
   sidebarItems: SidebarItem[] = [
     { label: 'Accueil', icon: 'pi pi-home', routerLink: '/portail/accueil' },
     {
+      label: 'Trésorerie prévisionnelle',
+      icon: 'pi pi-chart-line',
+      routerLink: '/portail/tresorerie-previsionnelle',
+      requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'],
+    },
+    {
       label: 'Les Comptes Bancaires',
       icon: 'pi pi-wallet',
       routerLink: '/portail/comptes-bancaires',

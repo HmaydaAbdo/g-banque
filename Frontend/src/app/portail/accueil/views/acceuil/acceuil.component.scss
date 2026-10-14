@@ -98,8 +98,8 @@
   padding   : 4px 12px;
   border-top: 1px solid var(--color-border);
 
-  // Le bouton de téléchargement reste calé à droite
-  > p-button { margin-left: auto; }
+  // Les boutons (plan de trésorerie, téléchargement) restent calés à droite, côte à côte
+  > p-button:first-of-type { margin-left: auto; }
 }
 
 .bank-card__ident {

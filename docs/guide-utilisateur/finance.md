@@ -32,6 +32,28 @@ Le tableau de bord affiche en temps réel la situation de chaque compte bancaire
 - **Échus LCN** : effets de commerce arrivés à échéance.
 - **Échus Virements** : virements dont la date d'échéance est passée.
 
+### Choisir l'horizon de la prévision (fin de mois / fin de trimestre)
+
+Chaque carte de banque a deux tuiles : **Aujourd'hui** (situation du jour) et une tuile de **prévision**.
+Le sélecteur **Fin de mois | Fin de trimestre**, en haut à droite du tableau de bord, règle cette tuile
+pour toutes les cartes à la fois :
+
+1. Cliquer sur **Fin de mois** (choix par défaut) ou sur **Fin de trimestre**.
+2. Les cartes se rechargent. Le titre de la tuile rappelle l'horizon et sa date (ex. « Fin de trimestre
+   · 31/12 »). La tuile affiche les **encours entrées** et **encours sorties** encore à valider jusqu'à
+   cette date, le **solde prévu** (solde actuel + entrées − sorties) et la **disponibilité** prévue
+   (solde prévu + facilité de caisse ; « Besoin » en rouge si elle est négative).
+
+Le trimestre est le trimestre civil en cours (janvier-mars, avril-juin, juillet-septembre,
+octobre-décembre). Votre choix est gardé si vous revenez sur le tableau de bord avec le bouton
+« précédent » ou si vous rechargez la page. Il sert aussi aux téléchargements **Récap détaillé** et
+présélectionne la période du **Récap global** (voir ci-dessous).
+
+Pour aller plus loin :
+- le bouton **Trésorerie** (en haut) ouvre le plan de trésorerie de toutes les banques, sur le même horizon ;
+- l'icône de **courbe** au pied d'une carte ouvre le plan de trésorerie de cette banque seulement.
+Voir « Trésorerie prévisionnelle » ci-dessous.
+
 ### Synchronisation FunPaiement
 
 Pour récupérer les données depuis le système de paiement externe :
@@ -45,13 +67,100 @@ Pour récupérer les données depuis le système de paiement externe :
 
 - **Récap global** (toutes banques) : bouton **Récap global** en haut du tableau de bord — rapport
   consolidé de trésorerie pour l'ensemble des banques. Un écran demande d'abord de choisir la
-  période du rapport, **à ce jour** ou **jusqu'à fin de mois** *(nouveau, 31/08/2026)* — les
-  libellés du PDF (soldes, disponibilité FC) s'adaptent au choix fait ; dans les deux cas, les
-  opérations en retard non encore validées restent toujours incluses.
-- **Récap détaillé** (toutes banques) : bouton **Récap détaillé** en haut du tableau de bord. Une
-  catégorie (Leasing, CMT, Agios...) n'apparaît que si au moins une banque y porte un montant non
-  nul — une catégorie à 0,00 pour toutes les banques est omise du tableau *(nouveau, 31/08/2026)*.
-- **Récap détaillé d'une banque** : bouton **Récap détaillé** sur la carte de la banque concernée.
+  période du rapport : **À ce jour**, **Fin de mois** ou **Fin de trimestre** (le choix est
+  présélectionné sur l'horizon du tableau de bord), puis **Télécharger**. Le titre et les libellés du
+  PDF (soldes, disponibilité FC) rappellent la période et sa date ; les opérations en retard non
+  encore validées restent toujours incluses.
+- **Récap détaillé** (toutes banques) : bouton **Récap détaillé** en haut du tableau de bord. La partie
+  « à venir » va du lendemain jusqu'à l'horizon choisi sur le tableau de bord (fin de mois ou fin de
+  trimestre), et la dernière ligne donne le solde prévu à cette date. Une catégorie (Leasing, CMT,
+  Agios...) n'apparaît que si au moins une banque y porte un montant non nul.
+- **Récap détaillé d'une banque** : bouton **Récap détaillé** (icône de téléchargement) sur la carte de
+  la banque concernée — même contenu, même horizon, pour cette banque seulement.
+
+---
+
+## Trésorerie prévisionnelle
+
+*Accès : sidebar → Trésorerie prévisionnelle, ou tableau de bord → bouton **Trésorerie** (toutes les
+banques) ou icône de courbe d'une carte (une banque). Droits : membres et directeurs Finance,
+administrateur système.*
+
+Cet écran montre le **plan de trésorerie** : à partir du solde actuel, les entrées et sorties encore à
+valider, période par période, jusqu'à la fin du mois ou du trimestre. Il ne modifie aucune opération :
+c'est une consultation, toujours à jour.
+
+### Régler l'écran
+
+En haut à droite :
+- **Fin de mois | Fin de trimestre** : l'horizon du plan. Fin de mois = une colonne par semaine (lundi
+  au dimanche) ; fin de trimestre = une colonne par mois.
+- **Banque** : « Toutes les banques » (vue consolidée, par défaut) ou une banque précise.
+- **Exporter PDF** : télécharge le plan affiché (voir plus bas).
+
+Une phrase sous l'en-tête rappelle ce que vous regardez : la banque (ou « Toutes les banques »), la date
+du calcul et la date de fin de l'horizon. Vos réglages sont gardés si vous revenez sur l'écran avec
+« précédent » ou si vous rechargez la page.
+
+### Lire les indicateurs
+
+Cinq cartes :
+- **Solde actuel** : le solde d'aujourd'hui (le même que sur le tableau de bord), avec la facilité de
+  caisse en dessous ;
+- **Solde prévu au JJ/MM** : le solde à la fin de l'horizon, et sa variation sur la période (en vert si
+  elle est positive, en rouge si elle est négative) ;
+- **Point bas** : le solde le plus bas prévu sur la période, et le jour où il sera atteint (carte
+  orange si ce solde est négatif) ;
+- **Besoin de financement** (carte rouge) : ce qui manquera ce jour-là même en utilisant toute la
+  facilité de caisse. S'il n'y a pas de besoin, la carte s'appelle **Disponibilité minimale** et donne
+  la marge qui restera au point bas, facilité de caisse comprise ;
+- **Jours sous zéro** : le nombre de jours où le solde sera négatif, sur le nombre de jours de la période.
+
+Sous les cartes, un bandeau peut apparaître :
+- **rouge** : « Il manquera X MAD le JJ/MM/AAAA, même en utilisant toute la facilité de caisse » — il
+  faut prévoir un financement ou décaler des sorties ;
+- **orange** : le solde passera sous zéro quelques jours, mais la facilité de caisse le couvre.
+
+### Lire la courbe
+
+**Évolution du solde prévu** montre le solde jour par jour, d'aujourd'hui à la fin de l'horizon. La
+ligne horizontale du zéro est plus marquée ; la ligne rouge en pointillés est la limite de la facilité
+de caisse (si la banque en a une) ; le point rouge marque le point bas. Passez la souris sur la courbe
+pour lire le solde d'un jour.
+
+### Lire le plan de trésorerie
+
+Le tableau a une colonne par période :
+- **À ce jour** (en orange, mention « en retard ») : les opérations dont la date est déjà atteinte mais
+  qui n'ont pas encore été validées. Elles sont comptées dès aujourd'hui ;
+- puis une colonne par semaine ou par mois, avec ses dates ; survolez un en-tête pour lire la période
+  exacte ;
+- enfin **Total**.
+
+Lignes, de haut en bas : **Solde de début** de chaque période, les **Encaissements** par catégorie et
+leur total, les **Décaissements** par catégorie et leur total, le **Solde de fin**, la **Facilité de
+caisse** et la **Disponibilité** (solde de fin + facilité de caisse). Les catégories sont les mêmes que
+dans le Récap détaillé (Leasing, CMT, Règlement fournisseurs, Agios…) ; une opération qui n'entre dans
+aucune catégorie figure sur la ligne **Autres**. Les montants négatifs sont en rouge, un montant nul
+s'affiche « — ».
+
+Quand une banque est choisie, le bouton **Voir les encours** ouvre ses opérations à valider (choix du
+rapprochement puis écran Récapitulatifs), pour vérifier ou valider ce qui compose le plan.
+
+### Comparer les banques
+
+En vue « Toutes les banques », la partie **Par banque** liste chaque banque avec son solde actuel, son
+solde prévu, son point bas (et sa date) et son besoin de financement. Cliquez sur une ligne pour
+afficher le plan de cette banque ; choisissez « Toutes les banques » dans la liste pour revenir.
+
+### Exporter le plan en PDF
+
+Cliquez sur **Exporter PDF** : le fichier contient le plan affiché (toutes les banques, ou la banque
+choisie) en format paysage, avec en titre le périmètre, l'horizon et sa date, et en bas le point bas, la
+disponibilité au point bas, le besoin de financement et le nombre de jours sous zéro.
+
+> Le plan ne compte que les opérations saisies dans G-Banque et encore à valider. Une sortie ou une
+> entrée qui n'est pas encore saisie n'y figure pas : pensez à la saisir pour que le plan soit complet.
 
 ---
 
@@ -613,7 +722,7 @@ Bouton corbeille — **réservé à l'administrateur système**. Refusé si le d
 
 ### Valider les décomptes en attente
 
-Les décomptes « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Décomptes** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
+Les décomptes « Prévu » dont la date d'émission est antérieure ou égale à l'horizon du Récapitulatif (fin du mois en cours par défaut, ou fin du trimestre) ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Décomptes** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Exporter en PDF
 
@@ -659,7 +768,7 @@ Bouton corbeille — **réservé à l'administrateur système**. Refusé si le p
 
 ### Valider les mouvements en attente
 
-Les mouvements « Prévu » (remboursements et déblocages) dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Préfinancement** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
+Les mouvements « Prévu » (remboursements et déblocages) dont la date d'émission est antérieure ou égale à l'horizon du Récapitulatif (fin du mois en cours par défaut, ou fin du trimestre) ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Préfinancement** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Consulter le suivi de ligne fonctionnelle
 
@@ -711,7 +820,7 @@ Bouton corbeille — **réservé à l'administrateur système**. Refusé si le f
 
 ### Valider les mouvements en attente
 
-Les mouvements « Prévu » (remboursements et déblocages) dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Factoring** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
+Les mouvements « Prévu » (remboursements et déblocages) dont la date d'émission est antérieure ou égale à l'horizon du Récapitulatif (fin du mois en cours par défaut, ou fin du trimestre) ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Factoring** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Consulter le suivi de ligne fonctionnelle
 
@@ -766,7 +875,7 @@ Bouton corbeille — **réservé à l'administrateur système**. Refusé si le d
 
 ### Valider les mouvements en attente
 
-Les mouvements « Prévu » (remboursements et déblocages) dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Droit constaté** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
+Les mouvements « Prévu » (remboursements et déblocages) dont la date d'émission est antérieure ou égale à l'horizon du Récapitulatif (fin du mois en cours par défaut, ou fin du trimestre) ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Droit constaté** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Consulter le suivi de ligne fonctionnelle
 
@@ -847,7 +956,7 @@ Bouton corbeille — **réservé à l'administrateur système**. Désactivé si 
 
 ### Valider les chèques en cours
 
-Les chèques « En cours » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Chèque** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
+Les chèques « En cours » dont la date d'émission est antérieure ou égale à l'horizon du Récapitulatif (fin du mois en cours par défaut, ou fin du trimestre) ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Chèque** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Exporter en PDF
 
@@ -991,7 +1100,7 @@ Bouton corbeille — **réservé à l'administrateur système**. Désactivé si 
 
 ### Valider les virements en cours
 
-Les virements « En cours » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Virement** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
+Les virements « En cours » dont la date d'émission est antérieure ou égale à l'horizon du Récapitulatif (fin du mois en cours par défaut, ou fin du trimestre) ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Virement** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 > Si la banque retenue pour la transaction (émettrice pour un décaissement, bénéficiaire pour un encaissement) n'est pas renseignée sur le virement, la validation reste possible mais le recalcul de solde en cascade n'est pas déclenché pour cette opération.
 
@@ -1045,7 +1154,7 @@ Bouton corbeille — **réservé à l'administrateur système**. Désactivé si 
 
 ### Valider les virements internationaux en cours
 
-Les virements internationaux « En cours » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Virement international** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
+Les virements internationaux « En cours » dont la date d'émission est antérieure ou égale à l'horizon du Récapitulatif (fin du mois en cours par défaut, ou fin du trimestre) ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Virement international** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Exporter en PDF
 
@@ -1090,7 +1199,7 @@ Une mise à disposition ne se supprime pas : la synchronisation relit tout l'his
 
 ### Valider les mises à disposition en cours
 
-Les mises à disposition « En cours » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Mise à disposition** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
+Les mises à disposition « En cours » dont la date d'émission est antérieure ou égale à l'horizon du Récapitulatif (fin du mois en cours par défaut, ou fin du trimestre) ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Mise à disposition** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Exporter en PDF
 
@@ -1174,7 +1283,7 @@ Bouton corbeille — **réservé à l'administrateur système**. Désactivé si 
 
 ### Valider les prélèvements en attente
 
-Les prélèvements « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Prélèvement** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
+Les prélèvements « Prévu » dont la date d'émission est antérieure ou égale à l'horizon du Récapitulatif (fin du mois en cours par défaut, ou fin du trimestre) ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Prélèvement** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Exporter en PDF
 
@@ -1284,7 +1393,7 @@ un frais bancaire réglé ne peut plus être supprimé.
 
 ### Valider les frais bancaires en attente
 
-Les frais bancaires « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Frais bancaire** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
+Les frais bancaires « Prévu » dont la date d'émission est antérieure ou égale à l'horizon du Récapitulatif (fin du mois en cours par défaut, ou fin du trimestre) ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Frais bancaire** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ---
 
@@ -1473,7 +1582,7 @@ Payé.**
 
 ### Valider les impôts et taxes en attente
 
-Les impôts et taxes « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Impôt / Taxe** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA). Un filtre **Motif Impôt/Taxe** est disponible dans les filtres de ce type.
+Les impôts et taxes « Prévu » dont la date d'émission est antérieure ou égale à l'horizon du Récapitulatif (fin du mois en cours par défaut, ou fin du trimestre) ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Impôt / Taxe** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA). Un filtre **Motif Impôt/Taxe** est disponible dans les filtres de ce type.
 
 ### Exporter en PDF
 
@@ -1538,7 +1647,7 @@ la TVA associée (le cas échéant) est supprimée avec elle.
 
 ### Valider les commissions en attente
 
-Les commissions « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Commission** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA). Un filtre **Motif Commission** est disponible dans les filtres de ce type.
+Les commissions « Prévu » dont la date d'émission est antérieure ou égale à l'horizon du Récapitulatif (fin du mois en cours par défaut, ou fin du trimestre) ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Commission** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA). Un filtre **Motif Commission** est disponible dans les filtres de ce type.
 
 ### Exporter en PDF
 
@@ -1608,7 +1717,7 @@ impayée régularisée ne peut plus être supprimée.
 
 ### Valider les impayées en attente
 
-Les impayées « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Impayé** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA). Les encaissements et les décaissements se trouvent sous la même carte (filtre **Sens**).
+Les impayées « Prévu » dont la date d'émission est antérieure ou égale à l'horizon du Récapitulatif (fin du mois en cours par défaut, ou fin du trimestre) ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Impayé** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA). Les encaissements et les décaissements se trouvent sous la même carte (filtre **Sens**).
 
 ### Exporter en PDF
 
@@ -1653,7 +1762,7 @@ Payée : une opération erronée régularisée ne peut plus être supprimée.
 
 ### Valider les opérations erronées en attente
 
-Les opérations erronées « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Opération erronée** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
+Les opérations erronées « Prévu » dont la date d'émission est antérieure ou égale à l'horizon du Récapitulatif (fin du mois en cours par défaut, ou fin du trimestre) ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Opération erronée** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Exporter en PDF
 
@@ -1699,7 +1808,7 @@ une provision régularisée ne peut plus être supprimée.
 
 ### Valider les provisions en attente
 
-Les provisions « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Provision** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA). Les encaissements et les décaissements se trouvent sous la même carte (filtre **Sens**) ; la TVA est déductible pour un décaissement, collectée pour un encaissement.
+Les provisions « Prévu » dont la date d'émission est antérieure ou égale à l'horizon du Récapitulatif (fin du mois en cours par défaut, ou fin du trimestre) ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Provision** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA). Les encaissements et les décaissements se trouvent sous la même carte (filtre **Sens**) ; la TVA est déductible pour un décaissement, collectée pour un encaissement.
 
 ### Exporter en PDF
 
@@ -1744,7 +1853,7 @@ une restitution régularisée ne peut plus être supprimée.
 
 ### Valider les restitutions en attente
 
-Les restitutions « Prévu » dont la date d'émission est antérieure ou égale à la fin du mois en cours ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Restitution** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
+Les restitutions « Prévu » dont la date d'émission est antérieure ou égale à l'horizon du Récapitulatif (fin du mois en cours par défaut, ou fin du trimestre) ne se traitent plus dans un écran propre à ce module : ils se consultent, s'exportent en PDF et se valident (un par un ou en lot) depuis **États des encours → Récapitulatifs**, sous la carte **Restitution** — voir « Module États des encours » ci-dessous pour le pas-à-pas (champs demandés : date de valeur, date de l'opération, libellé, observation, TVA).
 
 ### Exporter en PDF
 
@@ -1864,12 +1973,13 @@ deux écrans :
 L'écran a deux états : la **vue d'ensemble** (à l'arrivée) et la **vue d'une source** (quand vous avez
 ouvert un type d'opération).
 
-**La barre du haut** est la même dans les deux cas. Elle contient deux filtres — **Sens** (Tous,
-Encaissement, Décaissement) et **Type de transaction** (un ou plusieurs types, avec recherche) — et, à
+**La barre du haut** est la même dans les deux cas. Elle contient trois filtres — **Fin de mois | Fin de
+trimestre** (l'horizon), **Sens** (Tous, Encaissement, Décaissement) et **Type de transaction** (un ou
+plusieurs types, avec recherche) — et, à
 droite, quatre indicateurs présentés en petites cartes colorées qui suivent ces filtres : **Débit** (rouge), **Crédit** (vert), **À valider** (nombre
 d'opérations) et **Échues** (la carte passe en orange dès qu'au moins une opération est arrivée à échéance), puis le bouton
-vert **Ajouter** (voir « Ajouter une opération »). Le bouton **Effacer** apparaît dès qu'un des deux filtres
-est actif.
+vert **Ajouter** (voir « Ajouter une opération »). Le bouton **Effacer** apparaît dès qu'un sens ou un type
+est choisi.
 
 #### La vue d'ensemble
 
@@ -1925,13 +2035,18 @@ Il y a deux niveaux de filtres.
 
 #### Filtres globaux (barre du haut)
 
-Seulement deux, communs à toutes les sources, qui s'appliquent aux indicateurs, aux cartes et au tableau :
+Seulement trois, communs à toutes les sources, qui s'appliquent aux indicateurs, aux cartes et au tableau :
 
+- **Fin de mois | Fin de trimestre** : jusqu'à quelle date les opérations à valider sont affichées. Par
+  défaut, la fin du mois en cours ; choisissez **Fin de trimestre** pour voir aussi celles prévues
+  jusqu'à la fin du trimestre (survolez le sélecteur pour lire la date exacte). Les opérations en retard
+  restent toujours affichées.
 - **Sens** : Tous (par défaut), Encaissement ou Décaissement. Quand un sens est choisi, le total de
   l'autre tombe à zéro.
 - **Type de transaction** : un ou plusieurs types (liste avec recherche) ; vide = tous les types.
 
-Le bouton **Effacer** (visible dès qu'un filtre global est actif) les réinitialise.
+Le bouton **Effacer** (visible dès qu'un sens ou un type est choisi) réinitialise le sens et le type ;
+l'horizon reste celui que vous avez choisi.
 
 #### Filtres du type ouvert (une seule ligne sous l'en-tête)
 
@@ -1950,7 +2065,8 @@ Ils ne concernent que le tableau du type ouvert (les cartes et les autres types 
   recherche.
 - **Période** (bouton qui affiche le nombre de bornes actives) : ouvre dans la même ligne deux champs de
   date, **Depuis** et **Jusqu'au**. Chaque opération est comparée à sa propre date de référence (une bulle
-  d'aide le rappelle) ; si vous ne saisissez pas de borne haute, la fin du mois en cours reste utilisée.
+  d'aide le rappelle) ; si vous ne saisissez pas de borne haute, l'horizon de la barre du haut (fin de
+  mois ou fin de trimestre) reste utilisé. Une borne **Jusqu'au** saisie ici prime sur l'horizon.
 
 Le bouton **Effacer** de cette ligne (visible dès qu'un filtre du type est actif) ne réinitialise que ces
 filtres. Quand le tableau est vide à cause des filtres, son message propose **Effacer les filtres**, qui

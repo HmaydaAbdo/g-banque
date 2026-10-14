@@ -35,14 +35,13 @@ import java.awt.Color;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * Service pour générer un récapitulatif consolidé de tous les décaissements/encaissements
- * prévisionnels (échéances leasing/CMT, moyens de paiement, agios, commissions, etc.) pour
- * le mois en cours.
+ * prévisionnels (échéances leasing/CMT, moyens de paiement, agios, commissions, etc.) jusqu'à
+ * l'horizon choisi : fin du mois en cours par défaut, ou fin du trimestre (voir {@link PeriodeRecap}).
  *
  * <p>Interroge {@link RecapitulatifEncoursRepository}, adossé à la vue SQL
  * {@code v_recapitulatif_encours} — pagination, tri et agrégation réels en base, remplaçant
@@ -80,15 +79,12 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
     }
 
     /**
-     * Fin du mois en cours, recalculée à chaque appel — ce service est un singleton Spring,
-     * donc un champ figé calculé une seule fois à la construction du bean resterait bloqué sur
-     * la fin du mois au démarrage du backend et exclurait les échéances du mois courant tant
-     * que le serveur ne redémarre pas (bug identifié le 28/07/2026 : cartes Encours +/- correctes
-     * — recalculées à la demande dans RecapGeneralDetailleServiceImpl — mais détail
-     * Encaissement/Décaissement à 0).
+     * Borne de l'horizon, recalculée à chaque appel à partir de la date du jour — ce service est un
+     * singleton Spring, une borne figée à la construction du bean resterait bloquée sur la date de
+     * démarrage du backend (bug identifié le 28/07/2026). {@code null} vaut fin de mois.
      */
-    private LocalDate endOfMonth() {
-        return LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+    private LocalDate horizon(PeriodeRecap periode) {
+        return (periode != null ? periode : PeriodeRecap.FIN_DE_MOIS).horizon(LocalDate.now());
     }
 
     @Override
@@ -215,6 +211,10 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
                 filterLines.add("Motif Impôt/Taxe : " + searchDto.impotEtTaxeMotif());
             }
         }
+        if (searchDto == null || searchDto.dateReferenceJusqua() == null) {
+            PeriodeRecap periode = periodeDe(searchDto);
+            filterLines.add("Horizon : " + periode.libelle() + " (" + horizon(periode).format(DATE_FMT) + ")");
+        }
 
         String title = titreRapport(searchDto) + " — " + banque.nom();
 
@@ -329,13 +329,17 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
 
     /**
      * Détermine la borne supérieure ("jusqu'à") appliquée sur {@code dateReference} : la date
-     * choisie par l'utilisateur si elle est renseignée dans le formulaire de recherche, sinon la
-     * fin du mois en cours (comportement historique, cf. {@link #endOfMonth()}).
+     * choisie par l'utilisateur si elle est renseignée dans les filtres de la source, sinon
+     * l'horizon de l'écran (fin de mois par défaut, ou fin de trimestre).
      */
     private LocalDate resolveDateReferenceUntil(RecapitulatifSearchDto searchDto) {
         return (searchDto != null && searchDto.dateReferenceJusqua() != null)
                 ? searchDto.dateReferenceJusqua()
-                : endOfMonth();
+                : horizon(periodeDe(searchDto));
+    }
+
+    private PeriodeRecap periodeDe(RecapitulatifSearchDto searchDto) {
+        return (searchDto != null && searchDto.periode() != null) ? searchDto.periode() : PeriodeRecap.FIN_DE_MOIS;
     }
 
     private void addRecapPdfCell(PdfPTable table, String text, Font font, Color bg, int align) {
@@ -363,12 +367,12 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
         // Plafond FC stocké en positif en base (colonne ligne_fonctionnelle.plafond) — conservé
         // tel quel ici (pas de negate()) pour rester cohérent avec RecapGeneralDetailleServiceImpl
         // (ResumeSectionDto.plafondLigne), qui affiche le même plafond en positif. Voir
-        // RecaputilatifGlobal.disponibiliteFinDuMois() pour le calcul de marge qui en découle
+        // RecaputilatifGlobal.disponibilitePrevue() pour le calcul de marge qui en découle
         // (retour utilisateur du 31/08/2026 : l'ancien negate() ici inversait le signe de cette
         // marge par rapport à la convention déjà utilisée dans l'autre rapport).
         BigDecimal plafondFc = banqueService.getPlafondFC(banqueId);
 
-        LocalDate horizon = resolveHorizon(periode);
+        LocalDate horizon = horizon(periode);
         List<RecaputilatifItem> decaissements = fetchOutstanding(banqueId, Type.DECAISSEMENT, horizon);
         List<RecaputilatifItem> encaissements = fetchOutstanding(banqueId, Type.ENCAISSEMENT, horizon);
 
@@ -380,17 +384,6 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
                 encaissements,
                 decaissements
         );
-    }
-
-    /**
-     * Traduit le choix utilisateur ({@link PeriodeRecap}) en borne de date effective — {@code
-     * A_CE_JOUR} n'inclut que les encours déjà échus/émis (date de référence &lt;= aujourd'hui),
-     * {@code FIN_DE_MOIS} garde le comportement historique (borne à la fin du mois en cours).
-     * {@code null} est traité comme {@code FIN_DE_MOIS} (valeur par défaut au niveau du
-     * contrôleur de toute façon, filet de sécurité si jamais appelé directement).
-     */
-    private LocalDate resolveHorizon(PeriodeRecap periode) {
-        return periode == PeriodeRecap.A_CE_JOUR ? LocalDate.now() : endOfMonth();
     }
 
     private List<RecaputilatifItem> fetchOutstanding(Long banqueId, Type sens, LocalDate horizon) {
@@ -414,26 +407,26 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
     }
 
     @Override
-    public EncoursFinDeMoisDto getEncoursFinDeMois(Long banqueId) {
+    public EncoursPrevusDto getEncoursPrevus(Long banqueId, PeriodeRecap periode) {
         Map<Type, BigDecimal> sums = new EnumMap<>(Type.class);
-        for (Object[] row : encoursRepository.sumByBanqueAndSensUntil(banqueId, endOfMonth())) {
+        for (Object[] row : encoursRepository.sumByBanqueAndSensUntil(banqueId, horizon(periode))) {
             sums.put((Type) row[0], (BigDecimal) row[1]);
         }
-        return new EncoursFinDeMoisDto(sums.get(Type.ENCAISSEMENT), sums.get(Type.DECAISSEMENT));
+        return new EncoursPrevusDto(sums.get(Type.ENCAISSEMENT), sums.get(Type.DECAISSEMENT));
     }
 
     @Override
-    public Map<Long, EncoursFinDeMoisDto> getEncoursFinDeMoisParBanque() {
+    public Map<Long, EncoursPrevusDto> getEncoursPrevusParBanque(PeriodeRecap periode) {
         Map<Long, Map<Type, BigDecimal>> sumsByBanque = new HashMap<>();
-        for (Object[] row : encoursRepository.sumAllBanquesBySensUntil(endOfMonth())) {
+        for (Object[] row : encoursRepository.sumAllBanquesBySensUntil(horizon(periode))) {
             sumsByBanque
                     .computeIfAbsent((Long) row[0], k -> new EnumMap<>(Type.class))
                     .put((Type) row[1], (BigDecimal) row[2]);
         }
 
-        Map<Long, EncoursFinDeMoisDto> result = new HashMap<>();
+        Map<Long, EncoursPrevusDto> result = new HashMap<>();
         sumsByBanque.forEach((banqueId, sums) -> result.put(banqueId,
-                new EncoursFinDeMoisDto(sums.get(Type.ENCAISSEMENT), sums.get(Type.DECAISSEMENT))));
+                new EncoursPrevusDto(sums.get(Type.ENCAISSEMENT), sums.get(Type.DECAISSEMENT))));
         return result;
     }
 
