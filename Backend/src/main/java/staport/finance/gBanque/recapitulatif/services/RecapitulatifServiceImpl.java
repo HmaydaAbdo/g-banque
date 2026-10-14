@@ -410,9 +410,6 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
     public EncoursPrevusDto getEncoursPrevus(Long banqueId, PeriodeRecap periode) {
         Map<Type, BigDecimal> sums = new EnumMap<>(Type.class);
         for (Object[] row : encoursRepository.sumByBanqueAndSensUntil(banqueId, horizon(periode))) {
-            // Un encours sans sens (type non renseigné sur l'opération) n'est ni un encaissement ni un décaissement :
-            // EnumMap refuse une clé nulle, la ligne est ignorée au lieu de faire échouer tout l'accueil.
-            if (row[0] == null) continue;
             sums.put((Type) row[0], (BigDecimal) row[1]);
         }
         return new EncoursPrevusDto(sums.get(Type.ENCAISSEMENT), sums.get(Type.DECAISSEMENT));
@@ -422,7 +419,6 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
     public Map<Long, EncoursPrevusDto> getEncoursPrevusParBanque(PeriodeRecap periode) {
         Map<Long, Map<Type, BigDecimal>> sumsByBanque = new HashMap<>();
         for (Object[] row : encoursRepository.sumAllBanquesBySensUntil(horizon(periode))) {
-            if (row[1] == null) continue; // encours sans sens : voir getEncoursPrevus
             sumsByBanque
                     .computeIfAbsent((Long) row[0], k -> new EnumMap<>(Type.class))
                     .put((Type) row[1], (BigDecimal) row[2]);

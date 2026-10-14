@@ -82,6 +82,7 @@ public class DroitConstate {
     private BigDecimal montant;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Type type;
 
     @Column(nullable = false)

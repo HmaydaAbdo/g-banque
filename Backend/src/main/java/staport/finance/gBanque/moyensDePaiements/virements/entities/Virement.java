@@ -69,6 +69,7 @@ public class Virement {
     private StatutMoyenPaiement statut;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Type type;
 
     @Column(nullable = false)

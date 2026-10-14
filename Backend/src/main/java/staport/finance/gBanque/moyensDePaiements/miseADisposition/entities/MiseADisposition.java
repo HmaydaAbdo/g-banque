@@ -66,6 +66,7 @@ public class MiseADisposition {
     private String libelle;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Type type;
 
     private String emetteur;

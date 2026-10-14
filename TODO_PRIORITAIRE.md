@@ -59,5 +59,7 @@
 - Les dates de la **transaction** font foi pour tout référent (agios, préfinancement…).
 - Les migrations de données restent des migrations Flyway, gardées par l'état attendu, testées et rejouées sur une
   copie de production ; elles n'écrivent pas dans les tables d'audit (décision HMAYDA du 10/10/2026).
+- **Toute opération a un sens** (encaissement / décaissement, déblocage / remboursement) : contrainte NOT NULL en base
+  (V13, 14/10/2026) ; jamais de ligne « sans sens » à ignorer dans le code.
 - Une banque n'est calculée pour le préfinancement, les droits constatés ou le factoring que si l'un de ses marchés a
   une ligne active **et** au moins une opération payée du type (V12 et calculateurs).

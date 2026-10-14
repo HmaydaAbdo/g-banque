@@ -68,6 +68,7 @@ public class Prefinancement {
     private BigDecimal montant;
 
     @Enumerated(EnumType.STRING) // Best practice for enums
+    @Column(nullable = false)
     private Type type;
 
     @Column(nullable = false)

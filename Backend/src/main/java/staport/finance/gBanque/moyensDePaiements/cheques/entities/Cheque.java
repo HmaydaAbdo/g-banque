@@ -66,7 +66,7 @@ public class Cheque {
     private StatutMoyenPaiement statut;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type")
+    @Column(name = "type", nullable = false)
     private Type type;
 
     @Column(nullable = false)

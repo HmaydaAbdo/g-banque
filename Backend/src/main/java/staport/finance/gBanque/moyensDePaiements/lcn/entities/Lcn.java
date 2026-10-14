@@ -67,7 +67,7 @@ public class Lcn {
     private String observation;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type")
+    @Column(name = "type", nullable = false)
     private Type type;
 
     @Enumerated(EnumType.STRING)
