@@ -23,7 +23,7 @@
     <div class="indic" pTooltip="Le jour où le solde prévu est le plus bas" tooltipPosition="bottom">
       <span class="indic__label">Solde le plus bas · {{ plan.pointBas.date | date:'dd/MM' }}</span>
       <span class="indic__val" [class.neg]="plan.pointBas.solde < 0">{{ plan.pointBas.solde | number:'1.2-2' }}</span></div>
-    <div class="indic indic--{{ plan.besoinFinancement > 0 ? 'danger' : 'ok' }}"
+    <div class="indic"
          [pTooltip]="plan.besoinFinancement > 0 ? 'Ce qui manque ce jour-là, même en utilisant toute la facilité de caisse' : 'Solde le plus bas + facilité de caisse'"
          tooltipPosition="bottom">
       <span class="indic__label">{{ plan.besoinFinancement > 0 ? 'Besoin' : 'Disponibilité la plus basse' }}</span>

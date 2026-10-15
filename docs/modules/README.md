@@ -5391,8 +5391,8 @@ puis permet de descendre jusqu'à l'opération. De haut en bas :
   - **Exporter PDF** : exporte exactement ce que l'on regarde — la banque dont le détail est ouvert,
     sinon le total de la devise choisie (« Total groupe » ou « Total MAD »…). L'infobulle du bouton
     rappelle le périmètre. C'est le seul bouton d'export de l'écran ;
-- **Total groupe** (en tête de l'écran) : une carte dont le liseré suit la situation du total de la devise
-  choisie (vert, orange, rouge) et qui donne :
+- **Total groupe** (en tête de l'écran) : une carte à bordure neutre, avec un voyant de couleur pour la
+  situation du total de la devise choisie (vert, orange, rouge), qui donne :
   - le **nombre de banques par situation** (« 1 en besoin », « 2 facilité utilisée », « 4 sans souci »),
     sans les situations vides ;
   - la période (date du calcul → horizon), rappelée à droite ;
@@ -5403,7 +5403,7 @@ puis permet de descendre jusqu'à l'opération. De haut en bas :
   le suivi se fait donc banque par banque, dans les cartes ;
 - **Cartes par banque** : une carte par banque de la devise choisie, **classées par urgence** (le plus gros
   besoin en premier, puis les banques qui utilisent leur facilité de caisse, puis les autres par nom).
-  Chaque carte porte le liseré et l'étiquette de la situation (**Besoin**, **Facilité de caisse utilisée**,
+  Chaque carte, à bordure neutre, porte l'étiquette de la situation (**Besoin**, **Facilité de caisse utilisée**,
   **Sans souci**) et affiche :
   - pour une banque **en besoin** : le montant du besoin, son jour et **depuis combien de jours** la banque
     est en besoin sans interruption (« depuis 3 j », ou « nouveau » le jour où il apparaît) ;
@@ -5419,7 +5419,7 @@ puis permet de descendre jusqu'à l'opération. De haut en bas :
   période (la première, « échues », regroupe les opérations dont la date est atteinte) :
   - une ligne par banque, avec son **solde de fin de période** et sa couleur — **vert** (solde positif),
     **orange** (solde négatif couvert par la facilité de caisse), **rouge** (besoin : la facilité de caisse
-    ne suffit pas, la case est cerclée de rouge). Les montants sont abrégés (« 1,2 M », « 123 k ») ; le
+    ne suffit pas, la case est sur fond rouge). Les montants sont abrégés (« 1,2 M », « 123 k ») ; le
     survol donne le montant exact. Une colonne « Solde actuel » précède les périodes, et une colonne « Total »
     termine les lignes de source ;
   - la flèche d'une banque la **déplie** et montre ses **flux par source** (leasing, CMT, chèques…) :

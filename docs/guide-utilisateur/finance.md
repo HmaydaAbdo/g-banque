@@ -111,8 +111,8 @@ Vos choix sont gardés si vous revenez sur l'écran avec « précédent » ou si
 
 ### Le total groupe
 
-En haut de l'écran, une carte résume le total de la devise choisie. Son liseré est vert, orange ou rouge
-selon la situation du total, et elle indique combien de banques sont **en besoin**, en **facilité utilisée**
+En haut de l'écran, une carte résume le total de la devise choisie. Un voyant vert, orange ou rouge
+résume la situation du total, et elle indique combien de banques sont **en besoin**, en **facilité utilisée**
 ou **sans souci**. Dessous, cinq indicateurs : **Solde actuel** (avec la facilité de caisse « FC »),
 **Solde prévu** (avec l'écart sur la période), **Solde le plus bas** (et son jour), **Besoin** — ou
 **Disponibilité la plus basse** s'il n'y a pas de besoin — et **Jours à solde négatif**.
@@ -143,7 +143,7 @@ Chaque case affiche le **solde à la fin de la période** (abrégé : « 1,2 M �
 123 mille ; passez la souris dessus pour le montant exact) et une couleur :
 - **vert** : le solde est positif ;
 - **orange** : le solde est négatif, mais la facilité de caisse le couvre ;
-- **rouge**, cerclé de rouge : même avec la facilité de caisse, il manque de l'argent.
+- **rouge** : même avec la facilité de caisse, il manque de l'argent.
 
 **Cliquez sur la flèche d'une banque** pour la déplier :
 vous voyez ses flux par source (leasing, CMT, chèques…), les encaissements en vert et les décaissements en

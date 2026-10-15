@@ -1,21 +1,18 @@
-// Cartes par banque : cartes standard du design system, liseré de couleur selon la situation.
+// Cartes par banque : cartes standard du design system, bordure neutre ; la situation est portée par l'étiquette.
 .cartes {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: var(--space-3);
   margin: 0; padding: 0; list-style: none;
 }
 
 .carte-banque {
-  --teinte: var(--color-success);
   display: flex; flex-direction: column; gap: var(--space-1); width: 100%; height: 100%;
   padding: var(--space-4); font: inherit; text-align: left; color: var(--color-text-primary);
-  background: var(--color-surface); border: 1px solid var(--color-border); border-left: 4px solid var(--teinte);
+  background: var(--color-surface); border: 1px solid var(--color-border);
   border-radius: var(--radius-lg); box-shadow: var(--shadow-card); cursor: pointer;
   transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
   &:hover { box-shadow: var(--shadow-md); }
   &:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
-  &--warn { --teinte: var(--color-warning); }
-  &--danger { --teinte: var(--color-danger); }
-  &--sel { border-color: var(--color-primary); border-left-color: var(--teinte); box-shadow: var(--shadow-md); }
+  &--sel { border-color: var(--color-primary); box-shadow: var(--shadow-md); }
 
   &__tete { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
   &__nom { font-weight: var(--weight-semibold); font-size: var(--text-base); }

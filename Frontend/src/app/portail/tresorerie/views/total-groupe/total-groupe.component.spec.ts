@@ -37,14 +37,14 @@ describe('TotalGroupeComponent', () => {
     const el = creer();
     expect(Array.from(el.querySelectorAll('dt')).map(dt => dt.textContent!.trim()))
       .toEqual(['Solde actuel', 'Solde prévu', 'Solde le plus bas', 'Besoin', 'Jours à solde négatif']);
-    expect(el.querySelector('.indicateur--alerte')).not.toBeNull();
+    expect(el.querySelectorAll('dd')[3].classList).toContain('neg');
   });
 
   it("sans besoin, l'indicateur devient la disponibilité la plus basse", () => {
     const total = { ...planBanqueFixture(null, 'Toutes les banques', 0), pointBas: { date: '2026-11-20', solde: 100, disponibilite: 2100 } };
     const el = creer(total, { danger: 0, warn: 0, ok: 3 });
     expect(Array.from(el.querySelectorAll('dt')).map(dt => dt.textContent!.trim())).toContain('Disponibilité la plus basse');
-    expect(el.querySelector('.indicateur--alerte')).toBeNull();
+    expect(el.querySelectorAll('dd')[3].classList).not.toContain('neg');
   });
 
   it('plusieurs devises : la devise est rappelée dans le titre et avec les montants', () => {

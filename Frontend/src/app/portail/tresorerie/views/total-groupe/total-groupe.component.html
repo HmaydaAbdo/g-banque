@@ -29,13 +29,13 @@
       <dd [class.neg]="total.pointBas.solde < 0">{{ total.pointBas.solde | number:'1.2-2' }}<small>{{ total.devise }}</small></dd>
       <span class="indicateur__sous">{{ total.pointBas.date | date:'dd/MM' }}</span>
     </div>
-    <div class="indicateur" [class.indicateur--alerte]="enBesoin"
+    <div class="indicateur"
          [pTooltip]="enBesoin ? 'Ce qui manque ce jour-là, même en utilisant toute la facilité de caisse' : 'Solde le plus bas + facilité de caisse'"
          tooltipPosition="bottom">
       <dt>{{ enBesoin ? 'Besoin' : 'Disponibilité la plus basse' }}</dt>
       <dd [class.neg]="enBesoin">{{ (enBesoin ? total.besoinFinancement : total.pointBas.disponibilite) | number:'1.2-2' }}<small>{{ total.devise }}</small></dd>
     </div>
-    <div class="indicateur" [class.indicateur--attention]="total.joursSoldeNegatif > 0">
+    <div class="indicateur">
       <dt>Jours à solde négatif</dt>
       <dd>{{ total.joursSoldeNegatif }}</dd>
     </div>

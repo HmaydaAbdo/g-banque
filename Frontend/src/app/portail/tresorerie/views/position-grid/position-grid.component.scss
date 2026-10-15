@@ -71,7 +71,7 @@
   &--ok { color: var(--color-success-text); background: var(--color-success-light); }
   &--warn { color: var(--color-warning-text); background: var(--color-warning-light); }
   &--danger {
-    color: var(--color-danger-text); background: var(--color-danger-light); border-color: var(--color-danger);
+    color: var(--color-danger-text); background: var(--color-danger-light);
   }
 }
 
