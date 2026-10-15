@@ -95,7 +95,7 @@ mois ou du trimestre. Il ne modifie aucune opération : c'est une consultation, 
 
 ### La console : tous les filtres et l'export au même endroit
 
-La barre vitrée en haut de l'écran reste visible quand vous faites défiler la page. Elle réunit :
+La barre en haut de l'écran reste visible quand vous faites défiler la page. Elle réunit :
 - **Horizon** : **Fin de mois** (une colonne par semaine, du lundi au dimanche) ou **Fin de trimestre**
   (une colonne par mois) ;
 - **Devise** : seulement si vos banques n'ont pas toutes la même devise ;
@@ -111,16 +111,14 @@ Vos choix sont gardés si vous revenez sur l'écran avec « précédent » ou si
 
 ### Le bandeau d'état
 
-Une grande carte, dont la couleur suit la situation, répond à « est-ce que ça va ? » en une phrase :
+Une carte dont le liseré suit la situation répond à « est-ce que ça va ? » par un titre court et des pastilles :
 - **vert** : « Tout va bien jusqu'au JJ/MM/AAAA », avec le solde le plus bas du groupe ;
-- **orange** : le solde d'une banque passera en négatif, mais la facilité de caisse le couvre (toutes les
-  banques concernées sont nommées) ;
-- **rouge** : « Il manquera X MAD le JJ/MM/AAAA sur la banque Y » (et « N autres banques » s'il y en a
-  plusieurs), même en utilisant toute la facilité de caisse de la banque. La ligne du dessous **nomme toutes
-  les banques en besoin**, avec leur montant et leur jour. Une facilité de caisse ne couvre que sa propre
-  banque : le total du groupe peut rester positif pendant qu'une banque est en besoin — le bandeau le
-  précise alors, et un virement depuis une banque excédentaire peut combler le besoin. Sinon, il faut
-  prévoir un financement ou décaler des décaissements. Le voyant clignote doucement.
+- **orange** : « Facilité de caisse utilisée » : le solde d'une banque passera en négatif, mais la facilité
+  de caisse le couvre ; une pastille par banque concernée ;
+- **rouge** : « Besoin · Banque Y montant le JJ/MM » (et « +N banques » s'il y en a plusieurs) : la facilité
+  de caisse ne suffit pas. Une pastille par banque en besoin donne son montant et son jour. Une facilité de
+  caisse ne couvre que sa propre banque : si le total du groupe reste positif, la pastille « Groupe couvert »
+  apparaît, et un virement depuis une banque excédentaire peut combler le besoin.
 
 Dessous, cinq indicateurs : **Solde actuel**, **Solde prévu** (avec l'écart sur la période), **Solde le
 plus bas** (et le jour où il tombe), **Besoin** — ou **Disponibilité la plus basse** s'il n'y a pas de

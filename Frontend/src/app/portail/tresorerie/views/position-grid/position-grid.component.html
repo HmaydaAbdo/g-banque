@@ -1,8 +1,5 @@
 <div class="barre">
-  <span class="barre__aide">
-    Solde prévu à la fin de chaque période. Dépliez une banque pour voir ses flux par source
-    (<span class="entree">entrées</span> / <span class="sortie">sorties</span>).
-  </span>
+  <span></span>
   @if (banquesDepliables.length > 0) {
     <button type="button" class="barre__tout" (click)="basculerTout()">
       <i class="pi" [class.pi-angle-double-up]="toutOuvert" [class.pi-angle-double-down]="!toutOuvert" aria-hidden="true"></i>
@@ -110,9 +107,3 @@
     </tfoot>
   </table>
 </div>
-
-<ul class="legende" aria-label="Légende des couleurs">
-  <li><span class="pastille pastille--ok"></span>Solde positif</li>
-  <li><span class="pastille pastille--warn"></span>Solde négatif, couvert par la facilité de caisse</li>
-  <li><span class="pastille pastille--danger"></span>Besoin (facilité de caisse dépassée)</li>
-</ul>

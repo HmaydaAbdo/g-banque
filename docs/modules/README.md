@@ -5380,7 +5380,7 @@ l'ouvre directement sur cette banque, avec le même horizon.
 Écran à part, hors de l'espace de travail d'une banque (menu latéral « Trésorerie prévisionnelle »,
 bouton « Trésorerie » ou icône de courbe du tableau de bord). Il répond d'abord à « est-ce que ça va ? »,
 puis permet de descendre jusqu'à l'opération. De haut en bas :
-- **Console** : une barre vitrée, qui reste visible en haut de l'écran quand on le fait défiler, et qui
+- **Console** : une barre qui reste visible en haut de l'écran quand on le fait défiler, et qui
   réunit **tous les filtres et l'export au même endroit** :
   - **Horizon** : Fin de mois ou Fin de trimestre ;
   - **Devise** : seulement quand les banques n'ont pas toutes la même devise ;
@@ -5391,20 +5391,17 @@ puis permet de descendre jusqu'à l'opération. De haut en bas :
   - **Exporter PDF** : exporte exactement ce que l'on regarde — la banque dont le panneau est ouvert,
     sinon le total de la devise choisie (« Total groupe » ou « Total MAD »…). L'infobulle du bouton
     rappelle le périmètre. C'est le seul bouton d'export de l'écran ;
-- **Bandeau d'état** : une carte lumineuse dont la teinte suit la situation (vert, orange, rouge) et qui
-  donne, en une phrase, la réponse à « est-ce que ça va ? » pour le groupe entier, en nommant la banque la
-  plus touchée :
-  - **rouge** — « Il manquera X <devise> le JJ/MM/AAAA sur la banque Y [et N autres banques] », même en
-    utilisant toute la facilité de caisse **de chaque banque** : la ligne du dessous nomme **toutes** les
-    banques en besoin, avec leur montant et leur jour. Une facilité de caisse ne couvre que sa propre
-    banque : le total du groupe peut donc rester positif ; le bandeau le précise alors (« le total du
-    groupe reste couvert… un virement depuis une banque excédentaire peut combler ce besoin »). Le voyant
-    pulse ;
-  - **orange** — le solde de la banque Y passera en négatif, mais la facilité de caisse le couvre ; toutes
-    les banques concernées sont nommées avec leur solde le plus bas et son jour ;
+- **Bandeau d'état** : une carte dont le liseré suit la situation (vert, orange, rouge) et qui donne, en un
+  titre court et des pastilles, la réponse à « est-ce que ça va ? » pour le groupe entier :
+  - **rouge** — « Besoin · Banque Y montant le JJ/MM [· +N banques] », même en utilisant toute la facilité de
+    caisse **de chaque banque** ; une pastille par banque en besoin (nom, montant, jour). Une facilité de
+    caisse ne couvre que sa propre banque : si le total du groupe reste positif, une pastille « Groupe
+    couvert » le signale ;
+  - **orange** — « Facilité de caisse utilisée · Banque Y » : le solde passera en négatif mais la facilité
+    le couvre ; une pastille par banque concernée (solde le plus bas, jour) ;
   - **vert** — « Tout va bien jusqu'au JJ/MM/AAAA », avec le solde le plus bas du groupe (un par devise
     quand il y en a plusieurs).
-  La date du calcul et l'horizon sont rappelés à droite. Dessous, cinq indicateurs du total de la devise
+  La période (date du calcul → horizon) est rappelée à droite. Dessous, cinq indicateurs du total de la devise
   choisie : **Solde actuel** (avec la facilité de caisse), **Solde prévu** (avec sa variation sur la
   période), **Solde le plus bas** (avec son jour), **Besoin** — ou **Disponibilité la plus basse** quand
   il n'y en a pas — et **Jours à solde négatif** ;
@@ -5412,7 +5409,7 @@ puis permet de descendre jusqu'à l'opération. De haut en bas :
   période (la première, « échues », regroupe les opérations dont la date est atteinte) :
   - une ligne par banque, avec son **solde de fin de période** et sa couleur — **vert** (solde positif),
     **orange** (solde négatif couvert par la facilité de caisse), **rouge** (besoin : la facilité de caisse
-    ne suffit pas, la case est entourée d'un halo). Les montants sont abrégés (« 1,2 M », « 123 k ») ; le
+    ne suffit pas, la case est cerclée de rouge). Les montants sont abrégés (« 1,2 M », « 123 k ») ; le
     survol donne le montant exact. Une colonne « Solde actuel » précède les périodes, et une mini-courbe de
     tendance termine la ligne ;
   - la flèche d'une banque la **déplie** et montre ses **flux par source** (leasing, CMT, chèques…) :

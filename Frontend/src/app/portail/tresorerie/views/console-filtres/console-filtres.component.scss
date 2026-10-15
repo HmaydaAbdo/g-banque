@@ -1,13 +1,12 @@
-// Console : une barre vitrée, collée en haut au défilement, qui réunit filtres et export.
+// Console : une barre collée en haut au défilement, qui réunit filtres et export.
 .console {
   position: sticky; top: var(--space-2); z-index: 5;
   display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3) var(--space-5);
   padding: var(--space-3) var(--space-4);
-  background: color-mix(in srgb, var(--color-surface) 82%, transparent);
-  backdrop-filter: blur(14px) saturate(1.4);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--color-border));
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg), 0 0 0 1px color-mix(in srgb, var(--color-surface) 60%, transparent) inset;
+  box-shadow: var(--shadow-card);
 
   &__champ { display: flex; align-items: center; gap: var(--space-2); }
   &__label { font-size: var(--text-2xs); font-weight: var(--weight-semibold); text-transform: uppercase; letter-spacing: var(--tracking-wider); color: var(--color-text-muted); }
@@ -28,10 +27,9 @@
   display: inline-flex; align-items: center; gap: var(--space-1);
   padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
   font-size: var(--text-xs); color: var(--color-primary-text);
-  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  background: var(--color-primary-light);
+  border: 1px solid transparent;
   border-radius: var(--radius-full);
-  animation: entree 0.18s ease both;
 
   &__nom { font-weight: var(--weight-semibold); }
   &__retirer {
@@ -42,6 +40,4 @@
   }
 }
 
-@keyframes entree { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .pastille { animation: none; } }
 @media (max-width: 720px) { .console { position: static; } .console__actions { margin-left: 0; } }

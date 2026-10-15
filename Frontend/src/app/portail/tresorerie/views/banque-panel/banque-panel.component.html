@@ -10,7 +10,7 @@
           @default { Tout va bien }
         }
       </span>
-      <span class="entete__sous">Montants en {{ plan.devise }} · jusqu'au {{ dateHorizon | date:'dd/MM/yyyy' }}</span>
+      <span class="entete__sous">{{ plan.devise }} · {{ dateHorizon | date:'dd/MM/yyyy' }}</span>
     </div>
   </ng-template>
 
@@ -31,7 +31,6 @@
         <span class="indic__val" [class.neg]="plan.besoinFinancement > 0">
           {{ (plan.besoinFinancement > 0 ? plan.besoinFinancement : plan.pointBas.disponibilite) | number:'1.2-2' }}</span></div>
     </section>
-    <p class="aide">Solde prévu = solde actuel + encaissements − décaissements restant à valider jusqu'au {{ dateHorizon | date:'dd/MM/yyyy' }}.</p>
 
     <!-- Courbe -->
     <section class="bloc">
@@ -74,7 +73,6 @@
               </li>
             }
           </ul>
-          <p class="aide">Les plus grosses d'abord. Cliquez sur une opération pour l'ouvrir dans les encours du mois.</p>
           <button type="button" class="voir" (click)="ouvrirEncours()">
             {{ totalOperations > operations.length ? 'Voir les ' + totalOperations + ' opérations dans les encours' : 'Ouvrir les encours du mois' }}
             <i class="pi pi-arrow-right" aria-hidden="true"></i>
@@ -85,7 +83,7 @@
 
     <!-- Plus grosses opérations -->
     <section class="bloc">
-      <h3 class="bloc__titre">Plus grosses opérations à venir</h3>
+      <h3 class="bloc__titre">Plus grosses opérations</h3>
       <app-mouvements-list [mouvements]="plan.plusGrosMouvements" [dateCause]="plan.pointBas.date"/>
     </section>
 
