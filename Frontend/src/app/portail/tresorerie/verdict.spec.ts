@@ -15,7 +15,21 @@ describe('verdictDuPlan', () => {
     plan.banques = [planBanqueFixture(1, 'Banque A', 1000), planBanqueFixture(2, 'Banque B', 5000)];
     const v = verdictDuPlan(plan);
     expect(v.titre).toContain('Banque B');
-    expect(v.detail).toContain('2 banques');
+    expect(v.titre).toContain('et 1 autre banque');
+    // Les deux banques en besoin sont nommées, avec leur montant
+    const detail = v.detail.replace(/[  ]/g, ' ');
+    expect(detail).toContain('Banque A : 1 000,00 MAD');
+    expect(detail).toContain('Banque B : 5 000,00 MAD');
+  });
+
+  it('le total du groupe peut rester couvert : le verdict le dit, une facilité ne couvrant que sa banque', () => {
+    const plan = planTresorerieFixture();
+    plan.banques = [planBanqueFixture(1, 'Banque A', 1000)];
+    plan.groupes = [{ ...planBanqueFixture(null, 'Toutes les banques', 0), pointBas: { date: '2026-11-20', solde: 9000, disponibilite: 11000 } }];
+    const v = verdictDuPlan(plan);
+    expect(v.niveau).toBe('danger');
+    expect(v.detail).toContain('Le total du groupe reste couvert');
+    expect(v.detail).toContain('virement');
   });
 
   it('solde négatif couvert par la facilité : orange', () => {

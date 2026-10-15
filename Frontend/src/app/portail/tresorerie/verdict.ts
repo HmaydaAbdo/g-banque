@@ -20,12 +20,21 @@ export function verdictDuPlan(plan: PlanTresorerie): Verdict {
     .sort((a, b) => b.besoinFinancement - a.besoinFinancement);
   if (besoins.length > 0) {
     const pire = besoins[0];
+    const autres = besoins.length - 1;
+    // Toutes les banques en besoin sont nommées, avec leur montant et leur jour : pas seulement la pire
+    const liste = besoins.map(b => `${b.banqueNom} : ${montantComplet(b.besoinFinancement, b.devise)} le ${dateCourte(b.pointBas.date)}`).join(' · ');
+    // Une facilité de caisse ne couvre que sa propre banque : le total peut rester positif quand une banque est en besoin
+    const total = plan.groupes.find(g => g.devise === pire.devise);
+    const groupeCouvert = total !== undefined && total.besoinFinancement === 0 && total.pointBas.disponibilite > 0;
     return {
       niveau: 'danger',
-      titre: `Il manquera ${montantComplet(pire.besoinFinancement, pire.devise)} le ${dateCourte(pire.pointBas.date)} sur ${pire.banqueNom}`,
-      detail: besoins.length > 1
-        ? `${besoins.length} banques sont en besoin avant le ${horizon}, même en utilisant toute la facilité de caisse.`
-        : `Même en utilisant toute la facilité de caisse. Prévoir un financement ou décaler des sorties avant le ${horizon}.`,
+      titre: `Il manquera ${montantComplet(pire.besoinFinancement, pire.devise)} le ${dateCourte(pire.pointBas.date)} sur ${pire.banqueNom}`
+        + (autres > 0 ? ` et ${autres} autre${autres > 1 ? 's' : ''} banque${autres > 1 ? 's' : ''}` : ''),
+      detail: `${liste}. Même en utilisant toute la facilité de caisse de chaque banque.`
+        + (groupeCouvert
+          ? ` Le total du groupe reste couvert (disponibilité la plus basse : ${montantComplet(total.pointBas.disponibilite, total.devise)}) :`
+            + ' un virement depuis une banque excédentaire peut combler ce besoin.'
+          : ` Prévoir un financement ou décaler des décaissements avant le ${horizon}.`),
     };
   }
   const negatives = plan.banques.filter(b => b.joursSoldeNegatif > 0)
@@ -34,9 +43,9 @@ export function verdictDuPlan(plan: PlanTresorerie): Verdict {
     const pire: PlanBanque = negatives[0];
     return {
       niveau: 'warn',
-      titre: `Le solde de ${pire.banqueNom} passera en négatif, couvert par la facilité de caisse`,
-      detail: `Solde le plus bas : ${montantComplet(pire.pointBas.solde, pire.devise)} le ${dateCourte(pire.pointBas.date)}`
-        + (negatives.length > 1 ? `, et ${negatives.length - 1} autre(s) banque(s) concernée(s).` : '.'),
+      titre: `Le solde de ${pire.banqueNom} passera en négatif, couvert par la facilité de caisse`
+        + (negatives.length > 1 ? ` (${negatives.length} banques concernées)` : ''),
+      detail: negatives.map(b => `${b.banqueNom} : solde le plus bas ${montantComplet(b.pointBas.solde, b.devise)} le ${dateCourte(b.pointBas.date)}`).join(' · ') + '.',
     };
   }
   return {

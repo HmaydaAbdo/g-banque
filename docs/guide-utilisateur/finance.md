@@ -113,9 +113,14 @@ Vos choix sont gardés si vous revenez sur l'écran avec « précédent » ou si
 
 Une grande carte, dont la couleur suit la situation, répond à « est-ce que ça va ? » en une phrase :
 - **vert** : « Tout va bien jusqu'au JJ/MM/AAAA », avec le solde le plus bas du groupe ;
-- **orange** : le solde d'une banque passera en négatif, mais la facilité de caisse le couvre ;
-- **rouge** : « Il manquera X MAD le JJ/MM/AAAA sur la banque Y », même en utilisant toute la facilité de
-  caisse — il faut prévoir un financement ou décaler des décaissements. Le voyant clignote doucement.
+- **orange** : le solde d'une banque passera en négatif, mais la facilité de caisse le couvre (toutes les
+  banques concernées sont nommées) ;
+- **rouge** : « Il manquera X MAD le JJ/MM/AAAA sur la banque Y » (et « N autres banques » s'il y en a
+  plusieurs), même en utilisant toute la facilité de caisse de la banque. La ligne du dessous **nomme toutes
+  les banques en besoin**, avec leur montant et leur jour. Une facilité de caisse ne couvre que sa propre
+  banque : le total du groupe peut rester positif pendant qu'une banque est en besoin — le bandeau le
+  précise alors, et un virement depuis une banque excédentaire peut combler le besoin. Sinon, il faut
+  prévoir un financement ou décaler des décaissements. Le voyant clignote doucement.
 
 Dessous, cinq indicateurs : **Solde actuel**, **Solde prévu** (avec l'écart sur la période), **Solde le
 plus bas** (et le jour où il tombe), **Besoin** — ou **Disponibilité la plus basse** s'il n'y a pas de

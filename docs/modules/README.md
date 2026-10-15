@@ -5394,11 +5394,14 @@ puis permet de descendre jusqu'à l'opération. De haut en bas :
 - **Bandeau d'état** : une carte lumineuse dont la teinte suit la situation (vert, orange, rouge) et qui
   donne, en une phrase, la réponse à « est-ce que ça va ? » pour le groupe entier, en nommant la banque la
   plus touchée :
-  - **rouge** — « Il manquera X <devise> le JJ/MM/AAAA sur la banque Y », même en utilisant toute la
-    facilité de caisse (si plusieurs banques sont concernées, leur nombre est rappelé) ; le voyant
+  - **rouge** — « Il manquera X <devise> le JJ/MM/AAAA sur la banque Y [et N autres banques] », même en
+    utilisant toute la facilité de caisse **de chaque banque** : la ligne du dessous nomme **toutes** les
+    banques en besoin, avec leur montant et leur jour. Une facilité de caisse ne couvre que sa propre
+    banque : le total du groupe peut donc rester positif ; le bandeau le précise alors (« le total du
+    groupe reste couvert… un virement depuis une banque excédentaire peut combler ce besoin »). Le voyant
     pulse ;
-  - **orange** — le solde de la banque Y passera en négatif, mais la facilité de caisse le couvre (solde
-    le plus bas et jour indiqués) ;
+  - **orange** — le solde de la banque Y passera en négatif, mais la facilité de caisse le couvre ; toutes
+    les banques concernées sont nommées avec leur solde le plus bas et son jour ;
   - **vert** — « Tout va bien jusqu'au JJ/MM/AAAA », avec le solde le plus bas du groupe (un par devise
     quand il y en a plusieurs).
   La date du calcul et l'horizon sont rappelés à droite. Dessous, cinq indicateurs du total de la devise
