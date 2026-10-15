@@ -12,14 +12,12 @@ import java.util.List;
  * {@code v_recapitulatif_encours}).
  *
  * <p>On n'additionne jamais des devises différentes : {@code groupes} contient un total par devise
- * présente (le dirham en premier). {@code certainesSeulement} indique que le plan ne compte que les
- * opérations certaines (voir {@code CategoriesTresorerie}).</p>
+ * présente (le dirham en premier).</p>
  */
 public record PlanTresorerieDto(
         PeriodeRecap periode,
         LocalDate dateCalcul,
         LocalDate dateHorizon,
-        boolean certainesSeulement,
         List<ColonnePlanDto> colonnes,
         List<PlanBanqueDto> groupes,
         List<PlanBanqueDto> banques

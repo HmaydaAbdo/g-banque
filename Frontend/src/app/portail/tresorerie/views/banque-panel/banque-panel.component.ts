@@ -62,7 +62,12 @@ export class BanquePanelComponent implements OnChanges, OnDestroy {
     return this.colonnes.find(c => c.code === this.colonne) ?? this.periodeDuPointBas();
   }
 
-  /** Les opérations ne sont consultables que pour une banque : le groupe n'a pas de liste unique. */
+  /** Dernier jour du plan (fin du mois ou du trimestre). */
+  get dateHorizon(): string {
+    return this.colonnes[this.colonnes.length - 1]?.au ?? '';
+  }
+
+  /** Les opérations ne sont consultables que pour une banque : un total n'a pas de liste unique. */
   get listeDisponible(): boolean {
     return this.plan?.banqueId !== null;
   }

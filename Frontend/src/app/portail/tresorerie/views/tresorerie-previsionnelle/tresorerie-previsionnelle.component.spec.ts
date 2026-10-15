@@ -34,17 +34,17 @@ describe('TresoreriePrevisionnelleComponent', () => {
 
   afterEach(() => http.verify());
 
-  it("charge le plan à l'horizon de l'adresse et affiche verdict et grille, panneau fermé", () => {
+  it("charge le plan à l'horizon de l'adresse et affiche verdict et grille unique, panneau fermé", () => {
     const fixture = creer({ horizon: 'FIN_DE_TRIMESTRE' });
     const req = planReq();
     expect(req.request.params.get('periode')).toBe('FIN_DE_TRIMESTRE');
-    expect(req.request.params.get('certainesSeulement')).toBe('false');
     req.flush(planTresorerieFixture());
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelector('.verdict--danger')!.textContent).toContain('Banque A');
-    expect(el.querySelectorAll('.grille tbody tr').length).toBe(2);
+    expect(el.querySelectorAll('app-position-grid').length).toBe(1);
+    expect(el.querySelectorAll('.grille tbody .grille__ligne--n1').length).toBe(2);
     expect(el.querySelector('app-banque-panel')).toBeNull();
   });
 
@@ -68,14 +68,14 @@ describe('TresoreriePrevisionnelleComponent', () => {
 
     c.ouvrir({ banqueId: 2, colonne: 'P1', devise: 'MAD' });
     expect(navigate.calls.mostRecent().args[1]!.queryParams).toEqual(
-      { horizon: null, flux: null, vue: null, devise: null, banque: 2, col: 'P1' });
+      { horizon: null, ordre: null, devise: null, banque: 2, col: 'P1' });
     fixture.detectChanges();
     http.expectOne(r => r.url.includes('/recapitulatif/banque/2')).flush(aucunePage);
     fixture.detectChanges();
 
     c.fermer();
     expect(navigate.calls.mostRecent().args[1]!.queryParams).toEqual(
-      { horizon: null, flux: null, vue: null, devise: null, banque: null, col: null });
+      { horizon: null, ordre: null, devise: null, banque: null, col: null });
     expect(c.planDuPanneau).toBeNull();
   });
 
@@ -92,7 +92,7 @@ describe('TresoreriePrevisionnelleComponent', () => {
     http.expectNone(r => r.url.includes('/recapitulatif/banque/'));
   });
 
-  it("changer d'horizon ou de flux recharge le plan côté serveur et l'écrit dans l'adresse", () => {
+  it("changer d'horizon recharge le plan côté serveur et l'écrit dans l'adresse", () => {
     const fixture = creer();
     planReq().flush(planTresorerieFixture());
     const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
@@ -102,66 +102,69 @@ describe('TresoreriePrevisionnelleComponent', () => {
     expect(req.request.params.get('periode')).toBe('FIN_DE_TRIMESTRE');
     req.flush(planTresorerieFixture());
     expect(navigate.calls.mostRecent().args[1]!.queryParams!['horizon']).toBe('FIN_DE_TRIMESTRE');
-
-    fixture.componentInstance.fluxControl.setValue('CERTAINS');
-    const req2 = planReq();
-    expect(req2.request.params.get('certainesSeulement')).toBe('true');
-    req2.flush({ ...planTresorerieFixture(), certainesSeulement: true });
-    expect(navigate.calls.mostRecent().args[1]!.queryParams!['flux']).toBe('certains');
   });
 
-  it("la vue « Par source » n'appelle pas le serveur et affiche les sources du total", () => {
-    const fixture = creer({ vue: 'source' });
+  it("changer l'ordre de regroupement reste dans la même grille, sans appel serveur, et s'écrit dans l'adresse", () => {
+    const fixture = creer();
     planReq().flush(planTresorerieFixture());
     fixture.detectChanges();
-
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
     const el: HTMLElement = fixture.nativeElement;
-    expect(el.querySelector('app-position-grid')).toBeNull();
-    expect(el.querySelector('app-plan-tresorerie-table')!.textContent).toContain('Leasing');
+    expect(el.querySelector('.grille thead th')!.textContent).toContain('Banque');
 
-    spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
-    fixture.componentInstance.vueControl.setValue('BANQUE');
+    fixture.componentInstance.ordreControl.setValue('SOURCE_BANQUE');
     fixture.detectChanges();
-    expect(el.querySelector('app-position-grid')).not.toBeNull();
+
+    expect(el.querySelectorAll('app-position-grid').length).toBe(1);
+    expect(el.querySelector('.grille thead th')!.textContent).toContain('Source');
+    expect(navigate.calls.mostRecent().args[1]!.queryParams!['ordre']).toBe('source');
     http.expectNone(r => r.url.endsWith('tresorerie-previsionnelle'));
   });
 
-  it("rappelle en pastilles les réglages qui s'écartent de la vue par défaut, et les retire un à un", () => {
-    const fixture = creer({ horizon: 'FIN_DE_TRIMESTRE', flux: 'certains', vue: 'source', banque: '1', col: 'P1' });
-    planReq().flush({ ...planTresorerieFixture(), certainesSeulement: true });
+  it("l'ordre « Source › Banque » de l'adresse est repris à l'ouverture", () => {
+    const fixture = creer({ ordre: 'source' });
+    planReq().flush(planTresorerieFixture());
+    fixture.detectChanges();
+    expect(fixture.componentInstance.ordreControl.value).toBe('SOURCE_BANQUE');
+    expect((fixture.nativeElement as HTMLElement).querySelector('.grille thead th')!.textContent).toContain('Source');
+  });
+
+  it("rappelle en pastilles les filtres qui s'écartent de la vue par défaut, et les retire un à un", () => {
+    const fixture = creer({ horizon: 'FIN_DE_TRIMESTRE', ordre: 'source', banque: '1', col: 'P1' });
+    planReq().flush(planTresorerieFixture());
     fixture.detectChanges();
     http.expectOne(r => r.url.includes('/recapitulatif/banque/1')).flush(aucunePage);
     fixture.detectChanges();
 
     const c = fixture.componentInstance;
-    expect(c.filtres.map(f => f.cle)).toEqual(['horizon', 'flux', 'vue', 'banque', 'periode']);
+    expect(c.filtres.map(f => f.cle)).toEqual(['horizon', 'ordre', 'banque', 'periode']);
     const texte = (fixture.nativeElement as HTMLElement).querySelector('.filtres')!.textContent!;
     expect(texte).toContain('Fin de trimestre');
-    expect(texte).toContain('Certains seulement');
+    expect(texte).toContain('Source › Banque');
     expect(texte).toContain('Banque A');
     expect(texte).toContain('Novembre 2026');
 
     spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
     c.filtres.find(f => f.cle === 'periode')!.retirer();
     expect(c.colonne).toBe('');
-    c.filtres.find(f => f.cle === 'vue')!.retirer();
-    expect(c.vueControl.value).toBe('BANQUE');
+    c.filtres.find(f => f.cle === 'ordre')!.retirer();
+    expect(c.ordreControl.value).toBe('BANQUE_SOURCE');
   });
 
-  it('« Tout réinitialiser » remet les réglages par défaut et recharge le plan complet', () => {
-    const fixture = creer({ flux: 'certains' });
-    planReq().flush({ ...planTresorerieFixture(), certainesSeulement: true });
+  it('« Effacer les filtres » remet les réglages par défaut et recharge le plan', () => {
+    const fixture = creer({ horizon: 'FIN_DE_TRIMESTRE', ordre: 'source' });
+    planReq().flush(planTresorerieFixture());
     fixture.detectChanges();
     spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
 
     fixture.componentInstance.reinitialiser();
-    expect(planReq().request.params.get('certainesSeulement')).toBe('false');
-    expect(fixture.componentInstance.fluxControl.value).toBe('TOUS');
+    expect(planReq().request.params.get('periode')).toBe('FIN_DE_MOIS');
+    expect(fixture.componentInstance.ordreControl.value).toBe('BANQUE_SOURCE');
     expect(fixture.componentInstance.filtres).toEqual([]);
   });
 
-  it('plusieurs devises : le sélecteur de devise choisit le total de la vue par source', () => {
-    const fixture = creer({ vue: 'source' });
+  it('plusieurs devises : le sélecteur de devise choisit le total de la courbe', () => {
+    const fixture = creer();
     const plan = planTresorerieFixture();
     plan.groupes = [planBanqueFixture(null, 'Banques en MAD', 0), { ...planBanqueFixture(null, 'Banques en EUR', 0), devise: 'EUR' }];
     planReq().flush(plan);

@@ -60,7 +60,7 @@ class PlanTresorerieCalculateurTest {
 
     private static PlanBanqueDto planA(String plafond) {
         PlanTresorerieDto plan = PlanTresorerieCalculateur.calculer(PeriodeRecap.FIN_DE_MOIS, AUJOURDHUI,
-                List.of(new SoldeBanque(A, "Banque A", "MAD", bd("100000"), bd(plafond))), fluxBanqueA(), false);
+                List.of(new SoldeBanque(A, "Banque A", "MAD", bd("100000"), bd(plafond))), fluxBanqueA());
         return plan.banques().get(0);
     }
 
@@ -193,7 +193,7 @@ class PlanTresorerieCalculateurTest {
 
         PlanTresorerieDto plan = PlanTresorerieCalculateur.calculer(PeriodeRecap.FIN_DE_MOIS, AUJOURDHUI, List.of(
                 new SoldeBanque(A, "Banque A", "MAD", bd("100000"), bd("50000")),
-                new SoldeBanque(B, "Banque B", "MAD", bd("10000"), null)), flux, false);
+                new SoldeBanque(B, "Banque B", "MAD", bd("10000"), null)), flux);
         PlanBanqueDto total = plan.groupes().get(0);
 
         assertThat(total.banqueId()).isNull();
@@ -218,7 +218,7 @@ class PlanTresorerieCalculateurTest {
 
         PlanTresorerieDto plan = PlanTresorerieCalculateur.calculer(PeriodeRecap.FIN_DE_MOIS, AUJOURDHUI, List.of(
                 new SoldeBanque(B, "Banque Euro", "EUR", bd("2000"), bd("0")),
-                new SoldeBanque(A, "Banque Dirham", "MAD", bd("100000"), bd("0"))), flux, false);
+                new SoldeBanque(A, "Banque Dirham", "MAD", bd("100000"), bd("0"))), flux);
 
         assertThat(plan.groupes()).extracting(PlanBanqueDto::devise).containsExactly("MAD", "EUR");
         assertThat(plan.groupes()).extracting(PlanBanqueDto::banqueNom).containsExactly("Banques en MAD", "Banques en EUR");
@@ -230,33 +230,7 @@ class PlanTresorerieCalculateurTest {
     @DisplayName("Une seule devise : le total s'appelle « Toutes les banques »")
     void uneSeuleDevise() {
         assertThat(PlanTresorerieCalculateur.calculer(PeriodeRecap.FIN_DE_MOIS, AUJOURDHUI,
-                List.of(new SoldeBanque(A, "Banque A", null, bd("1"), bd("0"))), List.of(), false)
+                List.of(new SoldeBanque(A, "Banque A", null, bd("1"), bd("0"))), List.of())
                 .groupes().get(0).banqueNom()).isEqualTo("Toutes les banques");
-    }
-
-    @Test
-    @DisplayName("Opérations certaines seulement : les estimations (agios, hors catégorie) sont écartées")
-    void certainesSeulement() {
-        PlanTresorerieDto plan = PlanTresorerieCalculateur.calculer(PeriodeRecap.FIN_DE_MOIS, AUJOURDHUI,
-                List.of(new SoldeBanque(A, "Banque A", "MAD", bd("100000"), bd("50000"))), fluxBanqueA(), true);
-        PlanBanqueDto a = plan.banques().get(0);
-
-        assertThat(plan.certainesSeulement()).isTrue();
-        assertThat(a.decaissements()).extracting(LignePlanDto::categorie).containsExactly("Leasing", "REGLEMENT FRNS");
-        // 100 000 + 5 000 − 30 000 − 120 000 + 80 000 : ni les agios (10 000) ni le décompte (2 000)
-        assertThat(a.soldeFinal()).isEqualByComparingTo("35000");
-        assertThat(a.partEstimee()).isZero();
-    }
-
-    @Test
-    @DisplayName("Chaque ligne et chaque mouvement sont marqués certains ou estimés ; part estimée en pourcentage")
-    void certainOuEstime() {
-        PlanBanqueDto a = planA("50000");
-
-        assertThat(a.decaissements()).extracting(l -> l.categorie() + "=" + l.certain())
-                .containsExactly("Leasing=true", "REGLEMENT FRNS=true", "Agios=false", "Autres=false");
-        // flux : 30 000 + 5 000 + 120 000 + 80 000 certains ; 2 000 + 10 000 estimés → 12 000 / 247 000
-        assertThat(a.partEstimee()).isEqualTo(5);
-        assertThat(a.plusGrosMouvements().get(0).certain()).isTrue();
     }
 }

@@ -61,7 +61,7 @@ describe('BanquePanelComponent', () => {
     const el: HTMLElement = fixture.nativeElement;
     expect(el.textContent).toContain('Loyer leasing');
     expect(el.textContent).toContain('Voir les 12 opérations');
-    expect(el.textContent).toContain('Besoin de financement');
+    expect(el.textContent).toContain('Besoin');
   });
 
   it('choisir une période le signale à l\'écran', () => {
@@ -86,11 +86,18 @@ describe('BanquePanelComponent', () => {
     expect(ouvrir).toHaveBeenCalledWith(1, { horizon: 'FIN_DE_TRIMESTRE' });
   });
 
-  it('affiche la part estimée des flux', () => {
+  it("le bouton « Fermer » et la croix du panneau (visibleChange, jamais onHide) ferment le panneau", () => {
     const fixture = creer(1);
     http.expectOne(operations).flush({ totalDebit: 0, totalCredit: 0, page: { content: [], page: { totalElements: 0 } } });
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Part estimée');
-    expect(fixture.nativeElement.textContent).toContain('25 %');
+    let fermetures = 0;
+    fixture.componentInstance.fermer.subscribe(() => fermetures++);
+
+    Array.from(document.querySelectorAll<HTMLButtonElement>('p-sidebar .actions button'))
+      .find(b => b.textContent!.includes('Fermer'))!.click();
+    expect(fermetures).toBe(1);
+
+    document.querySelector<HTMLButtonElement>('p-sidebar .p-sidebar-close')!.click();
+    expect(fermetures).toBe(2);
   });
 });

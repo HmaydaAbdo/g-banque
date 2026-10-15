@@ -12,7 +12,6 @@ import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -47,8 +46,6 @@ import java.util.stream.Collectors;
  *   <li>Totaux : un par devise (on n'additionne jamais des devises différentes), le dirham en
  *       premier ; le point bas d'un total est calculé sur sa courbe consolidée (et non comme la somme
  *       des points bas de chaque banque, qui ne tombent pas le même jour).</li>
- *   <li>Opérations certaines seulement : écarte les estimations (voir
- *       {@link CategoriesTresorerie#certain}).</li>
  * </ul>
  */
 final class PlanTresorerieCalculateur {
@@ -73,12 +70,11 @@ final class PlanTresorerieCalculateur {
     }
 
     static PlanTresorerieDto calculer(PeriodeRecap periode, LocalDate aujourdHui,
-                                      List<SoldeBanque> banques, List<FluxPrevu> flux, boolean certainesSeulement) {
+                                      List<SoldeBanque> banques, List<FluxPrevu> flux) {
         LocalDate horizon = periode.horizon(aujourdHui);
         List<ColonnePlanDto> colonnes = colonnes(periode, aujourdHui, horizon);
         List<FluxPrevu> retenus = flux.stream()
                 .filter(f -> f.date() != null && !f.date().isAfter(horizon) && f.montant() != null)
-                .filter(f -> !certainesSeulement || CategoriesTresorerie.certain(nomCategorie(f)))
                 .toList();
 
         List<PlanBanqueDto> plans = new ArrayList<>();
@@ -107,7 +103,7 @@ final class PlanTresorerieCalculateur {
             groupes.add(plan(null, nom, devise, soldeTotal, plafondTotal, fluxGroupe, colonnes, aujourdHui, horizon));
         }
 
-        return new PlanTresorerieDto(periode, aujourdHui, horizon, certainesSeulement, colonnes, groupes, plans);
+        return new PlanTresorerieDto(periode, aujourdHui, horizon, colonnes, groupes, plans);
     }
 
     private static String devise(SoldeBanque banque) {
@@ -197,18 +193,7 @@ final class PlanTresorerieCalculateur {
                 Arrays.asList(totalEnc), Arrays.asList(totalDec),
                 soldesFin, disponibilites,
                 solde, solde.add(plafond),
-                pointBas, besoin, joursNegatifs, courbe, plusGrosMouvements(flux), partEstimee(flux));
-    }
-
-    /** Part, en pourcentage entier, des flux (en valeur absolue) qui sont des estimations ; 0 sans flux. */
-    private static int partEstimee(List<FluxPrevu> flux) {
-        BigDecimal total = flux.stream().map(FluxPrevu::montant).reduce(BigDecimal.ZERO, BigDecimal::add);
-        if (total.signum() == 0) {
-            return 0;
-        }
-        BigDecimal estime = flux.stream().filter(f -> !CategoriesTresorerie.certain(nomCategorie(f)))
-                .map(FluxPrevu::montant).reduce(BigDecimal.ZERO, BigDecimal::add);
-        return estime.multiply(BigDecimal.valueOf(100)).divide(total, 0, RoundingMode.HALF_UP).intValue();
+                pointBas, besoin, joursNegatifs, courbe, plusGrosMouvements(flux));
     }
 
     /** Les cinq plus gros flux à venir : somme par (jour, catégorie, sens), du plus gros au plus petit. */
@@ -221,7 +206,7 @@ final class PlanTresorerieCalculateur {
                 .map(e -> {
                     String categorie = (String) e.getKey().get(1);
                     return new MouvementDto((LocalDate) e.getKey().get(0), categorie,
-                            CategoriesTresorerie.famille(categorie), CategoriesTresorerie.certain(categorie),
+                            CategoriesTresorerie.famille(categorie),
                             ((Type) e.getKey().get(2)).name(), e.getValue());
                 })
                 .sorted(Comparator.comparing(MouvementDto::montant).reversed().thenComparing(MouvementDto::date))
@@ -255,7 +240,7 @@ final class PlanTresorerieCalculateur {
             boolean vide = Arrays.stream(montants).allMatch(m -> m.signum() == 0);
             if (!vide) {
                 resultat.add(new LignePlanDto(CategoriesTresorerie.famille(categorie), categorie,
-                        CategoriesTresorerie.certain(categorie), Arrays.asList(montants), total));
+                        Arrays.asList(montants), total));
             }
         });
         return resultat;

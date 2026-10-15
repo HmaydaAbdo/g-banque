@@ -1,15 +1,16 @@
 <p-sidebar [visible]="true" position="right" [modal]="true" [dismissible]="true"
-           [style]="{ width: 'min(780px, 100vw)' }" (onHide)="fermer.emit()" ariaCloseLabel="Fermer le détail">
+           [style]="{ width: 'min(780px, 100vw)' }" (visibleChange)="!$event && fermer.emit()" ariaCloseLabel="Fermer le détail">
   <ng-template pTemplate="header">
     <div class="entete">
       <h2 class="entete__nom">{{ plan.banqueNom }}</h2>
       <span class="statut statut--{{ statut }}">
         @switch (statut) {
-          @case ('danger') { Besoin de financement }
-          @case ('warn') { Sous zéro, couvert }
-          @default { Situation saine }
+          @case ('danger') { Besoin }
+          @case ('warn') { Facilité de caisse utilisée }
+          @default { Tout va bien }
         }
       </span>
+      <span class="entete__sous">Montants en {{ plan.devise }} · jusqu'au {{ dateHorizon | date:'dd/MM/yyyy' }}</span>
     </div>
   </ng-template>
 
@@ -20,32 +21,33 @@
         <span class="indic__val" [class.neg]="plan.soldeActuel < 0">{{ plan.soldeActuel | number:'1.2-2' }}</span></div>
       <div class="indic"><span class="indic__label">Solde prévu</span>
         <span class="indic__val" [class.neg]="plan.soldeFinal < 0">{{ plan.soldeFinal | number:'1.2-2' }}</span></div>
-      <div class="indic"><span class="indic__label">Point bas · {{ plan.pointBas.date | date:'dd/MM' }}</span>
+      <div class="indic" pTooltip="Le jour où le solde prévu est le plus bas" tooltipPosition="bottom">
+        <span class="indic__label">Solde le plus bas · {{ plan.pointBas.date | date:'dd/MM' }}</span>
         <span class="indic__val" [class.neg]="plan.pointBas.solde < 0">{{ plan.pointBas.solde | number:'1.2-2' }}</span></div>
-      <div class="indic" pTooltip="Part des flux qui sont des estimations (agios, commissions, provisions…)">
-        <span class="indic__label">Part estimée</span>
-        <span class="indic__val">{{ plan.partEstimee }} %</span></div>
-      <div class="indic indic--{{ plan.besoinFinancement > 0 ? 'danger' : 'ok' }}">
-        <span class="indic__label">{{ plan.besoinFinancement > 0 ? 'Besoin de financement' : 'Disponibilité minimale' }}</span>
+      <div class="indic indic--{{ plan.besoinFinancement > 0 ? 'danger' : 'ok' }}"
+           [pTooltip]="plan.besoinFinancement > 0 ? 'Ce qui manque ce jour-là, même en utilisant toute la facilité de caisse' : 'Solde le plus bas + facilité de caisse'"
+           tooltipPosition="bottom">
+        <span class="indic__label">{{ plan.besoinFinancement > 0 ? 'Besoin' : 'Disponibilité la plus basse' }}</span>
         <span class="indic__val" [class.neg]="plan.besoinFinancement > 0">
           {{ (plan.besoinFinancement > 0 ? plan.besoinFinancement : plan.pointBas.disponibilite) | number:'1.2-2' }}</span></div>
     </section>
+    <p class="aide">Solde prévu = solde actuel + encaissements − décaissements restant à valider jusqu'au {{ dateHorizon | date:'dd/MM/yyyy' }}.</p>
 
     <!-- Courbe -->
     <section class="bloc">
-      <h3 class="bloc__titre">Évolution du solde prévu</h3>
+      <h3 class="bloc__titre">Évolution du solde</h3>
       <app-courbe-tresorerie [plan]="plan"/>
     </section>
 
     <!-- Opérations de la période -->
     @if (listeDisponible) {
       <section class="bloc">
-        <h3 class="bloc__titre">Ce qui compose la période</h3>
+        <h3 class="bloc__titre">Opérations à valider</h3>
         <div class="periodes" role="tablist" aria-label="Période">
           @for (c of colonnes; track c.code) {
             <button type="button" role="tab" class="periode" [class.periode--on]="c.code === periode.code"
                     [attr.aria-selected]="c.code === periode.code" (click)="choisirPeriode(c.code)">
-              {{ c.libelle }}
+              {{ c.du ? c.libelle : 'Échues' }}
             </button>
           }
         </div>
@@ -72,29 +74,31 @@
               </li>
             }
           </ul>
+          <p class="aide">Les plus grosses d'abord. Cliquez sur une opération pour l'ouvrir dans les encours du mois.</p>
           <button type="button" class="voir" (click)="ouvrirEncours()">
-            {{ totalOperations > operations.length ? 'Voir les ' + totalOperations + ' opérations' : 'Ouvrir les encours du mois' }}
+            {{ totalOperations > operations.length ? 'Voir les ' + totalOperations + ' opérations dans les encours' : 'Ouvrir les encours du mois' }}
             <i class="pi pi-arrow-right" aria-hidden="true"></i>
           </button>
         }
       </section>
     }
 
-    <!-- Plus gros mouvements -->
+    <!-- Plus grosses opérations -->
     <section class="bloc">
-      <h3 class="bloc__titre">Les plus gros mouvements à venir</h3>
+      <h3 class="bloc__titre">Plus grosses opérations à venir</h3>
       <app-mouvements-list [mouvements]="plan.plusGrosMouvements" [dateCause]="plan.pointBas.date"/>
     </section>
 
-    <!-- Flux par famille -->
+    <!-- Détail par source -->
     <section class="bloc">
-      <h3 class="bloc__titre">Flux par famille</h3>
+      <h3 class="bloc__titre">Détail par source</h3>
       <app-plan-tresorerie-table [colonnes]="colonnes" [plan]="plan"/>
     </section>
 
     <div class="actions">
-      <p-button label="Exporter le plan en PDF" icon="pi pi-file-pdf" size="small" [outlined]="true"
+      <p-button label="Exporter PDF" icon="pi pi-file-pdf" size="small" [outlined]="true"
                 [loading]="exportEnCours" (onClick)="exporter.emit()"/>
+      <p-button label="Fermer" icon="pi pi-times" size="small" (onClick)="fermer.emit()"/>
     </div>
   </div>
 </p-sidebar>

@@ -40,12 +40,6 @@ describe('verdictDuPlan', () => {
     expect(v.detail).toContain('en EUR');
   });
 
-  it("le plan « certaines seulement » le dit dans le titre", () => {
-    const plan = { ...planTresorerieFixture(), certainesSeulement: true };
-    plan.banques = [{ ...planBanqueFixture(1, 'A', 0), joursSoldeNegatif: 0 }];
-    expect(verdictDuPlan(plan).titre).toContain('opérations certaines');
-  });
-
   it("aucun jour sous zéro : tout va bien jusqu'à l'horizon (vert)", () => {
     const plan = planTresorerieFixture();
     plan.banques = [{ ...planBanqueFixture(1, 'Banque A', 0), joursSoldeNegatif: 0 }];

@@ -24,7 +24,7 @@ export function verdictDuPlan(plan: PlanTresorerie): Verdict {
       niveau: 'danger',
       titre: `Il manquera ${montantComplet(pire.besoinFinancement, pire.devise)} le ${dateCourte(pire.pointBas.date)} sur ${pire.banqueNom}`,
       detail: besoins.length > 1
-        ? `${besoins.length} banques ont un besoin de financement avant le ${horizon}, même en utilisant toute la facilité de caisse.`
+        ? `${besoins.length} banques sont en besoin avant le ${horizon}, même en utilisant toute la facilité de caisse.`
         : `Même en utilisant toute la facilité de caisse. Prévoir un financement ou décaler des sorties avant le ${horizon}.`,
     };
   }
@@ -34,15 +34,15 @@ export function verdictDuPlan(plan: PlanTresorerie): Verdict {
     const pire: PlanBanque = negatives[0];
     return {
       niveau: 'warn',
-      titre: `${pire.banqueNom} passera sous zéro, couverte par la facilité de caisse`,
-      detail: `Point bas de ${montantComplet(pire.pointBas.solde, pire.devise)} le ${dateCourte(pire.pointBas.date)}`
+      titre: `Le solde de ${pire.banqueNom} passera en négatif, couvert par la facilité de caisse`,
+      detail: `Solde le plus bas : ${montantComplet(pire.pointBas.solde, pire.devise)} le ${dateCourte(pire.pointBas.date)}`
         + (negatives.length > 1 ? `, et ${negatives.length - 1} autre(s) banque(s) concernée(s).` : '.'),
     };
   }
   return {
     niveau: 'ok',
-    titre: `Tout va bien jusqu'au ${horizon}${plan.certainesSeulement ? ' (opérations certaines)' : ''}`,
-    detail: plan.groupes.map(g => `Point bas${plan.groupes.length > 1 ? ' en ' + g.devise : ' du groupe'} : `
+    titre: `Tout va bien jusqu'au ${horizon}`,
+    detail: plan.groupes.map(g => `Solde le plus bas${plan.groupes.length > 1 ? ' en ' + g.devise : ''} : `
       + `${montantComplet(g.pointBas.solde, g.devise)} le ${dateCourte(g.pointBas.date)}`).join(' · ') + '.',
   };
 }

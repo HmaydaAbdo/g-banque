@@ -63,7 +63,7 @@ public class TresoreriePrevisionnelleServiceImpl implements ITresoreriePrevision
     }
 
     @Override
-    public PlanTresorerieDto getPlan(PeriodeRecap periode, boolean certainesSeulement) {
+    public PlanTresorerieDto getPlan(PeriodeRecap periode) {
         LocalDate aujourdHui = LocalDate.now();
         LocalDate horizon = periode.horizon(aujourdHui);
         log.debug("Plan de trésorerie — horizon {} ({})", periode, horizon);
@@ -82,12 +82,12 @@ public class TresoreriePrevisionnelleServiceImpl implements ITresoreriePrevision
                         (Long) row[0], (TransactionSource) row[1], (Type) row[2], (LocalDate) row[3], (BigDecimal) row[4]))
                 .toList();
 
-        return PlanTresorerieCalculateur.calculer(periode, aujourdHui, banques, flux, certainesSeulement);
+        return PlanTresorerieCalculateur.calculer(periode, aujourdHui, banques, flux);
     }
 
     @Override
-    public byte[] exportPdf(PeriodeRecap periode, boolean certainesSeulement, Long banqueId, String devise) {
-        PlanTresorerieDto plan = getPlan(periode, certainesSeulement);
+    public byte[] exportPdf(PeriodeRecap periode, Long banqueId, String devise) {
+        PlanTresorerieDto plan = getPlan(periode);
         PlanBanqueDto perimetre = banqueId == null ? groupe(plan, devise) : plan.banques().stream()
                 .filter(b -> Objects.equals(b.banqueId(), banqueId))
                 .findFirst()

@@ -8,10 +8,10 @@ export function planBanqueFixture(banqueId: number | null, nom: string, besoin =
     devise: 'MAD',
     soldeActuel: 5000,
     plafondFC: 2000,
-    encaissements: [{ famille: 'Règlements', categorie: 'REGLEMENT FRNS', certain: true, montants: [1000, 0], total: 1000 }],
+    encaissements: [{ famille: 'Règlements', categorie: 'REGLEMENT FRNS', montants: [1000, 0], total: 1000 }],
     decaissements: [
-      { famille: 'Financements', categorie: 'Leasing', certain: true, montants: [0, 6000], total: 6000 },
-      { famille: 'Financements', categorie: 'Agios', certain: false, montants: [0, 3000], total: 3000 },
+      { famille: 'Financements', categorie: 'Leasing', montants: [0, 6000], total: 6000 },
+      { famille: 'Financements', categorie: 'Agios', montants: [0, 3000], total: 3000 },
     ],
     totalEncaissements: [1000, 0],
     totalDecaissements: [0, 9000],
@@ -27,10 +27,9 @@ export function planBanqueFixture(banqueId: number | null, nom: string, besoin =
       { date: '2026-11-20', solde: -3000 },
     ],
     plusGrosMouvements: [
-      { date: '2026-11-20', categorie: 'Leasing', famille: 'Financements', certain: true, sens: 'DECAISSEMENT', montant: 6000 },
-      { date: '2026-10-14', categorie: 'REGLEMENT FRNS', famille: 'Règlements', certain: true, sens: 'ENCAISSEMENT', montant: 1000 },
+      { date: '2026-11-20', categorie: 'Leasing', famille: 'Financements', sens: 'DECAISSEMENT', montant: 6000 },
+      { date: '2026-10-14', categorie: 'REGLEMENT FRNS', famille: 'Règlements', sens: 'ENCAISSEMENT', montant: 1000 },
     ],
-    partEstimee: 25,
   };
 }
 
@@ -39,7 +38,6 @@ export function planTresorerieFixture(): PlanTresorerie {
     periode: 'FIN_DE_TRIMESTRE',
     dateCalcul: '2026-10-14',
     dateHorizon: '2026-12-31',
-    certainesSeulement: false,
     colonnes: [
       { code: 'ECHU', libelle: 'À ce jour', du: null, au: '2026-10-14' },
       { code: 'P1', libelle: 'Novembre 2026', du: '2026-11-01', au: '2026-11-30' },

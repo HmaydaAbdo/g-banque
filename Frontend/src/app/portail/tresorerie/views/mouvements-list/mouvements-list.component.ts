@@ -12,7 +12,7 @@ import { Mouvement } from '../../dtos/PlanTresorerie';
   imports: [DatePipe, DecimalPipe],
   template: `
     @if (mouvements.length === 0) {
-      <p class="vide">Aucun mouvement prévu sur la période.</p>
+      <p class="vide">Aucune opération prévue sur la période.</p>
     } @else {
       <ol class="mouvements">
         @for (m of mouvements; track $index) {
@@ -21,8 +21,7 @@ import { Mouvement } from '../../dtos/PlanTresorerie';
                [class.entree]="m.sens === 'ENCAISSEMENT'" [class.sortie]="m.sens === 'DECAISSEMENT'" aria-hidden="true"></i>
             <span class="mouvement__corps">
               <span class="mouvement__cat">{{ m.categorie }}
-                @if (m.date === dateCause && m.sens === 'DECAISSEMENT') { <span class="cause">cause du point bas</span> }
-                @if (!m.certain) { <span class="estime">estimé</span> }
+                @if (m.date === dateCause && m.sens === 'DECAISSEMENT') { <span class="cause">cause du solde le plus bas</span> }
               </span>
               <span class="mouvement__sub">{{ m.famille }} · {{ m.date | date:'EEE dd/MM' }}</span>
             </span>
@@ -45,13 +44,11 @@ import { Mouvement } from '../../dtos/PlanTresorerie';
     .sortie { color: var(--color-danger); }
     .cause { font-size: var(--text-2xs); font-weight: var(--weight-semibold); padding: 1px var(--space-2);
       color: var(--color-danger-text); background: var(--color-danger-light); border-radius: var(--radius-full); }
-    .estime { font-size: var(--text-2xs); font-style: italic; padding: 1px var(--space-2);
-      color: var(--color-warning-text); background: var(--color-warning-light); border-radius: var(--radius-full); }
     .vide { margin: 0; font-size: var(--text-sm); color: var(--color-text-muted); }
   `]
 })
 export class MouvementsListComponent {
   @Input({ required: true }) mouvements: Mouvement[] = [];
-  /** Date du point bas (yyyy-MM-dd) : les sorties de ce jour sont signalées comme sa cause. */
+  /** Date du solde le plus bas (yyyy-MM-dd) : les sorties de ce jour sont signalées comme sa cause. */
   @Input() dateCause = '';
 }

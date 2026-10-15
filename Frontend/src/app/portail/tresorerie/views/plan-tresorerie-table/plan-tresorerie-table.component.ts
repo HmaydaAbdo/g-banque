@@ -15,15 +15,13 @@ export interface LigneAffichee {
   valeurs: number[];
   total: number;
   parent?: string;
-  /** Pour une catégorie : faux = montant estimé (agios, commissions, provisions…), vrai = certain. */
-  certain?: boolean;
 }
 
 /**
  * Plan de trésorerie d'une banque : une colonne par période, des lignes regroupées par famille
  * (Règlements, Financements, Charges bancaires, Autres) puis par source (Leasing, CMT, Chèques…),
  * encadrées par le solde de début, les totaux, le solde de fin et la disponibilité. Les familles sont
- * dépliées pour montrer chaque source ; une source estimée porte l'étiquette « estimé ».
+ * dépliées pour montrer chaque source.
  */
 @Component({
   selector: 'app-plan-tresorerie-table',
@@ -76,7 +74,6 @@ function sectionParFamille(prefixe: string, titre: string, lignes: LignePlan[], 
     resultat.push({ cle, libelle: famille, type: 'famille', valeurs, total: somme(valeurs) });
     membres.forEach(m => resultat.push({
       cle: `${cle}:${m.categorie}`, libelle: m.categorie, type: 'categorie', valeurs: m.montants, total: m.total, parent: cle,
-      certain: m.certain,
     }));
   }
   return resultat;

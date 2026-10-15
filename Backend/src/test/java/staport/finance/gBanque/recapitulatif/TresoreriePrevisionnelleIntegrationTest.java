@@ -42,12 +42,7 @@ class TresoreriePrevisionnelleIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.periode").value("FIN_DE_TRIMESTRE"))
                 .andExpect(jsonPath("$.colonnes[0].code").value("ECHU"))
-                .andExpect(jsonPath("$.certainesSeulement").value(false))
                 .andExpect(jsonPath("$.groupes").isArray());
-
-        mockMvc.perform(get("/tresorerie-previsionnelle").param("certainesSeulement", "true").cookie(session))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.certainesSeulement").value(true));
 
         mockMvc.perform(get("/tresorerie-previsionnelle/pdf").cookie(session))
                 .andExpect(status().isOk())

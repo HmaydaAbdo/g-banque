@@ -9,12 +9,8 @@ import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
  */
 public interface ITresoreriePrevisionnelleService {
 
-    /**
-     * Plan de toutes les banques (détail par banque + un total par devise) jusqu'à l'horizon demandé.
-     *
-     * @param certainesSeulement vrai pour ne compter que les opérations certaines, sans les estimations
-     */
-    PlanTresorerieDto getPlan(PeriodeRecap periode, boolean certainesSeulement);
+    /** Plan de toutes les banques (détail par banque + un total par devise) jusqu'à l'horizon demandé. */
+    PlanTresorerieDto getPlan(PeriodeRecap periode);
 
     /**
      * Export PDF du plan : la banque demandée si {@code banqueId} est renseigné, sinon le total de la
@@ -23,5 +19,5 @@ public interface ITresoreriePrevisionnelleService {
      * @throws staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException si la
      *         banque ou la devise n'existe pas
      */
-    byte[] exportPdf(PeriodeRecap periode, boolean certainesSeulement, Long banqueId, String devise);
+    byte[] exportPdf(PeriodeRecap periode, Long banqueId, String devise);
 }

@@ -5,6 +5,7 @@
   gap        : var(--space-3);
 
   &__nom { margin: 0; font-size: var(--text-title); font-weight: var(--weight-bold); letter-spacing: var(--tracking-tighter); }
+  &__sous { flex-basis: 100%; font-size: var(--text-xs); color: var(--color-text-secondary); }
 }
 
 .statut {
@@ -84,4 +85,5 @@
 .vide { margin: 0; font-size: var(--text-sm); color: var(--color-text-muted); }
 .neg, .sortie { color: var(--color-danger); }
 .entree { color: var(--color-success); }
-.actions { display: flex; justify-content: flex-end; }
+.actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
+.aide { margin: 0; font-size: var(--text-xs); color: var(--color-text-muted); }

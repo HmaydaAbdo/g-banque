@@ -727,8 +727,7 @@ public class StaportPdfReportService {
      */
     public byte[] generatePlanTresorerieReport(PlanTresorerieDto plan, PlanBanqueDto perimetre) throws DocumentException {
         String reportTitle = "Plan de trésorerie prévisionnel — " + perimetre.banqueNom() + " — "
-                + plan.periode().libelle() + " (" + DATETIME_FORMATTER.format(plan.dateHorizon()) + ")"
-                + (plan.certainesSeulement() ? " — opérations certaines seulement" : "");
+                + plan.periode().libelle() + " (" + DATETIME_FORMATTER.format(plan.dateHorizon()) + ")";
         List<ColonnePlanDto> colonnes = plan.colonnes();
         int n = colonnes.size();
 
@@ -740,9 +739,7 @@ public class StaportPdfReportService {
                 document.add(title);
                 Paragraph sub = new Paragraph("Montants en " + perimetre.devise() + " — calculé le "
                         + DATETIME_FORMATTER.format(plan.dateCalcul())
-                        + " à partir du solde actuel et des opérations non encore validées"
-                        + (plan.certainesSeulement() ? " (estimations écartées)"
-                                : " — dont " + perimetre.partEstimee() + " % d'estimations"), PLAN_FONT);
+                        + " à partir du solde actuel et des opérations non encore validées", PLAN_FONT);
                 sub.setAlignment(Element.ALIGN_CENTER);
                 sub.setSpacingAfter(10);
                 document.add(sub);
@@ -783,11 +780,11 @@ public class StaportPdfReportService {
 
                 Paragraph synthese = new Paragraph();
                 synthese.setSpacingBefore(10);
-                synthese.add(new Phrase("Point bas : " + formatCurrency(perimetre.pointBas().solde())
+                synthese.add(new Phrase("Solde le plus bas : " + formatCurrency(perimetre.pointBas().solde())
                         + " le " + DATETIME_FORMATTER.format(perimetre.pointBas().date())
-                        + "   •   Disponibilité au point bas : " + formatCurrency(perimetre.pointBas().disponibilite())
-                        + "   •   Besoin de financement : " + formatCurrency(perimetre.besoinFinancement())
-                        + "   •   Jours avec solde négatif : " + perimetre.joursSoldeNegatif(), PLAN_BOLD_FONT));
+                        + "   •   Disponibilité la plus basse : " + formatCurrency(perimetre.pointBas().disponibilite())
+                        + "   •   Besoin : " + formatCurrency(perimetre.besoinFinancement())
+                        + "   •   Jours à solde négatif : " + perimetre.joursSoldeNegatif(), PLAN_BOLD_FONT));
                 document.add(synthese);
             } catch (DocumentException e) {
                 throw new RuntimeException("Erreur lors de la génération du contenu du plan de trésorerie.", e);

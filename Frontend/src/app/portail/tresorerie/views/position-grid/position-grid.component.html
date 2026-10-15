@@ -1,48 +1,91 @@
+<div class="outils">
+  <span class="outils__aide">
+    @if (ordre === 'BANQUE_SOURCE') {
+      Solde prévu à la fin de chaque période. Dépliez une banque pour voir ses flux par source (<span class="entree">entrées</span> / <span class="sortie">sorties</span>).
+    } @else {
+      Flux net par source (<span class="entree">entrées</span> / <span class="sortie">sorties</span>). Dépliez une source pour voir ses banques ; les soldes sont en bas.
+    }
+  </span>
+  @if (parentsDepliables.length > 0) {
+    <button type="button" class="outils__tout" (click)="basculerTout()">
+      <i class="pi" [class.pi-angle-double-up]="toutOuvert" [class.pi-angle-double-down]="!toutOuvert" aria-hidden="true"></i>
+      {{ toutOuvert ? 'Tout replier' : 'Tout déplier' }}
+    </button>
+  }
+</div>
+
 <div class="grille-scroll">
-  <table class="grille" aria-label="Position de trésorerie par banque et par période">
+  <table class="grille" aria-label="Position de trésorerie par banque et par source">
     <thead>
       <tr>
-        <th scope="col" class="grille__banque">Banque</th>
+        <th scope="col" class="grille__banque">{{ ordre === 'BANQUE_SOURCE' ? 'Banque' : 'Source' }}</th>
         <th scope="col" class="grille__actuel">Solde actuel</th>
         @for (c of colonnes; track c.code) {
           <th scope="col" [class.grille__echu]="!c.du">
             {{ c.libelle }}
-            <span class="grille__dates">{{ c.du ? (date(c.du).slice(0, 5) + ' → ' + date(c.au).slice(0, 5)) : 'en retard' }}</span>
+            <span class="grille__dates">{{ c.du ? (date(c.du).slice(0, 5) + ' → ' + date(c.au).slice(0, 5)) : 'échues' }}</span>
           </th>
         }
-        <th scope="col" class="grille__tendance">Tendance</th>
+        <th scope="col" class="grille__tendance">{{ ordre === 'BANQUE_SOURCE' ? 'Tendance' : 'Total' }}</th>
       </tr>
     </thead>
     <tbody>
-      @for (b of banques; track b.banqueId) {
-        <tr [class.grille__ligne--sel]="selection === b.banqueId">
-          <th scope="row" class="grille__banque">
-            <button type="button" class="grille__nom" (click)="choisir.emit({ banqueId: b.banqueId, colonne: '', devise: b.devise })"
-                    [attr.aria-label]="'Ouvrir le détail de ' + b.banqueNom">
-              {{ b.banqueNom }}@if (plusieursDevises) { <span class="devise">{{ b.devise }}</span> }<i class="pi pi-angle-right" aria-hidden="true"></i>
-            </button>
-          </th>
-          <td class="grille__actuel" [class.neg]="b.soldeActuel < 0">{{ compact(b.soldeActuel) }}</td>
-          @for (c of colonnes; track c.code; let i = $index) {
-            <td class="grille__cell">
-              <button type="button" class="cellule cellule--{{ etat(b, i) }}"
-                      [attr.aria-label]="libelleCase(b, i)"
-                      [pTooltip]="(b.soldesFin[i] | number:'1.2-2') ?? ''" tooltipPosition="top"
-                      (click)="choisir.emit({ banqueId: b.banqueId, colonne: c.code, devise: b.devise })">
-                {{ compact(b.soldesFin[i]) }}
-              </button>
-            </td>
+      @for (s of sections; track s.devise) {
+        @if (plusieursDevises) {
+          <tr class="grille__devise-ligne"><th scope="rowgroup" [attr.colspan]="colonnes.length + 3">{{ s.devise }}</th></tr>
+        }
+        @for (l of s.lignes; track l.cle) {
+          @if (visible(l)) {
+            <tr class="grille__ligne grille__ligne--n{{ l.niveau }}" [class.grille__ligne--sel]="l.banqueId !== undefined && selection === l.banqueId">
+              <th scope="row" class="grille__banque">
+                @if (l.niveau === 1) {
+                  <button type="button" class="grille__toggle" (click)="basculer(l.cle)" [disabled]="l.enfants === 0"
+                          [attr.aria-expanded]="ouverte(l.cle)" [attr.aria-label]="l.libelle + ' : afficher le détail'">
+                    <i class="pi pi-angle-right grille__chevron" [class.grille__chevron--ouvert]="ouverte(l.cle)" [class.grille__chevron--vide]="l.enfants === 0" aria-hidden="true"></i>
+                  </button>
+                }
+                @if (l.banqueId !== undefined) {
+                  <button type="button" class="grille__nom" (click)="choisir.emit({ banqueId: l.banqueId, colonne: '', devise: s.devise })"
+                          [attr.aria-label]="'Ouvrir le détail de ' + l.libelle">{{ l.libelle }}</button>
+                  @if (plusieursDevises) { <span class="devise">{{ s.devise }}</span> }
+                } @else {
+                  <span class="grille__source">{{ l.libelle }}</span>
+                  <span class="sens sens--{{ l.sens === 'ENCAISSEMENT' ? 'entree' : 'sortie' }}">{{ l.sens === 'ENCAISSEMENT' ? 'encaissements' : 'décaissements' }}</span>
+                  @if (l.niveau === 1) { <span class="famille">{{ l.famille }}</span> }
+                }
+                @if (l.niveau === 1 && l.enfants > 0) { <span class="nb">{{ l.enfants }}</span> }
+              </th>
+
+              @if (estSolde(l)) {
+                @if (planDe(l); as b) {
+                  <td class="grille__actuel" [class.neg]="b.soldeActuel < 0">{{ compact(b.soldeActuel) }}</td>
+                  @for (c of colonnes; track c.code; let i = $index) {
+                    <td class="grille__cell">
+                      <button type="button" class="cellule cellule--{{ etat(b, i) }}" [attr.aria-label]="libelleCase(b, i)"
+                              [pTooltip]="(b.soldesFin[i] | number:'1.2-2') ?? ''" tooltipPosition="top"
+                              (click)="choisir.emit({ banqueId: b.banqueId, colonne: c.code, devise: s.devise })">{{ compact(b.soldesFin[i]) }}</button>
+                    </td>
+                  }
+                  <td class="grille__tendance">
+                    @if (trajectoire(b); as t) {
+                      <svg viewBox="0 0 80 24" class="spark spark--{{ niveauTendance(b) }}" role="img" [attr.aria-label]="'Trajectoire du solde de ' + b.banqueNom">
+                        @if (t.zero !== null) { <line x1="0" x2="80" [attr.y1]="t.zero" [attr.y2]="t.zero" class="spark__zero"/> }
+                        <polyline [attr.points]="t.points" fill="none"/>
+                      </svg>
+                    }
+                  </td>
+                }
+              } @else {
+                <td class="grille__actuel"></td>
+                @for (v of l.valeurs; track $index) {
+                  <td class="flux" [class.entree]="v > 0" [class.sortie]="v < 0" [class.grille__echu]="$index === 0"
+                      [pTooltip]="(v | number:'1.2-2') ?? ''" tooltipPosition="top">{{ v === 0 ? '—' : compact(v) }}</td>
+                }
+                <td class="grille__tendance flux flux--total" [class.entree]="l.total > 0" [class.sortie]="l.total < 0">{{ l.total === 0 ? '—' : compact(l.total) }}</td>
+              }
+            </tr>
           }
-          <td class="grille__tendance">
-            @if (trajectoire(b); as t) {
-              <svg viewBox="0 0 80 24" class="spark spark--{{ b.besoinFinancement > 0 ? 'danger' : b.joursSoldeNegatif > 0 ? 'warn' : 'ok' }}"
-                   role="img" [attr.aria-label]="'Trajectoire du solde de ' + b.banqueNom">
-                @if (t.zero !== null) { <line x1="0" x2="80" [attr.y1]="t.zero" [attr.y2]="t.zero" class="spark__zero"/> }
-                <polyline [attr.points]="t.points" fill="none"/>
-              </svg>
-            }
-          </td>
-        </tr>
+        }
       }
     </tbody>
     <tfoot>
@@ -57,18 +100,14 @@
           <td class="grille__actuel" [class.neg]="g.soldeActuel < 0">{{ compact(g.soldeActuel) }}</td>
           @for (c of colonnes; track c.code; let i = $index) {
             <td class="grille__cell">
-              <button type="button" class="cellule cellule--total cellule--{{ etat(g, i) }}"
-                      [attr.aria-label]="libelleCase(g, i)"
+              <button type="button" class="cellule cellule--total cellule--{{ etat(g, i) }}" [attr.aria-label]="libelleCase(g, i)"
                       [pTooltip]="(g.soldesFin[i] | number:'1.2-2') ?? ''" tooltipPosition="top"
-                      (click)="choisir.emit({ banqueId: null, colonne: c.code, devise: g.devise })">
-                {{ compact(g.soldesFin[i]) }}
-              </button>
+                      (click)="choisir.emit({ banqueId: null, colonne: c.code, devise: g.devise })">{{ compact(g.soldesFin[i]) }}</button>
             </td>
           }
           <td class="grille__tendance">
             @if (trajectoire(g); as t) {
-              <svg viewBox="0 0 80 24" class="spark spark--{{ g.besoinFinancement > 0 ? 'danger' : g.joursSoldeNegatif > 0 ? 'warn' : 'ok' }}"
-                   role="img" [attr.aria-label]="'Trajectoire du solde ' + g.devise">
+              <svg viewBox="0 0 80 24" class="spark spark--{{ niveauTendance(g) }}" role="img" [attr.aria-label]="'Trajectoire du solde ' + g.devise">
                 @if (t.zero !== null) { <line x1="0" x2="80" [attr.y1]="t.zero" [attr.y2]="t.zero" class="spark__zero"/> }
                 <polyline [attr.points]="t.points" fill="none"/>
               </svg>
@@ -82,5 +121,5 @@
 <ul class="legende" aria-label="Légende des couleurs">
   <li><span class="pastille pastille--ok"></span>Solde positif</li>
   <li><span class="pastille pastille--warn"></span>Solde négatif, couvert par la facilité de caisse</li>
-  <li><span class="pastille pastille--danger"></span>Besoin de financement</li>
+  <li><span class="pastille pastille--danger"></span>Besoin (facilité de caisse dépassée)</li>
 </ul>

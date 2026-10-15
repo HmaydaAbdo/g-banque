@@ -1060,15 +1060,13 @@ opérations en attente d'une banque donnée, quel que soit leur type d'origine.
   qui permet de repérer le compte en difficulté d'un coup d'œil, avec le total du groupe et une
   mini-courbe de tendance par banque. Les devises ne sont jamais additionnées : un total par devise, pour
   qu'aucun chiffre ne soit faux.
-- **Du certain et de l'estimé, clairement séparés** : chaque montant du plan est marqué comme certain
-  (échéanciers, moyens de paiement émis) ou estimé (agios, commissions, provisions…), la part d'estimation
-  est donnée, et un seul clic montre la situation avec les seules opérations certaines. La direction sait
-  quelle confiance accorder au chiffre.
-- **Une lecture par source** : à côté de la lecture par banque, les flux se regroupent par famille puis par
-  source (leasing, CMT, chèques…), pour voir ce qui pèse le plus sur la trésorerie.
+- **Une seule grille pour lire par banque, par source, ou les deux** : on choisit l'axe principal (chaque
+  banque puis ses sources, ou chaque source puis ses banques) et chaque ligne se déplie sur l'autre axe,
+  sans changer d'écran. La direction voit d'un coup d'œil qui est en difficulté, puis ce qui pèse le plus
+  (leasing, CMT, chèques…).
 - **De l'alerte à la cause en deux clics** : un clic sur une banque ou sur une case ouvre son détail — le
-  point bas et son jour, le besoin de financement au-delà de la facilité de caisse, les opérations qui
-  composent la période et les plus gros mouvements à venir, dont celui qui crée le point bas. Les flux
+  solde le plus bas et son jour, le besoin au-delà de la facilité de caisse, les opérations qui
+  composent la période et les plus grosses opérations à venir, dont celui qui crée le solde le plus bas. Les flux
   sont regroupés en quatre familles lisibles (règlements, financements, charges bancaires, autres) ; le
   plan s'exporte en PDF pour les comités et les échanges avec les banques. D'un clic sur une opération, on
   arrive dans les encours du mois en cours, déjà filtrés sur ce qu'on regardait : plus de ressaisie ni de

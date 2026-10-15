@@ -13,8 +13,7 @@ import java.util.List;
  * (zéro si la disponibilité reste positive). {@code joursSoldeNegatif} compte les jours de la
  * courbe où le solde prévu est négatif. {@code plusGrosMouvements} liste, du plus gros au plus petit,
  * les cinq plus importants flux à venir (encaissements et décaissements confondus). {@code devise}
- * est celle de la banque, ou de toutes les banques d'un total ; {@code partEstimee} est la part, en
- * pourcentage, des flux qui sont des estimations plutôt que des montants certains.</p>
+ * est celle de la banque, ou de toutes les banques d'un total.</p>
  */
 public record PlanBanqueDto(
         Long banqueId,
@@ -34,7 +33,6 @@ public record PlanBanqueDto(
         BigDecimal besoinFinancement,
         int joursSoldeNegatif,
         List<SoldeJourDto> courbe,
-        List<MouvementDto> plusGrosMouvements,
-        int partEstimee
+        List<MouvementDto> plusGrosMouvements
 ) {
 }

@@ -12,7 +12,6 @@ public record MouvementDto(
         LocalDate date,
         String categorie,
         String famille,
-        boolean certain,
         String sens,
         BigDecimal montant
 ) {

@@ -38,18 +38,11 @@ describe('PlanTresorerieTableComponent', () => {
   it('affiche les colonnes du plan, chaque source déjà visible, un tiret pour zéro et le négatif en rouge', () => {
     const el: HTMLElement = creer().nativeElement;
     expect(el.querySelector('thead')!.textContent).toContain('Novembre 2026');
-    expect(el.querySelector('thead')!.textContent).toContain('en retard');
+    expect(el.querySelector('thead')!.textContent).toContain('échues');
     expect(el.textContent).toContain('Financements');
     expect(el.textContent).toContain('Leasing');
     expect(el.querySelectorAll('td.neg').length).toBeGreaterThan(0);
     expect(el.textContent).toContain('—');
-  });
-
-  it("marque « estimé » les sources estimées (agios) et pas les certaines (leasing)", () => {
-    const el: HTMLElement = creer().nativeElement;
-    const estimes = Array.from(el.querySelectorAll('.plan__estime'));
-    expect(estimes.length).toBe(1);
-    expect(estimes[0].closest('tr')!.textContent).toContain('Agios');
   });
 
   it('un clic sur une famille replie ses sources, un second les redéplie', () => {

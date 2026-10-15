@@ -45,13 +45,11 @@ public class TresoreriePrevisionnelleController {
             description = "periode=FIN_DE_MOIS (défaut) : colonnes par semaine jusqu'à la fin du mois ; " +
                     "periode=FIN_DE_TRIMESTRE : colonnes par mois jusqu'à la fin du trimestre civil. " +
                     "La première colonne regroupe les encours non validés dont la date est atteinte. " +
-                    "Un total par devise (jamais de devises additionnées). " +
-                    "certainesSeulement=true écarte les estimations (agios, commissions, provisions…).")
+                    "Un total par devise (jamais de devises additionnées).")
     @GetMapping
     public ResponseEntity<PlanTresorerieDto> getPlan(
-            @RequestParam(defaultValue = "FIN_DE_MOIS") PeriodeRecap periode,
-            @RequestParam(defaultValue = "false") boolean certainesSeulement) {
-        return ResponseEntity.ok(tresorerieService.getPlan(periode, certainesSeulement));
+            @RequestParam(defaultValue = "FIN_DE_MOIS") PeriodeRecap periode) {
+        return ResponseEntity.ok(tresorerieService.getPlan(periode));
     }
 
     @Operation(summary = "Exporter le plan de trésorerie prévisionnel (PDF)",
@@ -62,11 +60,10 @@ public class TresoreriePrevisionnelleController {
     @GetMapping("/pdf")
     public ResponseEntity<byte[]> exportPdf(
             @RequestParam(defaultValue = "FIN_DE_MOIS") PeriodeRecap periode,
-            @RequestParam(defaultValue = "false") boolean certainesSeulement,
             @RequestParam(required = false) Long banqueId,
             @RequestParam(required = false) String devise) {
 
-        byte[] pdf = tresorerieService.exportPdf(periode, certainesSeulement, banqueId, devise);
+        byte[] pdf = tresorerieService.exportPdf(periode, banqueId, devise);
         String filename = "Plan_Tresorerie_" + (banqueId == null ? "toutes_banques" : "banque_" + banqueId)
                 + "_" + periode.name().toLowerCase() + "_"
                 + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".pdf";
