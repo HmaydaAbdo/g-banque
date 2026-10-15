@@ -85,82 +85,74 @@ Pour récupérer les données depuis le système de paiement externe :
 
 ## Trésorerie prévisionnelle
 
-*Accès : sidebar → Trésorerie prévisionnelle (toutes les banques), ou tableau de bord → icône de courbe
-d'une carte (une banque). Droits : membres et directeurs Finance,
-administrateur système.*
+*Accès : sidebar → Trésorerie prévisionnelle, ou tableau de bord → bouton **Trésorerie** (toutes les
+banques) ou icône de courbe d'une carte (cette banque s'ouvre directement). Droits : membres et
+directeurs Finance, administrateur système.*
 
-Cet écran montre le **plan de trésorerie** : à partir du solde actuel, les entrées et sorties encore à
-valider, période par période, jusqu'à la fin du mois ou du trimestre. Il ne modifie aucune opération :
-c'est une consultation, toujours à jour.
+Cet écran répond à une question : **« est-ce que ça va ? »** Il part du solde actuel de chaque banque et
+y ajoute les entrées et sorties encore à valider, jusqu'à la fin du mois ou du trimestre. Il ne modifie
+aucune opération : c'est une consultation, toujours à jour.
 
-### Régler l'écran
+### Choisir l'horizon
 
-En haut à droite :
-- **Horizon** (liste déroulante **Fin de mois** / **Fin de trimestre**) : l'horizon du plan. Fin de mois = une colonne par semaine (lundi
-  au dimanche) ; fin de trimestre = une colonne par mois.
-- **Banque** : « Toutes les banques » (vue consolidée, par défaut) ou une banque précise.
-- **Exporter PDF** : télécharge le plan affiché (voir plus bas).
+En haut à droite, **Fin de mois | Fin de trimestre**. Fin de mois = une colonne par semaine (lundi au
+dimanche) ; fin de trimestre = une colonne par mois. Le choix est gardé si vous revenez sur l'écran avec
+« précédent » ou si vous rechargez la page. **Exporter PDF** télécharge le plan de toutes les banques.
 
-Une phrase sous l'en-tête rappelle ce que vous regardez : la banque (ou « Toutes les banques »), la date
-du calcul et la date de fin de l'horizon. Vos réglages sont gardés si vous revenez sur l'écran avec
-« précédent » ou si vous rechargez la page.
+### Lire le verdict
 
-### Lire les indicateurs
+Le grand bandeau du haut résume la situation du groupe en une phrase :
+- **vert** : « Tout va bien jusqu'au JJ/MM/AAAA », avec le point bas du groupe ;
+- **orange** : une banque passera sous zéro, mais la facilité de caisse la couvre ;
+- **rouge** : « Il manquera X MAD le JJ/MM/AAAA sur la banque Y », même en utilisant toute la facilité de
+  caisse — il faut prévoir un financement ou décaler des sorties.
 
-Cinq cartes :
-- **Solde actuel** : le solde d'aujourd'hui (le même que sur le tableau de bord), avec la facilité de
-  caisse en dessous ;
-- **Solde prévu au JJ/MM** : le solde à la fin de l'horizon, et sa variation sur la période (en vert si
-  elle est positive, en rouge si elle est négative) ;
-- **Point bas** : le solde le plus bas prévu sur la période, et le jour où il sera atteint (carte
-  orange si ce solde est négatif) ;
-- **Besoin de financement** (carte rouge) : ce qui manquera ce jour-là même en utilisant toute la
-  facilité de caisse. S'il n'y a pas de besoin, la carte s'appelle **Disponibilité minimale** et donne
-  la marge qui restera au point bas, facilité de caisse comprise ;
-- **Jours sous zéro** : le nombre de jours où le solde sera négatif, sur le nombre de jours de la période.
+### Lire la grille « Position par banque »
 
-Sous les cartes, un bandeau peut apparaître :
-- **rouge** : « Il manquera X MAD le JJ/MM/AAAA, même en utilisant toute la facilité de caisse » — il
-  faut prévoir un financement ou décaler des sorties ;
-- **orange** : le solde passera sous zéro quelques jours, mais la facilité de caisse le couvre.
+Une ligne par banque, une colonne par période, et en bas le **Total groupe**. Chaque case affiche le
+**solde à la fin de la période** (abrégé : « 1,2 M » = 1,2 million ; « 123 k » = 123 mille ; passez la
+souris dessus pour le montant exact) et une couleur :
+- **vert** : le solde est positif ;
+- **orange** : le solde est négatif, mais la facilité de caisse le couvre ;
+- **rouge** : même avec la facilité de caisse, il manque de l'argent.
 
-### Lire la courbe
+La colonne **Solde actuel** est celle d'aujourd'hui. La colonne **À ce jour** (« en retard ») regroupe les
+opérations dont la date est atteinte mais qui n'ont pas encore été validées ; elles sont comptées dès
+aujourd'hui. À droite, une mini-courbe montre la trajectoire de la banque.
 
-**Évolution du solde prévu** montre le solde jour par jour, d'aujourd'hui à la fin de l'horizon. La
-ligne horizontale du zéro est plus marquée ; la ligne rouge en pointillés est la limite de la facilité
-de caisse (si la banque en a une) ; le point rouge marque le point bas. Passez la souris sur la courbe
-pour lire le solde d'un jour.
+### Aller de la case à la cause
 
-### Lire le plan de trésorerie
+Cliquez sur **le nom d'une banque**, sur **une case** ou sur **le total** : un panneau s'ouvre à droite.
+Il contient :
+- quatre indicateurs : solde actuel, solde prévu, **point bas** (le jour où la trésorerie est la plus
+  basse) et **besoin de financement** (ou disponibilité minimale s'il n'y en a pas) ;
+- la **courbe** du solde jour par jour (ligne du zéro, limite de la facilité de caisse en pointillés
+  rouges, point bas en rouge) ;
+- **Ce qui compose la période** : choisissez une période avec les pastilles (celle du point bas est
+  ouverte d'office, ou celle de la case cliquée) pour voir les opérations à valider qui la composent, les
+  plus grosses d'abord. Le lien en bas ouvre les encours de la banque pour les vérifier ou les valider.
+  Cette liste n'existe pas pour le total du groupe ;
+- **Les plus gros mouvements** : les cinq plus gros flux à venir ; un décaissement le jour du point bas
+  est signalé « cause du point bas » ;
+- **Flux par famille** : le plan de trésorerie de la banque, avec ses catégories regroupées en quatre
+  familles — **Règlements** (chèques, LCN, virements…), **Financements** (leasing, CMT, préfinancement,
+  factoring, droits constatés, agios), **Charges bancaires** (commissions, prélèvements, frais, impôts
+  et taxes) et **Autres**. Cliquez sur une famille pour voir le détail de ses catégories. Les montants
+  négatifs sont en rouge, un montant nul s'affiche « — » ;
+- le bouton **Exporter le plan en PDF** de cette banque.
 
-Le tableau a une colonne par période :
-- **À ce jour** (en orange, mention « en retard ») : les opérations dont la date est déjà atteinte mais
-  qui n'ont pas encore été validées. Elles sont comptées dès aujourd'hui ;
-- puis une colonne par semaine ou par mois, avec ses dates ; survolez un en-tête pour lire la période
-  exacte ;
-- enfin **Total**.
+Fermez le panneau avec la croix ou en cliquant à côté.
 
-Lignes, de haut en bas : **Solde de début** de chaque période, les **Encaissements** par catégorie et
-leur total, les **Décaissements** par catégorie et leur total, le **Solde de fin**, la **Facilité de
-caisse** et la **Disponibilité** (solde de fin + facilité de caisse). Les catégories sont les mêmes que
-dans le Récap détaillé (Leasing, CMT, Règlement fournisseurs, Agios…) ; une opération qui n'entre dans
-aucune catégorie figure sur la ligne **Autres**. Les montants négatifs sont en rouge, un montant nul
-s'affiche « — ».
+### Sous la grille
 
-Quand une banque est choisie, le bouton **Voir les encours** ouvre ses opérations à valider (choix du
-rapprochement puis écran Récapitulatifs), pour vérifier ou valider ce qui compose le plan.
-
-### Comparer les banques
-
-En vue « Toutes les banques », la partie **Par banque** liste chaque banque avec son solde actuel, son
-solde prévu, son point bas (et sa date) et son besoin de financement. Cliquez sur une ligne pour
-afficher le plan de cette banque ; choisissez « Toutes les banques » dans la liste pour revenir.
+- **Évolution du solde du groupe** : la courbe consolidée de toutes les banques ;
+- **Les plus gros mouvements à venir** pour le groupe.
 
 ### Exporter le plan en PDF
 
-Cliquez sur **Exporter PDF** : le fichier contient le plan affiché (toutes les banques, ou la banque
-choisie) en format paysage, avec en titre le périmètre, l'horizon et sa date, et en bas le point bas, la
-disponibilité au point bas, le besoin de financement et le nombre de jours sous zéro.
+Le fichier contient le plan du périmètre choisi (toutes les banques depuis l'en-tête, une banque depuis
+son panneau) en format paysage, avec en titre le périmètre, l'horizon et sa date, et en bas le point bas,
+la disponibilité au point bas, le besoin de financement et le nombre de jours sous zéro.
 
 > Le plan ne compte que les opérations saisies dans G-Banque et encore à valider. Une sortie ou une
 > entrée qui n'est pas encore saisie n'y figure pas : pensez à la saisir pour que le plan soit complet.

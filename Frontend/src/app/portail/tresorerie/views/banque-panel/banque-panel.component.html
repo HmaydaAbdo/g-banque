@@ -1,0 +1,93 @@
+<p-sidebar [visible]="true" position="right" [modal]="true" [dismissible]="true"
+           [style]="{ width: 'min(780px, 100vw)' }" (onHide)="fermer.emit()" ariaCloseLabel="Fermer le détail">
+  <ng-template pTemplate="header">
+    <div class="entete">
+      <h2 class="entete__nom">{{ plan.banqueNom }}</h2>
+      <span class="statut statut--{{ statut }}">
+        @switch (statut) {
+          @case ('danger') { Besoin de financement }
+          @case ('warn') { Sous zéro, couvert }
+          @default { Situation saine }
+        }
+      </span>
+    </div>
+  </ng-template>
+
+  <div class="panneau">
+    <!-- Indicateurs -->
+    <section class="indics" aria-label="Indicateurs">
+      <div class="indic"><span class="indic__label">Solde actuel</span>
+        <span class="indic__val" [class.neg]="plan.soldeActuel < 0">{{ plan.soldeActuel | number:'1.2-2' }}</span></div>
+      <div class="indic"><span class="indic__label">Solde prévu</span>
+        <span class="indic__val" [class.neg]="plan.soldeFinal < 0">{{ plan.soldeFinal | number:'1.2-2' }}</span></div>
+      <div class="indic"><span class="indic__label">Point bas · {{ plan.pointBas.date | date:'dd/MM' }}</span>
+        <span class="indic__val" [class.neg]="plan.pointBas.solde < 0">{{ plan.pointBas.solde | number:'1.2-2' }}</span></div>
+      <div class="indic indic--{{ plan.besoinFinancement > 0 ? 'danger' : 'ok' }}">
+        <span class="indic__label">{{ plan.besoinFinancement > 0 ? 'Besoin de financement' : 'Disponibilité minimale' }}</span>
+        <span class="indic__val" [class.neg]="plan.besoinFinancement > 0">
+          {{ (plan.besoinFinancement > 0 ? plan.besoinFinancement : plan.pointBas.disponibilite) | number:'1.2-2' }}</span></div>
+    </section>
+
+    <!-- Courbe -->
+    <section class="bloc">
+      <h3 class="bloc__titre">Évolution du solde prévu</h3>
+      <app-courbe-tresorerie [plan]="plan"/>
+    </section>
+
+    <!-- Opérations de la période -->
+    @if (listeDisponible) {
+      <section class="bloc">
+        <h3 class="bloc__titre">Ce qui compose la période</h3>
+        <div class="periodes" role="tablist" aria-label="Période">
+          @for (c of colonnes; track c.code) {
+            <button type="button" role="tab" class="periode" [class.periode--on]="c.code === periode.code"
+                    [attr.aria-selected]="c.code === periode.code" (click)="choisirPeriode(c.code)">
+              {{ c.libelle }}
+            </button>
+          }
+        </div>
+        @if (chargementOperations) {
+          <p-skeleton height="8rem" borderRadius="var(--radius-md)"/>
+        } @else if (operations.length === 0) {
+          <p class="vide">Aucune opération à valider sur cette période.</p>
+        } @else {
+          <ul class="ops">
+            @for (o of operations; track o.source + o.id) {
+              <li class="op">
+                <span class="op__date">{{ dateDe(o) | date:'dd/MM' }}</span>
+                <span class="op__corps">
+                  <span class="op__lib">{{ o.libelle || '—' }}</span>
+                  <span class="op__src">{{ source[o.source] }}</span>
+                </span>
+                <span class="op__montant" [class.sortie]="+o.debit > 0" [class.entree]="+o.credit > 0">
+                  {{ +o.debit > 0 ? '−' + (+o.debit | number:'1.2-2') : '+' + (+o.credit | number:'1.2-2') }}
+                </span>
+              </li>
+            }
+          </ul>
+          <a class="voir" [routerLink]="['/portail/etats-des-encours', plan.banqueId, 'select']">
+            {{ totalOperations > operations.length ? 'Voir les ' + totalOperations + ' opérations' : 'Ouvrir les encours' }}
+            <i class="pi pi-arrow-right" aria-hidden="true"></i>
+          </a>
+        }
+      </section>
+    }
+
+    <!-- Plus gros mouvements -->
+    <section class="bloc">
+      <h3 class="bloc__titre">Les plus gros mouvements à venir</h3>
+      <app-mouvements-list [mouvements]="plan.plusGrosMouvements" [dateCause]="plan.pointBas.date"/>
+    </section>
+
+    <!-- Flux par famille -->
+    <section class="bloc">
+      <h3 class="bloc__titre">Flux par famille</h3>
+      <app-plan-tresorerie-table [colonnes]="colonnes" [plan]="plan"/>
+    </section>
+
+    <div class="actions">
+      <p-button label="Exporter le plan en PDF" icon="pi pi-file-pdf" size="small" [outlined]="true"
+                [loading]="exportEnCours" (onClick)="exporter.emit()"/>
+    </div>
+  </div>
+</p-sidebar>

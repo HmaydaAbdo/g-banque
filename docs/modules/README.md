@@ -5218,7 +5218,7 @@ journée est négatif (couvert ou non par la facilité de caisse).
 [1] Tableau de bord Finance (ou menu latéral « Trésorerie prévisionnelle »)
         ↓ menu latéral « Trésorerie prévisionnelle » (toutes les banques) ou icône de courbe d'une carte (cette banque)
 [4] Écran « Trésorerie prévisionnelle » : plan de trésorerie jusqu'à la fin du mois ou du trimestre
-        ↓ « Voir les encours » (vue d'une banque)
+        ↓ lien « Voir les opérations » du panneau d'une banque
 [2] Écran de sélection du rapprochement actif de cette banque
 ```
 
@@ -5372,30 +5372,59 @@ l'ouvre directement sur cette banque, avec le même horizon.
 
 #### Écran Trésorerie prévisionnelle
 
-Écran à part, hors de l'espace de travail d'une banque (menu latéral « Trésorerie prévisionnelle »
-ou icône de courbe du tableau de bord). De haut en bas :
-- **En-tête** : liste d'horizon **Fin de mois / Fin de trimestre**, liste **Banque** (« Toutes les banques »
-  par défaut, puis chaque banque) et bouton **Exporter PDF**. Une phrase rappelle le périmètre, la date
-  du calcul et la date de l'horizon. L'horizon et la banque choisis sont conservés dans l'adresse ;
-- **Indicateurs** : solde actuel (avec la facilité de caisse), solde prévu à l'horizon (avec sa
-  variation sur la période), point bas (montant et jour), **besoin de financement** s'il y en a un —
-  sinon **disponibilité minimale** (disponibilité au point bas) — et jours sous zéro ;
-- **Alerte** : en rouge s'il existe un besoin de financement (« il manquera X MAD le JJ/MM/AAAA, même
-  en utilisant toute la facilité de caisse ») ; en orange si le solde passe sous zéro mais reste couvert
-  par la facilité de caisse ; rien sinon ;
-- **Évolution du solde prévu** : courbe jour par jour, de la date du jour à l'horizon, avec la ligne du
-  zéro marquée, la limite de la facilité de caisse en pointillés rouges (si la banque en a une) et le
-  point bas signalé par un point rouge ; le survol donne le solde du jour ;
-- **Plan de trésorerie** : le tableau décrit en section 2 ; la colonne « À ce jour » est surlignée en
-  orange, les montants négatifs sont en rouge, un montant nul est affiché « — ». En vue d'une banque, le
-  bouton **Voir les encours** ouvre la sélection du rapprochement de cette banque ;
-- **Par banque** (vue « Toutes les banques » seulement) : une ligne par banque avec solde actuel, solde
-  prévu, point bas et sa date, besoin de financement ; un clic sur la ligne affiche le plan de cette
-  banque.
+Écran à part, hors de l'espace de travail d'une banque (menu latéral « Trésorerie prévisionnelle »,
+bouton « Trésorerie » ou icône de courbe du tableau de bord). Il répond d'abord à « est-ce que ça va ? »,
+puis permet de descendre jusqu'à l'opération. De haut en bas :
+- **En-tête** : sélecteur d'horizon **Fin de mois / Fin de trimestre** et bouton **Exporter PDF**
+  (toutes les banques consolidées). L'horizon est conservé dans l'adresse ;
+- **Verdict** : un grand bandeau coloré d'une phrase, qui regarde le groupe entier et nomme la banque la
+  plus touchée :
+  - **rouge** — « Il manquera X MAD le JJ/MM/AAAA sur la banque Y », même en utilisant toute la facilité
+    de caisse (si plusieurs banques sont concernées, leur nombre est rappelé) ;
+  - **orange** — la banque Y passera sous zéro, mais la facilité de caisse la couvre (point bas et jour
+    indiqués) ;
+  - **vert** — « Tout va bien jusqu'au JJ/MM/AAAA », avec le point bas du groupe.
+  La date du calcul et l'horizon sont rappelés à droite ;
+- **Position par banque** : une grille avec **une ligne par banque**, **une colonne par période** et une
+  ligne **Total groupe**. Chaque case donne le **solde de fin de période** et sa couleur : **vert** (solde
+  positif), **orange** (solde négatif couvert par la facilité de caisse), **rouge** (besoin de
+  financement, la facilité de caisse ne suffit pas). Les montants sont abrégés (« 1,2 M », « 123 k ») ; le
+  survol donne le montant exact. Une colonne « Solde actuel » précède les périodes, et une mini-courbe de
+  tendance termine chaque ligne ;
+- **Évolution du solde du groupe** : courbe jour par jour du solde consolidé, avec la ligne du zéro, la
+  limite de la facilité de caisse et le point bas signalé ;
+- **Les plus gros mouvements à venir** : les cinq plus gros flux (encaissements et décaissements), avec
+  leur date, leur catégorie et leur famille ; un décaissement qui tombe le jour du point bas est signalé
+  « cause du point bas ».
 
-**Exporter PDF** télécharge le plan affiché (toutes banques, ou la banque choisie) en A4 paysage : même
-tableau, titre avec le périmètre, l'horizon et sa date, puis le point bas, la disponibilité au point
-bas, le besoin de financement et le nombre de jours sous zéro.
+**Panneau de détail.** Un clic sur une banque, sur une case ou sur le total ouvre, à droite, le détail :
+- le nom, un repère de situation (« Situation saine », « Sous zéro, couvert », « Besoin de
+  financement »), et quatre indicateurs — solde actuel, solde prévu, point bas (avec son jour), besoin de
+  financement (ou disponibilité minimale quand il n'y en a pas) ;
+- la courbe du solde ;
+- **Ce qui compose la période** (une banque seulement) : des pastilles pour choisir la période — celle du
+  point bas est ouverte d'office, ou celle de la case cliquée — et les opérations à valider de cette
+  période, les plus grosses d'abord (date, libellé, type d'opération, montant signé) ; un lien ouvre les
+  encours de la banque. Les opérations sont celles du Récapitulatif, sur la même période ;
+- **Les plus gros mouvements** de la banque ;
+- **Flux par famille** : le plan de trésorerie de la banque, avec les catégories regroupées en quatre
+  familles dépliables (voir ci-dessous) ;
+- le bouton **Exporter le plan en PDF** de cette banque.
+Le total du groupe ouvre le même panneau, sans la liste d'opérations (il n'existe pas de liste unique
+pour tout le groupe).
+
+**Familles de catégories.** Chaque catégorie du plan appartient à une famille :
+- **Règlements** : règlements fournisseurs (chèques, LCN, virements, mises à disposition) et virements
+  internationaux ;
+- **Financements** : leasing, crédits moyen terme, préfinancement, factoring, droits constatés, agios ;
+- **Charges bancaires** : commissions, prélèvements, frais bancaires, impôts et taxes ;
+- **Autres** : décomptes, restitutions, impayées, opérations erronées, provisions, et toute opération qui
+  n'entre dans aucune catégorie.
+La ligne d'une famille additionne ses catégories ; au départ les familles sont repliées.
+
+**Exporter PDF** télécharge le plan du périmètre choisi (toutes banques, ou une banque depuis son panneau)
+en A4 paysage : même tableau, titre avec le périmètre, l'horizon et sa date, puis le point bas, la
+disponibilité au point bas, le besoin de financement et le nombre de jours sous zéro.
 
 ---
 
@@ -5458,7 +5487,7 @@ bas, le besoin de financement et le nombre de jours sous zéro.
     bas est le premier jour où il atteint son minimum. La vue consolidée additionne les soldes, les
     facilités de caisse et les encours de toutes les banques, puis calcule son propre point bas.
 20. Le besoin de financement est −(solde au point bas + facilité de caisse) quand ce total est négatif,
-    zéro sinon. L'alerte rouge de l'écran Trésorerie prévisionnelle apparaît dès qu'il est positif.
+    zéro sinon. Le verdict de l'écran Trésorerie prévisionnelle passe au rouge dès qu'il est positif pour une banque.
 21. Le plan est un calcul de consultation : il n'enregistre rien et ne modifie aucune opération.
 
 ---

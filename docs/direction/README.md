@@ -1052,13 +1052,17 @@ opérations en attente d'une banque donnée, quel que soit leur type d'origine.
   construit automatiquement, pour le groupe ou pour une banque, le plan de trésorerie semaine par semaine
   jusqu'à la fin du mois, ou mois par mois jusqu'à la fin du trimestre, à partir des opérations déjà
   saisies dans G-Banque. Il est toujours à jour, sans consolidation manuelle.
-- **Anticiper les tensions de trésorerie** : le plan signale le **point bas** de la période (le jour où
-  la trésorerie sera la plus basse), le **besoin de financement** éventuel au-delà de la facilité de
-  caisse et le nombre de jours à découvert, avec une alerte visible et une courbe du solde jour par jour.
-  La direction sait, plusieurs semaines à l'avance, quand et de combien solliciter une banque, et sur
-  quel compte, au lieu de le découvrir sur le relevé.
-- **Piloter le groupe et chaque banque** : vue consolidée de toutes les banques, comparaison banque par
-  banque (solde prévu, point bas, besoin) et accès direct au plan d'une banque puis à ses opérations ; le
+- **Une réponse immédiate : « est-ce que ça va ? »** : dès l'ouverture, une phrase colorée résume la
+  situation du groupe — tout va bien jusqu'à telle date, ou il manquera tel montant tel jour sur telle
+  banque. La direction sait, plusieurs semaines à l'avance, quand et de combien solliciter une banque,
+  au lieu de le découvrir sur le relevé.
+- **Une vue de position par banque** : une grille banques × périodes, colorée en vert, orange ou rouge,
+  qui permet de repérer le compte en difficulté d'un coup d'œil, avec le total du groupe et une
+  mini-courbe de tendance par banque.
+- **De l'alerte à la cause en deux clics** : un clic sur une banque ou sur une case ouvre son détail — le
+  point bas et son jour, le besoin de financement au-delà de la facilité de caisse, les opérations qui
+  composent la période et les plus gros mouvements à venir, dont celui qui crée le point bas. Les flux
+  sont regroupés en quatre familles lisibles (règlements, financements, charges bancaires, autres) ; le
   plan s'exporte en PDF pour les comités et les échanges avec les banques.
 
 ---

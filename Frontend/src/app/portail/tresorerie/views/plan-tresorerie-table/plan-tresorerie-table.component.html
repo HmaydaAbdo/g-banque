@@ -16,12 +16,22 @@
       </tr>
     </thead>
     <tbody>
-      @for (l of lignes; track $index) {
+      @for (l of lignes; track l.cle) {
         @if (l.type === 'section') {
           <tr class="plan__section"><th scope="rowgroup" [attr.colspan]="colonnes.length + 2">{{ l.libelle }}</th></tr>
-        } @else {
-          <tr [class.plan__solde]="l.type === 'solde'" [class.plan__total]="l.type === 'total'">
-            <th scope="row" class="plan__label">{{ l.libelle }}</th>
+        } @else if (l.type !== 'categorie' || l.parent === 'fc' || visible(l)) {
+          <tr [class.plan__solde]="l.type === 'solde'" [class.plan__total]="l.type === 'total'"
+              [class.plan__famille]="l.type === 'famille'" [class.plan__cat]="l.type === 'categorie'">
+            <th scope="row" class="plan__label">
+              @if (l.type === 'famille') {
+                <button type="button" class="plan__toggle" (click)="basculer(l.cle)"
+                        [attr.aria-expanded]="ouverte(l.cle)" [attr.aria-label]="l.libelle + ' : afficher le détail'">
+                  <i class="pi" [class.pi-chevron-down]="ouverte(l.cle)" [class.pi-chevron-right]="!ouverte(l.cle)" aria-hidden="true"></i>{{ l.libelle }}
+                </button>
+              } @else {
+                {{ l.libelle }}
+              }
+            </th>
             @for (v of l.valeurs; track $index) {
               <td [class.neg]="v < 0" [class.plan__echu]="$index === 0">{{ v === 0 ? '—' : (v | number:'1.2-2') }}</td>
             }

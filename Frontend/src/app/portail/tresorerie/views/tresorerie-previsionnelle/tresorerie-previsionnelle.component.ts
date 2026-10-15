@@ -1,14 +1,13 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
-import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
+import { DatePipe, NgClass } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { MenuItem } from 'primeng/api';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { ButtonModule } from 'primeng/button';
-import { DropdownModule } from 'primeng/dropdown';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
-import { TooltipModule } from 'primeng/tooltip';
 import {
   HORIZON_OPTIONS,
   HorizonPrevision,
@@ -16,24 +15,27 @@ import {
 } from '../../../etatsDesEncours/views/lesEncours/recap/dtos/PeriodeRecap';
 import { PlanBanque, PlanTresorerie } from '../../dtos/PlanTresorerie';
 import { TresorerieService } from '../../services/tresorerie.service';
-import { PlanTresorerieTableComponent } from '../plan-tresorerie-table/plan-tresorerie-table.component';
+import { Verdict, verdictDuPlan } from '../../verdict';
+import { BanquePanelComponent } from '../banque-panel/banque-panel.component';
 import { CourbeTresorerieComponent } from '../courbe-tresorerie/courbe-tresorerie.component';
+import { MouvementsListComponent } from '../mouvements-list/mouvements-list.component';
+import { CaseChoisie, PositionGridComponent } from '../position-grid/position-grid.component';
 
 /**
- * Trésorerie prévisionnelle : du solde actuel jusqu'à la fin du mois ou du trimestre, pour toutes
- * les banques ou une seule — indicateurs (solde prévu, point bas, besoin de financement), courbe
- * du solde, plan par catégorie et comparaison des banques.
+ * Trésorerie prévisionnelle : une phrase de verdict, la grille de position (banques × périodes), puis
+ * le détail d'une banque dans un panneau latéral (ses opérations, ses flux par famille).
  *
- * L'horizon et la banque sont portés par l'adresse (`?horizon=FIN_DE_TRIMESTRE&banque=3`) : les
- * liens de l'accueil y mènent directement, et le retour arrière retrouve la même vue.
+ * L'horizon, la banque ouverte et la période choisie sont portés par l'adresse
+ * (`?horizon=FIN_DE_TRIMESTRE&banque=3&col=P2`) : l'accueil y mène directement, et le retour
+ * arrière retrouve la même vue.
  */
 @Component({
   selector: 'app-tresorerie-previsionnelle',
   standalone: true,
   imports: [
-    DatePipe, DecimalPipe, NgClass, ReactiveFormsModule, RouterLink,
-    BreadcrumbModule, ButtonModule, DropdownModule, SkeletonModule, TooltipModule,
-    PlanTresorerieTableComponent, CourbeTresorerieComponent,
+    DatePipe, NgClass, ReactiveFormsModule, RouterLink,
+    BreadcrumbModule, ButtonModule, SelectButtonModule, SkeletonModule,
+    PositionGridComponent, BanquePanelComponent, CourbeTresorerieComponent, MouvementsListComponent,
   ],
   templateUrl: './tresorerie-previsionnelle.component.html',
   styleUrl: './tresorerie-previsionnelle.component.scss'
@@ -50,27 +52,29 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
     { label: 'Trésorerie prévisionnelle' },
   ];
   readonly horizonOptions = HORIZON_OPTIONS;
-
   readonly horizonControl = new FormControl<HorizonPrevision>('FIN_DE_MOIS', { nonNullable: true });
-  readonly banqueControl = new FormControl<number | null>(null);
 
   plan: PlanTresorerie | null = null;
-  banqueOptions: { label: string; value: number | null }[] = [];
+  verdict: Verdict | null = null;
   loading = false;
   exporting = false;
+
+  /** Panneau de détail : `undefined` = fermé, `null` = total du groupe, sinon identifiant de la banque. */
+  panneau: number | null | undefined;
+  colonne = '';
 
   ngOnInit(): void {
     const params = this.route.snapshot.queryParamMap;
     this.horizonControl.setValue(horizonDepuisParam(params.get('horizon')), { emitEvent: false });
     const banque = Number(params.get('banque'));
-    this.banqueControl.setValue(Number.isInteger(banque) && banque > 0 ? banque : null, { emitEvent: false });
+    this.panneau = Number.isInteger(banque) && banque > 0 ? banque : undefined;
+    this.colonne = this.panneau !== undefined ? params.get('col') ?? '' : '';
 
     this.subscriptions.push(
       this.horizonControl.valueChanges.subscribe(() => {
         this.syncUrl();
         this.charger();
       }),
-      this.banqueControl.valueChanges.subscribe(() => this.syncUrl()),
     );
     this.charger();
   }
@@ -79,44 +83,35 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach(s => s.unsubscribe());
   }
 
-  /** Périmètre affiché : la banque choisie, ou toutes les banques consolidées. */
-  get perimetre(): PlanBanque | null {
-    if (!this.plan) {
+  /** Plan affiché dans le panneau ouvert ; `null` si le panneau est fermé ou la banque inconnue. */
+  get planDuPanneau(): PlanBanque | null {
+    if (!this.plan || this.panneau === undefined) {
       return null;
     }
-    const id = this.banqueControl.value;
-    return (id !== null && this.plan.banques.find(b => b.banqueId === id)) || this.plan.consolide;
+    return this.panneau === null
+      ? this.plan.consolide
+      : this.plan.banques.find(b => b.banqueId === this.panneau) ?? null;
   }
 
-  get vueConsolidee(): boolean {
-    return this.perimetre?.banqueId === null;
+  ouvrir(choix: CaseChoisie): void {
+    this.panneau = choix.banqueId;
+    this.colonne = choix.colonne;
+    this.syncUrl();
   }
 
-  /** Écart entre le solde prévu à l'horizon et le solde actuel. */
-  get variation(): number {
-    const p = this.perimetre;
-    return p ? p.soldeFinal - p.soldeActuel : 0;
+  fermer(): void {
+    this.panneau = undefined;
+    this.colonne = '';
+    this.syncUrl();
   }
 
-  /** Niveau d'alerte du périmètre : besoin non couvert, découvert couvert par la facilité, ou sain. */
-  get alerte(): 'besoin' | 'decouvert' | null {
-    const p = this.perimetre;
-    if (!p) {
-      return null;
-    }
-    if (p.besoinFinancement > 0) {
-      return 'besoin';
-    }
-    return p.joursSoldeNegatif > 0 ? 'decouvert' : null;
+  choisirColonne(code: string): void {
+    this.colonne = code;
+    this.syncUrl();
   }
 
-  choisirBanque(banqueId: number | null): void {
-    this.banqueControl.setValue(banqueId);
-  }
-
-  exporterPdf(): void {
+  exporterPdf(banqueId: number | null): void {
     const periode = this.horizonControl.value;
-    const banqueId = this.vueConsolidee ? null : this.perimetre?.banqueId ?? null;
     this.exporting = true;
     this.tresorerieService.exportPdf(periode, banqueId).subscribe({
       next: blob => {
@@ -140,10 +135,7 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
       this.tresorerieService.getPlan(this.horizonControl.value).subscribe({
         next: plan => {
           this.plan = plan;
-          this.banqueOptions = [
-            { label: 'Toutes les banques', value: null },
-            ...plan.banques.map(b => ({ label: b.banqueNom, value: b.banqueId })),
-          ];
+          this.verdict = verdictDuPlan(plan);
           this.loading = false;
         },
         error: () => {
@@ -153,13 +145,16 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
     );
   }
 
+  /** Écrit l'horizon, la banque et la période dans l'adresse sans ajouter d'entrée d'historique. Le total du groupe n'y figure pas. */
   private syncUrl(): void {
     const horizon = this.horizonControl.value;
+    const banque = typeof this.panneau === 'number' ? this.panneau : null;
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {
         horizon: horizon === 'FIN_DE_TRIMESTRE' ? horizon : null,
-        banque: this.banqueControl.value,
+        banque,
+        col: banque !== null && this.colonne ? this.colonne : null,
       },
       replaceUrl: true,
     });

@@ -1,0 +1,105 @@
+.grille-scroll {
+  overflow-x: auto;
+}
+
+.grille {
+  width          : 100%;
+  border-collapse: separate;
+  border-spacing : 0 var(--space-1);
+  font-size      : var(--text-sm);
+  font-variant-numeric: tabular-nums;
+
+  th, td { padding: var(--space-1) var(--space-2); text-align: center; white-space: nowrap; }
+
+  thead th {
+    color      : var(--color-text-secondary);
+    font-weight: var(--weight-semibold);
+    font-size  : var(--text-xs);
+    vertical-align: bottom;
+  }
+
+  &__dates {
+    display    : block;
+    font-weight: var(--weight-regular);
+    font-size  : var(--text-2xs);
+    color      : var(--color-text-muted);
+  }
+
+  &__echu { color: var(--color-warning-text); }
+
+  &__banque { text-align: left !important; min-width: 9rem; position: sticky; left: 0; background: var(--color-surface); z-index: 1; }
+  &__actuel { color: var(--color-text-secondary); }
+  &__tendance { width: 6rem; }
+
+  &__nom {
+    display    : inline-flex;
+    align-items: center;
+    gap        : var(--space-1);
+    padding    : var(--space-1) var(--space-2);
+    font       : inherit;
+    font-weight: var(--weight-semibold);
+    color      : var(--color-text-primary);
+    background : none;
+    border     : 0;
+    border-radius: var(--radius-md);
+    cursor     : pointer;
+
+    i { color: var(--color-text-muted); transition: transform var(--duration-fast); }
+    &:hover i { transform: translateX(2px); color: var(--color-primary); }
+    &:focus-visible { outline: 2px solid var(--color-border-focus); }
+  }
+
+  &__ligne--sel .grille__banque { box-shadow: inset 3px 0 0 var(--color-primary); }
+
+  tfoot th, tfoot td { border-top: 1px solid var(--color-border); padding-top: var(--space-2); }
+  .neg { color: var(--color-danger); }
+}
+
+.cellule {
+  min-width    : 4.5rem;
+  padding      : var(--space-2) var(--space-3);
+  font         : inherit;
+  font-weight  : var(--weight-semibold);
+  border       : 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor       : pointer;
+  transition   : transform var(--duration-fast), box-shadow var(--duration-fast);
+
+  &:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  &:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 1px; }
+  &--total { font-weight: var(--weight-bold); }
+
+  &--ok     { background: var(--color-success-light); color: var(--color-success-text); }
+  &--warn   { background: var(--color-warning-light); color: var(--color-warning-text); }
+  &--danger { background: var(--color-danger-light);  color: var(--color-danger-text); border-color: var(--color-danger); }
+}
+
+.spark {
+  width : 5rem;
+  height: 1.5rem;
+  polyline { stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+  &__zero { stroke: var(--color-border-strong); stroke-width: 1; stroke-dasharray: 3 2; }
+  &--ok polyline     { stroke: var(--color-success); }
+  &--warn polyline   { stroke: var(--color-warning); }
+  &--danger polyline { stroke: var(--color-danger); }
+}
+
+.legende {
+  display   : flex;
+  flex-wrap : wrap;
+  gap       : var(--space-4);
+  margin    : var(--space-3) 0 0;
+  padding   : 0;
+  list-style: none;
+  font-size : var(--text-xs);
+  color     : var(--color-text-secondary);
+
+  li { display: flex; align-items: center; gap: var(--space-2); }
+}
+
+.pastille {
+  width: 0.75rem; height: 0.75rem; border-radius: var(--radius-full);
+  &--ok { background: var(--color-success); }
+  &--warn { background: var(--color-warning); }
+  &--danger { background: var(--color-danger); }
+}

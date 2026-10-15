@@ -6,150 +6,50 @@
   height        : 100%;
   overflow-y    : auto;
 
-  &__header {
-    display        : flex;
-    justify-content: space-between;
-    align-items    : center;
-    flex-wrap      : wrap;
-    gap            : var(--space-3);
-  }
+  &__header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3); }
+  &__title { margin: 0 0 2px; font-size: var(--text-xl); font-weight: var(--weight-bold); letter-spacing: var(--tracking-tighter); }
+  &__controls { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); }
 
-  &__title {
-    font-size     : var(--text-xl);
-    font-weight   : var(--weight-bold);
-    letter-spacing: var(--tracking-tighter);
-    margin        : 0 0 2px;
-  }
-
-  &__controls {
-    display    : flex;
-    align-items: center;
-    flex-wrap  : wrap;
-    gap        : var(--space-2);
-  }
-
-  &__context {
-    margin   : 0;
-    font-size: var(--text-sm);
-    color    : var(--color-text-secondary);
-  }
-
-  &__kpis {
+  &__duo {
     display              : grid;
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-    gap                  : var(--space-3);
-  }
-
-  &__alert {
-    display      : flex;
-    align-items  : center;
-    gap          : var(--space-2);
-    padding      : var(--space-3) var(--space-4);
-    border-radius: var(--radius-md);
-    background   : var(--color-warning-light);
-    color        : var(--color-warning-text);
-    font-size    : var(--text-sm);
-
-    &--danger {
-      background: var(--color-danger-light);
-      color     : var(--color-danger-text);
-    }
-  }
-
-  &__card {
-    background   : var(--color-surface);
-    border       : 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    box-shadow   : var(--shadow-card);
-    padding      : var(--space-4);
-  }
-
-  &__card-head {
-    display        : flex;
-    justify-content: space-between;
-    align-items    : center;
-  }
-
-  &__card-title {
-    font-size  : var(--text-section);
-    font-weight: var(--weight-semibold);
-    margin     : 0 0 var(--space-3);
-  }
-
-  &__banques {
-    display       : flex;
-    flex-direction: column;
-    gap           : var(--space-2);
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap                  : var(--space-4);
   }
 }
 
-.kpi-card {
-  display       : flex;
-  flex-direction: column;
-  gap           : 2px;
-  padding       : var(--space-3) var(--space-4);
-  background    : var(--color-surface);
-  border        : 1px solid var(--color-border);
-  border-left   : 3px solid var(--color-primary);
-  border-radius : var(--radius-lg);
-  box-shadow    : var(--shadow-card);
+// ── Verdict : la réponse à « est-ce que ça va ? » ─────────────────────────
+.verdict {
+  display      : flex;
+  align-items  : center;
+  gap          : var(--space-4);
+  padding      : var(--space-5) var(--space-6);
+  border-radius: var(--radius-xl);
+  border       : 1px solid transparent;
 
-  &--warn   { border-left-color: var(--color-warning); }
-  &--danger { border-left-color: var(--color-danger); background: var(--color-danger-light); }
+  &--ok     { color: var(--color-success-text); background: var(--color-success-light); border-color: var(--color-success); }
+  &--warn   { color: var(--color-warning-text); background: var(--color-warning-light); border-color: var(--color-warning); }
+  &--danger { color: var(--color-danger-text);  background: var(--color-danger-light);  border-color: var(--color-danger); }
 
-  &__label {
-    font-size     : var(--text-xs);
-    text-transform: uppercase;
-    letter-spacing: var(--tracking-wide);
-    color         : var(--color-text-secondary);
-  }
-
-  &__value {
-    font-size  : var(--text-kpi);
-    font-weight: var(--weight-bold);
-    font-variant-numeric: tabular-nums;
-  }
-
-  &__hint {
-    font-size: var(--text-xs);
-    color    : var(--color-text-muted);
-  }
+  &__icone { font-size: var(--text-icon); flex: none; }
+  &__texte { flex: 1; min-width: 0; }
+  &__titre { margin: 0; font-size: var(--text-title); font-weight: var(--weight-bold); letter-spacing: var(--tracking-tight); }
+  &__detail { margin: var(--space-1) 0 0; font-size: var(--text-base); opacity: 0.9; }
+  &__meta { margin: 0; flex: none; text-align: right; font-size: var(--text-xs); opacity: 0.75; }
 }
 
-.banque-row {
-  display              : grid;
-  grid-template-columns: minmax(8rem, 1.4fr) repeat(4, minmax(7rem, 1fr)) auto;
-  align-items          : center;
-  gap                  : var(--space-3);
-  width                : 100%;
-  padding              : var(--space-2) var(--space-3);
-  border               : 1px solid var(--color-border);
-  border-radius        : var(--radius-md);
-  background           : var(--color-surface-2);
-  font                 : inherit;
-  font-size            : var(--text-sm);
-  font-variant-numeric : tabular-nums;
-  text-align           : right;
-  cursor               : pointer;
-  transition           : border-color var(--duration-fast);
+.carte {
+  padding      : var(--space-4) var(--space-5);
+  background   : var(--color-surface);
+  border       : 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow   : var(--shadow-card);
 
-  &:hover, &:focus-visible { border-color: var(--color-primary); }
-
-  &__nom {
-    text-align : left;
-    font-weight: var(--weight-semibold);
-  }
-
-  small {
-    display  : block;
-    font-size: var(--text-2xs);
-    color    : var(--color-text-muted);
-  }
+  &__tete { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: var(--space-2); }
+  &__titre { margin: 0 0 var(--space-3); font-size: var(--text-section); font-weight: var(--weight-semibold); }
+  &__aide { font-size: var(--text-xs); color: var(--color-text-muted); }
 }
 
-.neg { color: var(--color-danger); }
-.pos { color: var(--color-success); }
-
-@media (max-width: 768px) {
-  .banque-row { grid-template-columns: 1fr 1fr; text-align: left; }
+@media (max-width: 900px) {
+  .treso__duo { grid-template-columns: 1fr; }
+  .verdict { flex-wrap: wrap; &__meta { text-align: left; } }
 }

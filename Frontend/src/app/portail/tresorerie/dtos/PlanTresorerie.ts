@@ -14,11 +14,21 @@ export interface ColonnePlan {
   au: string;
 }
 
-/** Une catégorie (ex. « Leasing ») : un montant par colonne, et leur total. */
+/** Une catégorie (ex. « Leasing ») rattachée à sa famille (ex. « Financements ») : un montant par colonne, et leur total. */
 export interface LignePlan {
+  famille: string;
   categorie: string;
   montants: number[];
   total: number;
+}
+
+/** Un des plus gros flux à venir : somme d'une catégorie, un jour, dans un sens. `montant` est positif. */
+export interface Mouvement {
+  date: string;
+  categorie: string;
+  famille: string;
+  sens: 'ENCAISSEMENT' | 'DECAISSEMENT';
+  montant: number;
 }
 
 export interface SoldeJour {
@@ -53,6 +63,8 @@ export interface PlanBanque {
   besoinFinancement: number;
   joursSoldeNegatif: number;
   courbe: SoldeJour[];
+  /** Les cinq plus gros flux à venir, du plus gros au plus petit. */
+  plusGrosMouvements: Mouvement[];
 }
 
 export interface PlanTresorerie {

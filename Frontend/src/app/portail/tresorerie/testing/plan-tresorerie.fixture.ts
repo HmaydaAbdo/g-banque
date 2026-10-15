@@ -7,8 +7,11 @@ export function planBanqueFixture(banqueId: number | null, nom: string, besoin =
     banqueNom: nom,
     soldeActuel: 5000,
     plafondFC: 2000,
-    encaissements: [{ categorie: 'REGLEMENT FRNS', montants: [1000, 0], total: 1000 }],
-    decaissements: [{ categorie: 'Leasing', montants: [0, 9000], total: 9000 }],
+    encaissements: [{ famille: 'Règlements', categorie: 'REGLEMENT FRNS', montants: [1000, 0], total: 1000 }],
+    decaissements: [
+      { famille: 'Financements', categorie: 'Leasing', montants: [0, 6000], total: 6000 },
+      { famille: 'Financements', categorie: 'Agios', montants: [0, 3000], total: 3000 },
+    ],
     totalEncaissements: [1000, 0],
     totalDecaissements: [0, 9000],
     soldesFin: [6000, -3000],
@@ -21,6 +24,10 @@ export function planBanqueFixture(banqueId: number | null, nom: string, besoin =
     courbe: [
       { date: '2026-10-14', solde: 6000 },
       { date: '2026-11-20', solde: -3000 },
+    ],
+    plusGrosMouvements: [
+      { date: '2026-11-20', categorie: 'Leasing', famille: 'Financements', sens: 'DECAISSEMENT', montant: 6000 },
+      { date: '2026-10-14', categorie: 'REGLEMENT FRNS', famille: 'Règlements', sens: 'ENCAISSEMENT', montant: 1000 },
     ],
   };
 }

@@ -1,0 +1,84 @@
+<div class="grille-scroll">
+  <table class="grille" aria-label="Position de trésorerie par banque et par période">
+    <thead>
+      <tr>
+        <th scope="col" class="grille__banque">Banque</th>
+        <th scope="col" class="grille__actuel">Solde actuel</th>
+        @for (c of colonnes; track c.code) {
+          <th scope="col" [class.grille__echu]="!c.du">
+            {{ c.libelle }}
+            <span class="grille__dates">{{ c.du ? (date(c.du).slice(0, 5) + ' → ' + date(c.au).slice(0, 5)) : 'en retard' }}</span>
+          </th>
+        }
+        <th scope="col" class="grille__tendance">Tendance</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (b of banques; track b.banqueId) {
+        <tr [class.grille__ligne--sel]="selection === b.banqueId">
+          <th scope="row" class="grille__banque">
+            <button type="button" class="grille__nom" (click)="choisir.emit({ banqueId: b.banqueId, colonne: '' })"
+                    [attr.aria-label]="'Ouvrir le détail de ' + b.banqueNom">
+              {{ b.banqueNom }}<i class="pi pi-angle-right" aria-hidden="true"></i>
+            </button>
+          </th>
+          <td class="grille__actuel" [class.neg]="b.soldeActuel < 0">{{ compact(b.soldeActuel) }}</td>
+          @for (c of colonnes; track c.code; let i = $index) {
+            <td class="grille__cell">
+              <button type="button" class="cellule cellule--{{ etat(b, i) }}"
+                      [attr.aria-label]="libelleCase(b, i)"
+                      [pTooltip]="(b.soldesFin[i] | number:'1.2-2') ?? ''" tooltipPosition="top"
+                      (click)="choisir.emit({ banqueId: b.banqueId, colonne: c.code })">
+                {{ compact(b.soldesFin[i]) }}
+              </button>
+            </td>
+          }
+          <td class="grille__tendance">
+            @if (trajectoire(b); as t) {
+              <svg viewBox="0 0 80 24" class="spark spark--{{ b.besoinFinancement > 0 ? 'danger' : b.joursSoldeNegatif > 0 ? 'warn' : 'ok' }}"
+                   role="img" [attr.aria-label]="'Trajectoire du solde de ' + b.banqueNom">
+                @if (t.zero !== null) { <line x1="0" x2="80" [attr.y1]="t.zero" [attr.y2]="t.zero" class="spark__zero"/> }
+                <polyline [attr.points]="t.points" fill="none"/>
+              </svg>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+    <tfoot>
+      <tr [class.grille__ligne--sel]="selection === null">
+        <th scope="row" class="grille__banque">
+          <button type="button" class="grille__nom" (click)="choisir.emit({ banqueId: null, colonne: '' })"
+                  aria-label="Ouvrir le détail du groupe">
+            Total groupe<i class="pi pi-angle-right" aria-hidden="true"></i>
+          </button>
+        </th>
+        <td class="grille__actuel" [class.neg]="groupe.soldeActuel < 0">{{ compact(groupe.soldeActuel) }}</td>
+        @for (c of colonnes; track c.code; let i = $index) {
+          <td class="grille__cell">
+            <button type="button" class="cellule cellule--total cellule--{{ etat(groupe, i) }}"
+                    [attr.aria-label]="libelleCase(groupe, i)"
+                    [pTooltip]="(groupe.soldesFin[i] | number:'1.2-2') ?? ''" tooltipPosition="top"
+                    (click)="choisir.emit({ banqueId: null, colonne: c.code })">
+              {{ compact(groupe.soldesFin[i]) }}
+            </button>
+          </td>
+        }
+        <td class="grille__tendance">
+          @if (trajectoire(groupe); as t) {
+            <svg viewBox="0 0 80 24" class="spark spark--{{ groupe.besoinFinancement > 0 ? 'danger' : groupe.joursSoldeNegatif > 0 ? 'warn' : 'ok' }}"
+                 role="img" aria-label="Trajectoire du solde du groupe">
+              @if (t.zero !== null) { <line x1="0" x2="80" [attr.y1]="t.zero" [attr.y2]="t.zero" class="spark__zero"/> }
+              <polyline [attr.points]="t.points" fill="none"/>
+            </svg>
+          }
+        </td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+<ul class="legende" aria-label="Légende des couleurs">
+  <li><span class="pastille pastille--ok"></span>Solde positif</li>
+  <li><span class="pastille pastille--warn"></span>Solde négatif, couvert par la facilité de caisse</li>
+  <li><span class="pastille pastille--danger"></span>Besoin de financement</li>
+</ul>

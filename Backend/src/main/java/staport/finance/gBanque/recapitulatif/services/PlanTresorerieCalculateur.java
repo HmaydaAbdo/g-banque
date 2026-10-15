@@ -3,6 +3,7 @@ package staport.finance.gBanque.recapitulatif.services;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.recapitulatif.dtos.response.ColonnePlanDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.LignePlanDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.MouvementDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.PlanBanqueDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.PlanTresorerieDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.PointBasDto;
@@ -17,6 +18,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -170,7 +172,25 @@ final class PlanTresorerieCalculateur {
                 Arrays.asList(totalEnc), Arrays.asList(totalDec),
                 soldesFin, disponibilites,
                 solde, solde.add(plafond),
-                pointBas, besoin, joursNegatifs, courbe);
+                pointBas, besoin, joursNegatifs, courbe, plusGrosMouvements(flux));
+    }
+
+    /** Les cinq plus gros flux à venir : somme par (jour, catégorie, sens), du plus gros au plus petit. */
+    private static List<MouvementDto> plusGrosMouvements(List<FluxPrevu> flux) {
+        Map<List<Object>, BigDecimal> sommes = new LinkedHashMap<>();
+        for (FluxPrevu f : flux) {
+            String categorie = CategoriesTresorerie.categorie(f.source(), f.sens());
+            sommes.merge(List.of(f.date(), categorie != null ? categorie : AUTRES, f.sens()), f.montant(), BigDecimal::add);
+        }
+        return sommes.entrySet().stream()
+                .map(e -> {
+                    String categorie = (String) e.getKey().get(1);
+                    return new MouvementDto((LocalDate) e.getKey().get(0), categorie,
+                            CategoriesTresorerie.famille(categorie), ((Type) e.getKey().get(2)).name(), e.getValue());
+                })
+                .sorted(Comparator.comparing(MouvementDto::montant).reversed().thenComparing(MouvementDto::date))
+                .limit(5)
+                .toList();
     }
 
     private static int indexColonne(List<ColonnePlanDto> colonnes, LocalDate date, LocalDate aujourdHui) {
@@ -198,7 +218,7 @@ final class PlanTresorerieCalculateur {
             BigDecimal total = Arrays.stream(montants).reduce(BigDecimal.ZERO, BigDecimal::add);
             boolean vide = Arrays.stream(montants).allMatch(m -> m.signum() == 0);
             if (!vide) {
-                resultat.add(new LignePlanDto(categorie, Arrays.asList(montants), total));
+                resultat.add(new LignePlanDto(CategoriesTresorerie.famille(categorie), categorie, Arrays.asList(montants), total));
             }
         });
         return resultat;

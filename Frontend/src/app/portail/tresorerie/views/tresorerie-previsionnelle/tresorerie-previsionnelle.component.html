@@ -1,6 +1,5 @@
 <div class="treso route-enter">
 
-  <!-- ── En-tête : titre + réglages (horizon, banque) + export ───────────────── -->
   <header class="treso__header">
     <div>
       <h1 class="treso__title">Trésorerie prévisionnelle</h1>
@@ -20,125 +19,55 @@
     </div>
 
     <div class="treso__controls">
-      <p-dropdown [formControl]="horizonControl" [options]="horizonOptions" optionLabel="label"
-                  optionValue="value" ariaLabel="Horizon" appendTo="body" [style]="{'width': '10.5rem'}"/>
-      <p-dropdown [formControl]="banqueControl" [options]="banqueOptions" optionLabel="label"
-                  optionValue="value" ariaLabel="Banque" appendTo="body" [style]="{'min-width':'14rem'}"/>
+      <p-selectButton [formControl]="horizonControl" [options]="horizonOptions" optionLabel="label"
+                      optionValue="value" [allowEmpty]="false" styleClass="p-button-sm"/>
       <p-button label="Exporter PDF" icon="pi pi-file-pdf" size="small" [outlined]="true"
-                [loading]="exporting" [disabled]="!plan" (onClick)="exporterPdf()"/>
+                [loading]="exporting" [disabled]="!plan" (onClick)="exporterPdf(null)"/>
     </div>
   </header>
 
   @if (loading && !plan) {
-    <div class="treso__kpis">
-      @for (i of [1, 2, 3, 4, 5]; track i) { <p-skeleton height="5.5rem" borderRadius="var(--radius-lg)"/> }
-    </div>
-    <p-skeleton height="18rem" borderRadius="var(--radius-lg)"/>
+    <p-skeleton height="5rem" borderRadius="var(--radius-xl)"/>
+    <p-skeleton height="16rem" borderRadius="var(--radius-xl)"/>
   }
 
   @if (plan; as pl) {
-  @if (perimetre; as p) {
-    <p class="treso__context">
-      {{ p.banqueNom }} · calculé le {{ pl.dateCalcul | date:'dd/MM/yyyy' }} à partir du solde actuel et des
-      opérations non encore validées, jusqu'au <strong>{{ pl.dateHorizon | date:'dd/MM/yyyy' }}</strong>
-    </p>
-
-    <!-- ── Indicateurs ───────────────────────────────────────────────────────── -->
-    <section class="treso__kpis" aria-label="Indicateurs de trésorerie">
-      <div class="kpi-card">
-        <span class="kpi-card__label">Solde actuel</span>
-        <span class="kpi-card__value" [class.neg]="p.soldeActuel < 0">{{ p.soldeActuel | number:'1.2-2' }}</span>
-        <span class="kpi-card__hint">Facilité de caisse : {{ p.plafondFC | number:'1.2-2' }}</span>
-      </div>
-      <div class="kpi-card">
-        <span class="kpi-card__label">Solde prévu au {{ pl.dateHorizon | date:'dd/MM' }}</span>
-        <span class="kpi-card__value" [class.neg]="p.soldeFinal < 0">{{ p.soldeFinal | number:'1.2-2' }}</span>
-        <span class="kpi-card__hint" [class.neg]="variation < 0" [class.pos]="variation > 0">
-          {{ variation > 0 ? '+' : '' }}{{ variation | number:'1.2-2' }} sur la période
-        </span>
-      </div>
-      <div class="kpi-card" [class.kpi-card--warn]="p.pointBas.solde < 0"
-           pTooltip="Jour où le solde prévu est le plus bas" tooltipPosition="bottom">
-        <span class="kpi-card__label">Point bas</span>
-        <span class="kpi-card__value" [class.neg]="p.pointBas.solde < 0">{{ p.pointBas.solde | number:'1.2-2' }}</span>
-        <span class="kpi-card__hint">le {{ p.pointBas.date | date:'EEEE dd/MM' }}</span>
-      </div>
-      <div class="kpi-card" [class.kpi-card--danger]="p.besoinFinancement > 0"
-           pTooltip="Solde au point bas + facilité de caisse" tooltipPosition="bottom">
-        @if (p.besoinFinancement > 0) {
-          <span class="kpi-card__label">Besoin de financement</span>
-          <span class="kpi-card__value neg">{{ p.besoinFinancement | number:'1.2-2' }}</span>
-          <span class="kpi-card__hint">au-delà de la facilité de caisse</span>
-        } @else {
-          <span class="kpi-card__label">Disponibilité minimale</span>
-          <span class="kpi-card__value">{{ p.pointBas.disponibilite | number:'1.2-2' }}</span>
-          <span class="kpi-card__hint">facilité de caisse comprise</span>
-        }
-      </div>
-      <div class="kpi-card" [class.kpi-card--warn]="p.joursSoldeNegatif > 0">
-        <span class="kpi-card__label">Jours sous zéro</span>
-        <span class="kpi-card__value">{{ p.joursSoldeNegatif }}</span>
-        <span class="kpi-card__hint">sur {{ p.courbe.length }} jours</span>
-      </div>
-    </section>
-
-    @switch (alerte) {
-      @case ('besoin') {
-        <div class="treso__alert treso__alert--danger" role="alert">
-          <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
-          Il manquera {{ p.besoinFinancement | number:'1.2-2' }} MAD le {{ p.pointBas.date | date:'dd/MM/yyyy' }},
-          même en utilisant toute la facilité de caisse.
+    @if (verdict; as v) {
+      <section class="verdict verdict--{{ v.niveau }}" [attr.role]="v.niveau === 'danger' ? 'alert' : 'status'">
+        <i class="verdict__icone pi" [class.pi-check-circle]="v.niveau === 'ok'"
+           [class.pi-exclamation-triangle]="v.niveau === 'warn'" [class.pi-exclamation-circle]="v.niveau === 'danger'" aria-hidden="true"></i>
+        <div class="verdict__texte">
+          <h2 class="verdict__titre">{{ v.titre }}</h2>
+          <p class="verdict__detail">{{ v.detail }}</p>
         </div>
-      }
-      @case ('decouvert') {
-        <div class="treso__alert" role="status">
-          <i class="pi pi-info-circle" aria-hidden="true"></i>
-          Solde négatif pendant {{ p.joursSoldeNegatif }} jour(s), couvert par la facilité de caisse.
-        </div>
-      }
-    }
-
-    <!-- ── Courbe ────────────────────────────────────────────────────────────── -->
-    <section class="treso__card">
-      <h2 class="treso__card-title">Évolution du solde prévu</h2>
-      <app-courbe-tresorerie [plan]="p"/>
-    </section>
-
-    <!-- ── Plan par catégorie ────────────────────────────────────────────────── -->
-    <section class="treso__card">
-      <div class="treso__card-head">
-        <h2 class="treso__card-title">Plan de trésorerie</h2>
-        @if (!vueConsolidee) {
-          <p-button label="Voir les encours" icon="pi pi-arrow-right" iconPos="right" size="small" [text]="true"
-                    [routerLink]="['/portail/etats-des-encours', p.banqueId, 'select']"/>
-        }
-      </div>
-      <app-plan-tresorerie-table [colonnes]="pl.colonnes" [plan]="p"/>
-    </section>
-
-    <!-- ── Comparaison des banques (vue consolidée) ─────────────────────────── -->
-    @if (vueConsolidee && pl.banques.length > 1) {
-      <section class="treso__card">
-        <h2 class="treso__card-title">Par banque</h2>
-        <div class="treso__banques">
-          @for (b of pl.banques; track b.banqueId) {
-            <button type="button" class="banque-row" (click)="choisirBanque(b.banqueId)"
-                    [attr.aria-label]="'Voir le plan de ' + b.banqueNom">
-              <span class="banque-row__nom">{{ b.banqueNom }}</span>
-              <span><small>Actuel</small>{{ b.soldeActuel | number:'1.2-2' }}</span>
-              <span [class.neg]="b.soldeFinal < 0"><small>Prévu</small>{{ b.soldeFinal | number:'1.2-2' }}</span>
-              <span [class.neg]="b.pointBas.solde < 0">
-                <small>Point bas · {{ b.pointBas.date | date:'dd/MM' }}</small>{{ b.pointBas.solde | number:'1.2-2' }}
-              </span>
-              <span [class.neg]="b.besoinFinancement > 0">
-                <small>Besoin</small>{{ b.besoinFinancement > 0 ? (b.besoinFinancement | number:'1.2-2') : '—' }}
-              </span>
-              <i class="pi pi-chevron-right" aria-hidden="true"></i>
-            </button>
-          }
-        </div>
+        <p class="verdict__meta">Calculé le {{ pl.dateCalcul | date:'dd/MM/yyyy' }}<br>jusqu'au {{ pl.dateHorizon | date:'dd/MM/yyyy' }}</p>
       </section>
     }
-  }
+
+    <section class="carte">
+      <div class="carte__tete">
+        <h2 class="carte__titre">Position par banque</h2>
+        <span class="carte__aide">Solde de fin de période · cliquez une case ou une banque pour le détail</span>
+      </div>
+      <app-position-grid [colonnes]="pl.colonnes" [banques]="pl.banques" [groupe]="pl.consolide"
+                         [selection]="panneau" (choisir)="ouvrir($event)"/>
+    </section>
+
+    <div class="treso__duo">
+      <section class="carte">
+        <h2 class="carte__titre">Évolution du solde du groupe</h2>
+        <app-courbe-tresorerie [plan]="pl.consolide"/>
+      </section>
+      <section class="carte">
+        <h2 class="carte__titre">Les plus gros mouvements à venir</h2>
+        <app-mouvements-list [mouvements]="pl.consolide.plusGrosMouvements" [dateCause]="pl.consolide.pointBas.date"/>
+      </section>
+    </div>
+
+    @if (planDuPanneau; as detail) {
+      <app-banque-panel [plan]="detail" [colonnes]="pl.colonnes" [colonne]="colonne" [exportEnCours]="exporting"
+                        (fermer)="fermer()" (colonneChange)="choisirColonne($event)"
+                        (exporter)="exporterPdf(detail.banqueId)"/>
+    }
   }
 </div>

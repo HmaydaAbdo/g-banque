@@ -70,7 +70,31 @@ final class CategoriesTresorerie {
         ENCAISSEMENT.put(PROVISION, "Provision");
     }
 
+    static final String FAMILLE_REGLEMENTS = "Règlements";
+    static final String FAMILLE_FINANCEMENTS = "Financements";
+    static final String FAMILLE_CHARGES = "Charges bancaires";
+    static final String FAMILLE_AUTRES = "Autres";
+
+    private static final Map<String, String> FAMILLES = Map.ofEntries(
+            Map.entry("REGLEMENT FRNS", FAMILLE_REGLEMENTS),
+            Map.entry("Virement International", FAMILLE_REGLEMENTS),
+            Map.entry("Leasing", FAMILLE_FINANCEMENTS),
+            Map.entry("CMT", FAMILLE_FINANCEMENTS),
+            Map.entry("Préfinancement", FAMILLE_FINANCEMENTS),
+            Map.entry("Factoring", FAMILLE_FINANCEMENTS),
+            Map.entry("Droit Constaté", FAMILLE_FINANCEMENTS),
+            Map.entry("Agios", FAMILLE_FINANCEMENTS),
+            Map.entry("Commission", FAMILLE_CHARGES),
+            Map.entry("Prélèvement", FAMILLE_CHARGES),
+            Map.entry("Frais Bancaires", FAMILLE_CHARGES),
+            Map.entry("Impôts & Taxes", FAMILLE_CHARGES));
+
     private CategoriesTresorerie() {
+    }
+
+    /** Famille d'une catégorie ; tout ce qui n'est pas listé (décomptes, anomalies, provisions…) va dans « Autres ». */
+    static String famille(String categorie) {
+        return FAMILLES.getOrDefault(categorie, FAMILLE_AUTRES);
     }
 
     /**

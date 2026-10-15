@@ -11,7 +11,8 @@ import java.util.List;
  * actuel) ; {@code disponibilites} = {@code soldesFin} + plafond FC. {@code besoinFinancement}
  * est le montant qui manque au point bas une fois la facilité de caisse entièrement utilisée
  * (zéro si la disponibilité reste positive). {@code joursSoldeNegatif} compte les jours de la
- * courbe où le solde prévu est négatif.</p>
+ * courbe où le solde prévu est négatif. {@code plusGrosMouvements} liste, du plus gros au plus petit,
+ * les cinq plus importants flux à venir (encaissements et décaissements confondus).</p>
  */
 public record PlanBanqueDto(
         Long banqueId,
@@ -29,6 +30,7 @@ public record PlanBanqueDto(
         PointBasDto pointBas,
         BigDecimal besoinFinancement,
         int joursSoldeNegatif,
-        List<SoldeJourDto> courbe
+        List<SoldeJourDto> courbe,
+        List<MouvementDto> plusGrosMouvements
 ) {
 }

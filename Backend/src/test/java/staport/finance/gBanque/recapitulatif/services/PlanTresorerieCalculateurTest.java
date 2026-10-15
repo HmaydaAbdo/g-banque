@@ -136,6 +136,30 @@ class PlanTresorerieCalculateurTest {
     }
 
     @Test
+    @DisplayName("Chaque ligne a sa famille ; « Autres » regroupe ce qui n'est dans aucune famille")
+    void familles() {
+        PlanBanqueDto a = planA("50000");
+
+        assertThat(a.decaissements()).extracting(l -> l.categorie() + "=" + l.famille())
+                .containsExactly("Leasing=Financements", "REGLEMENT FRNS=Règlements", "Agios=Financements", "Autres=Autres");
+        assertThat(a.encaissements().get(0).famille()).isEqualTo("Règlements");
+    }
+
+    @Test
+    @DisplayName("Les cinq plus gros mouvements, du plus gros au plus petit, sommés par jour et catégorie")
+    void plusGrosMouvements() {
+        PlanBanqueDto a = planA("50000");
+
+        assertThat(a.plusGrosMouvements()).hasSize(5);
+        assertThat(a.plusGrosMouvements().get(0).montant()).isEqualByComparingTo("120000");
+        assertThat(a.plusGrosMouvements().get(0).categorie()).isEqualTo("REGLEMENT FRNS");
+        assertThat(a.plusGrosMouvements().get(0).sens()).isEqualTo("DECAISSEMENT");
+        assertThat(a.plusGrosMouvements().get(0).date()).isEqualTo(LocalDate.of(2026, 10, 16));
+        assertThat(a.plusGrosMouvements()).extracting(m -> m.montant().intValue())
+                .containsExactly(120000, 80000, 30000, 10000, 5000);
+    }
+
+    @Test
     @DisplayName("Point bas : jour du minimum de la courbe, jours négatifs, aucun besoin si la facilité couvre")
     void pointBasCouvertParLaFacilite() {
         PlanBanqueDto a = planA("50000");
