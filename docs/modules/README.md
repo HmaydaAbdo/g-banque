@@ -5223,7 +5223,7 @@ banque en euros reste en euros.
 [1] Tableau de bord Finance (ou menu latéral « Trésorerie prévisionnelle »)
         ↓ menu latéral « Trésorerie prévisionnelle » (toutes les banques) ou icône de courbe d'une carte (cette banque)
 [4] Écran « Trésorerie prévisionnelle » : plan de trésorerie jusqu'à la fin du mois ou du trimestre
-        ↓ clic sur une opération, ou « Voir les opérations », du panneau d'une banque
+        ↓ clic sur une opération, ou « Voir les opérations », du détail d'une banque
 [3] Récapitulatifs de cette banque, directement sur son mois en cours, déjà filtré (sans l'écran [2])
 ```
 
@@ -5388,7 +5388,7 @@ puis permet de descendre jusqu'à l'opération. De haut en bas :
     et tout réglage qui s'écarte de la vue par défaut, en pastilles, chacune avec une croix pour la
     retirer ; sans filtre, la console l'indique ;
   - **Effacer les filtres** (visible dès qu'un filtre est actif) : remet tout par défaut ;
-  - **Exporter PDF** : exporte exactement ce que l'on regarde — la banque dont le panneau est ouvert,
+  - **Exporter PDF** : exporte exactement ce que l'on regarde — la banque dont le détail est ouvert,
     sinon le total de la devise choisie (« Total groupe » ou « Total MAD »…). L'infobulle du bouton
     rappelle le périmètre. C'est le seul bouton d'export de l'écran ;
 - **Total groupe** (en tête de l'écran) : une carte dont le liseré suit la situation du total de la devise
@@ -5412,34 +5412,30 @@ puis permet de descendre jusqu'à l'opération. De haut en bas :
     (jauge et pourcentage) ; la trajectoire du solde ;
   - pour une banque **sans souci**, quand au moins une banque est en besoin, un badge **Excédent** : son
     solde le plus bas, c'est-à-dire ce qu'elle peut virer sans toucher à sa facilité de caisse ;
-  Un clic sur une carte ouvre le détail de la banque (panneau latéral). Les cartes n'ont aucun bouton de
-  filtre ni d'export : tout est dans la console ;
+  Un clic sur une carte **déplie le détail de la banque juste sous les cartes** (un second clic le referme ;
+  un clic sur une autre carte le remplace). Les cartes n'ont aucun bouton de filtre ni d'export : tout est
+  dans la console. Aucun graphique : seule la jauge de facilité de caisse est conservée ;
 - **Banque › Source** : une grille **regroupée Banque › Source**, avec une colonne par
   période (la première, « échues », regroupe les opérations dont la date est atteinte) :
   - une ligne par banque, avec son **solde de fin de période** et sa couleur — **vert** (solde positif),
     **orange** (solde négatif couvert par la facilité de caisse), **rouge** (besoin : la facilité de caisse
     ne suffit pas, la case est cerclée de rouge). Les montants sont abrégés (« 1,2 M », « 123 k ») ; le
-    survol donne le montant exact. Une colonne « Solde actuel » précède les périodes, et une mini-courbe de
-    tendance termine la ligne ;
+    survol donne le montant exact. Une colonne « Solde actuel » précède les périodes, et une colonne « Total »
+    termine les lignes de source ;
   - la flèche d'une banque la **déplie** et montre ses **flux par source** (leasing, CMT, chèques…) :
     entrées en vert, sorties en rouge, avec le sens (encaissements, décaissements). Le bouton
     **Tout déplier / Tout replier** agit sur toutes les banques ;
   - les **totaux par devise** restent en bas avec leurs soldes colorés (« Total groupe » quand toutes les
     banques ont la même devise ; sinon « Total MAD », « Total EUR »…, avec une section par devise et le
     code de devise sur chaque banque) ;
-  - un clic sur le nom d'une banque, sur une case de solde ou sur un total ouvre le panneau de détail ;
-- **Évolution du solde** : courbe jour par jour du total de la devise choisie, avec la ligne du zéro, la
-  limite de la facilité de caisse et le solde le plus bas signalé ;
-- **Plus grosses opérations à venir** : les cinq plus grosses opérations (encaissements et décaissements),
-  avec leur date, leur catégorie et leur famille ; un décaissement qui tombe le jour du solde le plus bas
-  est signalé « cause du solde le plus bas ».
+  - un clic sur le nom d'une banque, sur une case de solde ou sur un total ouvre le détail, sous les cartes ;
 
-**Panneau de détail.** Un clic sur une banque, sur une case de solde ou sur un total ouvre, à droite, le
-détail ; il se ferme par le bouton **Fermer**, la croix, la touche Échap ou un clic à côté :
+**Détail d'une banque.** Un clic sur une carte, sur une banque de la grille, sur une case de solde ou sur
+un total déplie le détail sous les cartes ; il se ferme par la croix, par un second clic sur la même
+banque ou par la pastille « Banque » de la console :
 - le nom, un repère de situation (« Tout va bien », « Facilité de caisse utilisée », « Besoin »), la devise
   et la date d'horizon, et quatre indicateurs — solde actuel, solde prévu, solde le plus bas (avec son
   jour), besoin (ou disponibilité la plus basse quand il n'y en a pas) ;
-- la courbe du solde ;
 - **Opérations à valider** (une banque seulement) : des pastilles pour choisir la période — celle du solde
   le plus bas est ouverte d'office, ou celle de la case cliquée — et les opérations à valider de cette
   période, les plus grosses d'abord (date, libellé, type d'opération, montant signé). Ce sont celles du
@@ -5452,8 +5448,8 @@ détail ; il se ferme par le bouton **Fermer**, la croix, la touche Échap ou un
 - les **plus grosses opérations** de la banque ;
 - le **détail par source** : le plan de trésorerie de la banque, avec les catégories regroupées en quatre
   familles (voir ci-dessous), chaque source visible d'emblée ; une famille se replie d'un clic ;
-- le bouton **Fermer**. L'export se fait depuis la console, qui exporte la banque ouverte.
-Le total d'une devise ouvre le même panneau, sans la liste d'opérations (il n'existe pas de liste unique
+- L'export se fait depuis la console, qui exporte la banque ouverte.
+Le total d'une devise ouvre le même détail, sans la liste d'opérations (il n'existe pas de liste unique
 pour toutes les banques).
 
 **Familles de catégories.** Chaque catégorie du plan appartient à une famille :

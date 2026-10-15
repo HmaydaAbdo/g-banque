@@ -28,7 +28,7 @@
   &__echu { color: var(--color-warning-text) !important; }
   &__banque { position: sticky; left: 0; z-index: 1; min-width: 12rem; text-align: left !important; background: var(--color-surface); font-family: var(--font-primary); }
   &__actuel { color: var(--color-text-secondary); }
-  &__tendance { width: 6rem; }
+  &__total { width: 6rem; }
   &__devise-ligne th { padding-top: var(--space-3); text-align: left; font-family: var(--font-primary); font-size: var(--text-xs); letter-spacing: var(--tracking-wide); color: var(--color-primary-text); }
 
   &__ligne { transition: background var(--duration-fast); }
@@ -73,15 +73,6 @@
   &--danger {
     color: var(--color-danger-text); background: var(--color-danger-light); border-color: var(--color-danger);
   }
-}
-
-.spark {
-  width: 5rem; height: 1.5rem;
-  polyline { stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
-  &__zero { stroke: var(--color-border-strong); stroke-width: 1; stroke-dasharray: 3 2; }
-  &--ok polyline { stroke: var(--color-success); }
-  &--warn polyline { stroke: var(--color-warning); }
-  &--danger polyline { stroke: var(--color-danger); }
 }
 
 .flux { font-weight: var(--weight-medium); &--total { font-weight: var(--weight-bold); } }

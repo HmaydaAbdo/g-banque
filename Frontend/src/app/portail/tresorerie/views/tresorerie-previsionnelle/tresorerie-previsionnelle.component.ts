@@ -16,10 +16,8 @@ import { FiltreActif } from '../../filtre-actif';
 import { TresorerieService } from '../../services/tresorerie.service';
 import { compterParSituation, NiveauSituation } from '../../situation';
 import { CartesBanquesComponent } from '../cartes-banques/cartes-banques.component';
-import { BanquePanelComponent } from '../banque-panel/banque-panel.component';
+import { DetailBanqueComponent } from '../detail-banque/detail-banque.component';
 import { ConsoleFiltresComponent } from '../console-filtres/console-filtres.component';
-import { CourbeTresorerieComponent } from '../courbe-tresorerie/courbe-tresorerie.component';
-import { MouvementsListComponent } from '../mouvements-list/mouvements-list.component';
 import { TotalGroupeComponent } from '../total-groupe/total-groupe.component';
 import { CaseChoisie, PositionGridComponent } from '../position-grid/position-grid.component';
 
@@ -32,8 +30,8 @@ export interface PerimetreExport {
 
 /**
  * Trésorerie prévisionnelle : une console qui réunit **tous les filtres et l'export**, le total groupe en
- * tête, une carte par banque (classées par urgence), la grille Banque › Source, la courbe et les plus grosses
- * opérations, puis le détail d'une banque dans un panneau latéral.
+ * tête, une carte par banque (classées par urgence), le détail de la banque choisie (déplié sous les
+ * cartes), puis la grille Banque › Source.
  *
  * Tous les filtres sont portés par l'adresse (`?horizon=FIN_DE_TRIMESTRE&devise=EUR&banque=3&col=P2`) :
  * l'accueil y mène directement et le retour arrière retrouve la même vue.
@@ -43,8 +41,7 @@ export interface PerimetreExport {
   standalone: true,
   imports: [
     NgClass, RouterLink, BreadcrumbModule, SkeletonModule,
-    ConsoleFiltresComponent, TotalGroupeComponent, CartesBanquesComponent, PositionGridComponent, BanquePanelComponent,
-    CourbeTresorerieComponent, MouvementsListComponent,
+    ConsoleFiltresComponent, TotalGroupeComponent, CartesBanquesComponent, PositionGridComponent, DetailBanqueComponent,
   ],
   templateUrl: './tresorerie-previsionnelle.component.html',
   styleUrl: './tresorerie-previsionnelle.component.scss'
@@ -69,7 +66,7 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
   loading = false;
   exporting = false;
 
-  /** Panneau de détail : `undefined` = fermé, `null` = total d'une devise, sinon identifiant de la banque. */
+  /** Détail déplié : `undefined` = fermé, `null` = total d'une devise, sinon identifiant de la banque. */
   panneau: number | null | undefined;
   /** Devise du total ouvert dans le panneau quand `panneau` est nul. */
   panneauDevise = '';
@@ -178,7 +175,12 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Un clic sur la banque déjà ouverte (sans période) referme son détail. */
   ouvrir(choix: CaseChoisie): void {
+    if (!choix.colonne && this.panneau === choix.banqueId && (choix.banqueId !== null || this.panneauDevise === choix.devise)) {
+      this.fermer();
+      return;
+    }
     this.panneau = choix.banqueId;
     this.panneauDevise = choix.devise;
     this.colonne = choix.colonne;

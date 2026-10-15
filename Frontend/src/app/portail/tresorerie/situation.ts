@@ -50,17 +50,3 @@ export function partFacilite(plan: PlanBanque): number {
 export function excedent(plan: PlanBanque): number {
   return niveauSituation(plan) === 'ok' ? Math.max(0, plan.pointBas.solde) : 0;
 }
-
-/** Mini-courbe du solde jour par jour, tracée dans une boîte de 80 × 24. */
-export function trajectoire(plan: PlanBanque): { points: string; zero: number | null } {
-  const valeurs = plan.courbe.map(p => p.solde);
-  if (valeurs.length < 2) {
-    return { points: '', zero: null };
-  }
-  const min = Math.min(...valeurs);
-  const max = Math.max(...valeurs);
-  const echelle = max === min ? 1 : max - min;
-  const y = (v: number) => 22 - ((v - min) / echelle) * 20;
-  const points = valeurs.map((v, i) => `${((i / (valeurs.length - 1)) * 80).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
-  return { points, zero: min < 0 && max > 0 ? y(0) : null };
-}

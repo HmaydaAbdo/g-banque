@@ -1,0 +1,89 @@
+<section class="detail" [attr.aria-label]="'Détail ' + plan.banqueNom">
+  <header class="entete">
+    <h2 class="entete__nom">{{ plan.banqueNom }}</h2>
+    <span class="statut statut--{{ statut }}">
+      @switch (statut) {
+        @case ('danger') { Besoin }
+        @case ('warn') { Facilité de caisse utilisée }
+        @default { Sans souci }
+      }
+    </span>
+    <span class="entete__sous">{{ plan.devise }} · {{ dateHorizon | date:'dd/MM/yyyy' }}</span>
+    <button type="button" class="entete__fermer" (click)="fermer.emit()" aria-label="Fermer le détail">
+      <i class="pi pi-times" aria-hidden="true"></i>
+    </button>
+  </header>
+
+  <!-- Indicateurs -->
+  <section class="indics" aria-label="Indicateurs">
+    <div class="indic"><span class="indic__label">Solde actuel</span>
+      <span class="indic__val" [class.neg]="plan.soldeActuel < 0">{{ plan.soldeActuel | number:'1.2-2' }}</span></div>
+    <div class="indic"><span class="indic__label">Solde prévu</span>
+      <span class="indic__val" [class.neg]="plan.soldeFinal < 0">{{ plan.soldeFinal | number:'1.2-2' }}</span></div>
+    <div class="indic" pTooltip="Le jour où le solde prévu est le plus bas" tooltipPosition="bottom">
+      <span class="indic__label">Solde le plus bas · {{ plan.pointBas.date | date:'dd/MM' }}</span>
+      <span class="indic__val" [class.neg]="plan.pointBas.solde < 0">{{ plan.pointBas.solde | number:'1.2-2' }}</span></div>
+    <div class="indic indic--{{ plan.besoinFinancement > 0 ? 'danger' : 'ok' }}"
+         [pTooltip]="plan.besoinFinancement > 0 ? 'Ce qui manque ce jour-là, même en utilisant toute la facilité de caisse' : 'Solde le plus bas + facilité de caisse'"
+         tooltipPosition="bottom">
+      <span class="indic__label">{{ plan.besoinFinancement > 0 ? 'Besoin' : 'Disponibilité la plus basse' }}</span>
+      <span class="indic__val" [class.neg]="plan.besoinFinancement > 0">
+        {{ (plan.besoinFinancement > 0 ? plan.besoinFinancement : plan.pointBas.disponibilite) | number:'1.2-2' }}</span></div>
+  </section>
+
+  <!-- Opérations de la période -->
+  @if (listeDisponible) {
+    <section class="bloc">
+      <h3 class="bloc__titre">Opérations à valider</h3>
+      <div class="periodes" role="tablist" aria-label="Période">
+        @for (c of colonnes; track c.code) {
+          <button type="button" role="tab" class="periode" [class.periode--on]="c.code === periode.code"
+                  [attr.aria-selected]="c.code === periode.code" (click)="choisirPeriode(c.code)">
+            {{ c.du ? c.libelle : 'Échues' }}
+          </button>
+        }
+      </div>
+      @if (chargementOperations) {
+        <p-skeleton height="8rem" borderRadius="var(--radius-md)"/>
+      } @else if (operations.length === 0) {
+        <p class="vide">Aucune opération à valider sur cette période.</p>
+      } @else {
+        <ul class="ops">
+          @for (o of operations; track o.source + o.id) {
+            <li>
+              <button type="button" class="op" (click)="ouvrirEncours(o)"
+                      [attr.aria-label]="'Ouvrir ' + (o.libelle || 'cette opération') + ' dans les encours'">
+                <span class="op__date">{{ dateDe(o) | date:'dd/MM' }}</span>
+                <span class="op__corps">
+                  <span class="op__lib">{{ o.libelle || '—' }}</span>
+                  <span class="op__src">{{ source[o.source] }}</span>
+                </span>
+                <span class="op__montant" [class.sortie]="+o.debit > 0" [class.entree]="+o.credit > 0">
+                  {{ +o.debit > 0 ? '−' + (+o.debit | number:'1.2-2') : '+' + (+o.credit | number:'1.2-2') }}
+                </span>
+                <i class="pi pi-angle-right op__go" aria-hidden="true"></i>
+              </button>
+            </li>
+          }
+        </ul>
+        <button type="button" class="voir" (click)="ouvrirEncours()">
+          {{ totalOperations > operations.length ? 'Voir les ' + totalOperations + ' opérations dans les encours' : 'Ouvrir les encours du mois' }}
+          <i class="pi pi-arrow-right" aria-hidden="true"></i>
+        </button>
+      }
+    </section>
+  }
+
+  <!-- Plus grosses opérations -->
+  <section class="bloc">
+    <h3 class="bloc__titre">Plus grosses opérations</h3>
+    <app-mouvements-list [mouvements]="plan.plusGrosMouvements" [dateCause]="plan.pointBas.date"/>
+  </section>
+
+  <!-- Détail par source -->
+  <section class="bloc">
+    <h3 class="bloc__titre">Détail par source</h3>
+    <app-plan-tresorerie-table [colonnes]="colonnes" [plan]="plan"/>
+  </section>
+
+</section>

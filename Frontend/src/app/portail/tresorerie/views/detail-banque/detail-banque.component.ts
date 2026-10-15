@@ -1,8 +1,6 @@
-import { Component, EventEmitter, inject, Input, OnChanges, OnDestroy, Output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, inject, Input, OnChanges, OnDestroy, Output } from '@angular/core';
 import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { Subscription } from 'rxjs';
-import { ButtonModule } from 'primeng/button';
-import { SidebarModule } from 'primeng/sidebar';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TooltipModule } from 'primeng/tooltip';
 import { RecapService } from '../../../etatsDesEncours/views/lesEncours/recap/services/recap.service';
@@ -12,7 +10,6 @@ import { parseLocalDate } from '../../../global/types/date.utils';
 import { HorizonPrevision } from '../../../etatsDesEncours/views/lesEncours/recap/dtos/PeriodeRecap';
 import { ColonnePlan, PlanBanque } from '../../dtos/PlanTresorerie';
 import { EncoursNavigationService } from '../../services/encours-navigation.service';
-import { CourbeTresorerieComponent } from '../courbe-tresorerie/courbe-tresorerie.component';
 import { PlanTresorerieTableComponent } from '../plan-tresorerie-table/plan-tresorerie-table.component';
 import { MouvementsListComponent } from '../mouvements-list/mouvements-list.component';
 
@@ -20,24 +17,25 @@ import { MouvementsListComponent } from '../mouvements-list/mouvements-list.comp
 const OPERATIONS_AFFICHEES = 8;
 
 /**
- * Détail d'une banque (ou du groupe) dans un panneau latéral : indicateurs, courbe, opérations
- * réelles d'une période (celle du point bas par défaut), flux par famille et plus gros mouvements.
+ * Détail d'une banque (ou du groupe), déplié sous les cartes : indicateurs, opérations réelles d'une
+ * période (celle du point bas par défaut), plus gros mouvements et flux par famille.
  * Les opérations viennent du Récapitulatif (mêmes critères, date de référence bornée à la période).
  */
 @Component({
-  selector: 'app-banque-panel',
+  selector: 'app-detail-banque',
   standalone: true,
   imports: [
-    DatePipe, DecimalPipe, NgClass, ButtonModule, SidebarModule, SkeletonModule, TooltipModule,
-    CourbeTresorerieComponent, PlanTresorerieTableComponent, MouvementsListComponent,
+    DatePipe, DecimalPipe, NgClass, SkeletonModule, TooltipModule,
+    PlanTresorerieTableComponent, MouvementsListComponent,
   ],
-  templateUrl: './banque-panel.component.html',
-  styleUrl: './banque-panel.component.scss'
+  templateUrl: './detail-banque.component.html',
+  styleUrl: './detail-banque.component.scss'
 })
-export class BanquePanelComponent implements OnChanges, OnDestroy {
+export class DetailBanqueComponent implements OnChanges, AfterViewInit, OnDestroy {
 
   private readonly recapService = inject(RecapService);
   private readonly navigation = inject(EncoursNavigationService);
+  private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
   private chargement?: Subscription;
 
   @Input({ required: true }) plan!: PlanBanque;
@@ -75,6 +73,11 @@ export class BanquePanelComponent implements OnChanges, OnDestroy {
       return 'danger';
     }
     return this.plan.joursSoldeNegatif > 0 ? 'warn' : 'ok';
+  }
+
+  /** Le détail s'ouvre sous les cartes : on l'amène à l'écran. */
+  ngAfterViewInit(): void {
+    this.element.nativeElement.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
   }
 
   ngOnChanges(): void {

@@ -20,7 +20,7 @@
             <span class="grille__dates">{{ c.du ? (date(c.du).slice(0, 5) + ' → ' + date(c.au).slice(0, 5)) : 'échues' }}</span>
           </th>
         }
-        <th scope="col" class="grille__tendance">Tendance</th>
+        <th scope="col" class="grille__total">Total</th>
       </tr>
     </thead>
     <tbody>
@@ -51,14 +51,7 @@
                               (click)="choisir.emit({ banqueId: b.banqueId, colonne: c.code, devise: s.devise })">{{ compact(b.soldesFin[i]) }}</button>
                     </td>
                   }
-                  <td class="grille__tendance">
-                    @if (trajectoire(b); as t) {
-                      <svg viewBox="0 0 80 24" class="spark spark--{{ niveauTendance(b) }}" role="img" [attr.aria-label]="'Trajectoire du solde de ' + b.banqueNom">
-                        @if (t.zero !== null) { <line x1="0" x2="80" [attr.y1]="t.zero" [attr.y2]="t.zero" class="spark__zero"/> }
-                        <polyline [attr.points]="t.points" fill="none"/>
-                      </svg>
-                    }
-                  </td>
+                  <td></td>
                 }
               } @else {
                 <th scope="row" class="grille__banque">
@@ -70,7 +63,7 @@
                   <td class="flux" [class.entree]="v > 0" [class.sortie]="v < 0" [class.grille__echu]="$index === 0"
                       [pTooltip]="(v | number:'1.2-2') ?? ''" tooltipPosition="top">{{ v === 0 ? '—' : compact(v) }}</td>
                 }
-                <td class="grille__tendance flux flux--total" [class.entree]="l.total > 0" [class.sortie]="l.total < 0">{{ l.total === 0 ? '—' : compact(l.total) }}</td>
+                <td class="grille__total flux flux--total" [class.entree]="l.total > 0" [class.sortie]="l.total < 0">{{ l.total === 0 ? '—' : compact(l.total) }}</td>
               }
             </tr>
           }
@@ -94,14 +87,7 @@
                       (click)="choisir.emit({ banqueId: null, colonne: c.code, devise: g.devise })">{{ compact(g.soldesFin[i]) }}</button>
             </td>
           }
-          <td class="grille__tendance">
-            @if (trajectoire(g); as t) {
-              <svg viewBox="0 0 80 24" class="spark spark--{{ niveauTendance(g) }}" role="img" [attr.aria-label]="'Trajectoire du solde ' + g.devise">
-                @if (t.zero !== null) { <line x1="0" x2="80" [attr.y1]="t.zero" [attr.y2]="t.zero" class="spark__zero"/> }
-                <polyline [attr.points]="t.points" fill="none"/>
-              </svg>
-            }
-          </td>
+          <td></td>
         </tr>
       }
     </tfoot>

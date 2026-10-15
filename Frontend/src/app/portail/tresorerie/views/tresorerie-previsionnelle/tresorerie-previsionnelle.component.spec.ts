@@ -4,7 +4,6 @@ import { HttpTestingController } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { testProviders } from '../../../../../testing/test-providers';
 import { TresoreriePrevisionnelleComponent } from './tresorerie-previsionnelle.component';
-import { CourbeTresorerieComponent } from '../courbe-tresorerie/courbe-tresorerie.component';
 import { planBanqueFixture, planTresorerieFixture } from '../../testing/plan-tresorerie.fixture';
 
 describe('TresoreriePrevisionnelleComponent', () => {
@@ -21,8 +20,6 @@ describe('TresoreriePrevisionnelleComponent', () => {
         },
       ],
     });
-    // La courbe (Chart.js) n'est pas l'objet de ces tests
-    TestBed.overrideComponent(CourbeTresorerieComponent, { set: { template: '', imports: [] } });
     http = TestBed.inject(HttpTestingController);
     const fixture = TestBed.createComponent(TresoreriePrevisionnelleComponent);
     fixture.detectChanges();
@@ -34,7 +31,7 @@ describe('TresoreriePrevisionnelleComponent', () => {
 
   afterEach(() => http.verify());
 
-  it("charge le plan à l'horizon de l'adresse et affiche console, total groupe en tête, cartes par banque et grille, panneau fermé", () => {
+  it("charge le plan à l'horizon de l'adresse et affiche console, total groupe en tête, cartes par banque et grille, détail fermé", () => {
     const fixture = creer({ horizon: 'FIN_DE_TRIMESTRE' });
     const req = planReq();
     expect(req.request.params.get('periode')).toBe('FIN_DE_TRIMESTRE');
@@ -49,7 +46,7 @@ describe('TresoreriePrevisionnelleComponent', () => {
     expect(Array.from(el.querySelectorAll('.carte-banque__nom')).map(n => n.textContent!.trim())).toEqual(['Banque A', 'Banque B']);
     expect(el.querySelectorAll('app-position-grid').length).toBe(1);
     expect(el.querySelectorAll('.grille tbody .grille__ligne--n1').length).toBe(2);
-    expect(el.querySelector('app-banque-panel')).toBeNull();
+    expect(el.querySelector('app-detail-banque')).toBeNull();
   });
 
   it("tous les filtres et l'export sont dans la console, et nulle part ailleurs", () => {
@@ -66,7 +63,7 @@ describe('TresoreriePrevisionnelleComponent', () => {
     expect(Array.from(el.querySelectorAll('p-selectbutton')).filter(s => !console.contains(s)).length).toBe(0);
   });
 
-  it("une banque dans l'adresse ouvre directement son panneau", () => {
+  it("une banque dans l'adresse ouvre directement son détail", () => {
     const fixture = creer({ banque: '1', col: 'P1' });
     planReq().flush(planTresorerieFixture());
     fixture.detectChanges();
@@ -75,7 +72,7 @@ describe('TresoreriePrevisionnelleComponent', () => {
 
     expect(fixture.componentInstance.planDuPanneau!.banqueNom).toBe('Banque A');
     expect(fixture.componentInstance.colonne).toBe('P1');
-    expect(fixture.nativeElement.querySelector('app-banque-panel')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-detail-banque')).not.toBeNull();
   });
 
   it("ouvrir une case écrit banque et période dans l'adresse ; fermer les retire", () => {
@@ -95,7 +92,22 @@ describe('TresoreriePrevisionnelleComponent', () => {
     expect(c.planDuPanneau).toBeNull();
   });
 
-  it("le total d'une devise ouvre le panneau consolidé, sans liste d'opérations ni écriture dans l'adresse", () => {
+  it('un second clic sur la banque ouverte referme son détail ; un clic sur une autre banque le remplace', () => {
+    const fixture = creer();
+    planReq().flush(planTresorerieFixture());
+    fixture.detectChanges();
+    spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    const c = fixture.componentInstance;
+
+    c.ouvrir({ banqueId: 1, colonne: '', devise: 'MAD' });
+    expect(c.panneau).toBe(1);
+    c.ouvrir({ banqueId: 2, colonne: '', devise: 'MAD' });
+    expect(c.panneau).toBe(2);
+    c.ouvrir({ banqueId: 2, colonne: '', devise: 'MAD' });
+    expect(c.panneau).toBeUndefined();
+  });
+
+  it("le total d'une devise ouvre le détail consolidé, sans liste d'opérations ni écriture dans l'adresse", () => {
     const fixture = creer();
     planReq().flush(planTresorerieFixture());
     const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
@@ -120,7 +132,7 @@ describe('TresoreriePrevisionnelleComponent', () => {
     expect(navigate.calls.mostRecent().args[1]!.queryParams!['horizon']).toBe('FIN_DE_TRIMESTRE');
   });
 
-  it("l'export suit ce que l'on regarde : le total de la devise, puis la banque dont le panneau est ouvert", () => {
+  it("l'export suit ce que l'on regarde : le total de la devise, puis la banque dont le détail est ouvert", () => {
     const fixture = creer();
     planReq().flush(planTresorerieFixture());
     spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);

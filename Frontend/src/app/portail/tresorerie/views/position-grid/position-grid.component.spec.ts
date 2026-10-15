@@ -79,11 +79,10 @@ describe('PositionGridComponent', () => {
     ]);
   });
 
-  it('chaque case a un libellé accessible et la trajectoire est tracée', () => {
+  it('chaque case a un libellé accessible', () => {
     const { el } = creer();
     expect(el.querySelector('.cellule')!.getAttribute('aria-label')).toContain('Banque A');
     expect(el.querySelector('.cellule--danger')!.getAttribute('aria-label')).toContain('besoin');
-    expect(el.querySelector('svg polyline')!.getAttribute('points')).toBeTruthy();
   });
 
   it('plusieurs devises : une section par devise, un total par devise, le code de devise sur chaque banque', () => {

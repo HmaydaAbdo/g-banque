@@ -3,13 +3,13 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { PlanBanque } from '../../dtos/PlanTresorerie';
 import { montantCompact } from '../../format';
 import {
-  excedent, joursEntre, NiveauSituation, niveauSituation, ordonnerParUrgence, partFacilite, trajectoire,
+  excedent, joursEntre, NiveauSituation, niveauSituation, ordonnerParUrgence, partFacilite,
 } from '../../situation';
 import { CaseChoisie } from '../position-grid/position-grid.component';
 
 /**
  * Une carte par banque, classées par urgence : situation, besoin (ou solde le plus bas) avec son jour et son
- * ancienneté, soldes actuel et prévu, part de facilité de caisse utilisée, trajectoire du solde. Une banque
+ * ancienneté, soldes actuel et prévu, part de facilité de caisse utilisée. Une banque
  * saine affiche ce qu'elle peut prêter quand une autre est en besoin. Un clic ouvre le détail de la banque.
  */
 @Component({
@@ -36,7 +36,6 @@ export class CartesBanquesComponent {
   uneBanqueEnBesoin = false;
 
   readonly niveau = niveauSituation;
-  readonly trajectoire = trajectoire;
   readonly partFacilite = partFacilite;
   readonly excedent = excedent;
 

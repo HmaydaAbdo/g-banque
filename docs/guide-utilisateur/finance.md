@@ -103,7 +103,7 @@ La barre en haut de l'écran reste visible quand vous faites défiler la page. E
   pastilles ; cliquez sur la croix d'une pastille pour la retirer. Sans filtre, la console indique
   « Aucun filtre actif » ;
 - **Effacer les filtres** (visible dès qu'un filtre est actif) : revient à la vue par défaut ;
-- **Exporter PDF** : télécharge le plan de **ce que vous regardez** — la banque dont le panneau est ouvert,
+- **Exporter PDF** : télécharge le plan de **ce que vous regardez** — la banque dont le détail est ouvert,
   sinon le total (« Total groupe », ou « Total MAD » s'il y a plusieurs devises). Survolez le bouton pour
   lire ce qui sera exporté. C'est le seul bouton d'export de l'écran.
 
@@ -145,7 +145,7 @@ Chaque case affiche le **solde à la fin de la période** (abrégé : « 1,2 M �
 - **orange** : le solde est négatif, mais la facilité de caisse le couvre ;
 - **rouge**, cerclé de rouge : même avec la facilité de caisse, il manque de l'argent.
 
-Une mini-courbe montre la tendance de la banque. **Cliquez sur la flèche d'une banque** pour la déplier :
+**Cliquez sur la flèche d'une banque** pour la déplier :
 vous voyez ses flux par source (leasing, CMT, chèques…), les encaissements en vert et les décaissements en
 rouge. Le bouton **Tout déplier / Tout replier** ouvre ou ferme toutes les banques d'un coup.
 
@@ -155,11 +155,11 @@ chaque banque).
 
 ### Aller de la grille à la cause
 
-Cliquez sur **le nom d'une banque**, sur **une case de solde** ou sur **un total** : un panneau s'ouvre à
-droite. Fermez-le avec le bouton **Fermer**, la croix, la touche Échap ou en cliquant à côté. Il contient :
+Cliquez sur **une carte de banque**, sur **le nom d'une banque** de la grille, sur **une case de solde** ou
+sur **un total** : le détail se déplie sous les cartes. Fermez-le avec la croix, en recliquant sur la même
+banque, ou avec la pastille « Banque » de la console. Il contient :
 - quatre indicateurs : solde actuel, solde prévu, **solde le plus bas** et **besoin** (ou disponibilité la
   plus basse s'il n'y a pas de besoin) ;
-- la **courbe** du solde jour par jour ;
 - **Opérations à valider** : choisissez une période avec les pastilles (celle du solde le plus bas est
   ouverte d'office, ou celle de la case cliquée) pour voir les opérations qui la composent, les plus
   grosses d'abord. **Cliquez sur une opération** pour l'ouvrir dans les encours de la banque : vous
@@ -173,17 +173,11 @@ droite. Fermez-le avec le bouton **Fermer**, la croix, la touche Échap ou en cl
   familles — **Règlements** (chèques, LCN, virements…), **Financements** (leasing, CMT, préfinancement,
   factoring, droits constatés, agios), **Charges bancaires** (commissions, prélèvements, frais, impôts
   et taxes) et **Autres**. Chaque source est visible d'emblée ; cliquez sur une famille pour la replier.
-  Les montants négatifs sont en rouge, un montant nul s'affiche « — » ;
-- le bouton **Fermer**.
-
-### Sous la grille
-
-- **Évolution du solde** : la courbe du total de la devise choisie ;
-- **Plus grosses opérations à venir** pour ce total.
+  Les montants négatifs sont en rouge, un montant nul s'affiche « — ».
 
 ### Exporter le plan en PDF
 
-Depuis la console, **Exporter PDF** télécharge le plan de la banque dont le panneau est ouvert, sinon du
+Depuis la console, **Exporter PDF** télécharge le plan de la banque dont le détail est ouvert, sinon du
 total. Le fichier est en format paysage, avec en titre le périmètre, l'horizon et sa date, la devise, et en
 bas le solde le plus bas, la disponibilité la plus basse, le besoin et le nombre de jours à solde négatif.
 

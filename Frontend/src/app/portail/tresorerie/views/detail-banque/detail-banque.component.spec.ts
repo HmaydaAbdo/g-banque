@@ -1,19 +1,17 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { testProviders } from '../../../../../testing/test-providers';
-import { BanquePanelComponent } from './banque-panel.component';
-import { CourbeTresorerieComponent } from '../courbe-tresorerie/courbe-tresorerie.component';
+import { DetailBanqueComponent } from './detail-banque.component';
 import { planBanqueFixture, planTresorerieFixture } from '../../testing/plan-tresorerie.fixture';
 import { EncoursNavigationService } from '../../services/encours-navigation.service';
 
-describe('BanquePanelComponent', () => {
+describe('DetailBanqueComponent', () => {
   let http: HttpTestingController;
 
   function creer(banqueId: number | null, colonne = '') {
-    TestBed.configureTestingModule({ imports: [BanquePanelComponent], providers: testProviders });
-    TestBed.overrideComponent(CourbeTresorerieComponent, { set: { template: '', imports: [] } });
+    TestBed.configureTestingModule({ imports: [DetailBanqueComponent], providers: testProviders });
     http = TestBed.inject(HttpTestingController);
-    const fixture = TestBed.createComponent(BanquePanelComponent);
+    const fixture = TestBed.createComponent(DetailBanqueComponent);
     const plan = planTresorerieFixture();
     fixture.componentRef.setInput('plan', planBanqueFixture(banqueId, 'Banque A'));
     fixture.componentRef.setInput('colonnes', plan.colonnes);
@@ -86,18 +84,14 @@ describe('BanquePanelComponent', () => {
     expect(ouvrir).toHaveBeenCalledWith(1, { horizon: 'FIN_DE_TRIMESTRE' });
   });
 
-  it("le bouton « Fermer » et la croix du panneau (visibleChange, jamais onHide) ferment le panneau", () => {
+  it("la croix du détail le ferme", () => {
     const fixture = creer(1);
     http.expectOne(operations).flush({ totalDebit: 0, totalCredit: 0, page: { content: [], page: { totalElements: 0 } } });
     fixture.detectChanges();
     let fermetures = 0;
     fixture.componentInstance.fermer.subscribe(() => fermetures++);
 
-    Array.from(document.querySelectorAll<HTMLButtonElement>('p-sidebar .actions button'))
-      .find(b => b.textContent!.includes('Fermer'))!.click();
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.entete__fermer')!.click();
     expect(fermetures).toBe(1);
-
-    document.querySelector<HTMLButtonElement>('p-sidebar .p-sidebar-close')!.click();
-    expect(fermetures).toBe(2);
   });
 });

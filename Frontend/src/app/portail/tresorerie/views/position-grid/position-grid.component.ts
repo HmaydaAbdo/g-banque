@@ -4,7 +4,6 @@ import { TooltipModule } from 'primeng/tooltip';
 import { construireCroisement, LigneCroisement } from '../../croisement';
 import { ColonnePlan, PlanBanque } from '../../dtos/PlanTresorerie';
 import { dateCourte, montantCompact } from '../../format';
-import { niveauSituation, trajectoire } from '../../situation';
 
 /** Situation d'une case : sain, facilité de caisse entamée (solde négatif couvert), ou besoin. */
 export type EtatCase = 'ok' | 'warn' | 'danger';
@@ -27,7 +26,7 @@ interface Section {
 
 /**
  * Grille de position de trésorerie, regroupée **Banque › Source** : une ligne par banque avec son solde
- * de fin de période (vert, orange, rouge) et sa tendance ; dépliée, la banque montre ses flux par source
+ * de fin de période (vert, orange, rouge) ; dépliée, la banque montre ses flux par source
  * (entrées en vert, sorties en rouge). Les totaux par devise (on n'additionne jamais des devises
  * différentes) restent en bas. Présentation uniquement : un clic sur une banque, une case ou un total
  * remonte la sélection à l'écran.
@@ -99,7 +98,7 @@ export class PositionGridComponent implements OnChanges {
     }
   }
 
-  /** Plan d'une ligne de banque (pour ses soldes, sa trajectoire, sa devise). */
+  /** Plan d'une ligne de banque (pour ses soldes et sa devise). */
   planDe(l: LigneCroisement): PlanBanque | undefined {
     return this.banques.find(b => b.banqueId === l.banqueId);
   }
@@ -111,14 +110,10 @@ export class PositionGridComponent implements OnChanges {
     return plan.soldesFin[colonne] < 0 ? 'warn' : 'ok';
   }
 
-  readonly trajectoire = trajectoire;
-
   libelleCase(plan: PlanBanque, colonne: number): string {
     const c = this.colonnes[colonne];
     const etat = this.etat(plan, colonne);
     const statut = etat === 'danger' ? 'besoin (facilité de caisse dépassée)' : etat === 'warn' ? 'solde négatif, couvert par la facilité de caisse' : 'solde positif';
     return `${plan.banqueNom}, ${c.libelle} : solde ${plan.soldesFin[colonne].toLocaleString('fr-FR')} ${plan.devise}, ${statut}`;
   }
-
-  readonly niveauTendance = niveauSituation;
 }

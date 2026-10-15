@@ -1057,8 +1057,7 @@ opérations en attente d'une banque donnée, quel que soit leur type d'origine.
   combien de jours, et quelle banque a un excédent pour y répondre. La direction sait, plusieurs semaines
   à l'avance, quand et de combien solliciter une banque, au lieu de le découvrir sur le relevé.
 - **Une vue de position par banque** : une grille banques × périodes, colorée en vert, orange ou rouge,
-  qui permet de repérer le compte en difficulté d'un coup d'œil, avec le total du groupe et une
-  mini-courbe de tendance par banque. Les devises ne sont jamais additionnées : un total par devise, pour
+  qui permet de repérer le compte en difficulté d'un coup d'œil, avec le total du groupe. Les devises ne sont jamais additionnées : un total par devise, pour
   qu'aucun chiffre ne soit faux.
 - **Une console unique et une grille Banque › Source** : tous les filtres (horizon, devise, banque, période)
   et l'export PDF sont réunis dans une seule barre toujours visible ; la grille montre d'un coup d'œil qui
