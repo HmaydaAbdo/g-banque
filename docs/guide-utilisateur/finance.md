@@ -133,7 +133,7 @@ Chaque case affiche le **solde à la fin de la période** (abrégé : « 1,2 M �
 123 mille ; passez la souris dessus pour le montant exact) et une couleur :
 - **vert** : le solde est positif ;
 - **orange** : le solde est négatif, mais la facilité de caisse le couvre ;
-- **rouge**, entouré d'un halo : même avec la facilité de caisse, il manque de l'argent.
+- **rouge**, cerclé de rouge : même avec la facilité de caisse, il manque de l'argent.
 
 Une mini-courbe montre la tendance de la banque. **Cliquez sur la flèche d'une banque** pour la déplier :
 vous voyez ses flux par source (leasing, CMT, chèques…), les encaissements en vert et les décaissements en
