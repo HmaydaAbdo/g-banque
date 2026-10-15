@@ -12,6 +12,7 @@ import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 /**
  * Calcul du plan de trésorerie prévisionnel — fonction pure, sans accès à la base ni à l'horloge :
@@ -42,9 +44,11 @@ import java.util.TreeMap;
  *   <li>Lignes : les catégories du Récapitulatif général détaillé ({@link CategoriesTresorerie}) ;
  *       une source hors catégorie va sur la ligne « Autres » pour que les totaux restent égaux à
  *       ceux des cartes de l'accueil.</li>
- *   <li>Vue consolidée : somme des banques ; son point bas est calculé sur la courbe consolidée
- *       (et non comme la somme des points bas de chaque banque, qui ne tombent pas le même
- *       jour).</li>
+ *   <li>Totaux : un par devise (on n'additionne jamais des devises différentes), le dirham en
+ *       premier ; le point bas d'un total est calculé sur sa courbe consolidée (et non comme la somme
+ *       des points bas de chaque banque, qui ne tombent pas le même jour).</li>
+ *   <li>Opérations certaines seulement : écarte les estimations (voir
+ *       {@link CategoriesTresorerie#certain}).</li>
  * </ul>
  */
 final class PlanTresorerieCalculateur {
@@ -52,12 +56,13 @@ final class PlanTresorerieCalculateur {
     static final String CODE_ECHU = "ECHU";
     static final String AUTRES = "Autres";
     static final String LIBELLE_CONSOLIDE = "Toutes les banques";
+    static final String DEVISE_PAR_DEFAUT = "MAD";
 
     private static final DateTimeFormatter JOUR_MOIS = DateTimeFormatter.ofPattern("dd/MM");
     private static final DateTimeFormatter MOIS_ANNEE = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.FRENCH);
 
     /** Solde de départ d'une banque. */
-    record SoldeBanque(Long banqueId, String nom, BigDecimal soldeActuel, BigDecimal plafondFC) {
+    record SoldeBanque(Long banqueId, String nom, String devise, BigDecimal soldeActuel, BigDecimal plafondFC) {
     }
 
     /** Montant prévu d'une source, dans un sens, à une date, pour une banque. */
@@ -68,11 +73,12 @@ final class PlanTresorerieCalculateur {
     }
 
     static PlanTresorerieDto calculer(PeriodeRecap periode, LocalDate aujourdHui,
-                                      List<SoldeBanque> banques, List<FluxPrevu> flux) {
+                                      List<SoldeBanque> banques, List<FluxPrevu> flux, boolean certainesSeulement) {
         LocalDate horizon = periode.horizon(aujourdHui);
         List<ColonnePlanDto> colonnes = colonnes(periode, aujourdHui, horizon);
         List<FluxPrevu> retenus = flux.stream()
                 .filter(f -> f.date() != null && !f.date().isAfter(horizon) && f.montant() != null)
+                .filter(f -> !certainesSeulement || CategoriesTresorerie.certain(nomCategorie(f)))
                 .toList();
 
         List<PlanBanqueDto> plans = new ArrayList<>();
@@ -80,18 +86,38 @@ final class PlanTresorerieCalculateur {
             List<FluxPrevu> fluxBanque = retenus.stream()
                     .filter(f -> banque.banqueId().equals(f.banqueId()))
                     .toList();
-            plans.add(plan(banque.banqueId(), banque.nom(), nz(banque.soldeActuel()), nz(banque.plafondFC()),
-                    fluxBanque, colonnes, aujourdHui, horizon));
+            plans.add(plan(banque.banqueId(), banque.nom(), devise(banque), nz(banque.soldeActuel()),
+                    nz(banque.plafondFC()), fluxBanque, colonnes, aujourdHui, horizon));
         }
 
-        List<Long> ids = banques.stream().map(SoldeBanque::banqueId).toList();
-        List<FluxPrevu> fluxConnus = retenus.stream().filter(f -> ids.contains(f.banqueId())).toList();
-        BigDecimal soldeTotal = banques.stream().map(b -> nz(b.soldeActuel())).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal plafondTotal = banques.stream().map(b -> nz(b.plafondFC())).reduce(BigDecimal.ZERO, BigDecimal::add);
-        PlanBanqueDto consolide = plan(null, LIBELLE_CONSOLIDE, soldeTotal, plafondTotal,
-                fluxConnus, colonnes, aujourdHui, horizon);
+        // Un total par devise : le dirham d'abord, puis les autres par ordre alphabétique
+        Map<String, List<SoldeBanque>> parDevise = banques.stream().collect(Collectors.groupingBy(
+                PlanTresorerieCalculateur::devise, TreeMap::new, Collectors.toList()));
+        List<String> devises = new ArrayList<>(parDevise.keySet());
+        devises.remove(DEVISE_PAR_DEFAUT);
+        devises.add(0, DEVISE_PAR_DEFAUT); // sans banque, un total vide en dirham reste présenté
+        List<PlanBanqueDto> groupes = new ArrayList<>();
+        for (String devise : devises) {
+            List<SoldeBanque> membres = parDevise.getOrDefault(devise, List.of());
+            List<Long> ids = membres.stream().map(SoldeBanque::banqueId).toList();
+            List<FluxPrevu> fluxGroupe = retenus.stream().filter(f -> ids.contains(f.banqueId())).toList();
+            BigDecimal soldeTotal = membres.stream().map(b -> nz(b.soldeActuel())).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal plafondTotal = membres.stream().map(b -> nz(b.plafondFC())).reduce(BigDecimal.ZERO, BigDecimal::add);
+            String nom = devises.size() == 1 ? LIBELLE_CONSOLIDE : "Banques en " + devise;
+            groupes.add(plan(null, nom, devise, soldeTotal, plafondTotal, fluxGroupe, colonnes, aujourdHui, horizon));
+        }
 
-        return new PlanTresorerieDto(periode, aujourdHui, horizon, colonnes, consolide, plans);
+        return new PlanTresorerieDto(periode, aujourdHui, horizon, certainesSeulement, colonnes, groupes, plans);
+    }
+
+    private static String devise(SoldeBanque banque) {
+        return banque.devise() != null ? banque.devise() : DEVISE_PAR_DEFAUT;
+    }
+
+    /** Catégorie d'un flux, « Autres » quand sa source n'appartient à aucune catégorie dans ce sens. */
+    private static String nomCategorie(FluxPrevu f) {
+        String categorie = CategoriesTresorerie.categorie(f.source(), f.sens());
+        return categorie != null ? categorie : AUTRES;
     }
 
     /**
@@ -118,7 +144,7 @@ final class PlanTresorerieCalculateur {
         return colonnes;
     }
 
-    private static PlanBanqueDto plan(Long banqueId, String nom, BigDecimal soldeActuel, BigDecimal plafond,
+    private static PlanBanqueDto plan(Long banqueId, String nom, String devise, BigDecimal soldeActuel, BigDecimal plafond,
                                       List<FluxPrevu> flux, List<ColonnePlanDto> colonnes,
                                       LocalDate aujourdHui, LocalDate horizon) {
         int n = colonnes.size();
@@ -129,10 +155,9 @@ final class PlanTresorerieCalculateur {
 
         for (FluxPrevu f : flux) {
             int colonne = indexColonne(colonnes, f.date(), aujourdHui);
-            String categorie = CategoriesTresorerie.categorie(f.source(), f.sens());
             boolean encaissement = f.sens() == Type.ENCAISSEMENT;
             Map<String, BigDecimal[]> lignes = encaissement ? encaissements : decaissements;
-            BigDecimal[] ligne = lignes.computeIfAbsent(categorie != null ? categorie : AUTRES, k -> zeros(n));
+            BigDecimal[] ligne = lignes.computeIfAbsent(nomCategorie(f), k -> zeros(n));
             ligne[colonne] = ligne[colonne].add(f.montant());
 
             LocalDate jour = f.date().isAfter(aujourdHui) ? f.date() : aujourdHui;
@@ -167,26 +192,37 @@ final class PlanTresorerieCalculateur {
         BigDecimal besoin = pointBas.disponibilite().signum() < 0 ? pointBas.disponibilite().negate() : BigDecimal.ZERO;
 
         return new PlanBanqueDto(
-                banqueId, nom, soldeActuel, plafond,
+                banqueId, nom, devise, soldeActuel, plafond,
                 lignes(encaissements), lignes(decaissements),
                 Arrays.asList(totalEnc), Arrays.asList(totalDec),
                 soldesFin, disponibilites,
                 solde, solde.add(plafond),
-                pointBas, besoin, joursNegatifs, courbe, plusGrosMouvements(flux));
+                pointBas, besoin, joursNegatifs, courbe, plusGrosMouvements(flux), partEstimee(flux));
+    }
+
+    /** Part, en pourcentage entier, des flux (en valeur absolue) qui sont des estimations ; 0 sans flux. */
+    private static int partEstimee(List<FluxPrevu> flux) {
+        BigDecimal total = flux.stream().map(FluxPrevu::montant).reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (total.signum() == 0) {
+            return 0;
+        }
+        BigDecimal estime = flux.stream().filter(f -> !CategoriesTresorerie.certain(nomCategorie(f)))
+                .map(FluxPrevu::montant).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return estime.multiply(BigDecimal.valueOf(100)).divide(total, 0, RoundingMode.HALF_UP).intValue();
     }
 
     /** Les cinq plus gros flux à venir : somme par (jour, catégorie, sens), du plus gros au plus petit. */
     private static List<MouvementDto> plusGrosMouvements(List<FluxPrevu> flux) {
         Map<List<Object>, BigDecimal> sommes = new LinkedHashMap<>();
         for (FluxPrevu f : flux) {
-            String categorie = CategoriesTresorerie.categorie(f.source(), f.sens());
-            sommes.merge(List.of(f.date(), categorie != null ? categorie : AUTRES, f.sens()), f.montant(), BigDecimal::add);
+            sommes.merge(List.of(f.date(), nomCategorie(f), f.sens()), f.montant(), BigDecimal::add);
         }
         return sommes.entrySet().stream()
                 .map(e -> {
                     String categorie = (String) e.getKey().get(1);
                     return new MouvementDto((LocalDate) e.getKey().get(0), categorie,
-                            CategoriesTresorerie.famille(categorie), ((Type) e.getKey().get(2)).name(), e.getValue());
+                            CategoriesTresorerie.famille(categorie), CategoriesTresorerie.certain(categorie),
+                            ((Type) e.getKey().get(2)).name(), e.getValue());
                 })
                 .sorted(Comparator.comparing(MouvementDto::montant).reversed().thenComparing(MouvementDto::date))
                 .limit(5)
@@ -218,7 +254,8 @@ final class PlanTresorerieCalculateur {
             BigDecimal total = Arrays.stream(montants).reduce(BigDecimal.ZERO, BigDecimal::add);
             boolean vide = Arrays.stream(montants).allMatch(m -> m.signum() == 0);
             if (!vide) {
-                resultat.add(new LignePlanDto(CategoriesTresorerie.famille(categorie), categorie, Arrays.asList(montants), total));
+                resultat.add(new LignePlanDto(CategoriesTresorerie.famille(categorie), categorie,
+                        CategoriesTresorerie.certain(categorie), Arrays.asList(montants), total));
             }
         });
         return resultat;

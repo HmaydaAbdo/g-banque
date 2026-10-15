@@ -11,7 +11,7 @@ describe('PositionGridComponent', () => {
     const plan = planTresorerieFixture();
     fixture.componentRef.setInput('colonnes', plan.colonnes);
     fixture.componentRef.setInput('banques', plan.banques);
-    fixture.componentRef.setInput('groupe', plan.consolide);
+    fixture.componentRef.setInput('groupes', plan.groupes);
     fixture.detectChanges();
     const choix: CaseChoisie[] = [];
     fixture.componentInstance.choisir.subscribe(c => choix.push(c));
@@ -41,9 +41,9 @@ describe('PositionGridComponent', () => {
     el.querySelector<HTMLElement>('tbody tr:first-child .grille__nom')!.click();
     el.querySelectorAll<HTMLElement>('tfoot .cellule')[0].click();
     expect(choix).toEqual([
-      { banqueId: 1, colonne: 'P1' },
-      { banqueId: 1, colonne: '' },
-      { banqueId: null, colonne: 'ECHU' },
+      { banqueId: 1, colonne: 'P1', devise: 'MAD' },
+      { banqueId: 1, colonne: '', devise: 'MAD' },
+      { banqueId: null, colonne: 'ECHU', devise: 'MAD' },
     ]);
   });
 
@@ -52,5 +52,17 @@ describe('PositionGridComponent', () => {
     expect(el.querySelector('.cellule')!.getAttribute('aria-label')).toContain('Banque A');
     expect(el.querySelector('.cellule--danger')!.getAttribute('aria-label')).toContain('besoin de financement');
     expect(el.querySelector('svg polyline')!.getAttribute('points')).toBeTruthy();
+  });
+
+  it('plusieurs devises : un total par devise, le code de devise sur chaque banque, jamais de total mélangé', () => {
+    const { fixture, el, plan } = creer();
+    fixture.componentRef.setInput('banques', [plan.banques[0], { ...plan.banques[1], devise: 'EUR' }]);
+    fixture.componentRef.setInput('groupes', [plan.groupes[0], { ...planBanqueFixture(null, 'Banques en EUR', 0), devise: 'EUR' }]);
+    fixture.detectChanges();
+
+    expect(el.querySelectorAll('tfoot tr').length).toBe(2);
+    expect(el.querySelector('tfoot')!.textContent).toContain('Total MAD');
+    expect(el.querySelector('tfoot')!.textContent).toContain('Total EUR');
+    expect(el.querySelectorAll('tbody .devise').length).toBe(2);
   });
 });

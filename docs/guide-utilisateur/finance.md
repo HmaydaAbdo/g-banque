@@ -93,11 +93,19 @@ Cet écran répond à une question : **« est-ce que ça va ? »** Il part du so
 y ajoute les entrées et sorties encore à valider, jusqu'à la fin du mois ou du trimestre. Il ne modifie
 aucune opération : c'est une consultation, toujours à jour.
 
-### Choisir l'horizon
+### Régler l'écran
 
-En haut à droite, **Fin de mois | Fin de trimestre**. Fin de mois = une colonne par semaine (lundi au
-dimanche) ; fin de trimestre = une colonne par mois. Le choix est gardé si vous revenez sur l'écran avec
-« précédent » ou si vous rechargez la page. **Exporter PDF** télécharge le plan de toutes les banques.
+En haut à droite, deux choix et un bouton :
+- **Fin de mois | Fin de trimestre** : fin de mois = une colonne par semaine (lundi au dimanche) ; fin de
+  trimestre = une colonne par mois ;
+- **Tous les flux | Certains seulement** : « Certains seulement » enlève du plan toutes les estimations
+  (voir « Certain ou estimé » plus bas) pour ne garder que ce qui est acquis ;
+- **Exporter PDF** : télécharge le plan (le total de la devise affichée).
+
+Vos réglages sont gardés si vous revenez sur l'écran avec « précédent » ou si vous rechargez la page.
+Sous le verdict, une ligne de **pastilles** rappelle tout ce qui s'écarte de la vue par défaut (horizon,
+flux, vue, devise, banque ouverte, période choisie) : cliquez sur la croix d'une pastille pour la
+retirer, ou sur **Tout réinitialiser** pour revenir à la vue par défaut.
 
 ### Lire le verdict
 
@@ -109,7 +117,9 @@ Le grand bandeau du haut résume la situation du groupe en une phrase :
 
 ### Lire la grille « Position par banque »
 
-Une ligne par banque, une colonne par période, et en bas le **Total groupe**. Chaque case affiche le
+Une ligne par banque, une colonne par période, et en bas le total (**Total groupe**, ou un **total par
+devise** si vos banques n'ont pas toutes la même devise : on n'additionne jamais des euros et des
+dirhams, et le code de devise s'affiche alors à côté de chaque banque). Chaque case affiche le
 **solde à la fin de la période** (abrégé : « 1,2 M » = 1,2 million ; « 123 k » = 123 mille ; passez la
 souris dessus pour le montant exact) et une couleur :
 - **vert** : le solde est positif ;
@@ -119,6 +129,24 @@ souris dessus pour le montant exact) et une couleur :
 La colonne **Solde actuel** est celle d'aujourd'hui. La colonne **À ce jour** (« en retard ») regroupe les
 opérations dont la date est atteinte mais qui n'ont pas encore été validées ; elles sont comptées dès
 aujourd'hui. À droite, une mini-courbe montre la trajectoire de la banque.
+
+### Lire par source plutôt que par banque
+
+Au-dessus de la grille, **Par banque | Par source**. « Par source » remplace la grille par le plan du
+total : les flux regroupés par famille, puis par source (leasing, CMT, chèques…), période par période.
+S'il y a plusieurs devises, un sélecteur permet de choisir la devise à lire. « Par banque » ramène à la
+grille.
+
+### Certain ou estimé
+
+Chaque source du plan est soit **certaine**, soit **estimée** (étiquette « estimé » à côté de son nom) :
+- **certaines** : les échéanciers (leasing, crédits moyen terme) et les moyens de paiement déjà émis
+  (chèques, LCN, virements, mises à disposition, prélèvements) ;
+- **estimées** : les agios, commissions, frais bancaires, impôts et taxes, préfinancement, factoring,
+  droits constatés, décomptes, restitutions, impayées, provisions et opérations erronées — des montants
+  calculés ou anticipés, qui peuvent changer.
+Dans le panneau d'une banque, **Part estimée** donne la part des flux qui sont des estimations. Le choix
+« Certains seulement » montre ce que serait la situation sans elles.
 
 ### Aller de la case à la cause
 
@@ -130,29 +158,33 @@ Il contient :
   rouges, point bas en rouge) ;
 - **Ce qui compose la période** : choisissez une période avec les pastilles (celle du point bas est
   ouverte d'office, ou celle de la case cliquée) pour voir les opérations à valider qui la composent, les
-  plus grosses d'abord. Le lien en bas ouvre les encours de la banque pour les vérifier ou les valider.
-  Cette liste n'existe pas pour le total du groupe ;
+  plus grosses d'abord. **Cliquez sur une opération** pour l'ouvrir dans les encours de la banque : vous
+  arrivez directement sur le **mois en cours**, sans choisir de période de rapprochement, déjà filtré sur
+  le type de l'opération et sur les dates de la période. Le lien « Voir les N opérations » ouvre les
+  encours du mois avec le même horizon. Le bouton « précédent » du navigateur vous ramène à la trésorerie
+  telle que vous l'avez quittée. Cette liste n'existe pas pour un total ;
 - **Les plus gros mouvements** : les cinq plus gros flux à venir ; un décaissement le jour du point bas
-  est signalé « cause du point bas » ;
-- **Flux par famille** : le plan de trésorerie de la banque, avec ses catégories regroupées en quatre
-  familles — **Règlements** (chèques, LCN, virements…), **Financements** (leasing, CMT, préfinancement,
-  factoring, droits constatés, agios), **Charges bancaires** (commissions, prélèvements, frais, impôts
-  et taxes) et **Autres**. Cliquez sur une famille pour voir le détail de ses catégories. Les montants
-  négatifs sont en rouge, un montant nul s'affiche « — » ;
+  est signalé « cause du point bas », un montant estimé porte l'étiquette « estimé » ;
+- **Flux par famille et par source** : le plan de trésorerie de la banque, avec ses sources regroupées en
+  quatre familles — **Règlements** (chèques, LCN, virements…), **Financements** (leasing, CMT,
+  préfinancement, factoring, droits constatés, agios), **Charges bancaires** (commissions, prélèvements,
+  frais, impôts et taxes) et **Autres**. Chaque source est visible d'emblée ; cliquez sur une famille pour
+  la replier. Les montants négatifs sont en rouge, un montant nul s'affiche « — » ;
 - le bouton **Exporter le plan en PDF** de cette banque.
 
 Fermez le panneau avec la croix ou en cliquant à côté.
 
 ### Sous la grille
 
-- **Évolution du solde du groupe** : la courbe consolidée de toutes les banques ;
-- **Les plus gros mouvements à venir** pour le groupe.
+- **Évolution du solde** : la courbe du total (de la devise choisie) ;
+- **Les plus gros mouvements à venir** pour ce total.
 
 ### Exporter le plan en PDF
 
-Le fichier contient le plan du périmètre choisi (toutes les banques depuis l'en-tête, une banque depuis
-son panneau) en format paysage, avec en titre le périmètre, l'horizon et sa date, et en bas le point bas,
-la disponibilité au point bas, le besoin de financement et le nombre de jours sous zéro.
+Le fichier contient le plan du périmètre choisi (le total depuis l'en-tête, une banque depuis son
+panneau) en format paysage, avec en titre le périmètre, l'horizon et sa date, la devise, la part
+d'estimations (ou la mention « opérations certaines seulement » si vous avez choisi ce réglage), et en
+bas le point bas, la disponibilité au point bas, le besoin de financement et le nombre de jours sous zéro.
 
 > Le plan ne compte que les opérations saisies dans G-Banque et encore à valider. Une sortie ou une
 > entrée qui n'est pas encore saisie n'y figure pas : pensez à la saisir pour que le plan soit complet.

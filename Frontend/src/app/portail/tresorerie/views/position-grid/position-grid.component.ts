@@ -7,16 +7,20 @@ import { dateCourte, montantCompact } from '../../format';
 /** Situation d'une case : sain, facilité de caisse entamée (solde négatif couvert), ou besoin de financement. */
 export type EtatCase = 'ok' | 'warn' | 'danger';
 
-/** Case de la grille : choix d'une banque (`banqueId` nul = total du groupe) et d'une période. */
+/**
+ * Case de la grille : choix d'une banque et d'une période. `banqueId` nul = le total d'une devise
+ * (`devise` donne laquelle).
+ */
 export interface CaseChoisie {
   banqueId: number | null;
   colonne: string;
+  devise: string;
 }
 
 /**
  * Grille de position de trésorerie : une ligne par banque, une colonne par période, chaque case
- * donnant le solde de fin de période et sa couleur (vert, orange, rouge), puis une ligne « Total
- * groupe ». Une mini-courbe résume la trajectoire de chaque banque. Présentation uniquement : un
+ * donnant le solde de fin de période et sa couleur (vert, orange, rouge), puis une ligne de total par
+ * devise (on n'additionne jamais des devises différentes). Une mini-courbe résume la trajectoire de chaque banque. Présentation uniquement : un
  * clic sur le nom, une case ou le total remonte la sélection à l'écran.
  */
 @Component({
@@ -30,14 +34,22 @@ export class PositionGridComponent {
 
   @Input({ required: true }) colonnes: ColonnePlan[] = [];
   @Input({ required: true }) banques: PlanBanque[] = [];
-  @Input({ required: true }) groupe!: PlanBanque;
-  /** Banque dont le panneau est ouvert (surlignée) ; `undefined` si aucune. */
+  /** Un total par devise, le dirham en premier. */
+  @Input({ required: true }) groupes: PlanBanque[] = [];
+  /** Banque dont le panneau est ouvert (surlignée) ; `null` = un total ; `undefined` si aucun panneau. */
   @Input() selection: number | null | undefined;
+  /** Devise du total ouvert (surligné quand `selection` est nul). */
+  @Input() deviseSelection = '';
 
   @Output() choisir = new EventEmitter<CaseChoisie>();
 
   readonly compact = montantCompact;
   readonly date = dateCourte;
+
+  /** Vrai quand la grille mélange plusieurs devises : le code de devise est alors affiché sur chaque banque. */
+  get plusieursDevises(): boolean {
+    return this.groupes.length > 1;
+  }
 
   etat(plan: PlanBanque, colonne: number): EtatCase {
     if (plan.disponibilites[colonne] < 0) {
@@ -64,6 +76,6 @@ export class PositionGridComponent {
     const c = this.colonnes[colonne];
     const etat = this.etat(plan, colonne);
     const statut = etat === 'danger' ? 'besoin de financement' : etat === 'warn' ? 'solde négatif, couvert par la facilité de caisse' : 'sain';
-    return `${plan.banqueNom}, ${c.libelle} : solde ${plan.soldesFin[colonne].toLocaleString('fr-FR')} MAD, ${statut}`;
+    return `${plan.banqueNom}, ${c.libelle} : solde ${plan.soldesFin[colonne].toLocaleString('fr-FR')} ${plan.devise}, ${statut}`;
   }
 }

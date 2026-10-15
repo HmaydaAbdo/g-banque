@@ -24,6 +24,28 @@ describe('verdictDuPlan', () => {
     expect(verdictDuPlan(plan).niveau).toBe('warn');
   });
 
+  it('la devise de la banque est reprise dans la phrase (jamais « MAD » en dur)', () => {
+    const plan = planTresorerieFixture();
+    plan.banques = [{ ...planBanqueFixture(1, 'Banque Euro', 1000), devise: 'EUR' }];
+    expect(verdictDuPlan(plan).titre).toContain('EUR');
+    expect(verdictDuPlan(plan).titre).not.toContain('MAD');
+  });
+
+  it('plusieurs devises : un point bas par devise, jamais additionnées', () => {
+    const plan = planTresorerieFixture();
+    plan.banques = [{ ...planBanqueFixture(1, 'A', 0), joursSoldeNegatif: 0 }];
+    plan.groupes = [planBanqueFixture(null, 'Banques en MAD', 0), { ...planBanqueFixture(null, 'Banques en EUR', 0), devise: 'EUR' }];
+    const v = verdictDuPlan(plan);
+    expect(v.detail).toContain('en MAD');
+    expect(v.detail).toContain('en EUR');
+  });
+
+  it("le plan « certaines seulement » le dit dans le titre", () => {
+    const plan = { ...planTresorerieFixture(), certainesSeulement: true };
+    plan.banques = [{ ...planBanqueFixture(1, 'A', 0), joursSoldeNegatif: 0 }];
+    expect(verdictDuPlan(plan).titre).toContain('opérations certaines');
+  });
+
   it("aucun jour sous zéro : tout va bien jusqu'à l'horizon (vert)", () => {
     const plan = planTresorerieFixture();
     plan.banques = [{ ...planBanqueFixture(1, 'Banque A', 0), joursSoldeNegatif: 0 }];

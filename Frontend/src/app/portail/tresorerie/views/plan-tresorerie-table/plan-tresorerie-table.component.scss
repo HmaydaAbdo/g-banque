@@ -66,6 +66,16 @@
   &__famille { font-weight: var(--weight-medium); }
   &__cat .plan__label { padding-left: var(--space-8); font-weight: var(--weight-regular); color: var(--color-text-secondary); }
 
+  &__estime {
+    margin-left: var(--space-2);
+    padding    : 1px var(--space-2);
+    font-size  : var(--text-2xs);
+    font-style : italic;
+    color      : var(--color-warning-text);
+    background : var(--color-warning-light);
+    border-radius: var(--radius-full);
+  }
+
   &__toggle {
     display    : inline-flex;
     align-items: center;

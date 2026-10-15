@@ -60,7 +60,7 @@ class PlanTresorerieCalculateurTest {
 
     private static PlanBanqueDto planA(String plafond) {
         PlanTresorerieDto plan = PlanTresorerieCalculateur.calculer(PeriodeRecap.FIN_DE_MOIS, AUJOURDHUI,
-                List.of(new SoldeBanque(A, "Banque A", bd("100000"), bd(plafond))), fluxBanqueA());
+                List.of(new SoldeBanque(A, "Banque A", "MAD", bd("100000"), bd(plafond))), fluxBanqueA(), false);
         return plan.banques().get(0);
     }
 
@@ -192,9 +192,9 @@ class PlanTresorerieCalculateurTest {
         flux.add(flux(99L, TransactionSource.CHEQUE, ENCAISSEMENT, "2026-10-16", "1000000"));
 
         PlanTresorerieDto plan = PlanTresorerieCalculateur.calculer(PeriodeRecap.FIN_DE_MOIS, AUJOURDHUI, List.of(
-                new SoldeBanque(A, "Banque A", bd("100000"), bd("50000")),
-                new SoldeBanque(B, "Banque B", bd("10000"), null)), flux);
-        PlanBanqueDto total = plan.consolide();
+                new SoldeBanque(A, "Banque A", "MAD", bd("100000"), bd("50000")),
+                new SoldeBanque(B, "Banque B", "MAD", bd("10000"), null)), flux, false);
+        PlanBanqueDto total = plan.groupes().get(0);
 
         assertThat(total.banqueId()).isNull();
         assertThat(total.soldeActuel()).isEqualByComparingTo("110000");
@@ -207,5 +207,56 @@ class PlanTresorerieCalculateurTest {
         assertThat(total.soldeFinal()).isEqualByComparingTo("43000");
         assertThat(plan.banques()).extracting(PlanBanqueDto::banqueNom).containsExactly("Banque A", "Banque B");
         assertThat(plan.banques().get(1).plafondFC()).isEqualByComparingTo("0");
+    }
+
+    @Test
+    @DisplayName("Les devises ne sont jamais additionnées : un total par devise, le dirham en premier")
+    void totalParDevise() {
+        List<FluxPrevu> flux = List.of(
+                flux(A, TransactionSource.LEASING, DECAISSEMENT, "2026-10-20", "10000"),
+                flux(B, TransactionSource.LEASING, DECAISSEMENT, "2026-10-20", "500"));
+
+        PlanTresorerieDto plan = PlanTresorerieCalculateur.calculer(PeriodeRecap.FIN_DE_MOIS, AUJOURDHUI, List.of(
+                new SoldeBanque(B, "Banque Euro", "EUR", bd("2000"), bd("0")),
+                new SoldeBanque(A, "Banque Dirham", "MAD", bd("100000"), bd("0"))), flux, false);
+
+        assertThat(plan.groupes()).extracting(PlanBanqueDto::devise).containsExactly("MAD", "EUR");
+        assertThat(plan.groupes()).extracting(PlanBanqueDto::banqueNom).containsExactly("Banques en MAD", "Banques en EUR");
+        assertThat(plan.groupes().get(0).soldeFinal()).isEqualByComparingTo("90000");
+        assertThat(plan.groupes().get(1).soldeFinal()).isEqualByComparingTo("1500");
+    }
+
+    @Test
+    @DisplayName("Une seule devise : le total s'appelle « Toutes les banques »")
+    void uneSeuleDevise() {
+        assertThat(PlanTresorerieCalculateur.calculer(PeriodeRecap.FIN_DE_MOIS, AUJOURDHUI,
+                List.of(new SoldeBanque(A, "Banque A", null, bd("1"), bd("0"))), List.of(), false)
+                .groupes().get(0).banqueNom()).isEqualTo("Toutes les banques");
+    }
+
+    @Test
+    @DisplayName("Opérations certaines seulement : les estimations (agios, hors catégorie) sont écartées")
+    void certainesSeulement() {
+        PlanTresorerieDto plan = PlanTresorerieCalculateur.calculer(PeriodeRecap.FIN_DE_MOIS, AUJOURDHUI,
+                List.of(new SoldeBanque(A, "Banque A", "MAD", bd("100000"), bd("50000"))), fluxBanqueA(), true);
+        PlanBanqueDto a = plan.banques().get(0);
+
+        assertThat(plan.certainesSeulement()).isTrue();
+        assertThat(a.decaissements()).extracting(LignePlanDto::categorie).containsExactly("Leasing", "REGLEMENT FRNS");
+        // 100 000 + 5 000 − 30 000 − 120 000 + 80 000 : ni les agios (10 000) ni le décompte (2 000)
+        assertThat(a.soldeFinal()).isEqualByComparingTo("35000");
+        assertThat(a.partEstimee()).isZero();
+    }
+
+    @Test
+    @DisplayName("Chaque ligne et chaque mouvement sont marqués certains ou estimés ; part estimée en pourcentage")
+    void certainOuEstime() {
+        PlanBanqueDto a = planA("50000");
+
+        assertThat(a.decaissements()).extracting(l -> l.categorie() + "=" + l.certain())
+                .containsExactly("Leasing=true", "REGLEMENT FRNS=true", "Agios=false", "Autres=false");
+        // flux : 30 000 + 5 000 + 120 000 + 80 000 certains ; 2 000 + 10 000 estimés → 12 000 / 247 000
+        assertThat(a.partEstimee()).isEqualTo(5);
+        assertThat(a.plusGrosMouvements().get(0).certain()).isTrue();
     }
 }

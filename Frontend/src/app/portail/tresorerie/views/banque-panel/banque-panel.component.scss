@@ -60,9 +60,12 @@
 .ops { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
 
 .op {
-  display: flex; align-items: center; gap: var(--space-3);
-  padding: var(--space-2) var(--space-3); font-size: var(--text-sm);
-  border-bottom: 1px solid var(--color-border);
+  display: flex; align-items: center; gap: var(--space-3); width: 100%;
+  padding: var(--space-2) var(--space-3); font: inherit; font-size: var(--text-sm); text-align: left;
+  color: inherit; background: none; border: 0; border-bottom: 1px solid var(--color-border); cursor: pointer;
+  &:hover { background: var(--color-surface-2); }
+  &:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: -2px; }
+  &__go { color: var(--color-text-muted); }
 
   &__date { width: 3rem; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
   &__corps { display: flex; flex-direction: column; flex: 1; min-width: 0; }
@@ -72,8 +75,9 @@
 }
 
 .voir {
-  display: inline-flex; align-items: center; gap: var(--space-2); margin-top: var(--space-3);
-  font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--color-primary); text-decoration: none;
+  display: inline-flex; align-items: center; gap: var(--space-2); margin-top: var(--space-3); padding: 0;
+  font: inherit; font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--color-primary);
+  background: none; border: 0; cursor: pointer;
   &:hover { text-decoration: underline; }
 }
 

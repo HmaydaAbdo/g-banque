@@ -63,7 +63,7 @@ public class TresoreriePrevisionnelleServiceImpl implements ITresoreriePrevision
     }
 
     @Override
-    public PlanTresorerieDto getPlan(PeriodeRecap periode) {
+    public PlanTresorerieDto getPlan(PeriodeRecap periode, boolean certainesSeulement) {
         LocalDate aujourdHui = LocalDate.now();
         LocalDate horizon = periode.horizon(aujourdHui);
         log.debug("Plan de trésorerie — horizon {} ({})", periode, horizon);
@@ -73,7 +73,8 @@ public class TresoreriePrevisionnelleServiceImpl implements ITresoreriePrevision
         Map<Long, BigDecimal> soldes = transactionService.computeBalancesForBanks(ids);
         Map<Long, BigDecimal> plafonds = ligneFonctionnelleService.getActivePlafondsForBanks(ids, FC_CODE);
         List<SoldeBanque> banques = entites.stream()
-                .map(b -> new SoldeBanque(b.getId(), b.getNom(), soldes.get(b.getId()), plafonds.get(b.getId())))
+                .map(b -> new SoldeBanque(b.getId(), b.getNom(), b.getDevise() != null ? b.getDevise().name() : null,
+                        soldes.get(b.getId()), plafonds.get(b.getId())))
                 .toList();
 
         List<FluxPrevu> flux = encoursRepository.sumParBanqueSourceSensEtDateUntil(horizon).stream()
@@ -81,22 +82,31 @@ public class TresoreriePrevisionnelleServiceImpl implements ITresoreriePrevision
                         (Long) row[0], (TransactionSource) row[1], (Type) row[2], (LocalDate) row[3], (BigDecimal) row[4]))
                 .toList();
 
-        return PlanTresorerieCalculateur.calculer(periode, aujourdHui, banques, flux);
+        return PlanTresorerieCalculateur.calculer(periode, aujourdHui, banques, flux, certainesSeulement);
     }
 
     @Override
-    public byte[] exportPdf(PeriodeRecap periode, Long banqueId) {
-        PlanTresorerieDto plan = getPlan(periode);
-        PlanBanqueDto perimetre = banqueId == null
-                ? plan.consolide()
-                : plan.banques().stream()
-                        .filter(b -> Objects.equals(b.banqueId(), banqueId))
-                        .findFirst()
-                        .orElseThrow(() -> new ResourceNotFoundException("Banque introuvable : " + banqueId));
+    public byte[] exportPdf(PeriodeRecap periode, boolean certainesSeulement, Long banqueId, String devise) {
+        PlanTresorerieDto plan = getPlan(periode, certainesSeulement);
+        PlanBanqueDto perimetre = banqueId == null ? groupe(plan, devise) : plan.banques().stream()
+                .filter(b -> Objects.equals(b.banqueId(), banqueId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Banque introuvable : " + banqueId));
         try {
             return pdfReportService.generatePlanTresorerieReport(plan, perimetre);
         } catch (DocumentException e) {
             throw new IllegalStateException("Erreur lors de la génération du PDF du plan de trésorerie.", e);
         }
+    }
+
+    /** Total de la devise demandée ; sans devise, le premier (le dirham quand il existe). */
+    private PlanBanqueDto groupe(PlanTresorerieDto plan, String devise) {
+        if (devise == null || devise.isBlank()) {
+            return plan.groupes().get(0);
+        }
+        return plan.groupes().stream()
+                .filter(g -> g.devise().equalsIgnoreCase(devise))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Devise introuvable : " + devise));
     }
 }

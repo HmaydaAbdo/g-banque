@@ -4,6 +4,7 @@ import { testProviders } from '../../../../../testing/test-providers';
 import { BanquePanelComponent } from './banque-panel.component';
 import { CourbeTresorerieComponent } from '../courbe-tresorerie/courbe-tresorerie.component';
 import { planBanqueFixture, planTresorerieFixture } from '../../testing/plan-tresorerie.fixture';
+import { EncoursNavigationService } from '../../services/encours-navigation.service';
 
 describe('BanquePanelComponent', () => {
   let http: HttpTestingController;
@@ -70,5 +71,26 @@ describe('BanquePanelComponent', () => {
     fixture.componentInstance.colonneChange.subscribe(c => choix.push(c));
     fixture.componentInstance.choisirPeriode('ECHU');
     expect(choix).toEqual(['ECHU']);
+  });
+
+  it("ouvrir une opération emmène ses filtres : source, dates de la période et horizon, vers le mois en cours", () => {
+    const fixture = creer(1);
+    http.expectOne(operations).flush({ totalDebit: 0, totalCredit: 0, page: { content: [], page: { totalElements: 0 } } });
+    const ouvrir = spyOn(TestBed.inject(EncoursNavigationService), 'ouvrirRecapitulatif');
+    fixture.componentRef.setInput('horizon', 'FIN_DE_TRIMESTRE');
+
+    fixture.componentInstance.ouvrirEncours({ source: 'LEASING' } as never);
+    expect(ouvrir).toHaveBeenCalledWith(1, { horizon: 'FIN_DE_TRIMESTRE', source: 'LEASING', du: '2026-11-01', au: '2026-11-30' });
+
+    fixture.componentInstance.ouvrirEncours();
+    expect(ouvrir).toHaveBeenCalledWith(1, { horizon: 'FIN_DE_TRIMESTRE' });
+  });
+
+  it('affiche la part estimée des flux', () => {
+    const fixture = creer(1);
+    http.expectOne(operations).flush({ totalDebit: 0, totalCredit: 0, page: { content: [], page: { totalElements: 0 } } });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Part estimée');
+    expect(fixture.nativeElement.textContent).toContain('25 %');
   });
 });

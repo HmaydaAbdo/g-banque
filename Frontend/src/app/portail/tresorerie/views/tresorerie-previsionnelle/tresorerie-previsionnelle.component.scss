@@ -46,7 +46,43 @@
 
   &__tete { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: var(--space-2); }
   &__titre { margin: 0 0 var(--space-3); font-size: var(--text-section); font-weight: var(--weight-semibold); }
-  &__aide { font-size: var(--text-xs); color: var(--color-text-muted); }
+  &__aide { margin: 0 0 var(--space-3); font-size: var(--text-xs); color: var(--color-text-muted); }
+  &__outils { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+}
+
+// ── Réglages actifs, rappelés en pastilles ─────────────────────────────
+.filtres {
+  display    : flex;
+  flex-wrap  : wrap;
+  align-items: center;
+  gap        : var(--space-2);
+  font-size  : var(--text-sm);
+  color      : var(--color-text-secondary);
+
+  &__titre, &__vide { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--text-xs); }
+  &__reset {
+    padding: 0; font: inherit; font-size: var(--text-xs); color: var(--color-primary);
+    background: none; border: 0; cursor: pointer; text-decoration: underline;
+  }
+}
+
+.filtre {
+  display      : inline-flex;
+  align-items  : center;
+  gap          : var(--space-1);
+  padding      : var(--space-1) var(--space-2) var(--space-1) var(--space-3);
+  font-size    : var(--text-xs);
+  color        : var(--color-primary-text);
+  background   : var(--color-primary-light);
+  border-radius: var(--radius-full);
+
+  &__nom { font-weight: var(--weight-semibold); }
+  &__retirer {
+    display: inline-flex; align-items: center; padding: var(--space-1); font-size: var(--text-2xs);
+    color: inherit; background: none; border: 0; border-radius: var(--radius-full); cursor: pointer;
+    &:hover { background: var(--color-surface); }
+    &:focus-visible { outline: 2px solid var(--color-border-focus); }
+  }
 }
 
 @media (max-width: 900px) {

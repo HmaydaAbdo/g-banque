@@ -1058,12 +1058,21 @@ opérations en attente d'une banque donnée, quel que soit leur type d'origine.
   au lieu de le découvrir sur le relevé.
 - **Une vue de position par banque** : une grille banques × périodes, colorée en vert, orange ou rouge,
   qui permet de repérer le compte en difficulté d'un coup d'œil, avec le total du groupe et une
-  mini-courbe de tendance par banque.
+  mini-courbe de tendance par banque. Les devises ne sont jamais additionnées : un total par devise, pour
+  qu'aucun chiffre ne soit faux.
+- **Du certain et de l'estimé, clairement séparés** : chaque montant du plan est marqué comme certain
+  (échéanciers, moyens de paiement émis) ou estimé (agios, commissions, provisions…), la part d'estimation
+  est donnée, et un seul clic montre la situation avec les seules opérations certaines. La direction sait
+  quelle confiance accorder au chiffre.
+- **Une lecture par source** : à côté de la lecture par banque, les flux se regroupent par famille puis par
+  source (leasing, CMT, chèques…), pour voir ce qui pèse le plus sur la trésorerie.
 - **De l'alerte à la cause en deux clics** : un clic sur une banque ou sur une case ouvre son détail — le
   point bas et son jour, le besoin de financement au-delà de la facilité de caisse, les opérations qui
   composent la période et les plus gros mouvements à venir, dont celui qui crée le point bas. Les flux
   sont regroupés en quatre familles lisibles (règlements, financements, charges bancaires, autres) ; le
-  plan s'exporte en PDF pour les comités et les échanges avec les banques.
+  plan s'exporte en PDF pour les comités et les échanges avec les banques. D'un clic sur une opération, on
+  arrive dans les encours du mois en cours, déjà filtrés sur ce qu'on regardait : plus de ressaisie ni de
+  choix de période, et les réglages de l'écran sont rappelés et conservés.
 
 ---
 

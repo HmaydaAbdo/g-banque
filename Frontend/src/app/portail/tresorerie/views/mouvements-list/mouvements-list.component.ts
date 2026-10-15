@@ -22,6 +22,7 @@ import { Mouvement } from '../../dtos/PlanTresorerie';
             <span class="mouvement__corps">
               <span class="mouvement__cat">{{ m.categorie }}
                 @if (m.date === dateCause && m.sens === 'DECAISSEMENT') { <span class="cause">cause du point bas</span> }
+                @if (!m.certain) { <span class="estime">estimé</span> }
               </span>
               <span class="mouvement__sub">{{ m.famille }} · {{ m.date | date:'EEE dd/MM' }}</span>
             </span>
@@ -44,6 +45,8 @@ import { Mouvement } from '../../dtos/PlanTresorerie';
     .sortie { color: var(--color-danger); }
     .cause { font-size: var(--text-2xs); font-weight: var(--weight-semibold); padding: 1px var(--space-2);
       color: var(--color-danger-text); background: var(--color-danger-light); border-radius: var(--radius-full); }
+    .estime { font-size: var(--text-2xs); font-style: italic; padding: 1px var(--space-2);
+      color: var(--color-warning-text); background: var(--color-warning-light); border-radius: var(--radius-full); }
     .vide { margin: 0; font-size: var(--text-sm); color: var(--color-text-muted); }
   `]
 })

@@ -12,8 +12,8 @@ export function montantCompact(valeur: number): string {
 }
 
 /** Montant complet pour les bulles d'aide et les phrases : « 1 234 567,89 MAD ». */
-export function montantComplet(valeur: number): string {
-  return `${valeur.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD`;
+export function montantComplet(valeur: number, devise = 'MAD'): string {
+  return `${valeur.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${devise}`;
 }
 
 /** Date ISO (yyyy-MM-dd) en « 20/11/2026 », sans passer par un fuseau horaire. */

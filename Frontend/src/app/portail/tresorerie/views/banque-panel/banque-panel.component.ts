@@ -1,15 +1,17 @@
 import { Component, EventEmitter, inject, Input, OnChanges, OnDestroy, Output } from '@angular/core';
 import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { SidebarModule } from 'primeng/sidebar';
 import { SkeletonModule } from 'primeng/skeleton';
+import { TooltipModule } from 'primeng/tooltip';
 import { RecapService } from '../../../etatsDesEncours/views/lesEncours/recap/services/recap.service';
 import { RecaputilatifItem } from '../../../etatsDesEncours/views/lesEncours/recap/dtos/RecaputilatifItem';
 import { TransactionSourceLabels } from '../../../transactions/dtos/TransactionSource';
 import { parseLocalDate } from '../../../global/types/date.utils';
+import { HorizonPrevision } from '../../../etatsDesEncours/views/lesEncours/recap/dtos/PeriodeRecap';
 import { ColonnePlan, PlanBanque } from '../../dtos/PlanTresorerie';
+import { EncoursNavigationService } from '../../services/encours-navigation.service';
 import { CourbeTresorerieComponent } from '../courbe-tresorerie/courbe-tresorerie.component';
 import { PlanTresorerieTableComponent } from '../plan-tresorerie-table/plan-tresorerie-table.component';
 import { MouvementsListComponent } from '../mouvements-list/mouvements-list.component';
@@ -26,7 +28,7 @@ const OPERATIONS_AFFICHEES = 8;
   selector: 'app-banque-panel',
   standalone: true,
   imports: [
-    DatePipe, DecimalPipe, NgClass, RouterLink, ButtonModule, SidebarModule, SkeletonModule,
+    DatePipe, DecimalPipe, NgClass, ButtonModule, SidebarModule, SkeletonModule, TooltipModule,
     CourbeTresorerieComponent, PlanTresorerieTableComponent, MouvementsListComponent,
   ],
   templateUrl: './banque-panel.component.html',
@@ -35,6 +37,7 @@ const OPERATIONS_AFFICHEES = 8;
 export class BanquePanelComponent implements OnChanges, OnDestroy {
 
   private readonly recapService = inject(RecapService);
+  private readonly navigation = inject(EncoursNavigationService);
   private chargement?: Subscription;
 
   @Input({ required: true }) plan!: PlanBanque;
@@ -42,6 +45,8 @@ export class BanquePanelComponent implements OnChanges, OnDestroy {
   /** Code de la période choisie ; vide = celle qui contient le point bas. */
   @Input() colonne = '';
   @Input() exportEnCours = false;
+  /** Horizon de l'écran, emporté dans l'adresse quand on ouvre les encours. */
+  @Input() horizon: HorizonPrevision = 'FIN_DE_MOIS';
 
   @Output() fermer = new EventEmitter<void>();
   @Output() colonneChange = new EventEmitter<string>();
@@ -79,6 +84,21 @@ export class BanquePanelComponent implements OnChanges, OnDestroy {
 
   choisirPeriode(code: string): void {
     this.colonneChange.emit(code);
+  }
+
+  /**
+   * Ouvre le Récapitulatif de la banque sur son mois en cours, avec les filtres de l'écran : l'horizon
+   * et, pour une opération, sa source et les dates de la période affichée.
+   */
+  ouvrirEncours(operation?: RecaputilatifItem): void {
+    const periode = this.periode;
+    const filtres: Record<string, string | null> = { horizon: this.horizon === 'FIN_DE_TRIMESTRE' ? this.horizon : null };
+    if (operation) {
+      filtres['source'] = operation.source;
+      filtres['du'] = periode.du;
+      filtres['au'] = periode.au;
+    }
+    this.navigation.ouvrirRecapitulatif(this.plan.banqueId!, filtres);
   }
 
   /** Date d'une opération : son échéance si elle en a une, sinon son émission. */

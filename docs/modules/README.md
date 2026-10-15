@@ -5200,6 +5200,21 @@ zéro sinon.
 **Jours sous zéro** : nombre de jours, entre aujourd'hui et l'horizon, où le solde prévu en fin de
 journée est négatif (couvert ou non par la facilité de caisse).
 
+**Certain ou estimé** : chaque catégorie du plan est soit **certaine**, soit une **estimation**.
+- *Certaines* : les échéanciers contractuels (leasing, crédits moyen terme) et les moyens de paiement déjà
+  émis (chèques, LCN, virements, virements internationaux, mises à disposition, prélèvements) ;
+- *Estimées* : tout le reste — agios, commissions, frais bancaires, impôts et taxes, préfinancement,
+  factoring, droits constatés, décomptes, restitutions, impayées, provisions, opérations erronées et la
+  ligne « Autres » — parce que ces montants sont calculés, anticipés ou susceptibles de changer.
+Le plan complet les compte toutes ; le choix **Certains seulement** recalcule le plan sans les
+estimations, pour voir ce qui est acquis. Dans le plan, une source estimée porte l'étiquette « estimé » ;
+la **part estimée** donne, en pourcentage, la part des flux (en valeur absolue) qui sont des estimations.
+
+**Devises** : une banque a sa devise (dirham, euro, dollar…). Le plan n'additionne **jamais** des devises
+différentes : il présente un total par devise, le dirham en premier, et la grille affiche le code de
+devise sur chaque banque quand il y en a plusieurs. Aucune conversion n'est faite : le montant d'une
+banque en euros reste en euros.
+
 ---
 
 ### 3. Parcours utilisateur
@@ -5218,8 +5233,8 @@ journée est négatif (couvert ou non par la facilité de caisse).
 [1] Tableau de bord Finance (ou menu latéral « Trésorerie prévisionnelle »)
         ↓ menu latéral « Trésorerie prévisionnelle » (toutes les banques) ou icône de courbe d'une carte (cette banque)
 [4] Écran « Trésorerie prévisionnelle » : plan de trésorerie jusqu'à la fin du mois ou du trimestre
-        ↓ lien « Voir les opérations » du panneau d'une banque
-[2] Écran de sélection du rapprochement actif de cette banque
+        ↓ clic sur une opération, ou « Voir les opérations », du panneau d'une banque
+[3] Récapitulatifs de cette banque, directement sur son mois en cours, déjà filtré (sans l'écran [2])
 ```
 
 ---
@@ -5375,43 +5390,57 @@ l'ouvre directement sur cette banque, avec le même horizon.
 Écran à part, hors de l'espace de travail d'une banque (menu latéral « Trésorerie prévisionnelle »,
 bouton « Trésorerie » ou icône de courbe du tableau de bord). Il répond d'abord à « est-ce que ça va ? »,
 puis permet de descendre jusqu'à l'opération. De haut en bas :
-- **En-tête** : sélecteur d'horizon **Fin de mois / Fin de trimestre** et bouton **Exporter PDF**
-  (toutes les banques consolidées). L'horizon est conservé dans l'adresse ;
+- **En-tête** : sélecteur d'horizon **Fin de mois / Fin de trimestre**, sélecteur de flux **Tous les flux /
+  Certains seulement** (voir « Certain ou estimé » en section 2) et bouton **Exporter PDF** ;
 - **Verdict** : un grand bandeau coloré d'une phrase, qui regarde le groupe entier et nomme la banque la
   plus touchée :
-  - **rouge** — « Il manquera X MAD le JJ/MM/AAAA sur la banque Y », même en utilisant toute la facilité
-    de caisse (si plusieurs banques sont concernées, leur nombre est rappelé) ;
+  - **rouge** — « Il manquera X <devise> le JJ/MM/AAAA sur la banque Y », même en utilisant toute la
+    facilité de caisse (si plusieurs banques sont concernées, leur nombre est rappelé) ;
   - **orange** — la banque Y passera sous zéro, mais la facilité de caisse la couvre (point bas et jour
     indiqués) ;
-  - **vert** — « Tout va bien jusqu'au JJ/MM/AAAA », avec le point bas du groupe.
+  - **vert** — « Tout va bien jusqu'au JJ/MM/AAAA », avec le point bas du groupe (un point bas par devise
+    quand il y en a plusieurs). Avec « Certains seulement », le titre le rappelle.
   La date du calcul et l'horizon sont rappelés à droite ;
-- **Position par banque** : une grille avec **une ligne par banque**, **une colonne par période** et une
-  ligne **Total groupe**. Chaque case donne le **solde de fin de période** et sa couleur : **vert** (solde
-  positif), **orange** (solde négatif couvert par la facilité de caisse), **rouge** (besoin de
-  financement, la facilité de caisse ne suffit pas). Les montants sont abrégés (« 1,2 M », « 123 k ») ; le
-  survol donne le montant exact. Une colonne « Solde actuel » précède les périodes, et une mini-courbe de
-  tendance termine chaque ligne ;
-- **Évolution du solde du groupe** : courbe jour par jour du solde consolidé, avec la ligne du zéro, la
+- **Réglages actifs** : une ligne rappelle ce qui s'écarte de la vue par défaut (fin de mois, tous les
+  flux, par banque, aucun panneau ouvert), sous forme de pastilles — horizon, flux, vue, devise, banque
+  ouverte, période choisie — chacune avec une croix pour la retirer, et un lien **Tout réinitialiser**.
+  Sans réglage particulier, la ligne indique « Vue par défaut » ;
+- **Position par banque** (vue « Par banque », par défaut) : une grille avec **une ligne par banque**, **une
+  colonne par période** et une ligne de **total par devise** (« Total groupe » quand toutes les banques
+  ont la même devise ; sinon « Total MAD », « Total EUR »… et le code de devise apparaît sur chaque
+  banque). Chaque case donne le **solde de fin de période** et sa couleur : **vert** (solde positif),
+  **orange** (solde négatif couvert par la facilité de caisse), **rouge** (besoin de financement). Les
+  montants sont abrégés (« 1,2 M », « 123 k ») ; le survol donne le montant exact. Une colonne « Solde
+  actuel » précède les périodes, et une mini-courbe de tendance termine chaque ligne ;
+- **Flux par source** (vue « Par source ») : à la place de la grille, le plan du total d'une devise, avec
+  les flux regroupés par famille puis par source (leasing, CMT, chèques…) ; un sélecteur de devise
+  apparaît s'il y en a plusieurs. Un clic sur « Par banque » ramène à la grille ;
+- **Évolution du solde** : courbe jour par jour du total (de la devise choisie), avec la ligne du zéro, la
   limite de la facilité de caisse et le point bas signalé ;
 - **Les plus gros mouvements à venir** : les cinq plus gros flux (encaissements et décaissements), avec
   leur date, leur catégorie et leur famille ; un décaissement qui tombe le jour du point bas est signalé
-  « cause du point bas ».
+  « cause du point bas », et un montant estimé porte l'étiquette « estimé ».
 
-**Panneau de détail.** Un clic sur une banque, sur une case ou sur le total ouvre, à droite, le détail :
+**Panneau de détail.** Un clic sur une banque, sur une case ou sur un total ouvre, à droite, le détail :
 - le nom, un repère de situation (« Situation saine », « Sous zéro, couvert », « Besoin de
-  financement »), et quatre indicateurs — solde actuel, solde prévu, point bas (avec son jour), besoin de
-  financement (ou disponibilité minimale quand il n'y en a pas) ;
+  financement »), et cinq indicateurs — solde actuel, solde prévu, point bas (avec son jour), part estimée
+  des flux, besoin de financement (ou disponibilité minimale quand il n'y en a pas) ;
 - la courbe du solde ;
 - **Ce qui compose la période** (une banque seulement) : des pastilles pour choisir la période — celle du
   point bas est ouverte d'office, ou celle de la case cliquée — et les opérations à valider de cette
-  période, les plus grosses d'abord (date, libellé, type d'opération, montant signé) ; un lien ouvre les
-  encours de la banque. Les opérations sont celles du Récapitulatif, sur la même période ;
+  période, les plus grosses d'abord (date, libellé, type d'opération, montant signé). Les opérations sont
+  celles du Récapitulatif, sur la même période ;
+- **Accès direct aux encours** : un clic sur une opération ouvre le Récapitulatif de la banque **sur son mois
+  en cours**, sans passer par le choix de la période de rapprochement, déjà filtré sur le type de
+  l'opération et sur les dates de la période, avec le même horizon ; le lien « Voir les N opérations »
+  l'ouvre avec le même horizon, sans autre filtre. L'écran Récapitulatifs affiche ces filtres, et
+  « précédent » ramène à la trésorerie telle qu'on l'a quittée ;
 - **Les plus gros mouvements** de la banque ;
-- **Flux par famille** : le plan de trésorerie de la banque, avec les catégories regroupées en quatre
-  familles dépliables (voir ci-dessous) ;
+- **Flux par famille et par source** : le plan de trésorerie de la banque, avec les catégories regroupées
+  en quatre familles (voir ci-dessous), chaque source visible d'emblée ; une famille se replie d'un clic ;
 - le bouton **Exporter le plan en PDF** de cette banque.
-Le total du groupe ouvre le même panneau, sans la liste d'opérations (il n'existe pas de liste unique
-pour tout le groupe).
+Le total d'une devise ouvre le même panneau, sans la liste d'opérations (il n'existe pas de liste unique
+pour toutes les banques).
 
 **Familles de catégories.** Chaque catégorie du plan appartient à une famille :
 - **Règlements** : règlements fournisseurs (chèques, LCN, virements, mises à disposition) et virements
@@ -5420,11 +5449,12 @@ pour tout le groupe).
 - **Charges bancaires** : commissions, prélèvements, frais bancaires, impôts et taxes ;
 - **Autres** : décomptes, restitutions, impayées, opérations erronées, provisions, et toute opération qui
   n'entre dans aucune catégorie.
-La ligne d'une famille additionne ses catégories ; au départ les familles sont repliées.
+La ligne d'une famille additionne ses catégories.
 
-**Exporter PDF** télécharge le plan du périmètre choisi (toutes banques, ou une banque depuis son panneau)
-en A4 paysage : même tableau, titre avec le périmètre, l'horizon et sa date, puis le point bas, la
-disponibilité au point bas, le besoin de financement et le nombre de jours sous zéro.
+**Exporter PDF** télécharge le plan du périmètre choisi (le total d'une devise depuis l'en-tête, une banque
+depuis son panneau) en A4 paysage : même tableau, titre avec le périmètre, l'horizon et sa date, la devise,
+la part d'estimations (ou la mention « opérations certaines seulement »), puis le point bas, la disponibilité
+au point bas, le besoin de financement et le nombre de jours sous zéro.
 
 ---
 
@@ -5489,6 +5519,16 @@ disponibilité au point bas, le besoin de financement et le nombre de jours sous
 20. Le besoin de financement est −(solde au point bas + facilité de caisse) quand ce total est négatif,
     zéro sinon. Le verdict de l'écran Trésorerie prévisionnelle passe au rouge dès qu'il est positif pour une banque.
 21. Le plan est un calcul de consultation : il n'enregistre rien et ne modifie aucune opération.
+22. Les devises ne sont jamais additionnées ni converties : un total par devise, le dirham en premier. Sans
+    banque, le plan présente un total en dirham vide.
+23. Une catégorie est certaine ou estimée (voir section 2). « Certains seulement » exclut les estimations
+    du plan, du verdict et du PDF ; la part estimée est calculée sur les flux retenus.
+24. Depuis la Trésorerie prévisionnelle, l'accès aux encours d'une banque ouvre toujours son rapprochement
+    « En cours » (le mois en cours), sans demander la période, même s'il existe aussi une clôture
+    provisoire. Les filtres de la trésorerie (horizon, type d'opération, dates de la période) sont repris
+    par l'écran Récapitulatifs et y sont affichés.
+25. Les réglages de l'écran (horizon, flux, vue, devise, banque ouverte, période) sont conservés dans
+    l'adresse : le bouton « précédent » les retrouve, et ils sont rappelés en pastilles.
 
 ---
 

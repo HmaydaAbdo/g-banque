@@ -44,23 +44,29 @@ public class TresoreriePrevisionnelleController {
     @Operation(summary = "Plan de trésorerie prévisionnel",
             description = "periode=FIN_DE_MOIS (défaut) : colonnes par semaine jusqu'à la fin du mois ; " +
                     "periode=FIN_DE_TRIMESTRE : colonnes par mois jusqu'à la fin du trimestre civil. " +
-                    "La première colonne regroupe les encours non validés dont la date est atteinte.")
+                    "La première colonne regroupe les encours non validés dont la date est atteinte. " +
+                    "Un total par devise (jamais de devises additionnées). " +
+                    "certainesSeulement=true écarte les estimations (agios, commissions, provisions…).")
     @GetMapping
     public ResponseEntity<PlanTresorerieDto> getPlan(
-            @RequestParam(defaultValue = "FIN_DE_MOIS") PeriodeRecap periode) {
-        return ResponseEntity.ok(tresorerieService.getPlan(periode));
+            @RequestParam(defaultValue = "FIN_DE_MOIS") PeriodeRecap periode,
+            @RequestParam(defaultValue = "false") boolean certainesSeulement) {
+        return ResponseEntity.ok(tresorerieService.getPlan(periode, certainesSeulement));
     }
 
     @Operation(summary = "Exporter le plan de trésorerie prévisionnel (PDF)",
-            description = "Sans banqueId : toutes les banques consolidées. Avec banqueId : la banque demandée.")
+            description = "Avec banqueId : la banque demandée. Sans banqueId : le total de la devise demandée " +
+                    "(le dirham par défaut).")
     @ApiResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_PDF_VALUE))
     @ApiResponse(responseCode = "404", description = "Banque introuvable")
     @GetMapping("/pdf")
     public ResponseEntity<byte[]> exportPdf(
             @RequestParam(defaultValue = "FIN_DE_MOIS") PeriodeRecap periode,
-            @RequestParam(required = false) Long banqueId) {
+            @RequestParam(defaultValue = "false") boolean certainesSeulement,
+            @RequestParam(required = false) Long banqueId,
+            @RequestParam(required = false) String devise) {
 
-        byte[] pdf = tresorerieService.exportPdf(periode, banqueId);
+        byte[] pdf = tresorerieService.exportPdf(periode, certainesSeulement, banqueId, devise);
         String filename = "Plan_Tresorerie_" + (banqueId == null ? "toutes_banques" : "banque_" + banqueId)
                 + "_" + periode.name().toLowerCase() + "_"
                 + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".pdf";

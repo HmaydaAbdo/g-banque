@@ -6,6 +6,7 @@ import staport.finance.gBanque.transactions.enums.TransactionSource;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static staport.finance.gBanque.transactions.enums.TransactionSource.*;
 
@@ -89,7 +90,22 @@ final class CategoriesTresorerie {
             Map.entry("Frais Bancaires", FAMILLE_CHARGES),
             Map.entry("Impôts & Taxes", FAMILLE_CHARGES));
 
+    /**
+     * Catégories dont les montants sont **certains** : échéanciers contractuels (leasing, crédits moyen
+     * terme) et moyens de paiement déjà émis (chèques, LCN, virements, mises à disposition,
+     * prélèvements). Tout le reste (agios, commissions, frais, impôts, préfinancement, factoring, droits
+     * constatés, décomptes, restitutions, impayées, provisions, opérations erronées) est une
+     * **estimation** : calculé, anticipé ou encore susceptible de changer.
+     */
+    private static final Set<String> CERTAINES = Set.of(
+            "Leasing", "CMT", "REGLEMENT FRNS", "Virement International", "Prélèvement");
+
     private CategoriesTresorerie() {
+    }
+
+    /** Vrai si les montants de la catégorie sont certains (voir {@link #CERTAINES}). */
+    static boolean certain(String categorie) {
+        return CERTAINES.contains(categorie);
     }
 
     /** Famille d'une catégorie ; tout ce qui n'est pas listé (décomptes, anomalies, provisions…) va dans « Autres ». */

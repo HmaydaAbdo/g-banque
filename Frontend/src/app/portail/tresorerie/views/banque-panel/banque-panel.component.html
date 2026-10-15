@@ -22,6 +22,9 @@
         <span class="indic__val" [class.neg]="plan.soldeFinal < 0">{{ plan.soldeFinal | number:'1.2-2' }}</span></div>
       <div class="indic"><span class="indic__label">Point bas · {{ plan.pointBas.date | date:'dd/MM' }}</span>
         <span class="indic__val" [class.neg]="plan.pointBas.solde < 0">{{ plan.pointBas.solde | number:'1.2-2' }}</span></div>
+      <div class="indic" pTooltip="Part des flux qui sont des estimations (agios, commissions, provisions…)">
+        <span class="indic__label">Part estimée</span>
+        <span class="indic__val">{{ plan.partEstimee }} %</span></div>
       <div class="indic indic--{{ plan.besoinFinancement > 0 ? 'danger' : 'ok' }}">
         <span class="indic__label">{{ plan.besoinFinancement > 0 ? 'Besoin de financement' : 'Disponibilité minimale' }}</span>
         <span class="indic__val" [class.neg]="plan.besoinFinancement > 0">
@@ -53,22 +56,26 @@
         } @else {
           <ul class="ops">
             @for (o of operations; track o.source + o.id) {
-              <li class="op">
-                <span class="op__date">{{ dateDe(o) | date:'dd/MM' }}</span>
-                <span class="op__corps">
-                  <span class="op__lib">{{ o.libelle || '—' }}</span>
-                  <span class="op__src">{{ source[o.source] }}</span>
-                </span>
-                <span class="op__montant" [class.sortie]="+o.debit > 0" [class.entree]="+o.credit > 0">
-                  {{ +o.debit > 0 ? '−' + (+o.debit | number:'1.2-2') : '+' + (+o.credit | number:'1.2-2') }}
-                </span>
+              <li>
+                <button type="button" class="op" (click)="ouvrirEncours(o)"
+                        [attr.aria-label]="'Ouvrir ' + (o.libelle || 'cette opération') + ' dans les encours'">
+                  <span class="op__date">{{ dateDe(o) | date:'dd/MM' }}</span>
+                  <span class="op__corps">
+                    <span class="op__lib">{{ o.libelle || '—' }}</span>
+                    <span class="op__src">{{ source[o.source] }}</span>
+                  </span>
+                  <span class="op__montant" [class.sortie]="+o.debit > 0" [class.entree]="+o.credit > 0">
+                    {{ +o.debit > 0 ? '−' + (+o.debit | number:'1.2-2') : '+' + (+o.credit | number:'1.2-2') }}
+                  </span>
+                  <i class="pi pi-angle-right op__go" aria-hidden="true"></i>
+                </button>
               </li>
             }
           </ul>
-          <a class="voir" [routerLink]="['/portail/etats-des-encours', plan.banqueId, 'select']">
-            {{ totalOperations > operations.length ? 'Voir les ' + totalOperations + ' opérations' : 'Ouvrir les encours' }}
+          <button type="button" class="voir" (click)="ouvrirEncours()">
+            {{ totalOperations > operations.length ? 'Voir les ' + totalOperations + ' opérations' : 'Ouvrir les encours du mois' }}
             <i class="pi pi-arrow-right" aria-hidden="true"></i>
-          </a>
+          </button>
         }
       </section>
     }

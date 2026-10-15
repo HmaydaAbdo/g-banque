@@ -15,12 +15,15 @@ export interface LigneAffichee {
   valeurs: number[];
   total: number;
   parent?: string;
+  /** Pour une catégorie : faux = montant estimé (agios, commissions, provisions…), vrai = certain. */
+  certain?: boolean;
 }
 
 /**
  * Plan de trésorerie d'une banque : une colonne par période, des lignes regroupées par famille
- * (Règlements, Financements, Charges bancaires, Autres) que l'on déplie pour voir les catégories,
- * encadrées par le solde de début, les totaux, le solde de fin et la disponibilité.
+ * (Règlements, Financements, Charges bancaires, Autres) puis par source (Leasing, CMT, Chèques…),
+ * encadrées par le solde de début, les totaux, le solde de fin et la disponibilité. Les familles sont
+ * dépliées pour montrer chaque source ; une source estimée porte l'étiquette « estimé ».
  */
 @Component({
   selector: 'app-plan-tresorerie-table',
@@ -35,24 +38,24 @@ export class PlanTresorerieTableComponent implements OnChanges {
   @Input({ required: true }) plan!: PlanBanque;
 
   lignes: LigneAffichee[] = [];
-  /** Familles dépliées ; tout est replié au départ pour ne montrer que l'essentiel. */
-  private readonly ouvertes = new Set<string>();
+  /** Familles repliées par l'utilisateur ; tout est déplié au départ pour voir chaque source. */
+  private readonly repliees = new Set<string>();
 
   ngOnChanges(): void {
     this.lignes = this.plan ? construireLignes(this.plan) : [];
   }
 
   visible(l: LigneAffichee): boolean {
-    return l.type !== 'categorie' || this.ouvertes.has(l.parent!);
+    return l.type !== 'categorie' || !this.repliees.has(l.parent!);
   }
 
   ouverte(cle: string): boolean {
-    return this.ouvertes.has(cle);
+    return !this.repliees.has(cle);
   }
 
   basculer(cle: string): void {
-    if (!this.ouvertes.delete(cle)) {
-      this.ouvertes.add(cle);
+    if (!this.repliees.delete(cle)) {
+      this.repliees.add(cle);
     }
   }
 }
@@ -73,6 +76,7 @@ function sectionParFamille(prefixe: string, titre: string, lignes: LignePlan[], 
     resultat.push({ cle, libelle: famille, type: 'famille', valeurs, total: somme(valeurs) });
     membres.forEach(m => resultat.push({
       cle: `${cle}:${m.categorie}`, libelle: m.categorie, type: 'categorie', valeurs: m.montants, total: m.total, parent: cle,
+      certain: m.certain,
     }));
   }
   return resultat;

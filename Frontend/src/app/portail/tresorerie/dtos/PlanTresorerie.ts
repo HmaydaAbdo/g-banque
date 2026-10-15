@@ -18,6 +18,8 @@ export interface ColonnePlan {
 export interface LignePlan {
   famille: string;
   categorie: string;
+  /** Vrai pour un montant certain (échéancier, moyen de paiement émis), faux pour une estimation. */
+  certain: boolean;
   montants: number[];
   total: number;
 }
@@ -27,6 +29,7 @@ export interface Mouvement {
   date: string;
   categorie: string;
   famille: string;
+  certain: boolean;
   sens: 'ENCAISSEMENT' | 'DECAISSEMENT';
   montant: number;
 }
@@ -46,6 +49,8 @@ export interface PointBas {
 export interface PlanBanque {
   banqueId: number | null;
   banqueNom: string;
+  /** Devise de la banque, ou de toutes les banques d'un total (jamais de devises additionnées). */
+  devise: string;
   soldeActuel: number;
   plafondFC: number;
   encaissements: LignePlan[];
@@ -65,13 +70,18 @@ export interface PlanBanque {
   courbe: SoldeJour[];
   /** Les cinq plus gros flux à venir, du plus gros au plus petit. */
   plusGrosMouvements: Mouvement[];
+  /** Part des flux (en %) qui sont des estimations plutôt que des montants certains. */
+  partEstimee: number;
 }
 
 export interface PlanTresorerie {
   periode: PeriodeRecap;
   dateCalcul: string;
   dateHorizon: string;
+  /** Vrai quand le plan ne compte que les opérations certaines. */
+  certainesSeulement: boolean;
   colonnes: ColonnePlan[];
-  consolide: PlanBanque;
+  /** Un total par devise présente, le dirham en premier. */
+  groupes: PlanBanque[];
   banques: PlanBanque[];
 }

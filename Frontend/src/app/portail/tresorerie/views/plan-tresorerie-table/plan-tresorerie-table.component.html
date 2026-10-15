@@ -30,6 +30,9 @@
                 </button>
               } @else {
                 {{ l.libelle }}
+                @if (l.type === 'categorie' && l.certain === false) {
+                  <span class="plan__estime" pTooltip="Montant estimé : calculé ou anticipé, il peut changer" tooltipPosition="right">estimé</span>
+                }
               }
             </th>
             @for (v of l.valeurs; track $index) {

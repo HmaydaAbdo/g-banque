@@ -727,7 +727,8 @@ public class StaportPdfReportService {
      */
     public byte[] generatePlanTresorerieReport(PlanTresorerieDto plan, PlanBanqueDto perimetre) throws DocumentException {
         String reportTitle = "Plan de trésorerie prévisionnel — " + perimetre.banqueNom() + " — "
-                + plan.periode().libelle() + " (" + DATETIME_FORMATTER.format(plan.dateHorizon()) + ")";
+                + plan.periode().libelle() + " (" + DATETIME_FORMATTER.format(plan.dateHorizon()) + ")"
+                + (plan.certainesSeulement() ? " — opérations certaines seulement" : "");
         List<ColonnePlanDto> colonnes = plan.colonnes();
         int n = colonnes.size();
 
@@ -737,8 +738,11 @@ public class StaportPdfReportService {
                 title.setAlignment(Element.ALIGN_CENTER);
                 document.add(Chunk.NEWLINE);
                 document.add(title);
-                Paragraph sub = new Paragraph("Calculé le " + DATETIME_FORMATTER.format(plan.dateCalcul())
-                        + " à partir du solde actuel et des opérations non encore validées", PLAN_FONT);
+                Paragraph sub = new Paragraph("Montants en " + perimetre.devise() + " — calculé le "
+                        + DATETIME_FORMATTER.format(plan.dateCalcul())
+                        + " à partir du solde actuel et des opérations non encore validées"
+                        + (plan.certainesSeulement() ? " (estimations écartées)"
+                                : " — dont " + perimetre.partEstimee() + " % d'estimations"), PLAN_FONT);
                 sub.setAlignment(Element.ALIGN_CENTER);
                 sub.setSpacingAfter(10);
                 document.add(sub);
