@@ -1,4 +1,4 @@
-// Bandeau d'état : carte dont la bordure et le voyant suivent la situation (vert, orange, rouge).
+// Total groupe : carte dont le liseré et le voyant suivent la situation du total (vert, orange, rouge).
 .etat {
   --teinte: var(--color-success);
   position: relative; overflow: hidden; padding: var(--space-6);
@@ -12,10 +12,15 @@
   &--danger { --teinte: var(--color-danger); }
 
   &__tete { display: flex; align-items: center; gap: var(--space-4); }
-  &__texte { flex: 1; min-width: 0; }
   &__titre { margin: 0; font-size: var(--text-title); font-weight: var(--weight-bold); letter-spacing: var(--tracking-tight); line-height: var(--leading-tight); }
-  &__pastilles { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-2) 0 0; padding: 0; list-style: none; }
-  &__meta { margin: 0; flex: none; text-align: right; font-size: var(--text-xs); color: var(--color-text-muted); }
+  &__compte { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+  &__puce {
+    padding: 2px var(--space-3); font-size: var(--text-xs); font-weight: var(--weight-semibold); border-radius: var(--radius-full);
+    &--danger { color: var(--color-danger-text); background: var(--color-danger-light); }
+    &--warn { color: var(--color-warning-text); background: var(--color-warning-light); }
+    &--ok { color: var(--color-success-text); background: var(--color-success-light); }
+  }
+  &__meta { margin: 0 0 0 auto; flex: none; text-align: right; font-size: var(--text-xs); color: var(--color-text-muted); }
 
   &__signal {
     flex: none; width: 0.9rem; height: 0.9rem; background: var(--teinte); border-radius: var(--radius-full);
@@ -46,11 +51,3 @@
 .pos { color: var(--color-success); }
 
 @media (max-width: 720px) { .etat__tete { flex-wrap: wrap; } .etat__meta { text-align: left; } }
-
-.pastille-etat {
-  padding: 2px var(--space-3); font-family: var(--font-mono); font-size: var(--text-xs); font-weight: var(--weight-semibold);
-  border-radius: var(--radius-full); background: var(--color-surface-3); color: var(--color-text-secondary);
-  &--danger { color: var(--color-danger-text); background: var(--color-danger-light); }
-  &--warn { color: var(--color-warning-text); background: var(--color-warning-light); }
-  &--ok { color: var(--color-success-text); background: var(--color-success-light); }
-}

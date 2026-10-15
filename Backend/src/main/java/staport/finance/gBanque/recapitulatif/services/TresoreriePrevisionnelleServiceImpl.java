@@ -49,17 +49,20 @@ public class TresoreriePrevisionnelleServiceImpl implements ITresoreriePrevision
     private final ILigneFonctionnelleService ligneFonctionnelleService;
     private final RecapitulatifEncoursRepository encoursRepository;
     private final StaportPdfReportService pdfReportService;
+    private final SuiviBesoinService suiviBesoinService;
 
     public TresoreriePrevisionnelleServiceImpl(IBanqueService banqueService,
                                                ITransactionService transactionService,
                                                ILigneFonctionnelleService ligneFonctionnelleService,
                                                RecapitulatifEncoursRepository encoursRepository,
-                                               StaportPdfReportService pdfReportService) {
+                                               StaportPdfReportService pdfReportService,
+                                               SuiviBesoinService suiviBesoinService) {
         this.banqueService = banqueService;
         this.transactionService = transactionService;
         this.ligneFonctionnelleService = ligneFonctionnelleService;
         this.encoursRepository = encoursRepository;
         this.pdfReportService = pdfReportService;
+        this.suiviBesoinService = suiviBesoinService;
     }
 
     @Override
@@ -82,7 +85,10 @@ public class TresoreriePrevisionnelleServiceImpl implements ITresoreriePrevision
                         (Long) row[0], (TransactionSource) row[1], (Type) row[2], (LocalDate) row[3], (BigDecimal) row[4]))
                 .toList();
 
-        return PlanTresorerieCalculateur.calculer(periode, aujourdHui, banques, flux);
+        PlanTresorerieDto plan = PlanTresorerieCalculateur.calculer(periode, aujourdHui, banques, flux);
+        Map<Long, LocalDate> depuis = suiviBesoinService.enBesoinDepuis(periode, aujourdHui, plan.banques());
+        return new PlanTresorerieDto(plan.periode(), plan.dateCalcul(), plan.dateHorizon(), plan.colonnes(), plan.groupes(),
+                plan.banques().stream().map(b -> b.avecBesoinDepuis(depuis.get(b.banqueId()))).toList());
     }
 
     @Override

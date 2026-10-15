@@ -4,6 +4,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { construireCroisement, LigneCroisement } from '../../croisement';
 import { ColonnePlan, PlanBanque } from '../../dtos/PlanTresorerie';
 import { dateCourte, montantCompact } from '../../format';
+import { niveauSituation, trajectoire } from '../../situation';
 
 /** Situation d'une case : sain, facilité de caisse entamée (solde négatif couvert), ou besoin. */
 export type EtatCase = 'ok' | 'warn' | 'danger';
@@ -110,19 +111,7 @@ export class PositionGridComponent implements OnChanges {
     return plan.soldesFin[colonne] < 0 ? 'warn' : 'ok';
   }
 
-  /** Mini-courbe du solde jour par jour, tracée dans une boîte de 80 × 24. */
-  trajectoire(plan: PlanBanque): { points: string; zero: number | null } {
-    const valeurs = plan.courbe.map(p => p.solde);
-    if (valeurs.length < 2) {
-      return { points: '', zero: null };
-    }
-    const min = Math.min(...valeurs);
-    const max = Math.max(...valeurs);
-    const echelle = max === min ? 1 : max - min;
-    const y = (v: number) => 22 - ((v - min) / echelle) * 20;
-    const points = valeurs.map((v, i) => `${((i / (valeurs.length - 1)) * 80).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
-    return { points, zero: min < 0 && max > 0 ? y(0) : null };
-  }
+  readonly trajectoire = trajectoire;
 
   libelleCase(plan: PlanBanque, colonne: number): string {
     const c = this.colonnes[colonne];
@@ -131,7 +120,5 @@ export class PositionGridComponent implements OnChanges {
     return `${plan.banqueNom}, ${c.libelle} : solde ${plan.soldesFin[colonne].toLocaleString('fr-FR')} ${plan.devise}, ${statut}`;
   }
 
-  niveauTendance(plan: PlanBanque): 'ok' | 'warn' | 'danger' {
-    return plan.besoinFinancement > 0 ? 'danger' : plan.joursSoldeNegatif > 0 ? 'warn' : 'ok';
-  }
+  readonly niveauTendance = niveauSituation;
 }

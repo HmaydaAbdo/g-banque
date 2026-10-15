@@ -34,7 +34,7 @@ describe('TresoreriePrevisionnelleComponent', () => {
 
   afterEach(() => http.verify());
 
-  it("charge le plan à l'horizon de l'adresse et affiche console, bandeau d'état et grille, panneau fermé", () => {
+  it("charge le plan à l'horizon de l'adresse et affiche console, total groupe en tête, cartes par banque et grille, panneau fermé", () => {
     const fixture = creer({ horizon: 'FIN_DE_TRIMESTRE' });
     const req = planReq();
     expect(req.request.params.get('periode')).toBe('FIN_DE_TRIMESTRE');
@@ -43,7 +43,10 @@ describe('TresoreriePrevisionnelleComponent', () => {
 
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelectorAll('app-console-filtres').length).toBe(1);
-    expect(el.querySelector('.etat--danger')!.textContent).toContain('Banque A');
+    expect(el.querySelector('app-total-groupe .etat__titre')!.textContent).toContain('Total groupe');
+    // Le total est avant les cartes, la banque en besoin est la première carte
+    expect(el.querySelector('app-total-groupe')!.compareDocumentPosition(el.querySelector('app-cartes-banques')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(Array.from(el.querySelectorAll('.carte-banque__nom')).map(n => n.textContent!.trim())).toEqual(['Banque A', 'Banque B']);
     expect(el.querySelectorAll('app-position-grid').length).toBe(1);
     expect(el.querySelectorAll('.grille tbody .grille__ligne--n1').length).toBe(2);
     expect(el.querySelector('app-banque-panel')).toBeNull();
@@ -171,7 +174,7 @@ describe('TresoreriePrevisionnelleComponent', () => {
     expect(fixture.componentInstance.filtres).toEqual([]);
   });
 
-  it('plusieurs devises : le sélecteur de devise est dans la console et choisit le total du bandeau', () => {
+  it('plusieurs devises : le sélecteur de devise est dans la console et choisit le total affiché', () => {
     const fixture = creer();
     const plan = planTresorerieFixture();
     plan.groupes = [planBanqueFixture(null, 'Banques en MAD', 0), { ...planBanqueFixture(null, 'Banques en EUR', 0), devise: 'EUR' }];

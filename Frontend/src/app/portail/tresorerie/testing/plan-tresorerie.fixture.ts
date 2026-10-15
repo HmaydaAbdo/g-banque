@@ -30,6 +30,7 @@ export function planBanqueFixture(banqueId: number | null, nom: string, besoin =
       { date: '2026-11-20', categorie: 'Leasing', famille: 'Financements', sens: 'DECAISSEMENT', montant: 6000 },
       { date: '2026-10-14', categorie: 'REGLEMENT FRNS', famille: 'Règlements', sens: 'ENCAISSEMENT', montant: 1000 },
     ],
+    enBesoinDepuis: besoin > 0 ? '2026-10-12' : null,
   };
 }
 

@@ -30,15 +30,15 @@
   }
 
   @if (plan; as pl) {
-    @if (verdict; as v) {
-      @if (groupeActif; as total) {
-        <app-bandeau-etat [verdict]="v" [total]="total" [dateCalcul]="pl.dateCalcul" [dateHorizon]="pl.dateHorizon"
-                          [plusieursDevises]="devises.length > 1"/>
-      }
+    @if (groupeActif; as total) {
+      <app-total-groupe [total]="total" [compte]="compte" [dateCalcul]="pl.dateCalcul" [dateHorizon]="pl.dateHorizon"
+                        [plusieursDevises]="devises.length > 1"/>
+      <app-cartes-banques [banques]="banquesDevise" [dateCalcul]="pl.dateCalcul"
+                          [selection]="panneau" (choisir)="ouvrir($event)"/>
     }
 
     <section class="carte">
-      <h2 class="carte__titre">Banques</h2>
+      <h2 class="carte__titre">Banque › Source</h2>
       <app-position-grid [colonnes]="pl.colonnes" [banques]="pl.banques" [groupes]="pl.groupes"
                          [selection]="panneau" [deviseSelection]="panneauDevise" (choisir)="ouvrir($event)"/>
     </section>

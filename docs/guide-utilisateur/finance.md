@@ -109,22 +109,32 @@ La barre en haut de l'écran reste visible quand vous faites défiler la page. E
 
 Vos choix sont gardés si vous revenez sur l'écran avec « précédent » ou si vous rechargez la page.
 
-### Le bandeau d'état
+### Le total groupe
 
-Une carte dont le liseré suit la situation répond à « est-ce que ça va ? » par un titre court et des pastilles :
-- **vert** : « Tout va bien jusqu'au JJ/MM/AAAA », avec le solde le plus bas du groupe ;
-- **orange** : « Facilité de caisse utilisée » : le solde d'une banque passera en négatif, mais la facilité
-  de caisse le couvre ; une pastille par banque concernée ;
-- **rouge** : « Besoin · Banque Y montant le JJ/MM » (et « +N banques » s'il y en a plusieurs) : la facilité
-  de caisse ne suffit pas. Une pastille par banque en besoin donne son montant et son jour. Une facilité de
-  caisse ne couvre que sa propre banque : si le total du groupe reste positif, la pastille « Groupe couvert »
-  apparaît, et un virement depuis une banque excédentaire peut combler le besoin.
+En haut de l'écran, une carte résume le total de la devise choisie. Son liseré est vert, orange ou rouge
+selon la situation du total, et elle indique combien de banques sont **en besoin**, en **facilité utilisée**
+ou **sans souci**. Dessous, cinq indicateurs : **Solde actuel** (avec la facilité de caisse « FC »),
+**Solde prévu** (avec l'écart sur la période), **Solde le plus bas** (et son jour), **Besoin** — ou
+**Disponibilité la plus basse** s'il n'y a pas de besoin — et **Jours à solde négatif**.
 
-Dessous, cinq indicateurs : **Solde actuel**, **Solde prévu** (avec l'écart sur la période), **Solde le
-plus bas** (et le jour où il tombe), **Besoin** — ou **Disponibilité la plus basse** s'il n'y a pas de
-besoin — et **Jours à solde négatif**.
+Attention : une facilité de caisse ne couvre que sa propre banque. Le total du groupe peut être positif
+pendant qu'une banque est en besoin ; c'est dans les cartes ci-dessous qu'il faut regarder.
 
-### La grille « Trésorerie par banque et par source »
+### Les cartes par banque
+
+Une carte par banque, la plus urgente en premier :
+- **rouge, « Besoin »** : le montant qui manque, le jour, et **depuis combien de jours** la banque est en
+  besoin (« depuis 3 j » ; « nouveau » si c'est apparu aujourd'hui). La facilité de caisse ne suffit pas ;
+- **orange, « Facilité de caisse utilisée »** : le solde passe en négatif mais la facilité le couvre ;
+- **vert, « Sans souci »** : le solde le plus bas reste positif. Quand une autre banque est en besoin, un
+  badge **Excédent** montre ce que cette banque peut virer sans toucher à sa facilité de caisse.
+
+Chaque carte donne aussi le solde actuel, le solde prévu, la part de facilité de caisse utilisée (barre et
+pourcentage) et la trajectoire du solde. **Cliquez sur une carte** pour ouvrir le détail de la banque.
+L'ancienneté « depuis N j » se calcule à partir d'un relevé enregistré chaque nuit : elle commence à compter
+dès la première nuit suivant la mise en service.
+
+### La grille « Banque › Source »
 
 Une ligne par banque, une colonne par période. La colonne **échues** regroupe les opérations dont la date
 est déjà atteinte mais qui n'ont pas encore été validées (elles sont comptées dès aujourd'hui).

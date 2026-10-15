@@ -14,12 +14,13 @@ import {
 import { PlanBanque, PlanTresorerie } from '../../dtos/PlanTresorerie';
 import { FiltreActif } from '../../filtre-actif';
 import { TresorerieService } from '../../services/tresorerie.service';
-import { Verdict, verdictDuPlan } from '../../verdict';
-import { BandeauEtatComponent } from '../bandeau-etat/bandeau-etat.component';
+import { compterParSituation, NiveauSituation } from '../../situation';
+import { CartesBanquesComponent } from '../cartes-banques/cartes-banques.component';
 import { BanquePanelComponent } from '../banque-panel/banque-panel.component';
 import { ConsoleFiltresComponent } from '../console-filtres/console-filtres.component';
 import { CourbeTresorerieComponent } from '../courbe-tresorerie/courbe-tresorerie.component';
 import { MouvementsListComponent } from '../mouvements-list/mouvements-list.component';
+import { TotalGroupeComponent } from '../total-groupe/total-groupe.component';
 import { CaseChoisie, PositionGridComponent } from '../position-grid/position-grid.component';
 
 /** Ce que produit le bouton « Exporter PDF » : la banque ouverte, sinon le total d'une devise. */
@@ -30,9 +31,9 @@ export interface PerimetreExport {
 }
 
 /**
- * Trésorerie prévisionnelle : une console qui réunit **tous les filtres et l'export**, un bandeau d'état
- * (verdict et indicateurs), la grille Banque › Source, la courbe et les plus grosses opérations, puis le
- * détail d'une banque dans un panneau latéral.
+ * Trésorerie prévisionnelle : une console qui réunit **tous les filtres et l'export**, le total groupe en
+ * tête, une carte par banque (classées par urgence), la grille Banque › Source, la courbe et les plus grosses
+ * opérations, puis le détail d'une banque dans un panneau latéral.
  *
  * Tous les filtres sont portés par l'adresse (`?horizon=FIN_DE_TRIMESTRE&devise=EUR&banque=3&col=P2`) :
  * l'accueil y mène directement et le retour arrière retrouve la même vue.
@@ -42,7 +43,7 @@ export interface PerimetreExport {
   standalone: true,
   imports: [
     NgClass, RouterLink, BreadcrumbModule, SkeletonModule,
-    ConsoleFiltresComponent, BandeauEtatComponent, PositionGridComponent, BanquePanelComponent,
+    ConsoleFiltresComponent, TotalGroupeComponent, CartesBanquesComponent, PositionGridComponent, BanquePanelComponent,
     CourbeTresorerieComponent, MouvementsListComponent,
   ],
   templateUrl: './tresorerie-previsionnelle.component.html',
@@ -65,7 +66,6 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
   readonly deviseControl = new FormControl<string>('', { nonNullable: true });
 
   plan: PlanTresorerie | null = null;
-  verdict: Verdict | null = null;
   loading = false;
   exporting = false;
 
@@ -106,6 +106,16 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
       return null;
     }
     return this.plan.groupes.find(g => g.devise === this.deviseControl.value) ?? this.plan.groupes[0] ?? null;
+  }
+
+  /** Banques de la devise choisie : celles des cartes et du compte du total. */
+  get banquesDevise(): PlanBanque[] {
+    const devise = this.groupeActif?.devise;
+    return this.plan?.banques.filter(b => b.devise === devise) ?? [];
+  }
+
+  get compte(): Record<NiveauSituation, number> {
+    return compterParSituation(this.banquesDevise);
   }
 
   /** Plan affiché dans le panneau ouvert ; `null` si le panneau est fermé ou la banque inconnue. */
@@ -215,7 +225,6 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
       this.tresorerieService.getPlan(this.horizonControl.value).subscribe({
         next: plan => {
           this.plan = plan;
-          this.verdict = verdictDuPlan(plan);
           this.loading = false;
         },
         error: () => {

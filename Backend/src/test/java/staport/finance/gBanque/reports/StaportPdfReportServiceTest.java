@@ -56,7 +56,7 @@ class StaportPdfReportServiceTest {
                 List.of(new BigDecimal("8000"), new BigDecimal("-1000")),
                 new BigDecimal("-3000"), new BigDecimal("-1000"),
                 new PointBasDto(LocalDate.of(2026, 11, 20), new BigDecimal("-3000"), new BigDecimal("-1000")),
-                new BigDecimal("1000"), 11, List.of(), List.of());
+                new BigDecimal("1000"), 11, List.of(), List.of(), null);
         PlanTresorerieDto plan = new PlanTresorerieDto(PeriodeRecap.FIN_DE_TRIMESTRE, LocalDate.of(2026, 10, 14),
                 LocalDate.of(2026, 12, 31),
                 List.of(new ColonnePlanDto("ECHU", "À ce jour", null, LocalDate.of(2026, 10, 14)),

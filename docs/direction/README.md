@@ -1052,10 +1052,10 @@ opérations en attente d'une banque donnée, quel que soit leur type d'origine.
   construit automatiquement, pour le groupe ou pour une banque, le plan de trésorerie semaine par semaine
   jusqu'à la fin du mois, ou mois par mois jusqu'à la fin du trimestre, à partir des opérations déjà
   saisies dans G-Banque. Il est toujours à jour, sans consolidation manuelle.
-- **Une réponse immédiate : « est-ce que ça va ? »** : dès l'ouverture, une phrase colorée résume la
-  situation du groupe — tout va bien jusqu'à telle date, ou il manquera tel montant tel jour sur telle
-  banque. La direction sait, plusieurs semaines à l'avance, quand et de combien solliciter une banque,
-  au lieu de le découvrir sur le relevé.
+- **Une réponse immédiate : « est-ce que ça va ? »** : dès l'ouverture, le total du groupe et une carte
+  par banque, classées par urgence, montrent qui est en besoin, de combien, pour quel jour et depuis
+  combien de jours, et quelle banque a un excédent pour y répondre. La direction sait, plusieurs semaines
+  à l'avance, quand et de combien solliciter une banque, au lieu de le découvrir sur le relevé.
 - **Une vue de position par banque** : une grille banques × périodes, colorée en vert, orange ou rouge,
   qui permet de repérer le compte en difficulté d'un coup d'œil, avec le total du groupe et une
   mini-courbe de tendance par banque. Les devises ne sont jamais additionnées : un total par devise, pour

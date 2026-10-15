@@ -5391,21 +5391,30 @@ puis permet de descendre jusqu'à l'opération. De haut en bas :
   - **Exporter PDF** : exporte exactement ce que l'on regarde — la banque dont le panneau est ouvert,
     sinon le total de la devise choisie (« Total groupe » ou « Total MAD »…). L'infobulle du bouton
     rappelle le périmètre. C'est le seul bouton d'export de l'écran ;
-- **Bandeau d'état** : une carte dont le liseré suit la situation (vert, orange, rouge) et qui donne, en un
-  titre court et des pastilles, la réponse à « est-ce que ça va ? » pour le groupe entier :
-  - **rouge** — « Besoin · Banque Y montant le JJ/MM [· +N banques] », même en utilisant toute la facilité de
-    caisse **de chaque banque** ; une pastille par banque en besoin (nom, montant, jour). Une facilité de
-    caisse ne couvre que sa propre banque : si le total du groupe reste positif, une pastille « Groupe
-    couvert » le signale ;
-  - **orange** — « Facilité de caisse utilisée · Banque Y » : le solde passera en négatif mais la facilité
-    le couvre ; une pastille par banque concernée (solde le plus bas, jour) ;
-  - **vert** — « Tout va bien jusqu'au JJ/MM/AAAA », avec le solde le plus bas du groupe (un par devise
-    quand il y en a plusieurs).
-  La période (date du calcul → horizon) est rappelée à droite. Dessous, cinq indicateurs du total de la devise
-  choisie : **Solde actuel** (avec la facilité de caisse), **Solde prévu** (avec sa variation sur la
-  période), **Solde le plus bas** (avec son jour), **Besoin** — ou **Disponibilité la plus basse** quand
-  il n'y en a pas — et **Jours à solde négatif** ;
-- **Trésorerie par banque et par source** : une grille **regroupée Banque › Source**, avec une colonne par
+- **Total groupe** (en tête de l'écran) : une carte dont le liseré suit la situation du total de la devise
+  choisie (vert, orange, rouge) et qui donne :
+  - le **nombre de banques par situation** (« 1 en besoin », « 2 facilité utilisée », « 4 sans souci »),
+    sans les situations vides ;
+  - la période (date du calcul → horizon), rappelée à droite ;
+  - cinq indicateurs du total : **Solde actuel** (avec la facilité de caisse), **Solde prévu** (avec sa
+    variation sur la période), **Solde le plus bas** (avec son jour), **Besoin** — ou **Disponibilité la
+    plus basse** quand il n'y en a pas — et **Jours à solde négatif**.
+  Le total ne dit jamais « le groupe est couvert » : une facilité de caisse ne couvre que sa propre banque,
+  le suivi se fait donc banque par banque, dans les cartes ;
+- **Cartes par banque** : une carte par banque de la devise choisie, **classées par urgence** (le plus gros
+  besoin en premier, puis les banques qui utilisent leur facilité de caisse, puis les autres par nom).
+  Chaque carte porte le liseré et l'étiquette de la situation (**Besoin**, **Facilité de caisse utilisée**,
+  **Sans souci**) et affiche :
+  - pour une banque **en besoin** : le montant du besoin, son jour et **depuis combien de jours** la banque
+    est en besoin sans interruption (« depuis 3 j », ou « nouveau » le jour où il apparaît) ;
+  - pour les autres : le solde le plus bas et son jour ;
+  - les soldes **actuel** et **prévu** ; la **part de facilité de caisse utilisée** au solde le plus bas
+    (jauge et pourcentage) ; la trajectoire du solde ;
+  - pour une banque **sans souci**, quand au moins une banque est en besoin, un badge **Excédent** : son
+    solde le plus bas, c'est-à-dire ce qu'elle peut virer sans toucher à sa facilité de caisse ;
+  Un clic sur une carte ouvre le détail de la banque (panneau latéral). Les cartes n'ont aucun bouton de
+  filtre ni d'export : tout est dans la console ;
+- **Banque › Source** : une grille **regroupée Banque › Source**, avec une colonne par
   période (la première, « échues », regroupe les opérations dont la date est atteinte) :
   - une ligne par banque, avec son **solde de fin de période** et sa couleur — **vert** (solde positif),
     **orange** (solde négatif couvert par la facilité de caisse), **rouge** (besoin : la facilité de caisse
@@ -5531,6 +5540,12 @@ besoin et le nombre de jours à solde négatif.
     par l'écran Récapitulatifs et y sont affichés.
 24. Les filtres de l'écran (horizon, devise, banque ouverte, période) sont conservés dans
     l'adresse : le bouton « précédent » les retrouve, et ils sont rappelés en pastilles.
+25. **Ancienneté d'un besoin** : chaque nuit à 03h00 (heure de Casablanca), G-Banque enregistre, pour chaque
+    banque et pour chacun des deux horizons (fin de mois, fin de trimestre), son besoin du jour (zéro si
+    elle est couverte). Une banque en besoin l'est « depuis » le premier jour enregistré après son dernier
+    jour sans besoin ; sans historique, ou si elle n'était pas en besoin la veille, elle est « nouveau »
+    le jour même. L'historique se constitue à partir de la première nuit suivant la mise en service : il ne
+    se reconstitue pas dans le passé.
 
 ---
 

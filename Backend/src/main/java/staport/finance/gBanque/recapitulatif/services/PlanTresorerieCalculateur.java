@@ -193,7 +193,7 @@ final class PlanTresorerieCalculateur {
                 Arrays.asList(totalEnc), Arrays.asList(totalDec),
                 soldesFin, disponibilites,
                 solde, solde.add(plafond),
-                pointBas, besoin, joursNegatifs, courbe, plusGrosMouvements(flux));
+                pointBas, besoin, joursNegatifs, courbe, plusGrosMouvements(flux), null);
     }
 
     /** Les cinq plus gros flux à venir : somme par (jour, catégorie, sens), du plus gros au plus petit. */

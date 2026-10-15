@@ -1,0 +1,68 @@
+// Cartes par banque : cartes standard du design system, liseré de couleur selon la situation.
+.cartes {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: var(--space-3);
+  margin: 0; padding: 0; list-style: none;
+}
+
+.carte-banque {
+  --teinte: var(--color-success);
+  display: flex; flex-direction: column; gap: var(--space-1); width: 100%; height: 100%;
+  padding: var(--space-4); font: inherit; text-align: left; color: var(--color-text-primary);
+  background: var(--color-surface); border: 1px solid var(--color-border); border-left: 4px solid var(--teinte);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-card); cursor: pointer;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+  &:hover { box-shadow: var(--shadow-md); }
+  &:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
+  &--warn { --teinte: var(--color-warning); }
+  &--danger { --teinte: var(--color-danger); }
+  &--sel { border-color: var(--color-primary); border-left-color: var(--teinte); box-shadow: var(--shadow-md); }
+
+  &__tete { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+  &__nom { font-weight: var(--weight-semibold); font-size: var(--text-base); }
+  &__etat {
+    padding: 1px var(--space-2); font-size: var(--text-2xs); font-weight: var(--weight-semibold); white-space: nowrap;
+    border-radius: var(--radius-full);
+    &--ok { color: var(--color-success-text); background: var(--color-success-light); }
+    &--warn { color: var(--color-warning-text); background: var(--color-warning-light); }
+    &--danger { color: var(--color-danger-text); background: var(--color-danger-light); }
+  }
+
+  &__cle {
+    margin-top: var(--space-2); font-family: var(--font-mono); font-size: var(--text-kpi); font-weight: var(--weight-bold);
+    font-variant-numeric: tabular-nums; letter-spacing: var(--tracking-tight);
+    small { margin-left: var(--space-1); font-size: var(--text-xs); font-weight: var(--weight-medium); color: var(--color-text-muted); }
+    &--danger { color: var(--color-danger); }
+    &--warn { color: var(--color-warning-text); }
+  }
+  &__sous { font-size: var(--text-xs); color: var(--color-text-muted); }
+
+  &__soldes {
+    display: flex; gap: var(--space-5); margin-top: var(--space-2); font-family: var(--font-mono); font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+    span { display: flex; flex-direction: column; }
+    small { font-family: var(--font-primary); font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: var(--tracking-wider); color: var(--color-text-muted); }
+  }
+
+  &__excedent {
+    align-self: flex-start; margin-top: var(--space-1); padding: 1px var(--space-2); font-size: var(--text-xs);
+    font-weight: var(--weight-semibold); color: var(--color-primary-text); background: var(--color-primary-light); border-radius: var(--radius-full);
+  }
+}
+
+.jauge {
+  display: block; height: 0.375rem; margin-top: var(--space-2); overflow: hidden; background: var(--color-surface-3); border-radius: var(--radius-full);
+  &__barre {
+    display: block; height: 100%; border-radius: var(--radius-full); background: var(--color-success);
+    &--warn { background: var(--color-warning); }
+    &--danger { background: var(--color-danger); }
+  }
+}
+
+.spark {
+  width: 100%; height: 1.5rem; margin-top: var(--space-2);
+  polyline { stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+  &__zero { stroke: var(--color-border-strong); stroke-width: 1; stroke-dasharray: 3 2; vector-effect: non-scaling-stroke; }
+  &--ok polyline { stroke: var(--color-success); }
+  &--warn polyline { stroke: var(--color-warning); }
+  &--danger polyline { stroke: var(--color-danger); }
+}

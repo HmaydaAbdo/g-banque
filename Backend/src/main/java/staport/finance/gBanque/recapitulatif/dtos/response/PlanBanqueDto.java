@@ -1,6 +1,7 @@
 package staport.finance.gBanque.recapitulatif.dtos.response;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -13,7 +14,8 @@ import java.util.List;
  * (zéro si la disponibilité reste positive). {@code joursSoldeNegatif} compte les jours de la
  * courbe où le solde prévu est négatif. {@code plusGrosMouvements} liste, du plus gros au plus petit,
  * les cinq plus importants flux à venir (encaissements et décaissements confondus). {@code devise}
- * est celle de la banque, ou de toutes les banques d'un total.</p>
+ * est celle de la banque, ou de toutes les banques d'un total. {@code enBesoinDepuis} est le jour depuis lequel
+ * la banque est en besoin sans interruption (null sans besoin, et pour un total).</p>
  */
 public record PlanBanqueDto(
         Long banqueId,
@@ -33,6 +35,14 @@ public record PlanBanqueDto(
         BigDecimal besoinFinancement,
         int joursSoldeNegatif,
         List<SoldeJourDto> courbe,
-        List<MouvementDto> plusGrosMouvements
+        List<MouvementDto> plusGrosMouvements,
+        LocalDate enBesoinDepuis
 ) {
+
+    /** Copie avec le jour depuis lequel la banque est en besoin (renseigné par le service, absent du calcul pur). */
+    public PlanBanqueDto avecBesoinDepuis(LocalDate depuis) {
+        return new PlanBanqueDto(banqueId, banqueNom, devise, soldeActuel, plafondFC, encaissements, decaissements,
+                totalEncaissements, totalDecaissements, soldesFin, disponibilites, soldeFinal, disponibiliteFinale,
+                pointBas, besoinFinancement, joursSoldeNegatif, courbe, plusGrosMouvements, depuis);
+    }
 }

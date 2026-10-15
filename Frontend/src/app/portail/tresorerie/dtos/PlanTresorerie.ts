@@ -67,6 +67,8 @@ export interface PlanBanque {
   courbe: SoldeJour[];
   /** Les cinq plus gros flux à venir, du plus gros au plus petit. */
   plusGrosMouvements: Mouvement[];
+  /** Jour depuis lequel la banque est en besoin sans interruption (nul sans besoin, et pour un total). */
+  enBesoinDepuis: string | null;
 }
 
 export interface PlanTresorerie {
