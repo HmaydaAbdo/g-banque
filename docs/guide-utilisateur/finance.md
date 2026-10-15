@@ -66,9 +66,12 @@ Pour récupérer les données depuis le système de paiement externe :
 ### Télécharger les récapitulatifs PDF
 
 - **Récap global** (toutes banques) : bouton **Récap global** en haut du tableau de bord — rapport
-  consolidé de trésorerie pour l'ensemble des banques. Un écran demande d'abord de choisir la
-  période du rapport : **À ce jour**, **Fin de mois** ou **Fin de trimestre** (le choix est
-  présélectionné sur l'horizon du tableau de bord), puis **Télécharger**. Le titre et les libellés du
+  consolidé de trésorerie pour l'ensemble des banques. La fenêtre « Choisir la période du
+  récapitulatif » présente trois grandes cartes, dont une seule peut être choisie : **À ce jour**,
+  **Fin de mois** ou **Fin de trimestre**. Chaque carte rappelle la date qu'elle recouvre (ex.
+  « Jusqu'au 31 déc. 2026 ») ; la carte choisie se met en évidence avec une coche. Le choix est
+  présélectionné sur l'horizon du tableau de bord ; on peut aussi choisir avec les flèches du clavier.
+  Cliquer sur **Télécharger** lance ensuite le téléchargement. Le titre et les libellés du
   PDF (soldes, disponibilité FC) rappellent la période et sa date ; les opérations en retard non
   encore validées restent toujours incluses.
 - **Récap détaillé** (toutes banques) : bouton **Récap détaillé** en haut du tableau de bord. La partie

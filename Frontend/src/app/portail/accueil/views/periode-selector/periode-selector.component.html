@@ -1,0 +1,19 @@
+<div class="periodes" role="radiogroup" aria-label="Période du récapitulatif">
+  @for (c of choix; track c.value) {
+    <button type="button" role="radio" class="periode"
+            [class.periode--on]="c.value === value"
+            [attr.aria-checked]="c.value === value"
+            [attr.tabindex]="c.value === value || (!value && $first) ? 0 : -1"
+            [disabled]="disabled"
+            (click)="choisir(c.value)"
+            (keydown.arrowRight)="naviguer($event, 1)" (keydown.arrowDown)="naviguer($event, 1)"
+            (keydown.arrowLeft)="naviguer($event, -1)" (keydown.arrowUp)="naviguer($event, -1)">
+      <span class="periode__icon"><i [class]="c.icon" aria-hidden="true"></i></span>
+      <span class="periode__body">
+        <span class="periode__label">{{ c.label }}</span>
+        <span class="periode__date">{{ c.hint }} · {{ fin(c.value) | date:'dd MMM yyyy' }}</span>
+      </span>
+      <span class="periode__check"><i class="pi pi-check" aria-hidden="true"></i></span>
+    </button>
+  }
+</div>

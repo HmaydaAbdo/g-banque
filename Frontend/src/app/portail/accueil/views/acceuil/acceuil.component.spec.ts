@@ -40,7 +40,7 @@ describe('AcceuilComponent', () => {
     component.horizonControl.setValue('FIN_DE_TRIMESTRE');
     component.openRecapGlobalPeriodeModal();
 
-    expect(component.periodeOptions.map(o => o.value)).toEqual(['A_CE_JOUR', 'FIN_DE_MOIS', 'FIN_DE_TRIMESTRE']);
+    expect(component.periodeChoix.map(o => o.value)).toEqual(['A_CE_JOUR', 'FIN_DE_MOIS', 'FIN_DE_TRIMESTRE']);
     expect(component.periodeControl.value).toBe('FIN_DE_TRIMESTRE');
   });
 });

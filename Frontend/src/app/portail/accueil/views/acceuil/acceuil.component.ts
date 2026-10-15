@@ -23,6 +23,7 @@ import {Subscription, throwError} from "rxjs";
 import {FormControl, ReactiveFormsModule} from "@angular/forms";
 import {DialogModule} from "primeng/dialog";
 import {SelectButtonModule} from "primeng/selectbutton";
+import {PeriodeChoix, PeriodeSelectorComponent} from "../periode-selector/periode-selector.component";
 import {DropdownModule} from "primeng/dropdown";
 
 @Component({
@@ -40,7 +41,8 @@ import {DropdownModule} from "primeng/dropdown";
     ReactiveFormsModule,
     DialogModule,
     SelectButtonModule,
-    DropdownModule
+    DropdownModule,
+    PeriodeSelectorComponent
   ],
   templateUrl: './acceuil.component.html',
   styleUrl: './acceuil.component.scss',
@@ -64,10 +66,10 @@ export class AcceuilComponent implements OnInit, OnDestroy {
   // ── Choix de la période du Récap global (retour utilisateur du 31/08/2026) ──
   showRecapGlobalPeriodeModal: boolean = false;
   periodeControl = new FormControl<PeriodeRecap | null>('FIN_DE_MOIS');
-  periodeOptions: { label: string; value: PeriodeRecap }[] = [
-    { label: 'À ce jour', value: 'A_CE_JOUR' },
-    { label: "Fin de mois", value: 'FIN_DE_MOIS' },
-    { label: "Fin de trimestre", value: 'FIN_DE_TRIMESTRE' }
+  readonly periodeChoix: PeriodeChoix[] = [
+    { value: 'A_CE_JOUR', label: 'À ce jour', icon: 'pi pi-calendar', hint: 'Déjà échu ou émis' },
+    { value: 'FIN_DE_MOIS', label: 'Fin de mois', icon: 'pi pi-calendar-plus', hint: "Jusqu'au" },
+    { value: 'FIN_DE_TRIMESTRE', label: 'Fin de trimestre', icon: 'pi pi-chart-line', hint: "Jusqu'au" },
   ];
 
   private banqueService      = inject(BanqueService);

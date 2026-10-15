@@ -5361,8 +5361,9 @@ l'ouvre directement sur cette banque, avec le même horizon.
 #### Téléchargements PDF (depuis le tableau de bord Finance)
 
 - **Récap global** (bouton d'en-tête) : rapport consolidé de trésorerie pour l'ensemble des banques.
-  Un choix de période est demandé avant le téléchargement — **à ce jour**, **fin de mois** ou **fin de
-  trimestre** (présélection : l'horizon du tableau de bord).
+  Un choix de période est demandé avant le téléchargement, dans une fenêtre à trois cartes (un seul
+  choix, chacune rappelant sa date de fin) — **à ce jour**, **fin de mois** ou **fin de trimestre**
+  (présélection : l'horizon du tableau de bord).
 - **Récap détaillé** (bouton d'en-tête) : récapitulatif général détaillé pour l'ensemble des
   banques, jusqu'à l'horizon du tableau de bord. Les catégories à 0,00 pour toutes les banques n'y
   figurent pas.

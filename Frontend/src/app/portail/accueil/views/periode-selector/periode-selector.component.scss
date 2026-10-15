@@ -1,0 +1,95 @@
+.periodes {
+  display       : flex;
+  flex-direction: column;
+  gap           : var(--space-3);
+}
+
+.periode {
+  display      : flex;
+  align-items  : center;
+  gap          : var(--space-4);
+  width        : 100%;
+  padding      : var(--space-4);
+  font         : inherit;
+  text-align   : left;
+  color        : var(--color-text-primary);
+  background   : var(--color-surface);
+  border       : 1.5px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  cursor       : pointer;
+  transition   : border-color var(--duration-fast), box-shadow var(--duration-fast), transform var(--duration-fast), background var(--duration-fast);
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    transform   : translateY(-1px);
+    box-shadow  : var(--shadow-md);
+  }
+
+  &:focus-visible {
+    outline       : 2px solid var(--color-border-focus);
+    outline-offset: 2px;
+  }
+
+  &--on {
+    border-color: var(--color-primary);
+    background  : var(--color-primary-light);
+    box-shadow  : 0 0 0 3px var(--color-primary-glow);
+  }
+
+  &__icon {
+    display        : flex;
+    align-items    : center;
+    justify-content: center;
+    flex           : none;
+    width          : 2.75rem;
+    height         : 2.75rem;
+    font-size      : var(--text-lg);
+    color          : var(--color-primary);
+    background     : var(--color-surface-3);
+    border-radius  : var(--radius-lg);
+  }
+
+  &--on &__icon {
+    color     : var(--color-text-inverse);
+    background: var(--color-primary);
+  }
+
+  &__body {
+    display       : flex;
+    flex-direction: column;
+    gap           : 2px;
+    flex          : 1;
+    min-width     : 0;
+  }
+
+  &__label {
+    font-size  : var(--text-md);
+    font-weight: var(--weight-semibold);
+  }
+
+  &__date {
+    font-size: var(--text-sm);
+    color    : var(--color-text-secondary);
+  }
+
+  &__check {
+    display        : flex;
+    align-items    : center;
+    justify-content: center;
+    flex           : none;
+    width          : 1.5rem;
+    height         : 1.5rem;
+    font-size      : var(--text-xs);
+    color          : var(--color-text-inverse);
+    background     : var(--color-primary);
+    border-radius  : var(--radius-full);
+    opacity        : 0;
+    transform      : scale(0.6);
+    transition     : opacity var(--duration-fast), transform var(--duration-fast);
+  }
+
+  &--on &__check {
+    opacity  : 1;
+    transform: scale(1);
+  }
+}
