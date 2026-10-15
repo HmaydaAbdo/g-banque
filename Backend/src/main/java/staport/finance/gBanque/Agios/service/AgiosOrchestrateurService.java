@@ -193,6 +193,8 @@ public class AgiosOrchestrateurService {
                                 banque, calculateur, t.getTrimestre(), t.getAnnee()) ? 0 : 1;
                     }
 
+                    erreursPeriodes += rattraperPeriodesManquantes(banque, calculateur, aujourdhui);
+
                     if (erreursPeriodes == 0) {
                         succes++;
                     } else {
@@ -211,6 +213,52 @@ public class AgiosOrchestrateurService {
         }
 
         log.info("══════ Fin du calcul quotidien ══════");
+    }
+
+    /**
+     * Rattrapage (décision HMAYDA, 15/10/2026) : crée et calcule les périodes de l'année en cours qui n'existent pas
+     * encore, de la première (janvier, ou 1er trimestre) à la veille de la période courante, pour tous les types.
+     * Le calcul de nuit ne créait jusque-là que la période courante : un mois ou un trimestre passé sans calcul
+     * manuel restait absent (ex. factoring d'avril à août).
+     *
+     * <p>Une période manquante qui se révèle vide (aucun jour avec encours, 0 MAD) n'est pas conservée : les périodes
+     * à zéro sont celles que la migration V12 a retirées. Les périodes existantes, ouvertes ou clôturées, ne sont
+     * jamais touchées ici.</p>
+     *
+     * @return le nombre de périodes en erreur (zéro si tout a abouti)
+     */
+    private int rattraperPeriodesManquantes(Banque banque, AgiosCalculateur calculateur, LocalDate aujourdhui) {
+        TypeAgios type = calculateur.getType();
+        int annee = aujourdhui.getYear();
+        Set<Integer> existantes = agiosTrimestrielRepository
+                .findByBanqueIdAndTypeAgiosOrderByAnneeDescTrimestreDesc(banque.getId(), type).stream()
+                .filter(t -> t.getAnnee() == annee)
+                .map(AgiosTrimestriel::getTrimestre)
+                .collect(Collectors.toSet());
+
+        int erreurs = 0;
+        for (int num = 1; num < periodeActuelle(type, aujourdhui); num++) {
+            if (existantes.contains(num)) {
+                continue;
+            }
+            if (!recalculerPeriodeSansInterrompre(banque, calculateur, num, annee)) {
+                erreurs++;
+            }
+            supprimerSiVide(banque, type, num, annee);
+        }
+        return erreurs;
+    }
+
+    /** Retire une période créée par le rattrapage quand elle ne contient rien (0 jour avec encours, 0 MAD). */
+    private void supprimerSiVide(Banque banque, TypeAgios type, int num, int annee) {
+        agiosTrimestrielRepository
+                .findByTrimestreAndAnneeAndBanqueIdAndTypeAgios(num, annee, banque.getId(), type)
+                .filter(t -> t.getNbJoursCalcules() == 0 && t.getTotalAgiosTTC().signum() == 0)
+                .ifPresent(t -> {
+                    agiosJournalierRepository.deleteAll(agiosJournalierRepository.findByTrimestreId(t.getId()));
+                    agiosTrimestrielRepository.delete(t);
+                    log.info("{} — {} période {}/{} vide : non conservée", type, banque.getNom(), num, annee);
+                });
     }
 
     /**

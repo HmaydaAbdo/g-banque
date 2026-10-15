@@ -3809,9 +3809,11 @@ Si la transaction est annulée (quel qu'en soit le motif), l'agios associé repa
 
 Le calcul tourne automatiquement chaque nuit à 02h00 (heure de Casablanca). Il couvre, pour toutes les banques éligibles, la période en cours (trimestre pour FC/PREFI/DC, mois pour le Factoring) ainsi que toutes les périodes passées encore ouvertes (non clôturées) — ce qui permet de répercuter toute modification de transaction sur les agios correspondants.
 
+**Rattrapage des périodes manquantes de l'année.** Le même traitement crée aussi, pour tous les types, les périodes de l'**année en cours** qui n'existent pas encore, de la première (janvier, ou 1er trimestre) à la veille de la période courante : un mois (Factoring) ou un trimestre passé qui n'a jamais été calculé apparaît donc de lui-même, sans action manuelle. Une période manquante qui se révèle vide (aucun jour avec encours, 0 MAD) n'est pas conservée ; les périodes déjà existantes, ouvertes ou clôturées, ne sont jamais modifiées par ce rattrapage. Il ne remonte pas avant le 1er janvier de l'année en cours.
+
 Chaque période est traitée indépendamment : si le calcul d'une période échoue (par exemple parce que le rapprochement du mois courant n'existe pas encore), les autres périodes ouvertes de la même banque sont tout de même recalculées.
 
-Un recalcul manuel est possible à tout moment : soit pour une banque et une période précise, soit globalement via l'action « Recalculer tout », qui rejoue exactement le même traitement que le calcul nocturne (toutes banques, tous types, toutes périodes ouvertes).
+Un recalcul manuel est possible à tout moment : soit pour une banque et une période précise, soit globalement via l'action « Recalculer tout », qui rejoue exactement le même traitement que le calcul nocturne (toutes banques, tous types, toutes périodes ouvertes, et rattrapage des périodes manquantes de l'année).
 
 #### Périmètre du calcul à une date donnée
 

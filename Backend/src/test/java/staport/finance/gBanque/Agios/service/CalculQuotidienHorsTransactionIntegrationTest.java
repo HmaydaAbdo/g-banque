@@ -31,8 +31,7 @@ class CalculQuotidienHorsTransactionIntegrationTest extends AbstractIntegrationT
     @Test
     @DisplayName("Le calcul quotidien lancé hors transaction calcule les droits constatés, le préfinancement et le factoring")
     void troisTypesCalculesHorsTransaction() {
-        LocalDate debutAnnee = LocalDate.now().withDayOfYear(1);
-        preparerDonnees(debutAnnee);
+        assurerDonnees();
 
         orchestrateur.calculQuotidienAutomatique();
 
@@ -45,6 +44,42 @@ class CalculQuotidienHorsTransactionIntegrationTest extends AbstractIntegrationT
                     Integer.class, BANQUE, type);
             assertThat(lignesJournalieres).as("jours avec agios pour %s", type).isGreaterThan(0);
         }
+    }
+
+    @Test
+    @DisplayName("Le calcul quotidien rattrape les périodes passées de l'année en cours, sans conserver de période vide")
+    void periodesManquantesDeLAnneeRattrapees() {
+        assurerDonnees();
+        orchestrateur.calculQuotidienAutomatique();
+
+        LocalDate aujourdhui = LocalDate.now();
+        int annee = aujourdhui.getYear();
+        int trimestreCourant = (aujourdhui.getMonthValue() - 1) / 3 + 1;
+        assertThat(periodes("FACTORING", annee)).as("factoring : un mois par mois écoulé, courant compris")
+                .hasSize(aujourdhui.getMonthValue());
+        assertThat(periodes("PREFINANCEMENT", annee)).as("préfinancement : un trimestre par trimestre écoulé")
+                .hasSize(trimestreCourant);
+        assertThat(periodes("DROIT_CONSTATE", annee)).hasSize(trimestreCourant);
+
+        Integer vides = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM agios_trimestriel WHERE banque_id = ? AND annee = ? AND nb_jours_calcules = 0 AND total_agios_ttc = 0 "
+                        + "AND NOT (type_agios = 'FACTORING' AND trimestre = ?)",
+                Integer.class, BANQUE, annee, aujourdhui.getMonthValue());
+        assertThat(vides).as("aucune période vide conservée par le rattrapage").isZero();
+    }
+
+    /** Une opération payée au 1er janvier pour chacun des trois types ; préparée une seule fois pour les deux tests. */
+    private void assurerDonnees() {
+        Integer deja = jdbcTemplate.queryForObject("SELECT count(*) FROM banque WHERE id = ?", Integer.class, BANQUE);
+        if (deja == 0) {
+            preparerDonnees(LocalDate.now().withDayOfYear(1));
+        }
+    }
+
+    private java.util.List<Integer> periodes(String type, int annee) {
+        return jdbcTemplate.queryForList(
+                "SELECT trimestre FROM agios_trimestriel WHERE banque_id = ? AND type_agios = ? AND annee = ? ORDER BY trimestre",
+                Integer.class, BANQUE, type, annee);
     }
 
     /**
