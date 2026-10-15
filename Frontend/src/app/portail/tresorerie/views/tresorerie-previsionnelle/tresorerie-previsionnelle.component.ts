@@ -1,53 +1,49 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
-import { DatePipe, NgClass } from '@angular/common';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { NgClass } from '@angular/common';
+import { FormControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { MenuItem } from 'primeng/api';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
-import { ButtonModule } from 'primeng/button';
-import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import {
   finHorizon,
-  HORIZON_OPTIONS,
   HorizonPrevision,
   horizonDepuisParam,
 } from '../../../etatsDesEncours/views/lesEncours/recap/dtos/PeriodeRecap';
-import { OrdreCroisement } from '../../croisement';
 import { PlanBanque, PlanTresorerie } from '../../dtos/PlanTresorerie';
+import { FiltreActif } from '../../filtre-actif';
 import { TresorerieService } from '../../services/tresorerie.service';
 import { Verdict, verdictDuPlan } from '../../verdict';
+import { BandeauEtatComponent } from '../bandeau-etat/bandeau-etat.component';
 import { BanquePanelComponent } from '../banque-panel/banque-panel.component';
+import { ConsoleFiltresComponent } from '../console-filtres/console-filtres.component';
 import { CourbeTresorerieComponent } from '../courbe-tresorerie/courbe-tresorerie.component';
 import { MouvementsListComponent } from '../mouvements-list/mouvements-list.component';
 import { CaseChoisie, PositionGridComponent } from '../position-grid/position-grid.component';
 
-/** Un réglage qui s'écarte de la vue par défaut, montré en pastille avec son bouton de retrait. */
-export interface FiltreActif {
-  cle: string;
+/** Ce que produit le bouton « Exporter PDF » : la banque ouverte, sinon le total d'une devise. */
+export interface PerimetreExport {
+  banqueId: number | null;
+  devise: string;
   libelle: string;
-  valeur: string;
-  retirer: () => void;
 }
 
 /**
- * Trésorerie prévisionnelle : une phrase de verdict, **une seule grille** qui se lit par banque, par
- * source ou les deux (on choisit l'ordre de regroupement, chaque ligne se déplie sur l'autre axe),
- * puis le détail d'une banque dans un panneau latéral.
+ * Trésorerie prévisionnelle : une console qui réunit **tous les filtres et l'export**, un bandeau d'état
+ * (verdict et indicateurs), la grille Banque › Source, la courbe et les plus grosses opérations, puis le
+ * détail d'une banque dans un panneau latéral.
  *
- * Tous les réglages sont portés par l'adresse
- * (`?horizon=FIN_DE_TRIMESTRE&ordre=source&devise=EUR&banque=3&col=P2`) : l'accueil y mène directement,
- * le retour arrière retrouve la même vue, et les réglages qui s'écartent de la vue par défaut sont
- * rappelés en pastilles sous le verdict.
+ * Tous les filtres sont portés par l'adresse (`?horizon=FIN_DE_TRIMESTRE&devise=EUR&banque=3&col=P2`) :
+ * l'accueil y mène directement et le retour arrière retrouve la même vue.
  */
 @Component({
   selector: 'app-tresorerie-previsionnelle',
   standalone: true,
   imports: [
-    DatePipe, NgClass, ReactiveFormsModule, RouterLink,
-    BreadcrumbModule, ButtonModule, SelectButtonModule, SkeletonModule,
-    PositionGridComponent, BanquePanelComponent, CourbeTresorerieComponent, MouvementsListComponent,
+    NgClass, RouterLink, BreadcrumbModule, SkeletonModule,
+    ConsoleFiltresComponent, BandeauEtatComponent, PositionGridComponent, BanquePanelComponent,
+    CourbeTresorerieComponent, MouvementsListComponent,
   ],
   templateUrl: './tresorerie-previsionnelle.component.html',
   styleUrl: './tresorerie-previsionnelle.component.scss'
@@ -63,16 +59,9 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
     { icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' },
     { label: 'Trésorerie prévisionnelle' },
   ];
-  readonly horizonOptions = HORIZON_OPTIONS;
-  readonly ordreOptions: { label: string; value: OrdreCroisement }[] = [
-    { label: 'Banque › Source', value: 'BANQUE_SOURCE' },
-    { label: 'Source › Banque', value: 'SOURCE_BANQUE' },
-  ];
 
   readonly horizonControl = new FormControl<HorizonPrevision>('FIN_DE_MOIS', { nonNullable: true });
-  /** Axe principal de la grille : chaque banque puis ses sources, ou chaque source puis ses banques. */
-  readonly ordreControl = new FormControl<OrdreCroisement>('BANQUE_SOURCE', { nonNullable: true });
-  /** Devise de la courbe et des plus grosses opérations ; vide = la première (le dirham). */
+  /** Devise du bandeau, de la courbe, des plus grosses opérations et de l'export ; vide = la première (le dirham). */
   readonly deviseControl = new FormControl<string>('', { nonNullable: true });
 
   plan: PlanTresorerie | null = null;
@@ -89,16 +78,14 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const params = this.route.snapshot.queryParamMap;
     this.horizonControl.setValue(horizonDepuisParam(params.get('horizon')), { emitEvent: false });
-    this.ordreControl.setValue(params.get('ordre') === 'source' ? 'SOURCE_BANQUE' : 'BANQUE_SOURCE', { emitEvent: false });
     this.deviseControl.setValue(params.get('devise') ?? '', { emitEvent: false });
     const banque = Number(params.get('banque'));
     this.panneau = Number.isInteger(banque) && banque > 0 ? banque : undefined;
     this.colonne = this.panneau !== undefined ? params.get('col') ?? '' : '';
 
     this.subscriptions.push(
-      // Le plan est recalculé côté serveur quand l'horizon change ; l'ordre et la devise ne sont que de l'affichage
+      // Le plan est recalculé côté serveur quand l'horizon change ; la devise n'est que de l'affichage
       this.horizonControl.valueChanges.subscribe(() => { this.syncUrl(); this.charger(); }),
-      this.ordreControl.valueChanges.subscribe(() => this.syncUrl()),
       this.deviseControl.valueChanges.subscribe(() => this.syncUrl()),
     );
     this.charger();
@@ -113,7 +100,7 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
     return this.plan?.groupes.map(g => g.devise) ?? [];
   }
 
-  /** Total de la devise choisie (courbe, plus grosses opérations). */
+  /** Total de la devise choisie (bandeau, courbe, plus grosses opérations). */
   get groupeActif(): PlanBanque | null {
     if (!this.plan) {
       return null;
@@ -131,7 +118,20 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
       : this.plan.banques.find(b => b.banqueId === this.panneau) ?? null;
   }
 
-  /** Filtres qui s'écartent de la vue par défaut (fin de mois, Banque › Source, panneau fermé). */
+  /** Ce que l'export produira : la banque dont le panneau est ouvert, sinon le total de la devise choisie. */
+  get perimetreExport(): PerimetreExport | null {
+    const detail = this.planDuPanneau;
+    if (detail) {
+      return { banqueId: detail.banqueId, devise: detail.devise, libelle: detail.banqueNom };
+    }
+    const groupe = this.groupeActif;
+    if (!groupe) {
+      return null;
+    }
+    return { banqueId: null, devise: groupe.devise, libelle: this.devises.length > 1 ? `Total ${groupe.devise}` : 'Total groupe' };
+  }
+
+  /** Filtres qui s'écartent de la vue par défaut (fin de mois, première devise, aucun panneau ouvert). */
   get filtres(): FiltreActif[] {
     const filtres: FiltreActif[] = [];
     const horizon = this.horizonControl.value;
@@ -141,9 +141,6 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
         valeur: `Fin de trimestre (${finHorizon(horizon).toLocaleDateString('fr-FR')})`,
         retirer: () => this.horizonControl.setValue('FIN_DE_MOIS'),
       });
-    }
-    if (this.ordreControl.value === 'SOURCE_BANQUE') {
-      filtres.push({ cle: 'ordre', libelle: 'Regroupé par', valeur: 'Source › Banque', retirer: () => this.ordreControl.setValue('BANQUE_SOURCE') });
     }
     if (this.devises.length > 1 && this.deviseControl.value && this.deviseControl.value !== this.devises[0]) {
       filtres.push({ cle: 'devise', libelle: 'Devise', valeur: this.deviseControl.value, retirer: () => this.deviseControl.setValue('') });
@@ -162,7 +159,6 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
   reinitialiser(): void {
     this.panneau = undefined;
     this.colonne = '';
-    this.ordreControl.setValue('BANQUE_SOURCE', { emitEvent: false });
     this.deviseControl.setValue('', { emitEvent: false });
     const recharger = this.horizonControl.value !== 'FIN_DE_MOIS';
     this.horizonControl.setValue('FIN_DE_MOIS', { emitEvent: false });
@@ -190,15 +186,19 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
     this.syncUrl();
   }
 
-  exporterPdf(banqueId: number | null, devise?: string): void {
+  exporterPdf(): void {
+    const perimetre = this.perimetreExport;
+    if (!perimetre) {
+      return;
+    }
     const periode = this.horizonControl.value;
     this.exporting = true;
-    this.tresorerieService.exportPdf(periode, banqueId, devise).subscribe({
+    this.tresorerieService.exportPdf(periode, perimetre.banqueId, perimetre.devise).subscribe({
       next: blob => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Plan_tresorerie_${banqueId ?? devise ?? 'toutes_banques'}_${periode.toLowerCase()}.pdf`;
+        a.download = `Plan_tresorerie_${perimetre.banqueId ?? perimetre.devise}_${periode.toLowerCase()}.pdf`;
         a.click();
         window.URL.revokeObjectURL(url);
         this.exporting = false;
@@ -225,7 +225,7 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
     );
   }
 
-  /** Écrit les réglages dans l'adresse sans ajouter d'entrée d'historique ; le total d'une devise n'y figure pas. */
+  /** Écrit les filtres dans l'adresse sans ajouter d'entrée d'historique ; le total d'une devise n'y figure pas. */
   private syncUrl(): void {
     const horizon = this.horizonControl.value;
     const banque = typeof this.panneau === 'number' ? this.panneau : null;
@@ -233,7 +233,6 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
       relativeTo: this.route,
       queryParams: {
         horizon: horizon === 'FIN_DE_TRIMESTRE' ? horizon : null,
-        ordre: this.ordreControl.value === 'SOURCE_BANQUE' ? 'source' : null,
         devise: this.deviseControl.value || null,
         banque,
         col: banque !== null && this.colonne ? this.colonne : null,

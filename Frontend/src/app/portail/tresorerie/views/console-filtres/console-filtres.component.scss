@@ -1,0 +1,47 @@
+// Console : une barre vitrée, collée en haut au défilement, qui réunit filtres et export.
+.console {
+  position: sticky; top: var(--space-2); z-index: 5;
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3) var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  background: color-mix(in srgb, var(--color-surface) 82%, transparent);
+  backdrop-filter: blur(14px) saturate(1.4);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--color-border));
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg), 0 0 0 1px color-mix(in srgb, var(--color-surface) 60%, transparent) inset;
+
+  &__champ { display: flex; align-items: center; gap: var(--space-2); }
+  &__label { font-size: var(--text-2xs); font-weight: var(--weight-semibold); text-transform: uppercase; letter-spacing: var(--tracking-wider); color: var(--color-text-muted); }
+
+  &__filtres { display: flex; align-items: center; flex-wrap: wrap; flex: 1 1 14rem; gap: var(--space-2); min-width: 0; }
+  &__vide { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--text-xs); color: var(--color-text-muted); }
+
+  &__actions { display: flex; align-items: center; gap: var(--space-3); margin-left: auto; }
+  &__effacer {
+    padding: 0; font: inherit; font-size: var(--text-xs); color: var(--color-primary); background: none; border: 0; cursor: pointer;
+    text-decoration: underline; text-underline-offset: 3px;
+    &:hover { color: var(--color-primary-hover); }
+    &:focus-visible { outline: 2px solid var(--color-border-focus); border-radius: var(--radius-sm); }
+  }
+}
+
+.pastille {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
+  font-size: var(--text-xs); color: var(--color-primary-text);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  border-radius: var(--radius-full);
+  animation: entree 0.18s ease both;
+
+  &__nom { font-weight: var(--weight-semibold); }
+  &__retirer {
+    display: inline-flex; align-items: center; padding: var(--space-1); font-size: var(--text-2xs); color: inherit;
+    background: none; border: 0; border-radius: var(--radius-full); cursor: pointer;
+    &:hover { background: var(--color-surface); }
+    &:focus-visible { outline: 2px solid var(--color-border-focus); }
+  }
+}
+
+@keyframes entree { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .pastille { animation: none; } }
+@media (max-width: 720px) { .console { position: static; } .console__actions { margin-left: 0; } }

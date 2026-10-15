@@ -1,0 +1,43 @@
+<section class="etat etat--{{ verdict.niveau }}" [attr.role]="verdict.niveau === 'danger' ? 'alert' : 'status'">
+
+  <div class="etat__tete">
+    <span class="etat__signal" aria-hidden="true"></span>
+    <div class="etat__texte">
+      <h2 class="etat__titre">{{ verdict.titre }}</h2>
+      <p class="etat__detail">{{ verdict.detail }}</p>
+    </div>
+    <p class="etat__meta">Calculé le {{ dateCalcul | date:'dd/MM/yyyy' }}<br>jusqu'au {{ dateHorizon | date:'dd/MM/yyyy' }}</p>
+  </div>
+
+  <dl class="indicateurs" [attr.aria-label]="'Indicateurs' + (plusieursDevises ? ' en ' + total.devise : '')">
+    <div class="indicateur">
+      <dt>Solde actuel</dt>
+      <dd [class.neg]="total.soldeActuel < 0">{{ total.soldeActuel | number:'1.2-2' }}<small>{{ total.devise }}</small></dd>
+      <span class="indicateur__sous">Facilité de caisse : {{ total.plafondFC | number:'1.2-2' }}</span>
+    </div>
+    <div class="indicateur">
+      <dt>Solde prévu</dt>
+      <dd [class.neg]="total.soldeFinal < 0">{{ total.soldeFinal | number:'1.2-2' }}<small>{{ total.devise }}</small></dd>
+      <span class="indicateur__sous" [class.neg]="variation < 0" [class.pos]="variation > 0">
+        {{ variation > 0 ? '+' : '' }}{{ variation | number:'1.2-2' }} sur la période
+      </span>
+    </div>
+    <div class="indicateur" pTooltip="Le jour où le solde prévu est le plus bas" tooltipPosition="bottom">
+      <dt>Solde le plus bas</dt>
+      <dd [class.neg]="total.pointBas.solde < 0">{{ total.pointBas.solde | number:'1.2-2' }}<small>{{ total.devise }}</small></dd>
+      <span class="indicateur__sous">le {{ total.pointBas.date | date:'EEEE dd/MM' }}</span>
+    </div>
+    <div class="indicateur" [class.indicateur--alerte]="enBesoin"
+         [pTooltip]="enBesoin ? 'Ce qui manque ce jour-là, même en utilisant toute la facilité de caisse' : 'Solde le plus bas + facilité de caisse'"
+         tooltipPosition="bottom">
+      <dt>{{ enBesoin ? 'Besoin' : 'Disponibilité la plus basse' }}</dt>
+      <dd [class.neg]="enBesoin">{{ (enBesoin ? total.besoinFinancement : total.pointBas.disponibilite) | number:'1.2-2' }}<small>{{ total.devise }}</small></dd>
+      <span class="indicateur__sous">{{ enBesoin ? 'au-delà de la facilité de caisse' : 'facilité de caisse comprise' }}</span>
+    </div>
+    <div class="indicateur" [class.indicateur--attention]="total.joursSoldeNegatif > 0">
+      <dt>Jours à solde négatif</dt>
+      <dd>{{ total.joursSoldeNegatif }}</dd>
+      <span class="indicateur__sous">sur {{ total.courbe.length }} jours</span>
+    </div>
+  </dl>
+</section>

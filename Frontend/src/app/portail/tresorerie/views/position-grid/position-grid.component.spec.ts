@@ -1,19 +1,17 @@
 import { TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { PositionGridComponent, CaseChoisie } from './position-grid.component';
-import { OrdreCroisement } from '../../croisement';
 import { planBanqueFixture, planTresorerieFixture } from '../../testing/plan-tresorerie.fixture';
 
 describe('PositionGridComponent', () => {
 
-  function creer(ordre: OrdreCroisement = 'BANQUE_SOURCE') {
+  function creer() {
     TestBed.configureTestingModule({ imports: [PositionGridComponent], providers: [provideNoopAnimations()] });
     const fixture = TestBed.createComponent(PositionGridComponent);
     const plan = planTresorerieFixture();
     fixture.componentRef.setInput('colonnes', plan.colonnes);
     fixture.componentRef.setInput('banques', plan.banques);
     fixture.componentRef.setInput('groupes', plan.groupes);
-    fixture.componentRef.setInput('ordre', ordre);
     fixture.detectChanges();
     const choix: CaseChoisie[] = [];
     fixture.componentInstance.choisir.subscribe(c => choix.push(c));
@@ -22,7 +20,7 @@ describe('PositionGridComponent', () => {
 
   const ligne = (el: HTMLElement, n: 1 | 2) => el.querySelectorAll(`tbody .grille__ligne--n${n}`);
 
-  it('Banque › Source : une ligne par banque, une case de solde par période, et le total du groupe', () => {
+  it('une ligne par banque, une case de solde par période, et le total du groupe', () => {
     const { el } = creer();
     expect(ligne(el, 1).length).toBe(2);
     expect(el.querySelectorAll('tbody tr:first-child .cellule').length).toBe(2);
@@ -57,34 +55,16 @@ describe('PositionGridComponent', () => {
     expect(ligne(el, 2).length).toBe(0);
   });
 
-  it('« Tout déplier » puis « Tout replier » agit sur toutes les lignes', () => {
+  it('« Tout déplier » puis « Tout replier » agit sur toutes les banques', () => {
     const { fixture, el } = creer();
-    el.querySelector<HTMLButtonElement>('.outils__tout')!.click();
+    el.querySelector<HTMLButtonElement>('.barre__tout')!.click();
     fixture.detectChanges();
     expect(ligne(el, 2).length).toBe(6);
-    expect(el.querySelector('.outils__tout')!.textContent).toContain('Tout replier');
+    expect(el.querySelector('.barre__tout')!.textContent).toContain('Tout replier');
 
-    el.querySelector<HTMLButtonElement>('.outils__tout')!.click();
+    el.querySelector<HTMLButtonElement>('.barre__tout')!.click();
     fixture.detectChanges();
     expect(ligne(el, 2).length).toBe(0);
-  });
-
-  it('Source › Banque : les sources sont au premier niveau avec leur sens, les banques dessous', () => {
-    const { fixture, el } = creer('SOURCE_BANQUE');
-    const premiers = Array.from(ligne(el, 1)).map(tr => tr.querySelector('th')!.textContent!.replace(/\s+/g, ' ').trim());
-    expect(premiers[0]).toContain('REGLEMENT FRNS');
-    expect(premiers[0]).toContain('encaissements');
-    expect(premiers[1]).toContain('Leasing');
-    expect(premiers[1]).toContain('décaissements');
-    // Pas de case de solde sur les lignes de source : des flux signés
-    expect(el.querySelectorAll('tbody .cellule').length).toBe(0);
-    expect(el.querySelectorAll('tbody td.flux.sortie').length).toBeGreaterThan(0);
-    // Les soldes restent en bas
-    expect(el.querySelectorAll('tfoot .cellule').length).toBe(2);
-
-    el.querySelector<HTMLButtonElement>('.outils__tout')!.click();
-    fixture.detectChanges();
-    expect(Array.from(ligne(el, 2)).some(tr => tr.textContent!.includes('Banque A'))).toBeTrue();
   });
 
   it('un clic sur une case remonte la banque et la période ; sur le nom, la banque seule ; sur le total, la devise', () => {
@@ -97,14 +77,6 @@ describe('PositionGridComponent', () => {
       { banqueId: 1, colonne: '', devise: 'MAD' },
       { banqueId: null, colonne: 'ECHU', devise: 'MAD' },
     ]);
-  });
-
-  it('en Source › Banque, un clic sur le nom d\'une banque en demande le détail', () => {
-    const { fixture, el, choix } = creer('SOURCE_BANQUE');
-    el.querySelector<HTMLButtonElement>('.outils__tout')!.click();
-    fixture.detectChanges();
-    el.querySelector<HTMLElement>('tbody .grille__ligne--n2 .grille__nom')!.click();
-    expect(choix).toEqual([{ banqueId: 1, colonne: '', devise: 'MAD' }]);
   });
 
   it('chaque case a un libellé accessible et la trajectoire est tracée', () => {
@@ -125,6 +97,6 @@ describe('PositionGridComponent', () => {
     expect(el.querySelectorAll('tfoot tr').length).toBe(2);
     expect(el.querySelector('tfoot')!.textContent).toContain('Total MAD');
     expect(el.querySelector('tfoot')!.textContent).toContain('Total EUR');
-    expect(el.querySelectorAll('tbody .devise').length).toBe(2);
+    expect(el.querySelectorAll('tbody .grille__ligne--n1 .puce').length).toBeGreaterThanOrEqual(2);
   });
 });

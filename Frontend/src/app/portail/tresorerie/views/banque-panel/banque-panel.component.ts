@@ -44,13 +44,11 @@ export class BanquePanelComponent implements OnChanges, OnDestroy {
   @Input({ required: true }) colonnes: ColonnePlan[] = [];
   /** Code de la période choisie ; vide = celle qui contient le point bas. */
   @Input() colonne = '';
-  @Input() exportEnCours = false;
   /** Horizon de l'écran, emporté dans l'adresse quand on ouvre les encours. */
   @Input() horizon: HorizonPrevision = 'FIN_DE_MOIS';
 
   @Output() fermer = new EventEmitter<void>();
   @Output() colonneChange = new EventEmitter<string>();
-  @Output() exporter = new EventEmitter<void>();
 
   operations: RecaputilatifItem[] = [];
   totalOperations = 0;

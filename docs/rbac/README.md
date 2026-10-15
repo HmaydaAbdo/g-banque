@@ -2739,7 +2739,7 @@ utilisateur hors Finance → 403 sur les deux ; banque inconnue → 404).
 |---|---|---|
 | `/portail/etats-des-encours/:banqueId` (parent — s'applique à `select` et à `:rapprochementId` avec tous ses enfants) | `departmentGuard('Finance')` | `DEPT_Finance:MEMBER` ou `DEPT_Finance:DIRECTOR`. `SYSTEM_ADMIN` passe toujours (accès transversal). |
 | `/portail/etats-des-encours/:banqueId/:rapprochementId` | `rapprochementActifGuard` | Ne vérifie aucun rôle — s'assure que `rapprochementId` est un identifiant numérique valide dans l'URL ; sinon redirige vers l'écran de sélection (`/select`), ou vers l'accueil si `banqueId` est lui-même introuvable. Garde de navigation, pas de sécurité d'accès. |
-| `/portail/tresorerie-previsionnelle` (14/10/2026) | `departmentGuard('Finance')` | `DEPT_Finance:MEMBER` ou `DEPT_Finance:DIRECTOR`. `SYSTEM_ADMIN` passe toujours. Les paramètres d'adresse `?horizon=`, `?ordre=`, `?devise=`, `?banque=` et `?col=` ne sont que des critères de lecture (valeur inconnue → valeur par défaut). |
+| `/portail/tresorerie-previsionnelle` (14/10/2026) | `departmentGuard('Finance')` | `DEPT_Finance:MEMBER` ou `DEPT_Finance:DIRECTOR`. `SYSTEM_ADMIN` passe toujours. Les paramètres d'adresse `?horizon=`, `?devise=`, `?banque=` et `?col=` ne sont que des critères de lecture (valeur inconnue → valeur par défaut). |
 
 ---
 

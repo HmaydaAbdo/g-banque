@@ -1060,10 +1060,10 @@ opérations en attente d'une banque donnée, quel que soit leur type d'origine.
   qui permet de repérer le compte en difficulté d'un coup d'œil, avec le total du groupe et une
   mini-courbe de tendance par banque. Les devises ne sont jamais additionnées : un total par devise, pour
   qu'aucun chiffre ne soit faux.
-- **Une seule grille pour lire par banque, par source, ou les deux** : on choisit l'axe principal (chaque
-  banque puis ses sources, ou chaque source puis ses banques) et chaque ligne se déplie sur l'autre axe,
-  sans changer d'écran. La direction voit d'un coup d'œil qui est en difficulté, puis ce qui pèse le plus
-  (leasing, CMT, chèques…).
+- **Une console unique et une grille Banque › Source** : tous les filtres (horizon, devise, banque, période)
+  et l'export PDF sont réunis dans une seule barre toujours visible ; la grille montre d'un coup d'œil qui
+  est en difficulté, et chaque banque se déplie sur ses sources (leasing, CMT, chèques…) pour voir ce qui
+  pèse le plus. L'export suit ce que l'on regarde, sans réglage supplémentaire.
 - **De l'alerte à la cause en deux clics** : un clic sur une banque ou sur une case ouvre son détail — le
   solde le plus bas et son jour, le besoin au-delà de la facilité de caisse, les opérations qui
   composent la période et les plus grosses opérations à venir, dont celui qui crée le solde le plus bas. Les flux

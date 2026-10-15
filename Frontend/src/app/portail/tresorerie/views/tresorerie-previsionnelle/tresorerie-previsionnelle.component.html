@@ -1,89 +1,52 @@
 <div class="treso route-enter">
 
-  <header class="treso__header">
-    <div>
-      <h1 class="treso__title">Trésorerie prévisionnelle</h1>
-      <p-breadcrumb [model]="items" styleClass="border-none p-0"
-                    [style]="{'background':'transparent','padding':'0','font-size':'var(--text-breadcrumb)'}">
-        <ng-template pTemplate="item" let-item>
-          @if (item.route) {
-            <a [routerLink]="item.route" class="p-menuitem-link">
-              <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
-              <span class="text-400 text-xs ml-1">{{ item.label }}</span>
-            </a>
-          } @else {
-            <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
-          }
-        </ng-template>
-      </p-breadcrumb>
-    </div>
-
-    <div class="treso__controls">
-      <p-selectButton [formControl]="horizonControl" [options]="horizonOptions" optionLabel="label"
-                      optionValue="value" [allowEmpty]="false" styleClass="p-button-sm"/>
-      <p-button label="Exporter PDF" icon="pi pi-file-pdf" size="small" [outlined]="true"
-                [loading]="exporting" [disabled]="!plan" (onClick)="exporterPdf(null, groupeActif?.devise)"/>
-    </div>
+  <header class="treso__entete">
+    <span class="treso__surtitre">Finance · Prévisionnel</span>
+    <h1 class="treso__titre">Trésorerie prévisionnelle</h1>
+    <p-breadcrumb [model]="items" styleClass="border-none p-0"
+                  [style]="{'background':'transparent','padding':'0','font-size':'var(--text-breadcrumb)'}">
+      <ng-template pTemplate="item" let-item>
+        @if (item.route) {
+          <a [routerLink]="item.route" class="p-menuitem-link">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
+            <span class="text-400 text-xs ml-1">{{ item.label }}</span>
+          </a>
+        } @else {
+          <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
+        }
+      </ng-template>
+    </p-breadcrumb>
   </header>
 
+  <!-- Tous les filtres et l'export, au même endroit -->
+  <app-console-filtres [horizon]="horizonControl" [devise]="deviseControl" [devises]="devises" [filtres]="filtres"
+                       [perimetreExport]="perimetreExport?.libelle ?? ''" [exportEnCours]="exporting"
+                       [exportPossible]="!!perimetreExport"
+                       (exporter)="exporterPdf()" (effacer)="reinitialiser()"/>
+
   @if (loading && !plan) {
-    <p-skeleton height="5rem" borderRadius="var(--radius-xl)"/>
+    <p-skeleton height="12rem" borderRadius="var(--radius-xl)"/>
     <p-skeleton height="16rem" borderRadius="var(--radius-xl)"/>
   }
 
   @if (plan; as pl) {
     @if (verdict; as v) {
-      <section class="verdict verdict--{{ v.niveau }}" [attr.role]="v.niveau === 'danger' ? 'alert' : 'status'">
-        <i class="verdict__icone pi" [class.pi-check-circle]="v.niveau === 'ok'"
-           [class.pi-exclamation-triangle]="v.niveau === 'warn'" [class.pi-exclamation-circle]="v.niveau === 'danger'" aria-hidden="true"></i>
-        <div class="verdict__texte">
-          <h2 class="verdict__titre">{{ v.titre }}</h2>
-          <p class="verdict__detail">{{ v.detail }}</p>
-        </div>
-        <p class="verdict__meta">Calculé le {{ pl.dateCalcul | date:'dd/MM/yyyy' }}<br>jusqu'au {{ pl.dateHorizon | date:'dd/MM/yyyy' }}</p>
-      </section>
+      @if (groupeActif; as total) {
+        <app-bandeau-etat [verdict]="v" [total]="total" [dateCalcul]="pl.dateCalcul" [dateHorizon]="pl.dateHorizon"
+                          [plusieursDevises]="devises.length > 1"/>
+      }
     }
 
-    <!-- Filtres actifs : ce qui s'écarte de la vue par défaut, toujours rappelé -->
-    <div class="filtres" role="group" aria-label="Filtres actifs">
-      @if (filtres.length === 0) {
-        <span class="filtres__vide"><i class="pi pi-filter" aria-hidden="true"></i> Aucun filtre : fin de mois, regroupé par banque puis par source</span>
-      } @else {
-        <span class="filtres__titre"><i class="pi pi-filter" aria-hidden="true"></i> Filtres actifs</span>
-        @for (f of filtres; track f.cle) {
-          <span class="filtre">
-            <span class="filtre__nom">{{ f.libelle }}</span> {{ f.valeur }}
-            <button type="button" class="filtre__retirer" (click)="f.retirer()"
-                    [attr.aria-label]="'Retirer le filtre ' + f.libelle + ' : ' + f.valeur"><i class="pi pi-times" aria-hidden="true"></i></button>
-          </span>
-        }
-        <button type="button" class="filtres__reset" (click)="reinitialiser()">Effacer les filtres</button>
-      }
-    </div>
-
-    <!-- Une seule grille : on choisit l'axe principal, chaque ligne se déplie sur l'autre -->
     <section class="carte">
-      <div class="carte__tete">
-        <h2 class="carte__titre">Trésorerie par banque et par source</h2>
-        <div class="carte__outils">
-          <span class="carte__libelle" id="regrouper">Regrouper par</span>
-          <p-selectButton [formControl]="ordreControl" [options]="ordreOptions" optionLabel="label"
-                          optionValue="value" [allowEmpty]="false" styleClass="p-button-sm"/>
-        </div>
-      </div>
-      <app-position-grid [colonnes]="pl.colonnes" [banques]="pl.banques" [groupes]="pl.groupes" [ordre]="ordreControl.value"
+      <h2 class="carte__titre">Trésorerie par banque et par source</h2>
+      <app-position-grid [colonnes]="pl.colonnes" [banques]="pl.banques" [groupes]="pl.groupes"
                          [selection]="panneau" [deviseSelection]="panneauDevise" (choisir)="ouvrir($event)"/>
     </section>
 
     @if (groupeActif; as g) {
       <div class="treso__duo">
         <section class="carte">
-          <div class="carte__tete">
-            <h2 class="carte__titre">Évolution du solde{{ pl.groupes.length > 1 ? ' en ' + g.devise : '' }}</h2>
-            @if (devises.length > 1) {
-              <p-selectButton [formControl]="deviseControl" [options]="devises" [allowEmpty]="false" styleClass="p-button-sm"/>
-            }
-          </div>
+          <h2 class="carte__titre">Évolution du solde{{ devises.length > 1 ? ' en ' + g.devise : '' }}</h2>
           <app-courbe-tresorerie [plan]="g"/>
         </section>
         <section class="carte">
@@ -94,10 +57,8 @@
     }
 
     @if (planDuPanneau; as detail) {
-      <app-banque-panel [plan]="detail" [colonnes]="pl.colonnes" [colonne]="colonne" [exportEnCours]="exporting"
-                        [horizon]="horizonControl.value"
-                        (fermer)="fermer()" (colonneChange)="choisirColonne($event)"
-                        (exporter)="exporterPdf(detail.banqueId, detail.devise)"/>
+      <app-banque-panel [plan]="detail" [colonnes]="pl.colonnes" [colonne]="colonne" [horizon]="horizonControl.value"
+                        (fermer)="fermer()" (colonneChange)="choisirColonne($event)"/>
     }
   }
 </div>

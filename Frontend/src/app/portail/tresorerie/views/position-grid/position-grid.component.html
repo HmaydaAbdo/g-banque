@@ -1,13 +1,10 @@
-<div class="outils">
-  <span class="outils__aide">
-    @if (ordre === 'BANQUE_SOURCE') {
-      Solde prévu à la fin de chaque période. Dépliez une banque pour voir ses flux par source (<span class="entree">entrées</span> / <span class="sortie">sorties</span>).
-    } @else {
-      Flux net par source (<span class="entree">entrées</span> / <span class="sortie">sorties</span>). Dépliez une source pour voir ses banques ; les soldes sont en bas.
-    }
+<div class="barre">
+  <span class="barre__aide">
+    Solde prévu à la fin de chaque période. Dépliez une banque pour voir ses flux par source
+    (<span class="entree">entrées</span> / <span class="sortie">sorties</span>).
   </span>
-  @if (parentsDepliables.length > 0) {
-    <button type="button" class="outils__tout" (click)="basculerTout()">
+  @if (banquesDepliables.length > 0) {
+    <button type="button" class="barre__tout" (click)="basculerTout()">
       <i class="pi" [class.pi-angle-double-up]="toutOuvert" [class.pi-angle-double-down]="!toutOuvert" aria-hidden="true"></i>
       {{ toutOuvert ? 'Tout replier' : 'Tout déplier' }}
     </button>
@@ -15,10 +12,10 @@
 </div>
 
 <div class="grille-scroll">
-  <table class="grille" aria-label="Position de trésorerie par banque et par source">
+  <table class="grille" aria-label="Trésorerie par banque et par source">
     <thead>
       <tr>
-        <th scope="col" class="grille__banque">{{ ordre === 'BANQUE_SOURCE' ? 'Banque' : 'Source' }}</th>
+        <th scope="col" class="grille__banque">Banque</th>
         <th scope="col" class="grille__actuel">Solde actuel</th>
         @for (c of colonnes; track c.code) {
           <th scope="col" [class.grille__echu]="!c.du">
@@ -26,7 +23,7 @@
             <span class="grille__dates">{{ c.du ? (date(c.du).slice(0, 5) + ' → ' + date(c.au).slice(0, 5)) : 'échues' }}</span>
           </th>
         }
-        <th scope="col" class="grille__tendance">{{ ordre === 'BANQUE_SOURCE' ? 'Tendance' : 'Total' }}</th>
+        <th scope="col" class="grille__tendance">Tendance</th>
       </tr>
     </thead>
     <tbody>
@@ -36,27 +33,18 @@
         }
         @for (l of s.lignes; track l.cle) {
           @if (visible(l)) {
-            <tr class="grille__ligne grille__ligne--n{{ l.niveau }}" [class.grille__ligne--sel]="l.banqueId !== undefined && selection === l.banqueId">
-              <th scope="row" class="grille__banque">
-                @if (l.niveau === 1) {
+            <tr class="grille__ligne grille__ligne--n{{ l.niveau }}" [class.grille__ligne--sel]="l.niveau === 1 && selection === l.banqueId">
+              @if (l.niveau === 1) {
+                <th scope="row" class="grille__banque">
                   <button type="button" class="grille__toggle" (click)="basculer(l.cle)" [disabled]="l.enfants === 0"
-                          [attr.aria-expanded]="ouverte(l.cle)" [attr.aria-label]="l.libelle + ' : afficher le détail'">
+                          [attr.aria-expanded]="ouverte(l.cle)" [attr.aria-label]="l.libelle + ' : afficher les sources'">
                     <i class="pi pi-angle-right grille__chevron" [class.grille__chevron--ouvert]="ouverte(l.cle)" [class.grille__chevron--vide]="l.enfants === 0" aria-hidden="true"></i>
                   </button>
-                }
-                @if (l.banqueId !== undefined) {
-                  <button type="button" class="grille__nom" (click)="choisir.emit({ banqueId: l.banqueId, colonne: '', devise: s.devise })"
+                  <button type="button" class="grille__nom" (click)="choisir.emit({ banqueId: l.banqueId!, colonne: '', devise: s.devise })"
                           [attr.aria-label]="'Ouvrir le détail de ' + l.libelle">{{ l.libelle }}</button>
-                  @if (plusieursDevises) { <span class="devise">{{ s.devise }}</span> }
-                } @else {
-                  <span class="grille__source">{{ l.libelle }}</span>
-                  <span class="sens sens--{{ l.sens === 'ENCAISSEMENT' ? 'entree' : 'sortie' }}">{{ l.sens === 'ENCAISSEMENT' ? 'encaissements' : 'décaissements' }}</span>
-                  @if (l.niveau === 1) { <span class="famille">{{ l.famille }}</span> }
-                }
-                @if (l.niveau === 1 && l.enfants > 0) { <span class="nb">{{ l.enfants }}</span> }
-              </th>
-
-              @if (estSolde(l)) {
+                  @if (plusieursDevises) { <span class="puce">{{ s.devise }}</span> }
+                  @if (l.enfants > 0) { <span class="puce">{{ l.enfants }} sources</span> }
+                </th>
                 @if (planDe(l); as b) {
                   <td class="grille__actuel" [class.neg]="b.soldeActuel < 0">{{ compact(b.soldeActuel) }}</td>
                   @for (c of colonnes; track c.code; let i = $index) {
@@ -76,6 +64,10 @@
                   </td>
                 }
               } @else {
+                <th scope="row" class="grille__banque">
+                  <span class="grille__source">{{ l.libelle }}</span>
+                  <span class="puce puce--{{ l.sens === 'ENCAISSEMENT' ? 'entree' : 'sortie' }}">{{ l.sens === 'ENCAISSEMENT' ? 'encaissements' : 'décaissements' }}</span>
+                </th>
                 <td class="grille__actuel"></td>
                 @for (v of l.valeurs; track $index) {
                   <td class="flux" [class.entree]="v > 0" [class.sortie]="v < 0" [class.grille__echu]="$index === 0"
@@ -92,7 +84,7 @@
       @for (g of groupes; track g.devise) {
         <tr [class.grille__ligne--sel]="selection === null && deviseSelection === g.devise">
           <th scope="row" class="grille__banque">
-            <button type="button" class="grille__nom" (click)="choisir.emit({ banqueId: null, colonne: '', devise: g.devise })"
+            <button type="button" class="grille__nom grille__nom--total" (click)="choisir.emit({ banqueId: null, colonne: '', devise: g.devise })"
                     [attr.aria-label]="'Ouvrir le détail du total ' + g.devise">
               {{ plusieursDevises ? 'Total ' + g.devise : 'Total groupe' }}<i class="pi pi-angle-right" aria-hidden="true"></i>
             </button>
@@ -118,6 +110,7 @@
     </tfoot>
   </table>
 </div>
+
 <ul class="legende" aria-label="Légende des couleurs">
   <li><span class="pastille pastille--ok"></span>Solde positif</li>
   <li><span class="pastille pastille--warn"></span>Solde négatif, couvert par la facilité de caisse</li>

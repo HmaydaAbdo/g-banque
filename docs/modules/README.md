@@ -5380,39 +5380,47 @@ l'ouvre directement sur cette banque, avec le même horizon.
 Écran à part, hors de l'espace de travail d'une banque (menu latéral « Trésorerie prévisionnelle »,
 bouton « Trésorerie » ou icône de courbe du tableau de bord). Il répond d'abord à « est-ce que ça va ? »,
 puis permet de descendre jusqu'à l'opération. De haut en bas :
-- **En-tête** : sélecteur d'horizon **Fin de mois / Fin de trimestre** et bouton **Exporter PDF** ;
-- **Verdict** : un grand bandeau coloré d'une phrase, qui regarde le groupe entier et nomme la banque la
+- **Console** : une barre vitrée, qui reste visible en haut de l'écran quand on le fait défiler, et qui
+  réunit **tous les filtres et l'export au même endroit** :
+  - **Horizon** : Fin de mois ou Fin de trimestre ;
+  - **Devise** : seulement quand les banques n'ont pas toutes la même devise ;
+  - **filtres actifs** : les filtres posés en descendant dans le détail (banque ouverte, période choisie)
+    et tout réglage qui s'écarte de la vue par défaut, en pastilles, chacune avec une croix pour la
+    retirer ; sans filtre, la console l'indique ;
+  - **Effacer les filtres** (visible dès qu'un filtre est actif) : remet tout par défaut ;
+  - **Exporter PDF** : exporte exactement ce que l'on regarde — la banque dont le panneau est ouvert,
+    sinon le total de la devise choisie (« Total groupe » ou « Total MAD »…). L'infobulle du bouton
+    rappelle le périmètre. C'est le seul bouton d'export de l'écran ;
+- **Bandeau d'état** : une carte lumineuse dont la teinte suit la situation (vert, orange, rouge) et qui
+  donne, en une phrase, la réponse à « est-ce que ça va ? » pour le groupe entier, en nommant la banque la
   plus touchée :
   - **rouge** — « Il manquera X <devise> le JJ/MM/AAAA sur la banque Y », même en utilisant toute la
-    facilité de caisse (si plusieurs banques sont concernées, leur nombre est rappelé) ;
-  - **orange** — le solde de la banque Y passera en négatif, mais la facilité de caisse le couvre (solde le
-    plus bas et jour indiqués) ;
+    facilité de caisse (si plusieurs banques sont concernées, leur nombre est rappelé) ; le voyant
+    pulse ;
+  - **orange** — le solde de la banque Y passera en négatif, mais la facilité de caisse le couvre (solde
+    le plus bas et jour indiqués) ;
   - **vert** — « Tout va bien jusqu'au JJ/MM/AAAA », avec le solde le plus bas du groupe (un par devise
     quand il y en a plusieurs).
-  La date du calcul et l'horizon sont rappelés à droite ;
-- **Filtres actifs** : une ligne rappelle ce qui s'écarte de la vue par défaut (fin de mois, regroupé par
-  banque puis par source, aucun panneau ouvert), sous forme de pastilles — horizon, regroupement, devise,
-  banque ouverte, période choisie — chacune avec une croix pour la retirer, et un lien **Effacer les
-  filtres**. Sans filtre particulier, la ligne l'indique ;
-- **Trésorerie par banque et par source** : **une seule grille**, avec une colonne par période (la première,
-  « échues », regroupe les opérations dont la date est atteinte), qui se lit par banque, par source, ou
-  les deux à la fois. Le sélecteur **Regrouper par** choisit l'axe principal, et chaque ligne se déplie
-  sur l'autre axe (bouton **Tout déplier / Tout replier** au-dessus de la grille) :
-  - **Banque › Source** (par défaut) : une ligne par banque, avec son **solde de fin de période** et sa
-    couleur — **vert** (solde positif), **orange** (solde négatif couvert par la facilité de caisse),
-    **rouge** (besoin : la facilité de caisse ne suffit pas). Les montants sont abrégés (« 1,2 M »,
-    « 123 k ») ; le survol donne le montant exact. Une colonne « Solde actuel » précède les périodes, et
-    une mini-courbe de tendance termine la ligne. Dépliée, la banque montre ses **flux par source**
-    (leasing, CMT, chèques…) : entrées en vert, sorties en rouge ;
-  - **Source › Banque** : une ligne par source (avec son sens, encaissements ou décaissements, et sa
-    famille), qui donne le **flux net** de la période pour toutes les banques ; dépliée, elle montre ce
-    que chaque banque y contribue. La dernière colonne donne le total des périodes.
-  Dans les deux cas, les **totaux par devise** restent en bas avec leurs soldes colorés (« Total groupe »
-  quand toutes les banques ont la même devise ; sinon « Total MAD », « Total EUR »…, avec une section par
-  devise et le code de devise sur chaque banque). Un clic sur le nom d'une banque, sur une case de solde
-  ou sur un total ouvre le panneau de détail ;
-- **Évolution du solde** : courbe jour par jour du total (de la devise choisie, avec un sélecteur s'il y en
-  a plusieurs), avec la ligne du zéro, la limite de la facilité de caisse et le solde le plus bas signalé ;
+  La date du calcul et l'horizon sont rappelés à droite. Dessous, cinq indicateurs du total de la devise
+  choisie : **Solde actuel** (avec la facilité de caisse), **Solde prévu** (avec sa variation sur la
+  période), **Solde le plus bas** (avec son jour), **Besoin** — ou **Disponibilité la plus basse** quand
+  il n'y en a pas — et **Jours à solde négatif** ;
+- **Trésorerie par banque et par source** : une grille **regroupée Banque › Source**, avec une colonne par
+  période (la première, « échues », regroupe les opérations dont la date est atteinte) :
+  - une ligne par banque, avec son **solde de fin de période** et sa couleur — **vert** (solde positif),
+    **orange** (solde négatif couvert par la facilité de caisse), **rouge** (besoin : la facilité de caisse
+    ne suffit pas, la case est entourée d'un halo). Les montants sont abrégés (« 1,2 M », « 123 k ») ; le
+    survol donne le montant exact. Une colonne « Solde actuel » précède les périodes, et une mini-courbe de
+    tendance termine la ligne ;
+  - la flèche d'une banque la **déplie** et montre ses **flux par source** (leasing, CMT, chèques…) :
+    entrées en vert, sorties en rouge, avec le sens (encaissements, décaissements). Le bouton
+    **Tout déplier / Tout replier** agit sur toutes les banques ;
+  - les **totaux par devise** restent en bas avec leurs soldes colorés (« Total groupe » quand toutes les
+    banques ont la même devise ; sinon « Total MAD », « Total EUR »…, avec une section par devise et le
+    code de devise sur chaque banque) ;
+  - un clic sur le nom d'une banque, sur une case de solde ou sur un total ouvre le panneau de détail ;
+- **Évolution du solde** : courbe jour par jour du total de la devise choisie, avec la ligne du zéro, la
+  limite de la facilité de caisse et le solde le plus bas signalé ;
 - **Plus grosses opérations à venir** : les cinq plus grosses opérations (encaissements et décaissements),
   avec leur date, leur catégorie et leur famille ; un décaissement qui tombe le jour du solde le plus bas
   est signalé « cause du solde le plus bas ».
@@ -5435,7 +5443,7 @@ détail ; il se ferme par le bouton **Fermer**, la croix, la touche Échap ou un
 - les **plus grosses opérations** de la banque ;
 - le **détail par source** : le plan de trésorerie de la banque, avec les catégories regroupées en quatre
   familles (voir ci-dessous), chaque source visible d'emblée ; une famille se replie d'un clic ;
-- les boutons **Exporter PDF** (de cette banque) et **Fermer**.
+- le bouton **Fermer**. L'export se fait depuis la console, qui exporte la banque ouverte.
 Le total d'une devise ouvre le même panneau, sans la liste d'opérations (il n'existe pas de liste unique
 pour toutes les banques).
 
@@ -5448,9 +5456,9 @@ pour toutes les banques).
   n'entre dans aucune catégorie.
 La ligne d'une famille additionne ses catégories.
 
-**Exporter PDF** télécharge le plan du périmètre choisi (le total d'une devise depuis l'en-tête, une banque
-depuis son panneau) en A4 paysage : même tableau, titre avec le périmètre, l'horizon et sa date, la devise,
-puis le solde le plus bas, la disponibilité la plus basse, le besoin et le nombre de jours à solde négatif.
+**Exporter PDF** télécharge le plan du périmètre choisi en A4 paysage : même tableau, titre avec le
+périmètre, l'horizon et sa date, la devise, puis le solde le plus bas, la disponibilité la plus basse, le
+besoin et le nombre de jours à solde négatif.
 
 ---
 
@@ -5521,7 +5529,7 @@ puis le solde le plus bas, la disponibilité la plus basse, le besoin et le nomb
     « En cours » (le mois en cours), sans demander la période, même s'il existe aussi une clôture
     provisoire. Les filtres de la trésorerie (horizon, type d'opération, dates de la période) sont repris
     par l'écran Récapitulatifs et y sont affichés.
-24. Les filtres de l'écran (horizon, regroupement, devise, banque ouverte, période) sont conservés dans
+24. Les filtres de l'écran (horizon, devise, banque ouverte, période) sont conservés dans
     l'adresse : le bouton « précédent » les retrouve, et ils sont rappelés en pastilles.
 
 ---

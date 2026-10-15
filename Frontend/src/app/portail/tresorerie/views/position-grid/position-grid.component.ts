@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { TooltipModule } from 'primeng/tooltip';
-import { construireCroisement, LigneCroisement, OrdreCroisement } from '../../croisement';
+import { construireCroisement, LigneCroisement } from '../../croisement';
 import { ColonnePlan, PlanBanque } from '../../dtos/PlanTresorerie';
 import { dateCourte, montantCompact } from '../../format';
 
@@ -25,13 +25,11 @@ interface Section {
 }
 
 /**
- * Grille de position de trésorerie — **une seule vue** pour lire par banque, par source, ou les deux.
- * L'ordre de regroupement choisit l'axe principal ; chaque ligne se déplie sur l'autre axe :
- * - **Banque › Source** : une ligne par banque avec son solde de fin de période (vert, orange, rouge) ;
- *   dépliée, ses flux par source (entrées en vert, sorties en rouge) ;
- * - **Source › Banque** : une ligne par source avec son flux net ; dépliée, ses banques.
- * Les totaux par devise (on n'additionne jamais des devises différentes) restent en bas dans les deux
- * cas. Présentation uniquement : un clic sur une banque, une case ou un total remonte la sélection.
+ * Grille de position de trésorerie, regroupée **Banque › Source** : une ligne par banque avec son solde
+ * de fin de période (vert, orange, rouge) et sa tendance ; dépliée, la banque montre ses flux par source
+ * (entrées en vert, sorties en rouge). Les totaux par devise (on n'additionne jamais des devises
+ * différentes) restent en bas. Présentation uniquement : un clic sur une banque, une case ou un total
+ * remonte la sélection à l'écran.
  */
 @Component({
   selector: 'app-position-grid',
@@ -46,7 +44,6 @@ export class PositionGridComponent implements OnChanges {
   @Input({ required: true }) banques: PlanBanque[] = [];
   /** Un total par devise, le dirham en premier. */
   @Input({ required: true }) groupes: PlanBanque[] = [];
-  @Input() ordre: OrdreCroisement = 'BANQUE_SOURCE';
   /** Banque dont le panneau est ouvert (surlignée) ; `null` = un total ; `undefined` si aucun panneau. */
   @Input() selection: number | null | undefined;
   /** Devise du total ouvert (surligné quand `selection` est nul). */
@@ -60,7 +57,7 @@ export class PositionGridComponent implements OnChanges {
   private readonly ouvertes = new Set<string>();
 
   ngOnChanges(): void {
-    this.sections = this.groupes.map(g => ({ devise: g.devise, lignes: construireCroisement(this.banques, g.devise, this.ordre) }));
+    this.sections = this.groupes.map(g => ({ devise: g.devise, lignes: construireCroisement(this.banques, g.devise) }));
     this.ouvertes.clear();
   }
 
@@ -69,12 +66,12 @@ export class PositionGridComponent implements OnChanges {
     return this.groupes.length > 1;
   }
 
-  get parentsDepliables(): LigneCroisement[] {
+  get banquesDepliables(): LigneCroisement[] {
     return this.sections.flatMap(s => s.lignes).filter(l => l.niveau === 1 && l.enfants > 0);
   }
 
   get toutOuvert(): boolean {
-    const parents = this.parentsDepliables;
+    const parents = this.banquesDepliables;
     return parents.length > 0 && parents.every(l => this.ouvertes.has(l.cle));
   }
 
@@ -97,13 +94,8 @@ export class PositionGridComponent implements OnChanges {
     const ouvrir = !this.toutOuvert;
     this.ouvertes.clear();
     if (ouvrir) {
-      this.parentsDepliables.forEach(l => this.ouvertes.add(l.cle));
+      this.banquesDepliables.forEach(l => this.ouvertes.add(l.cle));
     }
-  }
-
-  /** Une ligne affiche le solde coloré (et non un flux) quand c'est une banque au premier niveau, ordre Banque › Source. */
-  estSolde(l: LigneCroisement): boolean {
-    return this.ordre === 'BANQUE_SOURCE' && l.niveau === 1;
   }
 
   /** Plan d'une ligne de banque (pour ses soldes, sa trajectoire, sa devise). */
