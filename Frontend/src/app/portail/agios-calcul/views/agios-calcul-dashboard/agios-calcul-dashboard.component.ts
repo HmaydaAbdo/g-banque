@@ -98,13 +98,8 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
     { label: 'T4', value: 4 },
   ];
 
-  private static readonly MOIS_LABELS = [
-    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
-  ];
-
-  private static readonly MOIS_OPTIONS = AgiosCalculDashboardComponent.MOIS_LABELS
-    .map((label, i) => ({ label, value: i + 1 }));
+  /** Mois de l'année pour le Factoring : « M1 » à « M12 », comme « T1 » à « T4 » pour les trimestres. */
+  private static readonly MOIS_OPTIONS = Array.from({ length: 12 }, (_, i) => ({ label: `M${i + 1}`, value: i + 1 }));
 
   /**
    * Options du filtre de période — mensuelles (Factoring) ou trimestrielles (les autres types),
@@ -385,13 +380,13 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Libellé de la période d'une ligne — "Septembre 2026" pour Factoring (mensuel, le champ
+   * Libellé de la période d'une ligne — "M9/2026" pour Factoring (mensuel, le champ
    * `trimestre` contient alors le numéro de mois 1-12), "T3/2026" pour les autres types
    * (trimestriel) — mirroring `AgiosCalculDetailComponent.periodeLabel`.
    */
   getPeriodeLabel(trim: { typeAgios: TypeAgios; trimestre: number; annee: number }): string {
     if (trim.typeAgios === TypeAgios.FACTORING) {
-      return `${AgiosCalculDashboardComponent.MOIS_LABELS[(trim.trimestre - 1) % 12]} ${trim.annee}`;
+      return `M${trim.trimestre}/${trim.annee}`;
     }
     return `T${trim.trimestre}/${trim.annee}`;
   }

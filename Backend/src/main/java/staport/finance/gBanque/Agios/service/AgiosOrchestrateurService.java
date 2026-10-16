@@ -560,7 +560,7 @@ public class AgiosOrchestrateurService {
         // Générer l'agios définitif si montant > 0
         if (trimestre.getTotalAgiosTTC().compareTo(BigDecimal.ZERO) > 0) {
             AgiosRequestDto req = new AgiosRequestDto(
-                    String.format("Agios %s T%d/%d", type.getLibelle(), trimNum, annee),
+                    String.format("Agios %s %s", type.getLibelle(), libellePeriode(type, trimNum, annee)),
                     String.format("Clôture trimestrielle | HT: %s | TVA: %s | Jours: %d/%d",
                             trimestre.getTotalAgiosHT(), trimestre.getTotalTVA(),
                             trimestre.getNbJoursCalcules(), trimestre.getNbJoursTotal()),
@@ -988,7 +988,7 @@ public class AgiosOrchestrateurService {
         if (dto.trimestre() != null) {
             boolean mensuel = dto.type() != null && dto.type().getPeriodeCalcul() == PeriodeCalculAgios.MENSUEL;
             lines.add((mensuel ? "Mois : " : "Trimestre : ")
-                    + (mensuel ? MOIS_LABELS[(dto.trimestre() - 1) % 12] : "T" + dto.trimestre()));
+                    + (mensuel ? "M" : "T") + dto.trimestre());
         }
         if (dto.statut() != null) {
             lines.add("Statut : " + dto.statut().name());
@@ -1118,7 +1118,7 @@ public class AgiosOrchestrateurService {
         if (dto.trimestre() != null) {
             boolean mensuel = dto.type() != null && dto.type().getPeriodeCalcul() == PeriodeCalculAgios.MENSUEL;
             lines.add((mensuel ? "Mois : " : "Trimestre : ")
-                    + (mensuel ? MOIS_LABELS[(dto.trimestre() - 1) % 12] : "T" + dto.trimestre()));
+                    + (mensuel ? "M" : "T") + dto.trimestre());
         }
         if (dto.dateLimite() != null) {
             lines.add("Date limite : " + dto.dateLimite().format(DATE_FMT));
@@ -1139,21 +1139,16 @@ public class AgiosOrchestrateurService {
         table.addCell(cell);
     }
 
-    private static final String[] MOIS_LABELS = {
-            "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-            "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
-    };
-
     /**
-     * Libellé d'une période — "Septembre 2026" pour {@link TypeAgios#FACTORING} (mensuel, le
-     * champ {@code trimestre} contient alors le numéro de mois 1-12), "T3/2026" pour les autres
+     * Libellé d'une période — "M9/2026" pour {@link TypeAgios#FACTORING} (mensuel, le champ
+     * {@code trimestre} contient alors le numéro de mois 1-12, « M1 » à « M12 »), "T3/2026" pour les autres
      * types (trimestriel). Mirroring le frontend ({@code AgiosCalculDetailComponent.periodeLabel}
      * / {@code AgiosCalculDashboardComponent.getPeriodeLabel}) — ne jamais préfixer "T" pour
      * Factoring, sous peine d'afficher des valeurs impossibles comme "T9".
      */
     private String libellePeriode(TypeAgios type, int trimestreOuMois, int annee) {
         if (type == TypeAgios.FACTORING) {
-            return MOIS_LABELS[(trimestreOuMois - 1) % 12] + " " + annee;
+            return "M" + trimestreOuMois + "/" + annee;
         }
         return "T" + trimestreOuMois + "/" + annee;
     }

@@ -3556,7 +3556,7 @@ Seules les opérations effectivement payées (statut PAYE) sont prises en compte
 **Période de calcul** : unité de gestion du calcul automatique. Sa nature dépend du type d'agios :
 
 - **Trimestrielle** — Facilité de Caisse, Préfinancement, Droits Constatés : identifiée par un numéro de trimestre (1 à 4), une année, et la banque concernée.
-- **Mensuelle** — Factoring : identifiée par un numéro de mois (1 à 12), une année, et la banque concernée. Le Factoring est le seul type dont l'agrégat est mensuel plutôt que trimestriel.
+- **Mensuelle** — Factoring : identifiée par un numéro de mois (1 à 12), une année, et la banque concernée. Elle s'écrit partout **« M1 » à « M12 »** (ex. « M9/2026 » pour septembre 2026), comme « T3/2026 » pour un trimestre : tableau de bord, détail, filtre de période, rapports PDF et libellé de l'agios définitif. Le Factoring est le seul type dont l'agrégat est mensuel plutôt que trimestriel.
 
 | Trimestre | Période |
 |-----------|---------|

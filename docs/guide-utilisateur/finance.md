@@ -1554,7 +1554,7 @@ découvert ou encours sur la période. Le fichier est téléchargé automatiquem
 
 > **Clôturer une période est une action réservée à l'administrateur système.** Le bouton correspondant n'est visible que pour le profil SYSTEM_ADMIN. Le recalcul (global ou d'une période précise) est ouvert à toute l'équipe Finance.
 
-- **Recalculer tout** (bouton en haut du tableau de bord) : relance le calcul pour toutes les banques, tous les types et toutes les périodes encore ouvertes (période en cours et périodes passées non clôturées) et crée les périodes de l'année en cours qui manquent (par exemple les mois d'avril à août du Factoring), sauf celles qui seraient vides — accessible à toute l'équipe Finance. Si une période ne peut pas être calculée (par exemple, rapprochement du mois en cours pas encore créé), les autres périodes sont tout de même recalculées.
+- **Recalculer tout** (bouton en haut du tableau de bord) : relance le calcul pour toutes les banques, tous les types et toutes les périodes encore ouvertes (période en cours et périodes passées non clôturées) et crée les périodes de l'année en cours qui manquent (par exemple M4 à M8 du Factoring), sauf celles qui seraient vides — accessible à toute l'équipe Finance. Si une période ne peut pas être calculée (par exemple, rapprochement du mois en cours pas encore créé), les autres périodes sont tout de même recalculées.
 - **Recalculer** (icône sur une ligne, période OUVERT uniquement) : relance le calcul pour cette banque, ce type et cette période précise — accessible à toute l'équipe Finance.
 
 > Le calcul automatique s'exécute chaque nuit à 02h00 heure de Casablanca. Il n'est généralement pas nécessaire de le déclencher manuellement.

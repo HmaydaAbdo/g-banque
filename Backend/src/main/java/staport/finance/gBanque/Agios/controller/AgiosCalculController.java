@@ -138,7 +138,7 @@ public class AgiosCalculController {
             @PathVariable int annee) {
         orchestrateur.recalculerTrimestreManuel(banqueId, trim, annee);
         return ResponseEntity.ok(
-                String.format("Recalcul T%d/%d terminé pour banque %d", trim, annee, banqueId));
+                String.format("Recalcul période %d/%d terminé pour banque %d", trim, annee, banqueId));
     }
 
     @PostMapping("/banque/{banqueId}/type/{type}/cloturer/{trim}/{annee}")

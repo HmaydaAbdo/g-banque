@@ -357,14 +357,12 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
 
   /**
    * Libellé de la période affiché dans le header et le fil d'Ariane.
-   * – FACTORING (mensuel) : "Juillet 2026"
+   * – FACTORING (mensuel) : "M7/2026"
    * – Autres (trimestriel) : "T2/2026"
    */
   get periodeLabel(): string {
     if (this.typeAgios === TypeAgios.FACTORING) {
-      const mois = ['Janvier','Février','Mars','Avril','Mai','Juin',
-                    'Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-      return `${mois[(this.trimestre - 1) % 12]} ${this.annee}`;
+      return `M${this.trimestre}/${this.annee}`;
     }
     return `T${this.trimestre}/${this.annee}`;
   }
