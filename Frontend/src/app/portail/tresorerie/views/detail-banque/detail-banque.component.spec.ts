@@ -1,96 +1,36 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpTestingController } from '@angular/common/http/testing';
 import { testProviders } from '../../../../../testing/test-providers';
 import { DetailBanqueComponent } from './detail-banque.component';
 import { planBanqueFixture, planTresorerieFixture } from '../../testing/plan-tresorerie.fixture';
-import { EncoursNavigationService } from '../../services/encours-navigation.service';
 
 describe('DetailBanqueComponent', () => {
-  let http: HttpTestingController;
 
-  function creer(banqueId: number | null, colonne = '') {
+  function creer(besoin: number) {
     TestBed.configureTestingModule({ imports: [DetailBanqueComponent], providers: testProviders });
-    http = TestBed.inject(HttpTestingController);
     const fixture = TestBed.createComponent(DetailBanqueComponent);
-    const plan = planTresorerieFixture();
-    fixture.componentRef.setInput('plan', planBanqueFixture(banqueId, 'Banque A'));
-    fixture.componentRef.setInput('colonnes', plan.colonnes);
-    fixture.componentRef.setInput('colonne', colonne);
+    fixture.componentRef.setInput('plan', planBanqueFixture(null, 'Toutes les banques', besoin));
+    fixture.componentRef.setInput('colonnes', planTresorerieFixture().colonnes);
     fixture.detectChanges();
     return fixture;
   }
 
-  const operations = (r: { url: string }) => r.url.includes('/recapitulatif/banque/1');
-
-  afterEach(() => http.verify());
-
-  it('sans période choisie, ouvre celle du point bas (20/11 : colonne de novembre) et borne les dates', () => {
-    const fixture = creer(1);
-    const req = http.expectOne(operations);
-    expect(fixture.componentInstance.periode.code).toBe('P1');
-    expect(req.request.params.get('dateReferenceDepuis')).toBe('2026-11-01');
-    expect(req.request.params.get('dateReferenceJusqua')).toBe('2026-11-30');
-    expect(req.request.params.get('sort')).toBe('montant,desc');
-    req.flush({ totalDebit: 0, totalCredit: 0, page: { content: [], page: { totalElements: 0 } } });
-  });
-
-  it("la colonne « À ce jour » n'a pas de borne basse", () => {
-    creer(1, 'ECHU');
-    const req = http.expectOne(operations);
-    expect(req.request.params.has('dateReferenceDepuis')).toBeFalse();
-    expect(req.request.params.get('dateReferenceJusqua')).toBe('2026-10-14');
-    req.flush({ totalDebit: 0, totalCredit: 0, page: { content: [], page: { totalElements: 0 } } });
-  });
-
-  it("le groupe n'a pas de liste d'opérations : aucune requête", () => {
-    const fixture = creer(null);
-    http.expectNone(r => r.url.includes('/recapitulatif/banque/'));
-    expect(fixture.componentInstance.listeDisponible).toBeFalse();
-  });
-
-  it('affiche les opérations reçues et le statut de la banque', () => {
-    const fixture = creer(1);
-    http.expectOne(operations).flush({
-      totalDebit: 0, totalCredit: 0,
-      page: { content: [{ id: 5, dateEmission: '2026-11-18', dateEcheance: '2026-11-20', libelle: 'Loyer leasing', sens: 'DECAISSEMENT', debit: 6000, credit: 0, source: 'LEASING' }], page: { totalElements: 12 } },
-    });
-    fixture.detectChanges();
-
+  it('affiche le total, son statut et sa date d\'horizon', () => {
+    const fixture = creer(1000);
     const el: HTMLElement = fixture.nativeElement;
-    expect(el.textContent).toContain('Loyer leasing');
-    expect(el.textContent).toContain('Voir les 12 opérations');
+    expect(el.textContent).toContain('Toutes les banques');
     expect(el.textContent).toContain('Besoin');
+    expect(fixture.componentInstance.dateHorizon).toBe('2026-11-30');
+    expect(fixture.componentInstance.statut).toBe('danger');
   });
 
-  it('choisir une période le signale à l\'écran', () => {
-    const fixture = creer(1);
-    http.expectOne(operations).flush({ totalDebit: 0, totalCredit: 0, page: { content: [], page: { totalElements: 0 } } });
-    const choix: string[] = [];
-    fixture.componentInstance.colonneChange.subscribe(c => choix.push(c));
-    fixture.componentInstance.choisirPeriode('ECHU');
-    expect(choix).toEqual(['ECHU']);
+  it('sans besoin mais avec des jours négatifs : statut « facilité de caisse utilisée »', () => {
+    expect(creer(0).componentInstance.statut).toBe('warn');
   });
 
-  it("ouvrir une opération emmène ses filtres : source, dates de la période et horizon, vers le mois en cours", () => {
-    const fixture = creer(1);
-    http.expectOne(operations).flush({ totalDebit: 0, totalCredit: 0, page: { content: [], page: { totalElements: 0 } } });
-    const ouvrir = spyOn(TestBed.inject(EncoursNavigationService), 'ouvrirRecapitulatif');
-    fixture.componentRef.setInput('horizon', 'FIN_DE_TRIMESTRE');
-
-    fixture.componentInstance.ouvrirEncours({ source: 'LEASING' } as never);
-    expect(ouvrir).toHaveBeenCalledWith(1, { horizon: 'FIN_DE_TRIMESTRE', source: 'LEASING', du: '2026-11-01', au: '2026-11-30' });
-
-    fixture.componentInstance.ouvrirEncours();
-    expect(ouvrir).toHaveBeenCalledWith(1, { horizon: 'FIN_DE_TRIMESTRE' });
-  });
-
-  it("la croix du détail le ferme", () => {
-    const fixture = creer(1);
-    http.expectOne(operations).flush({ totalDebit: 0, totalCredit: 0, page: { content: [], page: { totalElements: 0 } } });
-    fixture.detectChanges();
+  it('la croix du détail le ferme', () => {
+    const fixture = creer(0);
     let fermetures = 0;
     fixture.componentInstance.fermer.subscribe(() => fermetures++);
-
     (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.entete__fermer')!.click();
     expect(fermetures).toBe(1);
   });

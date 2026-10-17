@@ -49,8 +49,8 @@ class StaportPdfReportServiceTest {
     void genereLePlanDeTresorerieAvecSesColonnesEtSonPointBas() throws Exception {
         List<BigDecimal> deux = List.of(new BigDecimal("1000"), BigDecimal.ZERO);
         PlanBanqueDto banque = new PlanBanqueDto(1L, "Banque Test", "MAD", new BigDecimal("5000"), new BigDecimal("2000"),
-                List.of(new LignePlanDto("Règlements", "REGLEMENT FRNS", deux, new BigDecimal("1000"))),
-                List.of(new LignePlanDto("Financements", "Leasing", List.of(BigDecimal.ZERO, new BigDecimal("9000")), new BigDecimal("9000"))),
+                List.of(new LignePlanDto("Règlements", "REGLEMENT FRNS", deux, new BigDecimal("1000"), List.of())),
+                List.of(new LignePlanDto("Financements", "Leasing", List.of(BigDecimal.ZERO, new BigDecimal("9000")), new BigDecimal("9000"), List.of())),
                 deux, List.of(BigDecimal.ZERO, new BigDecimal("9000")),
                 List.of(new BigDecimal("6000"), new BigDecimal("-3000")),
                 List.of(new BigDecimal("8000"), new BigDecimal("-1000")),

@@ -10,6 +10,8 @@ export interface OperationEncours {
   libelle: string;
   numero: string | null;
   montant: number;
+  /** Identité stable `${source}:${id}` (l'identifiant seul se répète d'une source à l'autre). */
+  cle: string;
 }
 
 /** Les opérations d'une même source, au sein d'un sens et d'une période. */
@@ -101,7 +103,8 @@ function libelleBorne(b: Borne, horizon: HorizonPrevision): { titre: string; pre
   return { titre: plage, precision: '' };
 }
 
-function blocSens(operations: OperationEncours[]): BlocSens | null {
+/** Groupe les opérations d'un même sens par source (plus gros total d'abord) ; `null` sans opération. */
+export function blocSens(operations: OperationEncours[]): BlocSens | null {
   if (operations.length === 0) {
     return null;
   }
@@ -117,6 +120,21 @@ function blocSens(operations: OperationEncours[]): BlocSens | null {
   }));
   sources.sort((a, b) => b.total - a.total || a.libelle.localeCompare(b.libelle));
   return { total: sources.reduce((s, g) => s + g.total, 0), nombre: operations.length, sources };
+}
+
+/** Opération d'encours à partir d'une ligne du récapitulatif : date de référence, libellé (ou observation), montant positif. */
+export function versOperation(item: RecaputilatifItem): OperationEncours {
+  const entree = item.sens === SensOperation.ENCAISSEMENT;
+  const libelle = item.libelle || item.observations || '';
+  return {
+    source: item.source,
+    date: item.dateReference ?? item.dateEcheance ?? item.dateEmission,
+    libelle,
+    // Un numéro déjà écrit dans le libellé (« contrat N° 0557150 ») n'est pas répété à côté
+    numero: item.numero && !libelle.includes(item.numero) ? item.numero : null,
+    montant: Number(entree ? item.credit : item.debit),
+    cle: `${item.source}:${item.id}`,
+  };
 }
 
 /**
@@ -138,14 +156,8 @@ export function construireTimeline(items: RecaputilatifItem[], aujourdhui: Date,
 
   for (const item of items) {
     const entree = item.sens === SensOperation.ENCAISSEMENT;
-    const date = item.dateReference ?? item.dateEcheance ?? item.dateEmission;
-    const operation: OperationEncours = {
-      source: item.source,
-      date,
-      libelle: item.libelle || item.observations || '',
-      numero: item.numero,
-      montant: Number(entree ? item.credit : item.debit),
-    };
+    const operation = versOperation(item);
+    const date = operation.date;
     let code = 'echues';
     if (date && jour(date) >= debutJour) {
       const d = jour(date);

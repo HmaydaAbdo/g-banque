@@ -344,55 +344,26 @@
   color      : var(--color-text-secondary);
 }
 
-// ── Consommation de la facilité de caisse (une barre par tuile) ──
+// ── Consommation de la facilité de caisse (une barre par tuile, composant app-fc-barre) ──
 .fc {
   display       : flex;
   flex-direction: column;
   gap           : 5px;
   padding       : var(--space-2) 0 var(--space-3);
 
-  &__head {
-    display             : flex;
-    justify-content     : space-between;
-    align-items         : baseline;
-    font-size           : var(--text-xs);
-    color               : var(--color-text-secondary);
-    font-variant-numeric: tabular-nums;
-  }
-
-  // Banque sans facilité de caisse : piste en pointillés, texte atténué
+  // Banque sans facilité de caisse : piste en pointillés, texte atténué, même emplacement que la barre
   &--aucune {
-    .fc__head { color: var(--color-text-muted); }
-    .fc__bar  { background: transparent; border: 1px dashed var(--color-border-strong); box-sizing: border-box; }
+    .fc__head {
+      display        : flex;
+      justify-content: space-between;
+      font-size      : var(--text-xs);
+      color          : var(--color-text-muted);
+    }
+    .fc__bar {
+      height       : 6px;
+      border-radius: var(--radius-full);
+      border       : 1px dashed var(--color-border-strong);
+      box-sizing   : border-box;
+    }
   }
-
-  &__head strong {
-    font-size           : var(--text-sm);
-    font-weight         : var(--weight-semibold);
-    font-variant-numeric: tabular-nums;
-  }
-
-  &__bar {
-    position     : relative;
-    height       : 6px;
-    border-radius: var(--radius-full);
-    background   : var(--color-border);
-    overflow     : hidden;
-  }
-
-  &__fill {
-    position     : absolute;
-    inset        : 0 auto 0 0;
-    border-radius: var(--radius-full);
-    transition   : width 0.4s ease;
-
-    &--faible   { background: var(--color-primary); }
-    &--eleve    { background: var(--color-warning); }
-    &--depasse  { background: var(--color-danger);  }
-  }
-
-  &__pct--aucun   { color: var(--color-text-secondary); }
-  &__pct--faible  { color: var(--color-primary); }
-  &__pct--eleve   { color: var(--color-warning); }
-  &__pct--depasse { color: var(--color-danger); }
 }

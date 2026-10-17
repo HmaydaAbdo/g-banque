@@ -1,3 +1,4 @@
+import { TransactionSource } from '../../transactions/dtos/TransactionSource';
 import { PeriodeRecap } from '../../etatsDesEncours/views/lesEncours/recap/dtos/PeriodeRecap';
 
 /**
@@ -20,6 +21,8 @@ export interface LignePlan {
   categorie: string;
   montants: number[];
   total: number;
+  /** Sources qui alimentent la ligne (ex. REGLEMENT FRNS = LCN, chèque…), de la plus grosse à la plus petite. */
+  sources: TransactionSource[];
 }
 
 /** Un des plus gros flux à venir : somme d'une catégorie, un jour, dans un sens. `montant` est positif. */

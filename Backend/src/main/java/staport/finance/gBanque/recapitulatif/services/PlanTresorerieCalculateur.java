@@ -19,6 +19,8 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -146,6 +148,9 @@ final class PlanTresorerieCalculateur {
         int n = colonnes.size();
         Map<String, BigDecimal[]> encaissements = lignesVides(Type.ENCAISSEMENT, n);
         Map<String, BigDecimal[]> decaissements = lignesVides(Type.DECAISSEMENT, n);
+        // Total de chaque source par catégorie et par sens : ordonne les sources d'une ligne
+        Map<String, Map<TransactionSource, BigDecimal>> sourcesEnc = new HashMap<>();
+        Map<String, Map<TransactionSource, BigDecimal>> sourcesDec = new HashMap<>();
         // Mouvement net par jour : les flux échus sont tous ramenés à aujourd'hui.
         TreeMap<LocalDate, BigDecimal> netParJour = new TreeMap<>();
 
@@ -155,6 +160,9 @@ final class PlanTresorerieCalculateur {
             Map<String, BigDecimal[]> lignes = encaissement ? encaissements : decaissements;
             BigDecimal[] ligne = lignes.computeIfAbsent(nomCategorie(f), k -> zeros(n));
             ligne[colonne] = ligne[colonne].add(f.montant());
+            (encaissement ? sourcesEnc : sourcesDec)
+                    .computeIfAbsent(nomCategorie(f), k -> new EnumMap<>(TransactionSource.class))
+                    .merge(f.source(), f.montant(), BigDecimal::add);
 
             LocalDate jour = f.date().isAfter(aujourdHui) ? f.date() : aujourdHui;
             netParJour.merge(jour, encaissement ? f.montant() : f.montant().negate(), BigDecimal::add);
@@ -189,7 +197,7 @@ final class PlanTresorerieCalculateur {
 
         return new PlanBanqueDto(
                 banqueId, nom, devise, soldeActuel, plafond,
-                lignes(encaissements), lignes(decaissements),
+                lignes(encaissements, sourcesEnc), lignes(decaissements, sourcesDec),
                 Arrays.asList(totalEnc), Arrays.asList(totalDec),
                 soldesFin, disponibilites,
                 solde, solde.add(plafond),
@@ -233,14 +241,20 @@ final class PlanTresorerieCalculateur {
         return lignes;
     }
 
-    private static List<LignePlanDto> lignes(Map<String, BigDecimal[]> lignes) {
+    private static List<LignePlanDto> lignes(Map<String, BigDecimal[]> lignes,
+                                             Map<String, Map<TransactionSource, BigDecimal>> sources) {
         List<LignePlanDto> resultat = new ArrayList<>();
         lignes.forEach((categorie, montants) -> {
             BigDecimal total = Arrays.stream(montants).reduce(BigDecimal.ZERO, BigDecimal::add);
             boolean vide = Arrays.stream(montants).allMatch(m -> m.signum() == 0);
             if (!vide) {
+                List<TransactionSource> sourcesLigne = sources.getOrDefault(categorie, Map.of()).entrySet().stream()
+                        .sorted(Map.Entry.<TransactionSource, BigDecimal>comparingByValue().reversed()
+                                .thenComparing(e -> e.getKey().name()))
+                        .map(Map.Entry::getKey)
+                        .toList();
                 resultat.add(new LignePlanDto(CategoriesTresorerie.famille(categorie), categorie,
-                        Arrays.asList(montants), total));
+                        Arrays.asList(montants), total, sourcesLigne));
             }
         });
         return resultat;

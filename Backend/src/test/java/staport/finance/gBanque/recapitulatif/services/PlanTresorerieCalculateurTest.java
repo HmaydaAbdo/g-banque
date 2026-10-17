@@ -136,6 +136,24 @@ class PlanTresorerieCalculateurTest {
     }
 
     @Test
+    @DisplayName("Chaque ligne liste ses sources, de la plus grosse à la plus petite sur l'horizon")
+    void sourcesParLigne() {
+        PlanTresorerieDto plan = PlanTresorerieCalculateur.calculer(PeriodeRecap.FIN_DE_MOIS, AUJOURDHUI,
+                List.of(new SoldeBanque(A, "Banque A", "MAD", bd("100000"), bd("0"))), List.of(
+                        flux(A, TransactionSource.CHEQUE, DECAISSEMENT, "2026-10-16", "1000"),
+                        flux(A, TransactionSource.LCN_DECAISSEMENT, DECAISSEMENT, "2026-10-16", "5000"),
+                        flux(A, TransactionSource.Virement, DECAISSEMENT, "2026-10-20", "3000"),
+                        flux(A, TransactionSource.CHEQUE, DECAISSEMENT, "2026-10-21", "1500")));
+        LignePlanDto reglements = plan.banques().get(0).decaissements().get(0);
+
+        assertThat(reglements.categorie()).isEqualTo("REGLEMENT FRNS");
+        assertThat(reglements.sources()).containsExactly(
+                TransactionSource.LCN_DECAISSEMENT, TransactionSource.Virement, TransactionSource.CHEQUE);
+        assertThat(planA("50000").decaissements()).filteredOn(l -> l.categorie().equals("Autres"))
+                .singleElement().extracting(LignePlanDto::sources).isEqualTo(List.of(TransactionSource.DECOMPTES));
+    }
+
+    @Test
     @DisplayName("Chaque ligne a sa famille ; « Autres » regroupe ce qui n'est dans aucune famille")
     void familles() {
         PlanBanqueDto a = planA("50000");

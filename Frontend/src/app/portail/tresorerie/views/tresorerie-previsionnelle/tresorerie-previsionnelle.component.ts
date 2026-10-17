@@ -21,20 +21,19 @@ import { ConsoleFiltresComponent } from '../console-filtres/console-filtres.comp
 import { TotalGroupeComponent } from '../total-groupe/total-groupe.component';
 import { CaseChoisie, PositionGridComponent } from '../position-grid/position-grid.component';
 
-/** Ce que produit le bouton « Exporter PDF » : la banque ouverte, sinon le total d'une devise. */
+/** Ce que produit le bouton « Exporter PDF » : le total d'une devise. */
 export interface PerimetreExport {
-  banqueId: number | null;
   devise: string;
   libelle: string;
 }
 
 /**
  * Trésorerie prévisionnelle : une console qui réunit **tous les filtres et l'export**, le total groupe en
- * tête, une carte par banque (classées par urgence), le détail de la banque choisie (déplié sous les
- * cartes), puis la grille Banque › Source.
+ * tête, une carte par banque (classées par urgence), le détail du total (déplié sous les cartes), puis la
+ * grille Banque › Source. Un clic sur une banque ouvre sa page dédiée (`banque/:banqueId`).
  *
- * Tous les filtres sont portés par l'adresse (`?horizon=FIN_DE_TRIMESTRE&devise=EUR&banque=3&col=P2`) :
- * l'accueil y mène directement et le retour arrière retrouve la même vue.
+ * Les filtres sont portés par l'adresse (`?horizon=FIN_DE_TRIMESTRE&devise=EUR`) : le retour arrière retrouve
+ * la même vue. L'ancienne adresse `?banque=3&col=P2` est redirigée vers la page de la banque.
  */
 @Component({
   selector: 'app-tresorerie-previsionnelle',
@@ -66,19 +65,21 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
   loading = false;
   exporting = false;
 
-  /** Détail déplié : `undefined` = fermé, `null` = total d'une devise, sinon identifiant de la banque. */
-  panneau: number | null | undefined;
-  /** Devise du total ouvert dans le panneau quand `panneau` est nul. */
+  /** Détail du total déplié : `undefined` = fermé, `null` = ouvert. */
+  panneau: null | undefined;
+  /** Devise du total ouvert dans le panneau. */
   panneauDevise = '';
-  colonne = '';
 
   ngOnInit(): void {
     const params = this.route.snapshot.queryParamMap;
     this.horizonControl.setValue(horizonDepuisParam(params.get('horizon')), { emitEvent: false });
     this.deviseControl.setValue(params.get('devise') ?? '', { emitEvent: false });
     const banque = Number(params.get('banque'));
-    this.panneau = Number.isInteger(banque) && banque > 0 ? banque : undefined;
-    this.colonne = this.panneau !== undefined ? params.get('col') ?? '' : '';
+    if (Number.isInteger(banque) && banque > 0) {
+      // Ancienne adresse du détail d'une banque : la banque a désormais sa page
+      this.ouvrirBanque(banque, params.get('col') ?? '', true);
+      return;
+    }
 
     this.subscriptions.push(
       // Le plan est recalculé côté serveur quand l'horizon change ; la devise n'est que de l'affichage
@@ -115,27 +116,21 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
     return compterParSituation(this.banquesDevise);
   }
 
-  /** Plan affiché dans le panneau ouvert ; `null` si le panneau est fermé ou la banque inconnue. */
+  /** Total affiché dans le panneau ouvert ; `null` si le panneau est fermé. */
   get planDuPanneau(): PlanBanque | null {
     if (!this.plan || this.panneau === undefined) {
       return null;
     }
-    return this.panneau === null
-      ? this.plan.groupes.find(g => g.devise === this.panneauDevise) ?? this.plan.groupes[0] ?? null
-      : this.plan.banques.find(b => b.banqueId === this.panneau) ?? null;
+    return this.plan.groupes.find(g => g.devise === this.panneauDevise) ?? this.plan.groupes[0] ?? null;
   }
 
-  /** Ce que l'export produira : la banque dont le panneau est ouvert, sinon le total de la devise choisie. */
+  /** Ce que l'export produira : le total de la devise ouverte, sinon celui de la devise choisie. */
   get perimetreExport(): PerimetreExport | null {
-    const detail = this.planDuPanneau;
-    if (detail) {
-      return { banqueId: detail.banqueId, devise: detail.devise, libelle: detail.banqueNom };
-    }
-    const groupe = this.groupeActif;
+    const groupe = this.planDuPanneau ?? this.groupeActif;
     if (!groupe) {
       return null;
     }
-    return { banqueId: null, devise: groupe.devise, libelle: this.devises.length > 1 ? `Total ${groupe.devise}` : 'Total groupe' };
+    return { devise: groupe.devise, libelle: this.devises.length > 1 ? `Total ${groupe.devise}` : 'Total groupe' };
   }
 
   /** Filtres qui s'écartent de la vue par défaut (fin de mois, première devise, aucun panneau ouvert). */
@@ -152,20 +147,11 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
     if (this.devises.length > 1 && this.deviseControl.value && this.deviseControl.value !== this.devises[0]) {
       filtres.push({ cle: 'devise', libelle: 'Devise', valeur: this.deviseControl.value, retirer: () => this.deviseControl.setValue('') });
     }
-    const detail = typeof this.panneau === 'number' ? this.planDuPanneau : null;
-    if (detail) {
-      filtres.push({ cle: 'banque', libelle: 'Banque', valeur: detail.banqueNom, retirer: () => this.fermer() });
-      const periode = this.plan!.colonnes.find(c => c.code === this.colonne);
-      if (periode) {
-        filtres.push({ cle: 'periode', libelle: 'Période', valeur: periode.libelle, retirer: () => this.choisirColonne('') });
-      }
-    }
     return filtres;
   }
 
   reinitialiser(): void {
     this.panneau = undefined;
-    this.colonne = '';
     this.deviseControl.setValue('', { emitEvent: false });
     const recharger = this.horizonControl.value !== 'FIN_DE_MOIS';
     this.horizonControl.setValue('FIN_DE_MOIS', { emitEvent: false });
@@ -175,27 +161,32 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Un clic sur la banque déjà ouverte (sans période) referme son détail. */
+  /** Une banque ouvre sa page dédiée ; le total d'une devise se déplie sous les cartes (un second clic le referme). */
   ouvrir(choix: CaseChoisie): void {
-    if (!choix.colonne && this.panneau === choix.banqueId && (choix.banqueId !== null || this.panneauDevise === choix.devise)) {
+    if (choix.banqueId !== null) {
+      this.ouvrirBanque(choix.banqueId, choix.colonne);
+      return;
+    }
+    if (this.panneau === null && this.panneauDevise === choix.devise) {
       this.fermer();
       return;
     }
-    this.panneau = choix.banqueId;
+    this.panneau = null;
     this.panneauDevise = choix.devise;
-    this.colonne = choix.colonne;
-    this.syncUrl();
+  }
+
+  /** Page du plan d'une banque, avec l'horizon de l'écran et, s'il y en a une, la période à ouvrir. */
+  ouvrirBanque(banqueId: number, colonne: string, remplacer = false): void {
+    const horizon = this.horizonControl.value;
+    this.router.navigate(['banque', banqueId], {
+      relativeTo: this.route,
+      queryParams: { horizon: horizon === 'FIN_DE_TRIMESTRE' ? horizon : null, col: colonne || null },
+      replaceUrl: remplacer,
+    });
   }
 
   fermer(): void {
     this.panneau = undefined;
-    this.colonne = '';
-    this.syncUrl();
-  }
-
-  choisirColonne(code: string): void {
-    this.colonne = code;
-    this.syncUrl();
   }
 
   exporterPdf(): void {
@@ -205,12 +196,12 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
     }
     const periode = this.horizonControl.value;
     this.exporting = true;
-    this.tresorerieService.exportPdf(periode, perimetre.banqueId, perimetre.devise).subscribe({
+    this.tresorerieService.exportPdf(periode, null, perimetre.devise).subscribe({
       next: blob => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Plan_tresorerie_${perimetre.banqueId ?? perimetre.devise}_${periode.toLowerCase()}.pdf`;
+        a.download = `Plan_tresorerie_${perimetre.devise}_${periode.toLowerCase()}.pdf`;
         a.click();
         window.URL.revokeObjectURL(url);
         this.exporting = false;
@@ -236,17 +227,14 @@ export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
     );
   }
 
-  /** Écrit les filtres dans l'adresse sans ajouter d'entrée d'historique ; le total d'une devise n'y figure pas. */
+  /** Écrit les filtres dans l'adresse sans ajouter d'entrée d'historique ; le total ouvert n'y figure pas. */
   private syncUrl(): void {
     const horizon = this.horizonControl.value;
-    const banque = typeof this.panneau === 'number' ? this.panneau : null;
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {
         horizon: horizon === 'FIN_DE_TRIMESTRE' ? horizon : null,
         devise: this.deviseControl.value || null,
-        banque,
-        col: banque !== null && this.colonne ? this.colonne : null,
       },
       replaceUrl: true,
     });

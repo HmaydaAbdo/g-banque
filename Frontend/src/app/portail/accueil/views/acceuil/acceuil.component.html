@@ -6,19 +6,7 @@
 <!-- Barre de consommation de la facilité de caisse : palier faible (< 70 %), élevé (70 à 100 %), dépassé (> 100 %) -->
 <!-- Le plafond n'est pas répété ici : il figure sur la ligne « Facilité caisse » de la tuile Aujourd'hui. -->
 <ng-template #barreFc let-s>
-  <div class="fc">
-    <div class="fc__head">
-      @if (s.palier === 'aucun') {
-        <span>FC non utilisée</span>
-      } @else {
-        <span>FC utilisée <ng-container [ngTemplateOutlet]="montant" [ngTemplateOutletContext]="{ $implicit: s.utilise }"/></span>
-      }
-      <strong [ngClass]="'fc__pct--' + s.palier">{{ s.pourcentage }} %</strong>
-    </div>
-    <div class="fc__bar" role="img" [attr.aria-label]="'Facilité de caisse utilisée à ' + s.pourcentage + ' pour cent'">
-      <span class="fc__fill" [ngClass]="'fc__fill--' + s.palier" [style.width.%]="s.largeur"></span>
-    </div>
-  </div>
+  <app-fc-barre class="fc" [situation]="s"/>
 </ng-template>
 
 <!-- Banque sans facilité de caisse : même emplacement que la barre, pour garder les tuiles alignées -->
@@ -224,8 +212,8 @@
               ariaLabel="Plan de trésorerie de la banque"
               pTooltip="Plan de trésorerie"
               tooltipPosition="left"
-              routerLink="/portail/tresorerie-previsionnelle"
-              [queryParams]="{ banque: account.banqueId, horizon: horizon === 'FIN_DE_TRIMESTRE' ? horizon : null }"/>
+              [routerLink]="['/portail/tresorerie-previsionnelle/banque', account.banqueId]"
+              [queryParams]="{ horizon: horizon === 'FIN_DE_TRIMESTRE' ? horizon : null }"/>
             <p-button
               icon="pi pi-download"
               size="small"

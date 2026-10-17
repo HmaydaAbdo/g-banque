@@ -1,4 +1,5 @@
 import { PlanBanque, PlanTresorerie } from '../dtos/PlanTresorerie';
+import { TransactionSource } from '../../transactions/dtos/TransactionSource';
 
 /** Plan d'une banque sur deux colonnes (« À ce jour » + novembre), point bas négatif non couvert. */
 export function planBanqueFixture(banqueId: number | null, nom: string, besoin = 1000): PlanBanque {
@@ -8,10 +9,10 @@ export function planBanqueFixture(banqueId: number | null, nom: string, besoin =
     devise: 'MAD',
     soldeActuel: 5000,
     plafondFC: 2000,
-    encaissements: [{ famille: 'Règlements', categorie: 'REGLEMENT FRNS', montants: [1000, 0], total: 1000 }],
+    encaissements: [{ famille: 'Règlements', categorie: 'REGLEMENT FRNS', montants: [1000, 0], total: 1000, sources: [TransactionSource.CHEQUE] }],
     decaissements: [
-      { famille: 'Financements', categorie: 'Leasing', montants: [0, 6000], total: 6000 },
-      { famille: 'Financements', categorie: 'Agios', montants: [0, 3000], total: 3000 },
+      { famille: 'Financements', categorie: 'Leasing', montants: [0, 6000], total: 6000, sources: [TransactionSource.LEASING] },
+      { famille: 'Financements', categorie: 'Agios', montants: [0, 3000], total: 3000, sources: [TransactionSource.AGIOS] },
     ],
     totalEncaissements: [1000, 0],
     totalDecaissements: [0, 9000],

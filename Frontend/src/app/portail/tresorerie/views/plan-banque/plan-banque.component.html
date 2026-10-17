@@ -1,0 +1,116 @@
+<div class="page route-enter">
+
+  <header class="page__entete">
+    <p-breadcrumb [model]="items" styleClass="border-none p-0"
+                  [style]="{'background':'transparent','padding':'0','font-size':'var(--text-breadcrumb)'}">
+      <ng-template pTemplate="item" let-item>
+        @if (item.route) {
+          <a [routerLink]="item.route" class="p-menuitem-link">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
+            <span class="text-400 text-xs ml-1">{{ item.label }}</span>
+          </a>
+        } @else {
+          <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
+        }
+      </ng-template>
+    </p-breadcrumb>
+    <div class="page__titre-ligne">
+      <a class="page__retour" routerLink="/portail/tresorerie-previsionnelle"
+         [queryParams]="{ horizon: horizon === 'FIN_DE_TRIMESTRE' ? horizon : null }">
+        <i class="pi pi-arrow-left" aria-hidden="true"></i> Toutes les banques
+      </a>
+      <h1 class="page__titre">{{ plan?.banqueNom ?? 'Plan de trésorerie' }}</h1>
+      @if (plan) {
+        <span class="page__meta">
+          {{ plan.devise }} · plafond FC {{ plan.plafondFC > 0 ? (plan.plafondFC | number:'1.2-2') : 'aucun' }}
+          @if (dateCalcul) { · calculé le {{ dateCalcul | date:'dd/MM/yyyy' }} }
+        </span>
+      }
+      <div class="vues" role="tablist" aria-label="Vue du plan">
+        <button type="button" role="tab" class="vues__btn" [class.vues__btn--on]="vue === 'recit'"
+                [attr.aria-selected]="vue === 'recit'" (click)="choisirVue('recit')">
+          <i class="pi pi-history" aria-hidden="true"></i> Récit
+        </button>
+        <button type="button" role="tab" class="vues__btn" [class.vues__btn--on]="vue === 'tableau'"
+                [attr.aria-selected]="vue === 'tableau'" (click)="choisirVue('tableau')">
+          <i class="pi pi-table" aria-hidden="true"></i> Tableau
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Une seule barre : filtres, horizon et export -->
+  <section class="barre" role="toolbar" aria-label="Filtres, horizon et export">
+    <p-dropdown [options]="sensOptions" optionLabel="label" optionValue="value" [ngModel]="filtres.sens"
+                (ngModelChange)="appliquer({ sens: $event })" ariaLabel="Sens" styleClass="barre__sens" appendTo="body"/>
+
+    <p-multiSelect [options]="sourcesDisponibles" optionLabel="label" optionValue="value" [ngModel]="filtres.sources"
+                   (ngModelChange)="appliquer({ sources: $event })" placeholder="Toutes les sources"
+                   selectedItemsLabel="{0} sources" [maxSelectedLabels]="1" [showHeader]="false"
+                   ariaLabel="Sources" styleClass="barre__sources" appendTo="body"/>
+
+    <div class="barre__montant" role="group" aria-label="Montant">
+      <p-dropdown [options]="operateurs" optionLabel="label" optionValue="value" [ngModel]="filtres.operateur"
+                  (ngModelChange)="appliquer({ operateur: $event })" ariaLabel="Comparaison du montant"
+                  styleClass="barre__op" appendTo="body"/>
+      <p-inputNumber [ngModel]="filtres.montant" (ngModelChange)="appliquer({ montant: $event })" mode="decimal"
+                     locale="fr-FR" [minFractionDigits]="0" [maxFractionDigits]="2" [min]="0" placeholder="Montant"
+                     ariaLabel="Montant" inputStyleClass="barre__montant-input"/>
+    </div>
+
+    <span class="p-input-icon-left barre__recherche">
+      <i class="pi pi-search" aria-hidden="true"></i>
+      <input pInputText type="search" [ngModel]="texte" (ngModelChange)="saisirTexte($event)"
+             placeholder="Libellé, n°, tiers" aria-label="Rechercher une opération"/>
+    </span>
+
+    <span class="barre__sep" aria-hidden="true"></span>
+
+    <p-dropdown [options]="horizonOptions" optionLabel="label" optionValue="value" [ngModel]="horizon"
+                (ngModelChange)="choisirHorizon($event)" ariaLabel="Horizon" styleClass="barre__horizon" appendTo="body"/>
+
+    <p-button label="Exporter PDF" icon="pi pi-file-pdf" size="small" [loading]="exporting" [disabled]="!plan"
+              pTooltip="Plan complet de la banque à l'horizon choisi (sans les filtres)" tooltipPosition="bottom"
+              (onClick)="exporterPdf()"/>
+  </section>
+
+  @if (actif) {
+    <div class="filtres" role="group" aria-label="Filtres actifs">
+      @for (p of pastilles; track p.cle) {
+        <span class="pastille">{{ p.libelle }}
+          <button type="button" class="pastille__retirer" (click)="p.retirer()" [attr.aria-label]="'Retirer le filtre ' + p.libelle">
+            <i class="pi pi-times" aria-hidden="true"></i>
+          </button>
+        </span>
+      }
+      @if (resumeFiltre; as r) {
+        <span class="filtres__resume">
+          <strong>{{ r.nombre }}</strong> opération{{ r.nombre > 1 ? 's' : '' }}
+          @if (r.entrees > 0) { · <strong class="pos">+{{ montantTexte(r.entrees) }}</strong> }
+          @if (r.sorties > 0) { · <strong class="neg">−{{ montantTexte(r.sorties) }}</strong> }
+          · les soldes restent ceux de toutes les opérations
+        </span>
+      }
+      <button type="button" class="filtres__effacer" (click)="effacer()">Effacer les filtres</button>
+    </div>
+  }
+
+  @if (tronque) {
+    <p class="avert"><i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+      Seules les {{ operations.length }} premières opérations sont détaillées ; les soldes restent exacts.</p>
+  }
+
+  @if (loading && !plan) {
+    <p-skeleton height="6rem" borderRadius="var(--radius-xl)"/>
+    <p-skeleton height="18rem" borderRadius="var(--radius-xl)"/>
+  } @else if (erreur || !plan) {
+    <p class="vide">Impossible de charger le plan de cette banque. Revenez à <a routerLink="/portail/tresorerie-previsionnelle">toutes les banques</a> et réessayez.</p>
+  } @else if (vue === 'recit') {
+    <app-recit-banque [plan]="plan" [colonnes]="colonnes" [operations]="operations" [filtres]="filtres"
+                      [ouvertes]="ouvertes" (basculer)="basculer($event)" (toutOuvrir)="toutOuvrir($event)"
+                      (ouvrir)="ouvrir($event)" (ouvrirEncours)="ouvrirEncours($event)"/>
+  } @else {
+    <app-tableau-banque [plan]="plan" [colonnes]="colonnes" [operations]="operations" [filtres]="filtres"
+                        (ouvrirEncours)="ouvrirEncours($event)"/>
+  }
+</div>

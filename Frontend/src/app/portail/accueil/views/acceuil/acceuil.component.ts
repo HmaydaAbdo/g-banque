@@ -28,6 +28,7 @@ import {DropdownModule} from "primeng/dropdown";
 import {SensOperation} from "../../../transactions/dtos/SensOperation";
 import {SituationFc, situationFc} from "../../fc-consommation";
 import {EncoursOperationsDialogComponent} from "../encours-operations-dialog/encours-operations-dialog.component";
+import {FcBarreComponent} from "../fc-barre/fc-barre.component";
 
 /**
  * Vrai tant que l'accueil n'a pas été affiché depuis le chargement de la page : seul ce premier affichage peut être un
@@ -58,7 +59,8 @@ function pageRechargee(): boolean {
     SelectButtonModule,
     DropdownModule,
     PeriodeSelectorComponent,
-    EncoursOperationsDialogComponent
+    EncoursOperationsDialogComponent,
+    FcBarreComponent
   ],
   templateUrl: './acceuil.component.html',
   styleUrl: './acceuil.component.scss',

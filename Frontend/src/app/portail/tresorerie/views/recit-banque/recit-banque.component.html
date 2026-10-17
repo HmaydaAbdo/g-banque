@@ -1,0 +1,150 @@
+<div class="recit">
+
+  <!-- L'histoire en une phrase -->
+  <p class="resume">
+    Vous partez de <strong [class.pos]="plan.soldeActuel >= 0" [class.neg]="plan.soldeActuel < 0">{{ compact(plan.soldeActuel) }}</strong> aujourd'hui.
+    D'ici au {{ jourMois(dateHorizon) }} :
+    @if (nombreSorties > 0) { <strong>{{ nombreSorties }} sortie{{ nombreSorties > 1 ? 's' : '' }}</strong> pour <strong class="neg">{{ compact(totalSorties) }}</strong> } @else { aucune sortie }
+    et
+    @if (nombreEntrees > 0) { <strong>{{ nombreEntrees }} entrée{{ nombreEntrees > 1 ? 's' : '' }}</strong> pour <strong class="pos">{{ compact(totalEntrees) }}</strong>. } @else { aucune entrée. }
+    @if (jalon('SOUS_ZERO'); as j) {
+      @if (aujourdhui(j.date)) { Le compte passe sous zéro <strong>dès aujourd'hui</strong>, une fois les échues comptées. }
+      @else { Le compte passe sous zéro le <strong>{{ jourMois(j.date) }}</strong>. }
+    }
+    @if (jalon('FC_DEPASSEE'); as j) {
+      @if (aujourdhui(j.date)) { La facilité de caisse est <strong class="neg">dépassée dès aujourd'hui</strong>. }
+      @else { La facilité de caisse ne suffit plus dès le <strong class="neg">{{ jourMois(j.date) }}</strong>. }
+    }
+    La période se termine à
+    <strong [class.pos]="plan.soldeFinal >= 0" [class.neg]="plan.soldeFinal < 0">{{ compact(plan.soldeFinal) }}</strong>
+    @if (plan.soldeFinal < 0 && plan.disponibiliteFinale < 0) { — besoin non couvert de <strong class="neg">{{ compact(-plan.disponibiliteFinale) }}</strong> }
+    @else if (plan.soldeFinal < 0) { — couvert par la facilité de caisse }.
+  </p>
+
+  <div class="outils">
+    <span class="legende" aria-hidden="true">
+      <span><i class="legende__z legende__z--pos"></i>Solde positif</span>
+      @if (plan.plafondFC > 0) { <span><i class="legende__z legende__z--couvert"></i>Couvert par la facilité de caisse</span> }
+      <span><i class="legende__z legende__z--depasse"></i>{{ plan.plafondFC > 0 ? 'Au-delà du plafond' : 'Besoin' }}</span>
+      <span><i class="legende__pt"></i>Solde d'ouverture</span>
+    </span>
+    <button type="button" class="outils__lien" (click)="toutOuvrir.emit(!toutesOuvertes)">
+      <i class="pi" [class.pi-angle-double-down]="!toutesOuvertes" [class.pi-angle-double-up]="toutesOuvertes" aria-hidden="true"></i>
+      {{ toutesOuvertes ? 'Tout fermer' : 'Tout ouvrir' }}
+    </button>
+  </div>
+
+  <ol class="frise">
+    @for (el of frise; track el.type === 'jalon' ? 'j-' + el.jalon.code : 'e-' + el.etape.colonne.code) {
+      @if (el.type === 'jalon') {
+        <li class="jalon" [ngClass]="'jalon--' + el.jalon.niveau">
+          <span class="jalon__losange" aria-hidden="true"></span>
+          <button type="button" class="jalon__btn" (click)="allerAuJalon(el.jalon)"
+                  [attr.aria-label]="el.jalon.texte + ', le ' + jourMois(el.jalon.date) + ' — afficher la période'">
+            <span class="jalon__date">{{ jourMois(el.jalon.date) }}</span>
+            <span class="jalon__texte">{{ el.jalon.texte }}</span>
+            <i class="pi pi-arrow-down jalon__go" aria-hidden="true"></i>
+          </button>
+        </li>
+      } @else {
+        <li class="etape" [ngClass]="'etape--' + el.etape.niveau" [id]="'etape-' + el.etape.colonne.code"
+            [class.etape--ouverte]="estOuverte(el.etape)" [class.etape--attenuee]="filtre && el.etape.nombreFiltrees === 0">
+          <span class="etape__noeud" aria-hidden="true"></span>
+          <button type="button" class="etape__entete" (click)="basculer.emit(el.etape.colonne.code)"
+                  [attr.aria-expanded]="estOuverte(el.etape)" [attr.aria-controls]="'corps-' + el.etape.colonne.code">
+            <span class="etape__ligne">
+              <span class="etape__titre">{{ libelleEtape(el.etape) }}</span>
+              <span class="etape__sous">{{ sousTitreEtape(el.etape) }}</span>
+              <span class="etape__flux" [class.neg]="el.etape.entrees - el.etape.sorties < 0" [class.pos]="el.etape.entrees - el.etape.sorties > 0">
+                {{ el.etape.entrees - el.etape.sorties === 0 ? 'aucun flux' : 'flux ' + signe(el.etape.entrees - el.etape.sorties) }}
+              </span>
+              <i class="pi pi-chevron-down etape__chevron" aria-hidden="true"></i>
+            </span>
+
+            <span class="niveau">
+              <span class="niveau__solde">
+                <small>ouverture</small>{{ compact(el.etape.ouverture) }}
+              </span>
+              <span class="regle" aria-hidden="true">
+                <span class="regle__zone regle__zone--depasse" [style.width.%]="zones.depasse"></span>
+                <span class="regle__zone regle__zone--couvert" [style.left.%]="zones.depasse" [style.width.%]="zones.couvert"></span>
+                <span class="regle__zone regle__zone--pos" [style.left.%]="zones.zero" [style.width.%]="100 - zones.zero"></span>
+                <span class="regle__zero" [style.left.%]="zones.zero"></span>
+                <span class="regle__trajet"
+                      [style.left.%]="position(el.etape.ouverture) < position(el.etape.cloture) ? position(el.etape.ouverture) : position(el.etape.cloture)"
+                      [style.width.%]="position(el.etape.ouverture) < position(el.etape.cloture) ? position(el.etape.cloture) - position(el.etape.ouverture) : position(el.etape.ouverture) - position(el.etape.cloture)"></span>
+                <span class="regle__pt regle__pt--depart" [style.left.%]="position(el.etape.ouverture)"></span>
+                <span class="regle__pt regle__pt--arrivee" [ngClass]="'regle__pt--' + el.etape.niveau" [style.left.%]="position(el.etape.cloture)"></span>
+              </span>
+              <span class="niveau__solde niveau__solde--fin">
+                <small>clôture</small><strong [class.pos]="el.etape.cloture >= 0" [class.neg]="el.etape.cloture < 0">{{ compact(el.etape.cloture) }}</strong>
+              </span>
+            </span>
+
+            @if (plan.plafondFC > 0) {
+              <app-fc-barre [situation]="fc(el.etape.cloture)" format="compact"/>
+            }
+
+            @if (el.etape.pastilles.length > 0) {
+              <span class="pastilles">
+                @for (p of el.etape.pastilles; track p.sens + p.source) {
+                  <span class="pastille" [class.pastille--entree]="p.sens === 'ENCAISSEMENT'" [class.pastille--off]="filtre && !p.retenue">
+                    <strong>{{ p.sens === 'ENCAISSEMENT' ? '+' : '−' }}{{ compact(p.total) }}</strong> {{ p.libelle }}
+                    @if (p.nombre > 1) { <span class="pastille__nb">· {{ p.nombre }}</span> }
+                  </span>
+                }
+              </span>
+            } @else {
+              <span class="etape__calme">Aucune opération sur la période.</span>
+            }
+            @if (filtre && el.etape.pastilles.length > 0) {
+              <span class="etape__filtre">
+                {{ el.etape.nombreFiltrees === 0 ? 'Aucune opération ne correspond aux filtres' : el.etape.nombreFiltrees + ' opération' + (el.etape.nombreFiltrees > 1 ? 's' : '') + ' retenue' + (el.etape.nombreFiltrees > 1 ? 's' : '') + ' par les filtres' }}
+              </span>
+            }
+          </button>
+
+          @if (estOuverte(el.etape)) {
+            <div class="etape__corps" [id]="'corps-' + el.etape.colonne.code">
+              @for (b of blocs(el.etape); track b.sens) {
+                <div class="sens" [class.sens--entree]="b.sens === 'ENTREES'">
+                  <div class="sens__tete">
+                    <span><i class="pi" [class.pi-arrow-down-left]="b.sens === 'ENTREES'" [class.pi-arrow-up-right]="b.sens === 'SORTIES'" aria-hidden="true"></i>
+                      {{ b.sens === 'ENTREES' ? 'Entrées' : 'Sorties' }}</span>
+                    <span>{{ b.sens === 'ENTREES' ? '+' : '−' }}{{ montant(b.bloc.total) }}</span>
+                  </div>
+                  @for (g of b.bloc.sources; track g.source) {
+                    <div class="source">
+                      <div class="source__tete">
+                        <span class="source__nom">{{ g.libelle }}</span>
+                        <span class="source__nb">{{ g.operations.length }}</span>
+                        <span class="source__total">{{ b.sens === 'ENTREES' ? '+' : '−' }}{{ montant(g.total) }}</span>
+                      </div>
+                      <ul class="ops">
+                        @for (o of g.operations; track o.cle) {
+                          <li>
+                            <button type="button" class="op" [class.op--surlignee]="surlignees.has(o.cle)"
+                                    (click)="ouvrirEncours.emit({ operation: ligneDe(o.cle), colonne: el.etape.colonne })"
+                                    [attr.aria-label]="'Ouvrir ' + (o.libelle || 'cette opération') + ' dans les encours'">
+                              <span class="op__date">{{ jourMois(o.date) }}</span>
+                              <span class="op__lib">{{ o.libelle || '—' }}@if (o.numero) {<small>N° {{ o.numero }}</small>}</span>
+                              <span class="op__montant">{{ b.sens === 'ENTREES' ? '+' : '−' }}{{ montant(o.montant) }}</span>
+                              <i class="pi pi-angle-right op__go" aria-hidden="true"></i>
+                            </button>
+                          </li>
+                        }
+                      </ul>
+                    </div>
+                  }
+                </div>
+              }
+              @if (blocs(el.etape).length === 0) {
+                <p class="etape__calme">{{ filtre ? 'Aucune opération ne correspond aux filtres sur cette période.' : 'Aucune opération sur la période.' }}</p>
+              }
+            </div>
+          }
+        </li>
+      }
+    }
+  </ol>
+</div>

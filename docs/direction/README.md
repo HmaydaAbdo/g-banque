@@ -1066,6 +1066,11 @@ opérations en attente d'une banque donnée, quel que soit leur type d'origine.
   par banque, classées par urgence, montrent qui est en besoin, de combien, pour quel jour et depuis
   combien de jours, et quelle banque a un excédent pour y répondre. La direction sait, plusieurs semaines
   à l'avance, quand et de combien solliciter une banque, au lieu de le découvrir sur le relevé.
+- **Le plan de trésorerie de chaque banque raconté comme une histoire** : une page par banque relate le mois
+  période par période — solde de départ, sorties et entrées, jour où la facilité de caisse prend le relais, jour où
+  elle est dépassée et opération qui le provoque, point bas — avec la consommation de la facilité de caisse suivie
+  à chaque étape. Les équipes voient d'un coup d'œil quand agir et pourquoi, filtrent par source, sens ou montant
+  sans jamais fausser les soldes, et retrouvent le plan classique en vue tableau.
 - **Une vue de position par banque** : une grille banques × périodes, colorée en vert, orange ou rouge,
   qui permet de repérer le compte en difficulté d'un coup d'œil, avec le total du groupe. Les devises ne sont jamais additionnées : un total par devise, pour
   qu'aucun chiffre ne soit faux.

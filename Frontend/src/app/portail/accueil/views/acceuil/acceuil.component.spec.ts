@@ -64,7 +64,7 @@ describe('AcceuilComponent', () => {
     expect(cartes[0].textContent).toContain('couvert par FC');
     expect(cartes[1].textContent).toContain('dépassement');
     expect(cartes[1].textContent).toContain('FC disponible');
-    expect(cartes[1].querySelector('.fc__fill--depasse')).not.toBeNull();
+    expect(cartes[1].querySelector('.fc__rempli--depasse')).not.toBeNull();
     expect(cartes[2].querySelectorAll('.fc--aucune').length).toBe(2);
     expect(cartes[2].textContent).toContain('Aucune');
     expect(cartes[2].textContent).toContain('Sans facilité de caisse');

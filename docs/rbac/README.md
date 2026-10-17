@@ -2725,7 +2725,7 @@ endpoint d'écriture.
 
 | Méthode | URL | Description |
 |---|---|---|
-| GET | `/tresorerie-previsionnelle` | Plan de trésorerie prévisionnel (JSON) : détail par banque + un total par devise, `?periode=FIN_DE_MOIS` (défaut) \| `FIN_DE_TRIMESTRE` — écran Trésorerie prévisionnelle. |
+| GET | `/tresorerie-previsionnelle` | Plan de trésorerie prévisionnel (JSON) : détail par banque + un total par devise, `?periode=FIN_DE_MOIS` (défaut) \| `FIN_DE_TRIMESTRE` — écran Trésorerie prévisionnelle et page d'une banque (chaque ligne de catégorie liste ses sources depuis le 17/10/2026). |
 | GET | `/tresorerie-previsionnelle/pdf` | Export PDF du plan, `?periode=…`, puis `?banqueId=` (une banque ; inconnue = 404) ou `?devise=` (le total d'une devise ; inconnue = 404 ; absent = dirham) — boutons « Exporter PDF » de l'écran. |
 
 Couverture de test : `TresoreriePrevisionnelleIntegrationTest` (administrateur → 200 sur les deux endpoints ;
@@ -2739,7 +2739,8 @@ utilisateur hors Finance → 403 sur les deux ; banque inconnue → 404).
 |---|---|---|
 | `/portail/etats-des-encours/:banqueId` (parent — s'applique à `select` et à `:rapprochementId` avec tous ses enfants) | `departmentGuard('Finance')` | `DEPT_Finance:MEMBER` ou `DEPT_Finance:DIRECTOR`. `SYSTEM_ADMIN` passe toujours (accès transversal). |
 | `/portail/etats-des-encours/:banqueId/:rapprochementId` | `rapprochementActifGuard` | Ne vérifie aucun rôle — s'assure que `rapprochementId` est un identifiant numérique valide dans l'URL ; sinon redirige vers l'écran de sélection (`/select`), ou vers l'accueil si `banqueId` est lui-même introuvable. Garde de navigation, pas de sécurité d'accès. |
-| `/portail/tresorerie-previsionnelle` (14/10/2026) | `departmentGuard('Finance')` | `DEPT_Finance:MEMBER` ou `DEPT_Finance:DIRECTOR`. `SYSTEM_ADMIN` passe toujours. Les paramètres d'adresse `?horizon=`, `?devise=`, `?banque=` et `?col=` ne sont que des critères de lecture (valeur inconnue → valeur par défaut). |
+| `/portail/tresorerie-previsionnelle` (14/10/2026) | `departmentGuard('Finance')` | `DEPT_Finance:MEMBER` ou `DEPT_Finance:DIRECTOR`. `SYSTEM_ADMIN` passe toujours. Les paramètres d'adresse `?horizon=` et `?devise=` ne sont que des critères de lecture (valeur inconnue → valeur par défaut) ; l'ancien `?banque=…&col=…` redirige vers la page de la banque. |
+| `/portail/tresorerie-previsionnelle/banque/:banqueId` (17/10/2026) | `departmentGuard('Finance')` (hérité de la route parente) | Même règle. Page du plan d'une banque : appelle `GET /tresorerie-previsionnelle`, `GET /recapitulatif/banque/{banqueId}` et `GET /tresorerie-previsionnelle/pdf?banqueId=` (mêmes `@PreAuthorize`). Les paramètres `?horizon=`, `?vue=`, `?sens=`, `?sources=`, `?op=`, `?montant=`, `?q=`, `?ouvert=`, `?col=` ne sont que des critères de lecture (valeur inconnue → valeur par défaut). Aucune autorisation nouvelle. |
 
 ---
 

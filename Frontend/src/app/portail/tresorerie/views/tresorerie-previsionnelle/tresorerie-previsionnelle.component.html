@@ -38,8 +38,7 @@
     }
 
     @if (planDuPanneau; as detail) {
-      <app-detail-banque [plan]="detail" [colonnes]="pl.colonnes" [colonne]="colonne" [horizon]="horizonControl.value"
-                         (fermer)="fermer()" (colonneChange)="choisirColonne($event)"/>
+      <app-detail-banque [plan]="detail" [colonnes]="pl.colonnes" (fermer)="fermer()"/>
     }
 
     <section class="carte">

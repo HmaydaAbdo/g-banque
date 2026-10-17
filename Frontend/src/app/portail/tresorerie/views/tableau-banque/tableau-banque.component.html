@@ -1,0 +1,134 @@
+<div class="tableau">
+  <div class="grille" role="region" aria-label="Plan de trésorerie par période" tabindex="0">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col" class="col-libelle">{{ plan.devise }}</th>
+          @for (c of colonnes; track c.code; let i = $index) {
+            <th scope="col">{{ libelleColonne(c, i) }}<small>{{ sousTitreColonne(c, i) }}</small></th>
+          }
+          <th scope="col" class="col-total">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row">Solde d'ouverture</th>
+          @for (v of ouvertures; track $index) { <td [class.neg]="v < 0">{{ compact(v) }}</td> }
+          <td class="col-total" [class.neg]="plan.soldeActuel < 0">{{ compact(plan.soldeActuel) }}</td>
+        </tr>
+
+        @for (groupe of groupes; track groupe.sens) {
+          <tr class="sens" [class.sens--entree]="groupe.sens === 'ENCAISSEMENT'">
+            <th scope="row">
+              <button type="button" class="deplier" [attr.aria-expanded]="!repliees.has(groupe.sens)" (click)="basculer(groupe.sens)">
+                <i class="pi pi-chevron-down" [class.replie]="repliees.has(groupe.sens)" aria-hidden="true"></i>{{ groupe.titre }}
+              </button>
+            </th>
+            @for (v of groupe.totaux; track $index) { <td>{{ cellule(v) }}</td> }
+            <td class="col-total">{{ cellule(somme(groupe.totaux)) }}</td>
+          </tr>
+          @for (l of groupe.lignes; track l.cle) {
+            @if (visible(l)) {
+              @if (aDesSources(l)) {
+                <tr class="categorie">
+                  <th scope="row">
+                    <button type="button" class="deplier" [attr.aria-expanded]="!repliees.has(l.cle)" (click)="basculer(l.cle)">
+                      <i class="pi pi-chevron-down" [class.replie]="repliees.has(l.cle)" aria-hidden="true"></i>{{ l.libelle }}
+                    </button>
+                  </th>
+                  @for (v of l.montants; track $index) { <td>{{ cellule(v) }}</td> }
+                  <td class="col-total">{{ cellule(l.total) }}</td>
+                </tr>
+              } @else {
+                <tr class="source" [class.source--categorie]="l.niveau === 1">
+                  <th scope="row">{{ l.libelle }}
+                    @if (l.sens === 'DECAISSEMENT') {
+                      <span class="part" [style.width.px]="part(l) * 0.4 + 2" [attr.title]="part(l) + ' % des sorties'" aria-hidden="true"></span>
+                    }
+                  </th>
+                  @for (v of l.montants; track i; let i = $index) {
+                    <td [class.case]="v !== 0" [class.case--choisie]="estChoisie(l, i)">
+                      @if (v !== 0) {
+                        <button type="button" class="case__btn" (click)="choisir(l, i)"
+                                [attr.aria-label]="'Voir les opérations ' + l.libelle + ', ' + libelleColonne(colonnes[i], i)">{{ cellule(v) }}</button>
+                      } @else { — }
+                    </td>
+                  }
+                  <td class="col-total">{{ cellule(l.total) }}</td>
+                </tr>
+              }
+            }
+          }
+          @if (groupe.lignes.length === 0) {
+            <tr class="vide"><th scope="row" [attr.colspan]="colonnes.length + 2">{{ filtre ? 'Aucune opération ne correspond aux filtres.' : 'Aucune opération.' }}</th></tr>
+          }
+        }
+
+        <tr class="cle">
+          <th scope="row">Flux net</th>
+          @for (v of fluxNets; track $index) { <td [class.neg]="v < 0" [class.pos]="v > 0">{{ signe(v) }}</td> }
+          <td class="col-total" [class.neg]="somme(fluxNets) < 0" [class.pos]="somme(fluxNets) > 0">{{ signe(somme(fluxNets)) }}</td>
+        </tr>
+        <tr class="cle">
+          <th scope="row">Solde de clôture</th>
+          @for (v of plan.soldesFin; track $index) {
+            <td [class.neg]="v < 0" [class.pos]="v >= 0">
+              {{ compact(v) }}
+              @if (plan.plafondFC > 0) {
+                <app-fc-barre class="cellule-fc" [situation]="fc(v)" [entete]="false"/>
+              }
+            </td>
+          }
+          <td class="col-total" [class.neg]="plan.soldeFinal < 0" [class.pos]="plan.soldeFinal >= 0">{{ compact(plan.soldeFinal) }}</td>
+        </tr>
+        @if (plan.plafondFC > 0) {
+          <tr>
+            <th scope="row">FC utilisée</th>
+            @for (v of plan.soldesFin; track $index) {
+              <td [ngClass]="'fc__pct--' + fc(v).palier">{{ fc(v).pourcentage }} %</td>
+            }
+            <td class="col-total"></td>
+          </tr>
+        }
+        <tr>
+          <th scope="row">Disponibilité / besoin</th>
+          @for (v of plan.soldesFin; track $index) {
+            <td [ngClass]="'statut--' + fc(v).statut">
+              {{ fc(v).statut === 'DISPONIBILITE' ? compact(fc(v).montantTotal) : fc(v).statut === 'BESOIN_COUVERT' ? 'couvert FC' : '−' + compact(fc(v).montantTotal) }}
+            </td>
+          }
+          <td class="col-total"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  @if (choix) {
+    <section class="detail" aria-live="polite">
+      <header class="detail__tete">
+        <strong>{{ choix.libelle }}</strong>
+        <span>{{ choix.sens === 'ENCAISSEMENT' ? 'entrées' : 'sorties' }} · {{ libelleColonne(colonnes[choix.index], choix.index) }} · {{ operationsChoisies.length }} opération{{ operationsChoisies.length > 1 ? 's' : '' }}</span>
+        <span class="detail__total" [class.pos]="choix.sens === 'ENCAISSEMENT'" [class.neg]="choix.sens === 'DECAISSEMENT'">
+          {{ choix.sens === 'ENCAISSEMENT' ? '+' : '−' }}{{ montant(totalChoisi) }}
+        </span>
+        <button type="button" class="detail__fermer" (click)="choix = null" aria-label="Fermer le détail"><i class="pi pi-times" aria-hidden="true"></i></button>
+      </header>
+      <ul class="detail__ops">
+        @for (o of operationsChoisies; track o.source + o.id) {
+          <li>
+            <button type="button" class="op" (click)="ouvrirEncours.emit({ operation: o, colonne: colonnes[choix.index] })">
+              <span class="op__date">{{ jourMois(o.dateReference) }}</span>
+              <span class="op__lib">{{ o.libelle || o.observations || '—' }}@if (o.numero) {<small>N° {{ o.numero }}</small>}</span>
+              <span class="op__montant" [class.pos]="choix.sens === 'ENCAISSEMENT'" [class.neg]="choix.sens === 'DECAISSEMENT'">
+                {{ choix.sens === 'ENCAISSEMENT' ? '+' : '−' }}{{ montant(montantDe(o)) }}
+              </span>
+              <i class="pi pi-angle-right op__go" aria-hidden="true"></i>
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
+  } @else {
+    <p class="aide"><i class="pi pi-info-circle" aria-hidden="true"></i> Cliquez un montant de source pour voir ses opérations.</p>
+  }
+</div>
