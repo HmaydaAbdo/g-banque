@@ -2770,8 +2770,8 @@ utilisateur qui a accès à l'écran, sans condition de rôle.
 
 **Popup des opérations en cours d'une banque (17/10/2026) — aucune autorisation modifiée.** Les lignes
 « Encours entrées / sorties » des cartes du tableau de bord ouvrent un popup qui appelle l'endpoint existant
-`GET /recapitulatif/banque/{banqueId}` (même `@PreAuthorize`, paramètres `periode` et `sens` de lecture). Aucun
-nouvel endpoint, aucun guard ni élément de navigation ajouté ; le popup est visible de tout utilisateur qui voit le
+`GET /recapitulatif/banque/{banqueId}` (même `@PreAuthorize`, paramètres `periode` et `sens` de lecture ; chaque
+ligne porte désormais aussi sa `dateReference`, déjà utilisée par le filtre d'horizon). Aucun nouvel endpoint, aucun guard ni élément de navigation ajouté ; le popup est visible de tout utilisateur qui voit le
 tableau de bord. L'horizon repart de la fin de mois après un rechargement de page : simple état d'interface, sans
 effet sur les droits.
 

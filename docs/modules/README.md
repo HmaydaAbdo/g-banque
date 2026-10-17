@@ -5374,14 +5374,18 @@ l'ouvre directement sur cette banque, avec le même horizon.
 sorties » sont cliquables : elles ouvrent une fenêtre qui détaille les opérations qui composent ce montant, jusqu'à
 l'horizon de la carte. Les montants sont les mêmes que ceux de la carte. La fenêtre propose trois vues —
 **Entrées**, **Sorties** et **Tout** — chacune rappelant son nombre d'opérations et son total ; la vue présélectionnée
-est celle de la ligne cliquée. Les opérations sont présentées sur une frise chronologique : d'abord les **échues**
-(date antérieure à aujourd'hui, signalées « à régulariser »), puis une période par **semaine** (du lundi au dimanche,
+est celle de la ligne cliquée. Les opérations sont présentées sur une frise chronologique, d'après leur **date de
+référence** — la même que celle qui fixe l'horizon : date d'émission pour la plupart des sources, date d'échéance pour
+le leasing, le CMT et les LCN (sauf l'escompte, à sa date d'émission). D'abord les **échues** (date de référence
+antérieure à aujourd'hui, signalées « à régulariser »), puis une période par **semaine** (du lundi au dimanche,
 la première commençant aujourd'hui) pour la fin de mois, ou par **mois civil** pour la fin de trimestre ; une
 période sans opération n'apparaît pas. Dans chaque période, les opérations sont regroupées **par sens** (entrées,
 puis sorties) et, dans chaque sens, **par source** (la source au total le plus élevé en premier), chaque source
 indiquant son nombre d'opérations et son total ; un clic sur une source replie ou déplie ses opérations (date,
 libellé, numéro de pièce, montant). Dans la vue « Tout », chaque période rappelle son solde net (entrées moins
-sorties). Un lien en pied de fenêtre ouvre les états des encours de la banque.
+sorties). Un lien en pied de fenêtre ouvre les états des encours de la banque. La fenêtre se ferme par sa croix, la
+touche Échap ou un clic à côté. Une opération sans libellé est présentée sous son observation. Pendant le chargement,
+les totaux affichent « — » ; si le chargement échoue, un message invite à fermer la fenêtre et à recommencer.
 
 #### Tableau de bord Finance : consommation de la facilité de caisse
 
@@ -5394,7 +5398,11 @@ consommation de la facilité de caisse** et par une ligne de total.
   pourcentage ; un solde positif ne consomme rien (barre vide, 0 %). Pour la tuile « Aujourd'hui » on prend le solde
   actuel, pour la tuile de l'horizon le solde prévu.
 - **Couleur de la barre** : bleue sous 70 % du plafond, orange de 70 % à 100 %, rouge au-delà du plafond (la barre
-  est alors pleine). Une banque sans facilité de caisse n'a pas de barre.
+  est alors pleine). Au-dessus de la barre : le montant utilisé (« FC non utilisée » si rien ne l'est) et le
+  pourcentage ; le plafond n'est pas répété, il figure sur la ligne « Facilité caisse ».
+- **Banque sans facilité de caisse** : « Facilité caisse : Aucune », « FC disponible : — » et, à la place de la barre,
+  un emplacement en pointillés « Sans facilité de caisse », pour que les deux tuiles gardent les mêmes rubriques à la
+  même hauteur.
 - **Ligne de total** : **Disponibilité** (solde positif : solde + plafond, en vert) ; **Besoin couvert par FC**
   (solde négatif que le plafond couvre : montant du découvert, en orange) ; **Besoin dépassement** (solde négatif
   au-delà du plafond : part non couverte, en rouge).

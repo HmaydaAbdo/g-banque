@@ -5,7 +5,8 @@
   [dismissableMask]="true"
   [draggable]="false"
   [resizable]="false"
-  [closable]="false"
+  [closable]="true"
+  [closeOnEscape]="true"
   [showHeader]="false"
   [style]="{ width: '680px', maxWidth: '96vw' }"
   [contentStyle]="{ padding: '0' }"
@@ -20,12 +21,12 @@
       }
       <div class="encours__title">
         <h2>{{ titre }}</h2>
-        <p>{{ libelleHorizon }} · jusqu'au {{ compte?.dateHorizon ? jourMois(compte!.dateHorizon) + '/' + compte!.dateHorizon.slice(0, 4) : '' }} · {{ nombreAffiche }} opération{{ nombreAffiche > 1 ? 's' : '' }}</p>
+        <p>{{ libelleHorizon }} · jusqu'au {{ compte?.dateHorizon ? jourMois(compte!.dateHorizon) + '/' + compte!.dateHorizon.slice(0, 4) : '' }} · @if (chargement) { chargement… } @else { {{ nombreAffiche }} opération{{ nombreAffiche > 1 ? 's' : '' }} }</p>
       </div>
       <div class="encours__total">
-        <span class="encours__amount" [class.encours__amount--pos]="vue === 'ENTREES' || (vue === 'TOUT' && totalAffiche >= 0)"
-              [class.encours__amount--neg]="vue === 'SORTIES' || (vue === 'TOUT' && totalAffiche < 0)">
-          {{ totalAffiche >= 0 ? '+' : '−' }}{{ montant(totalAffiche < 0 ? -totalAffiche : totalAffiche) }} {{ compte?.devise }}
+        <span class="encours__amount" [class.encours__amount--pos]="!chargement && totalAffiche > 0"
+              [class.encours__amount--neg]="!chargement && totalAffiche < 0">
+          {{ chargement ? '—' : montantSigne(totalAffiche) + ' ' + (compte?.devise ?? '') }}
         </span>
         <span class="encours__total-label">{{ vue === 'TOUT' ? 'Net sur la période' : 'Total sur la période' }}</span>
       </div>
@@ -34,17 +35,17 @@
 
     <div class="encours__vues" role="group" aria-label="Sens des opérations">
       <button type="button" class="vue" [class.vue--on]="vue === 'ENTREES'" [attr.aria-pressed]="vue === 'ENTREES'" (click)="choisirVue('ENTREES')">
-        <span>Entrées · {{ nombreEntrees }} op.</span>
-        <strong class="encours__amount--pos">+{{ montant(totalEntrees) }}</strong>
+        <span>Entrées · {{ chargement ? '…' : nombreEntrees }} op.</span>
+        <strong [class.encours__amount--pos]="!chargement && totalEntrees > 0">{{ chargement ? '—' : montantSigne(totalEntrees) }}</strong>
       </button>
       <button type="button" class="vue" [class.vue--on]="vue === 'SORTIES'" [attr.aria-pressed]="vue === 'SORTIES'" (click)="choisirVue('SORTIES')">
-        <span>Sorties · {{ nombreSorties }} op.</span>
-        <strong class="encours__amount--neg">−{{ montant(totalSorties) }}</strong>
+        <span>Sorties · {{ chargement ? '…' : nombreSorties }} op.</span>
+        <strong [class.encours__amount--neg]="!chargement && totalSorties > 0">{{ chargement ? '—' : montantSigne(-totalSorties) }}</strong>
       </button>
       <button type="button" class="vue" [class.vue--on]="vue === 'TOUT'" [attr.aria-pressed]="vue === 'TOUT'" (click)="choisirVue('TOUT')">
-        <span>Tout · {{ nombreEntrees + nombreSorties }} op.</span>
-        <strong [class.encours__amount--pos]="totalEntrees - totalSorties >= 0" [class.encours__amount--neg]="totalEntrees - totalSorties < 0">
-          {{ totalEntrees - totalSorties >= 0 ? '+' : '−' }}{{ montant(totalEntrees - totalSorties < 0 ? totalSorties - totalEntrees : totalEntrees - totalSorties) }}
+        <span>Tout · {{ chargement ? '…' : nombreEntrees + nombreSorties }} op.</span>
+        <strong [class.encours__amount--pos]="!chargement && totalEntrees - totalSorties > 0" [class.encours__amount--neg]="!chargement && totalEntrees - totalSorties < 0">
+          {{ chargement ? '—' : montantSigne(totalEntrees - totalSorties) }}
         </strong>
       </button>
     </div>
@@ -69,7 +70,7 @@
                   @if (periode.echue) { <span class="periode__tag">à régulariser</span> }
                 </span>
                 @if (vue === 'TOUT') {
-                  <span class="periode__net">Net {{ periode.net >= 0 ? '+' : '−' }}{{ montant(periode.net < 0 ? -periode.net : periode.net) }}</span>
+                  <span class="periode__net">Net {{ montantSigne(periode.net) }}</span>
                 }
               </div>
 

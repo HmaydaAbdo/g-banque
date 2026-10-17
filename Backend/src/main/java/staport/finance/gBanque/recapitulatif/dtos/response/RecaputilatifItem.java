@@ -22,6 +22,10 @@ import java.time.LocalDate;
  * sens explicitement plutôt que de le laisser déduire de celle des deux colonnes de montant qui
  * est remplie. {@code null} n'a de sens qu'au niveau du filtre de recherche
  * ({@code RecapitulatifSearchDto.sens} = tous sens confondus), jamais au niveau d'une ligne.</p>
+ *
+ * <p>{@code dateReference} est la date qui range la ligne dans le temps et pilote l'horizon (émission pour la plupart
+ * des sources, échéance pour le leasing, le CMT et les LCN — voir la vue SQL). Elle est toujours renseignée, contrairement
+ * à {@code dateEcheance}, vide pour les sources sans échéance : le popup des encours de l'accueil s'en sert pour ses périodes.</p>
  */
 public record RecaputilatifItem(
         Long id,
@@ -33,6 +37,7 @@ public record RecaputilatifItem(
         BigDecimal debit,
         BigDecimal credit,
         String observations,
-        TransactionSource source
+        TransactionSource source,
+        LocalDate dateReference
 ) {
 }

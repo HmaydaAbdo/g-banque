@@ -6,8 +6,15 @@ import {SensOperation} from "../../../../../transactions/dtos/SensOperation";
 export interface RecaputilatifItem {
   id:number;
   dateEmission: string;
-  dateEcheance: string;
-  libelle: string;
+  /** Vide pour les sources sans échéance (chèque, virement, commission…). */
+  dateEcheance: string | null;
+  /**
+   * Date qui range l'opération dans le temps et pilote l'horizon : émission pour la plupart des sources, échéance pour
+   * le leasing, le CMT et les LCN. Toujours renseignée par le backend.
+   */
+  dateReference: string;
+  /** Peut être vide sur d'anciennes lignes. */
+  libelle: string | null;
   /** Numéro de pièce porté par la source ; `null` quand la source n'en a pas. */
   numero: string | null;
   sens: SensOperation;

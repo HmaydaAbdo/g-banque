@@ -9,7 +9,7 @@ describe('encours-timeline', () => {
 
   function item(source: TransactionSource, sens: SensOperation, date: string, montant: number, libelle = 'op'): RecaputilatifItem {
     return {
-      id: 1, dateEmission: date, dateEcheance: date, libelle, numero: null, sens,
+      id: 1, dateEmission: date, dateEcheance: null, dateReference: date, libelle, numero: null, sens,
       debit: (sens === SensOperation.DECAISSEMENT ? montant : 0) as never,
       credit: (sens === SensOperation.ENCAISSEMENT ? montant : 0) as never,
       observations: '', source, compositeKey: `${source}:1`,
@@ -48,6 +48,15 @@ describe('encours-timeline', () => {
     expect(semaine.sorties?.nombre).toBe(3);
     expect(semaine.sorties?.sources.map(s => [s.libelle, s.total])).toEqual([['Agios', 450], ['Leasing', 100]]);
     expect(semaine.net).toBe(-550);
+  });
+
+  it("range par date de référence (pas par échéance, vide pour la plupart des sources) et tolère un libellé vide", () => {
+    const sansLibelle = { ...item(TransactionSource.CHEQUE, SensOperation.DECAISSEMENT, '2026-10-20', 10), libelle: null, observations: 'CHQ 12' };
+    const avecLibelle = item(TransactionSource.CHEQUE, SensOperation.DECAISSEMENT, '2026-10-20', 20, 'B');
+    const t = construireTimeline([avecLibelle, sansLibelle], aujourdhui, 'FIN_DE_MOIS');
+
+    expect(t.map(p => p.titre)).toEqual(['19 – 25 oct.']);
+    expect(t[0].sorties?.sources[0].operations.map(o => o.libelle)).toEqual(['B', 'CHQ 12']);
   });
 
   it('omet les périodes sans opération et reste vide sans opération', () => {

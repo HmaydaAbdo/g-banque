@@ -65,8 +65,10 @@ describe('AcceuilComponent', () => {
     expect(cartes[1].textContent).toContain('dépassement');
     expect(cartes[1].textContent).toContain('FC disponible');
     expect(cartes[1].querySelector('.fc__fill--depasse')).not.toBeNull();
-    expect(cartes[2].querySelectorAll('.fc').length).toBe(0);
+    expect(cartes[2].querySelectorAll('.fc--aucune').length).toBe(2);
     expect(cartes[2].textContent).toContain('Aucune');
+    expect(cartes[2].textContent).toContain('Sans facilité de caisse');
+    expect(cartes[0].textContent).not.toContain('Plafond');
   });
 
   it('un clic sur « Encours sorties » ouvre le popup sur les sorties sans suivre le lien de la carte', () => {

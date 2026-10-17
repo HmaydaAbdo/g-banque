@@ -113,14 +113,15 @@ function blocSens(operations: OperationEncours[]): BlocSens | null {
     source,
     libelle: TransactionSourceLabels[source] ?? source,
     total: ops.reduce((s, o) => s + o.montant, 0),
-    operations: [...ops].sort((a, b) => a.date.localeCompare(b.date) || a.libelle.localeCompare(b.libelle)),
+    operations: [...ops].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? '') || a.libelle.localeCompare(b.libelle)),
   }));
   sources.sort((a, b) => b.total - a.total || a.libelle.localeCompare(b.libelle));
   return { total: sources.reduce((s, g) => s + g.total, 0), nombre: operations.length, sources };
 }
 
 /**
- * Range les opérations d'encours en timeline : « Échues » (date antérieure à aujourd'hui) puis une période par semaine
+ * Range les opérations d'encours en timeline, d'après leur date de référence (celle qui pilote l'horizon) :
+ * « Échues » (date antérieure à aujourd'hui) puis une période par semaine
  * ou par mois jusqu'à l'horizon ; dans chaque période, un bloc par sens, puis un groupe par source. Les périodes sans
  * opération sont omises ; une opération datée après l'horizon rejoint la dernière période.
  */
@@ -137,11 +138,11 @@ export function construireTimeline(items: RecaputilatifItem[], aujourdhui: Date,
 
   for (const item of items) {
     const entree = item.sens === SensOperation.ENCAISSEMENT;
-    const date = item.dateEcheance;
+    const date = item.dateReference ?? item.dateEcheance ?? item.dateEmission;
     const operation: OperationEncours = {
       source: item.source,
       date,
-      libelle: item.libelle,
+      libelle: item.libelle || item.observations || '',
       numero: item.numero,
       montant: Number(entree ? item.credit : item.debit),
     };

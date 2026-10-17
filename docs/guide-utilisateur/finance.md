@@ -58,12 +58,14 @@ elle montre quelle part du plafond de la facilité de caisse est utilisée, d'ap
 - Barre **vide (0 %)** : le solde est positif, la facilité de caisse n'est pas utilisée.
 - Barre **bleue** : moins de 70 % du plafond utilisé. Barre **orange** : de 70 % à 100 %. Barre **rouge et pleine** :
   le plafond est dépassé.
-- Sous la barre, **0** et le **plafond** donnent l'échelle. Dans la tuile « Aujourd'hui », la ligne **FC disponible**
-  indique ce qu'il reste du plafond.
+- Au-dessus de la barre : le montant de facilité de caisse utilisé (ou « FC non utilisée ») et le pourcentage du
+  plafond. Le plafond lui-même est sur la ligne **Facilité caisse** ; la ligne **FC disponible** indique ce qu'il en
+  reste aujourd'hui.
 - La ligne du bas annonce la situation : **Disponibilité** en vert, **Besoin — couvert par FC** en orange (le solde est
   négatif mais le plafond le couvre ; le montant est le découvert), **Besoin — dépassement** en rouge (le plafond ne
   suffit pas ; le montant est la part non couverte).
-- Une banque sans facilité de caisse affiche « Aucune » et n'a pas de barre.
+- Une banque sans facilité de caisse affiche « Aucune », « FC disponible : — » et un emplacement en pointillés
+  « Sans facilité de caisse » à la place de la barre.
 
 ### Voir les opérations qui composent les encours d'une banque
 
@@ -75,7 +77,8 @@ petite flèche et un survol les signalent).
 2. En haut de la fenêtre, trois boutons — **Entrées**, **Sorties**, **Tout** — donnent chacun le nombre
    d'opérations et le total. Celui de la ligne cliquée est déjà sélectionné ; cliquer sur un autre pour changer de
    vue.
-3. Les opérations sont rangées dans le temps : **Échues** d'abord (avec la mention « à régulariser »), puis chaque
+3. Les opérations sont rangées dans le temps, d'après la date qui sert aussi à l'horizon (date d'émission, ou
+   d'échéance pour le leasing, le CMT et les LCN) : **Échues** d'abord (avec la mention « à régulariser »), puis chaque
    semaine (fin de mois) ou chaque mois (fin de trimestre). Les périodes vides n'apparaissent pas.
 4. Dans chaque période, les **entrées** puis les **sorties** sont regroupées par **source** (Leasing, LCN, Virements,
    Agios, etc.). Cliquer sur une source pour replier ou déplier ses opérations (date, libellé, numéro, montant).

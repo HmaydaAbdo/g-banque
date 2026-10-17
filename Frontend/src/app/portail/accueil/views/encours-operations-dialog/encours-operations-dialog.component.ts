@@ -6,6 +6,7 @@ import { HorizonPrevision } from '../../../etatsDesEncours/views/lesEncours/reca
 import { SensOperation } from '../../../transactions/dtos/SensOperation';
 import { dateCourte } from '../../../tresorerie/format';
 import { RecapitulatifCompte } from '../../dtos/RecapitulatifCompte';
+import { RecaputilatifItem } from '../../../etatsDesEncours/views/lesEncours/recap/dtos/RecaputilatifItem';
 import { BlocSens, construireTimeline, PeriodeTimeline } from '../../encours-timeline';
 
 export type VueEncours = 'ENTREES' | 'SORTIES' | 'TOUT';
@@ -112,7 +113,15 @@ export class EncoursOperationsDialogComponent implements OnChanges {
   }
 
   montant(valeur: number): string {
-    return valeur.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    // + 0 ramène un éventuel -0 (somme vide, opposé de zéro) à 0 : jamais de « -0,00 »
+    return (Math.abs(valeur) + 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  /** Montant précédé de son signe (« +1 234,00 », « −1 234,00 ») ; zéro s'affiche sans signe. */
+  montantSigne(valeur: number): string {
+    const arrondi = Math.round(valeur * 100) / 100;
+    const signe = arrondi > 0 ? '+' : arrondi < 0 ? '−' : '';
+    return signe + this.montant(arrondi);
   }
 
   jourMois(iso: string): string {
@@ -125,13 +134,13 @@ export class EncoursOperationsDialogComponent implements OnChanges {
     this.recapService.getRecapitulatif(banqueId, { libelleOuObservation: '', periode: this.horizon }, 0, TAILLE_MAX, 'dateReference,asc')
       .subscribe({
         next: reponse => {
-          const lignes = reponse.page.content;
-          this.tronque = reponse.page.page.totalElements > lignes.length;
-          this.periodes = construireTimeline(lignes, new Date(), this.horizon);
-          this.totalEntrees = this.periodes.reduce((s, p) => s + (p.entrees?.total ?? 0), 0);
-          this.totalSorties = this.periodes.reduce((s, p) => s + (p.sorties?.total ?? 0), 0);
-          this.nombreEntrees = this.periodes.reduce((s, p) => s + (p.entrees?.nombre ?? 0), 0);
-          this.nombreSorties = this.periodes.reduce((s, p) => s + (p.sorties?.nombre ?? 0), 0);
+          try {
+            this.appliquer(reponse.page.content, reponse.page.page.totalElements);
+          } catch {
+            // Une ligne inattendue ne doit jamais laisser le popup bloqué sur « Chargement… »
+            this.periodes = [];
+            this.erreur = true;
+          }
           this.chargement = false;
         },
         error: () => {
@@ -140,5 +149,14 @@ export class EncoursOperationsDialogComponent implements OnChanges {
           this.erreur = true;
         },
       });
+  }
+
+  private appliquer(lignes: RecaputilatifItem[], totalElements: number): void {
+    this.tronque = totalElements > lignes.length;
+    this.periodes = construireTimeline(lignes, new Date(), this.horizon);
+    this.totalEntrees = this.periodes.reduce((s, p) => s + (p.entrees?.total ?? 0), 0);
+    this.totalSorties = this.periodes.reduce((s, p) => s + (p.sorties?.total ?? 0), 0);
+    this.nombreEntrees = this.periodes.reduce((s, p) => s + (p.entrees?.nombre ?? 0), 0);
+    this.nombreSorties = this.periodes.reduce((s, p) => s + (p.sorties?.nombre ?? 0), 0);
   }
 }

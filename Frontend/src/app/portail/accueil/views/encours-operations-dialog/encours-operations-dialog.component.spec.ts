@@ -15,7 +15,7 @@ describe('EncoursOperationsDialogComponent', () => {
   const compte = { banqueId: 3, nom: 'BMCI', logoBase64: '', devise: 'MAD', dateHorizon: '2026-10-31' } as unknown as RecapitulatifCompte;
 
   const ligne = (source: TransactionSource, sens: SensOperation, date: string, montant: number) => ({
-    id: 1, dateEmission: date, dateEcheance: date, libelle: 'op', numero: null, sens,
+    id: 1, dateEmission: date, dateEcheance: null, dateReference: date, libelle: null, numero: null, sens,
     debit: sens === SensOperation.DECAISSEMENT ? montant : 0,
     credit: sens === SensOperation.ENCAISSEMENT ? montant : 0,
     observations: '', source, compositeKey: `${source}:1`,
@@ -66,6 +66,13 @@ describe('EncoursOperationsDialogComponent', () => {
     component.choisirVue('TOUT');
     expect(component.totalAffiche).toBe(4700);
     expect(component.blocs(component.periodes[0]).map(b => b.sens)).toEqual(['ENTREES', 'SORTIES']);
+  });
+
+  it('affiche les montants signés sans jamais écrire « -0,00 »', () => {
+    expect(component.montantSigne(-0)).toBe('0,00');
+    expect(component.montantSigne(0)).toBe('0,00');
+    expect(component.montantSigne(-1234.5).replace(/\s/g, ' ')).toBe('−1 234,50');
+    expect(component.montantSigne(12).startsWith('+')).toBeTrue();
   });
 
   it('replie et déplie une source', () => {
