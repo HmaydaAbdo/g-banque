@@ -26,6 +26,7 @@ public interface TransactionMapper {
     @Mapping(target = "rapprochementId", expression = "java(transaction.getRapprochement() != null ? transaction.getRapprochement().getId() : null)")
     @Mapping(target = "banqueDePrelevementId", expression = "java(transaction.getBanqueDePrelevement() != null ? transaction.getBanqueDePrelevement().getId() : null)")
     @Mapping(target = "banqueDePrelevementNom", expression = "java(transaction.getBanqueDePrelevement() != null ? toUpper(transaction.getBanqueDePrelevement().getNom()) : null)")
+    @Mapping(target = "avertissements", ignore = true)
     TransactionResponseDto toDto(Transaction transaction);
 
     default String toUpper(String value) {

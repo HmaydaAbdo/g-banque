@@ -687,8 +687,9 @@ avoir à consulter chaque module séparément.
 - **Cohérence garantie** : toute correction ponctuelle (date de valeur, date d'opération, TVA) est
   automatiquement répercutée sur l'opération source — impossible que les deux divergent
   silencieusement.
-- **Verrouillage automatique** : une fois un rapprochement définitivement clôturé, ses transactions
-  ne sont plus modifiables, garantissant l'intégrité des comptes arrêtés.
+- **Verrouillage des montants** : une fois un rapprochement définitivement clôturé, le montant de ses
+  transactions ne change plus, garantissant l'intégrité des soldes arrêtés ; les dates, libellés et la
+  TVA restent corrigeables pour rattraper une erreur découverte après coup, avec historique complet.
 - **Recherche et filtrage transverses** : l'historique est consultable par banque, libellé,
   montant, source ou statut de rapprochement, tous modules confondus, sans naviguer module par
   module.
@@ -963,8 +964,9 @@ verrouille la période de façon permanente.
   répercute automatiquement le nouveau solde sur la période suivante — aucun décalage de solde ne
   peut se glisser sans être corrigé.
 - **Verrouillage définitif fiable** : une fois une période clôturée définitivement (auteur et date
-  historisés), plus aucune modification n'est possible — protège l'intégrité des chiffres remis à
-  la comptabilité ou à l'administration fiscale.
+  historisés), les soldes et les montants ne bougent plus — protège l'intégrité des chiffres remis à
+  la comptabilité ou à l'administration fiscale. Seules les corrections de dates, de libellé et de TVA
+  restent possibles, toutes historisées.
 - **Rapports prêts à l'emploi, filtrables à la demande** : un rapport PDF de chaque période est
   généré en un clic, en version Finance (avec TVA) ou Comptabilité (sans TVA), sans mise en forme
   manuelle — soit sur l'ensemble de la période, soit restreint aux transactions correspondant aux
@@ -1028,9 +1030,11 @@ opérations en attente d'une banque donnée, quel que soit leur type d'origine.
   affiché peut être partagé avec un collègue.
 - **Alerte sur les échéances** : les opérations arrivées à échéance sont signalées directement sur
   chaque carte et dans les indicateurs globaux, pour qu'aucune échéance ne passe inaperçue.
-- **Corrections maîtrisées après validation** : une transaction validée peut être corrigée ou annulée
-  tant que le mois n'est pas définitivement clôturé ; l'opération d'origine reste toujours cohérente
-  avec la transaction, sans ressaisie. Le retour « en cours » manuel d'une opération rapprochée (réservé à l'administrateur système)
+- **Corrections maîtrisées après validation** : une transaction validée peut être corrigée (dates,
+  libellé, TVA) même après la clôture définitive du mois, et annulée tant que le mois n'est pas
+  définitivement clôturé ; une date de valeur corrigée relance aussitôt le calcul des agios concernés
+  et un avertissement signale toute période d'agios déjà clôturée à revoir. L'opération d'origine reste
+  toujours cohérente avec la transaction, sans ressaisie. Le retour « en cours » manuel d'une opération rapprochée (réservé à l'administrateur système)
   supprime proprement sa transaction : plus aucune opération « en cours » ne reste liée à une écriture bancaire.
 - **Prévisionnel et réalisé jamais confondus** : chaque écran indique explicitement s'il présente
   des opérations *attendues* (pas encore passées en banque) ou *réalisées* (déjà passées sur le

@@ -397,6 +397,9 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
             summary: 'Succès',
             detail: 'Transaction mise à jour avec succès.'
           });
+          // Périodes d'agios clôturées touchées par la nouvelle date de valeur : non recalculées, à vérifier.
+          updatedTransaction.avertissements?.forEach(detail =>
+            this.messageService.add({ severity: 'warn', summary: 'Agios à vérifier', detail, sticky: true }));
           this.closeEditDialog();
         }
       });

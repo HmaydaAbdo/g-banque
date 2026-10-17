@@ -21,6 +21,8 @@ export interface TransactionResponseDto {
   statutRapprochement: 'EN_COURS' | 'CLOTURE_PROVISOIRE' | 'CLOTURE_DEFINITIVE';
   rapprochementId?: number | null;
   referent?: number | null;
+  /** Renseigné uniquement par la modification : périodes d'agios clôturées non recalculées. */
+  avertissements?: string[] | null;
   createdAt: Date;
   updatedAt: Date;
 }

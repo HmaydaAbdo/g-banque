@@ -3217,8 +3217,8 @@ l'échéance de leasing) — absent pour toute transaction qui n'est pas synchro
 origine.
 
 **Statut du rapprochement** : hérité du rapprochement auquel la transaction appartient — en cours,
-clôture provisoire ou clôture définitive. Une transaction rattachée à un rapprochement clôturé
-définitivement n'est plus modifiable.
+clôture provisoire ou clôture définitive. Une transaction d'un rapprochement clôturé définitivement
+reste corrigeable (dates, libellé, observation, TVA) mais jamais son montant ; elle ne peut pas être annulée.
 
 ---
 
@@ -3239,7 +3239,7 @@ définitivement n'est plus modifiable.
     → Répercutée automatiquement sur l'opération source correspondante
         ↓
 [4] Le rapprochement passe en clôture provisoire puis définitive
-    → Après clôture définitive, la transaction n'est plus modifiable
+    → Après clôture définitive, la transaction reste corrigeable (sauf son montant) mais ne peut plus être annulée
 ```
 
 ---
@@ -3279,8 +3279,8 @@ produite par la validation d'une opération dans son module source.
 
 1. Une transaction est toujours rattachée à un rapprochement.
 2. Le débit et le crédit ne sont jamais négatifs ; l'un des deux est nécessairement à zéro.
-3. La modification d'une transaction est interdite si son rapprochement est en clôture définitive.
-4. Une transaction peut être corrigée avec les mêmes champs que lors de sa validation : date de valeur, date d'opération, libellé, observation et TVA (un taux ou un montant, jamais les deux). Le montant, la banque et la date d'émission ne sont jamais modifiables. Chaque correction est répercutée automatiquement sur l'opération source dont elle provient (échéance, moyen de paiement, etc.), afin que les deux restent toujours cohérentes ; la TVA est recalculée sur le montant, inchangé, de la transaction.
+3. La modification d'une transaction reste possible quand son rapprochement est en clôture définitive (décision du 17/10/2026, pour rattraper les erreurs découvertes lors de la vérification du calcul des agios) : seuls la date de valeur, la date d'opération, le libellé, l'observation et la TVA sont corrigeables ; le montant, la banque, la date d'émission, le rapprochement et l'opération d'origine ne changent jamais, donc les soldes du rapprochement restent identiques. Seule l'annulation est interdite sur un rapprochement clôturé définitivement.
+4. Une transaction peut être corrigée avec les mêmes champs que lors de sa validation : date de valeur, date d'opération, libellé, observation et TVA (un taux ou un montant, jamais les deux). Le montant, la banque et la date d'émission ne sont jamais modifiables. Chaque correction est répercutée automatiquement sur l'opération source dont elle provient (échéance, moyen de paiement, etc.), afin que les deux restent toujours cohérentes ; la TVA est recalculée sur le montant, inchangé, de la transaction. La TVA nette d'un rapprochement clos est donc susceptible de changer : à signaler à la comptabilité si elle a déjà été déclarée. Si la date de valeur est corrigée, les agios sont recalculés immédiatement pour les périodes encore ouvertes (celle de l'ancienne date et celle de la nouvelle) ; une période d'agios déjà clôturée n'est jamais recalculée : la modification est acceptée et un avertissement signale que l'agios définitif de cette période est à vérifier.
 5. Une transaction sans opération source synchronisable (pas de référent) peut être modifiée sans
    répercussion — seule la transaction elle-même est mise à jour.
 6. Le retour « en cours » manuel d'une opération rapprochée (administrateur système) a le même effet que l'annulation de sa transaction (chapitre 31). L'annulation (suppression) d'une transaction remet l'opération source dans son statut de départ (elle redevient « à valider ») et efface ses dates de valeur et d'opération ; elle est interdite si son rapprochement est en clôture définitive — c'est le statut du rapprochement, et non le rôle de l'utilisateur, qui protège une
@@ -3333,8 +3333,7 @@ Les traitements suivants produisent un événement utile au diagnostic :
 - récupération de l'historique et des transactions agrégées d'une banque ;
 - modification réussie d'une transaction, ainsi que la répercussion vers son opération source.
 
-Les tentatives d'opérations invalides sont également journalisées comme anomalies gérées,
-notamment la modification d'une transaction dont le rapprochement est déjà clôturé définitivement.
+Les tentatives d'opérations invalides sont également journalisées comme anomalies gérées.
 
 ---
 
@@ -4891,7 +4890,8 @@ de fin et des totaux (débit, crédit, TVA) à partir des transactions qui lui s
 - **Clôture provisoire** — période figée en vue d'un contrôle avant verrouillage définitif ; reste
   modifiable (une transaction peut encore y être ajoutée, corrigée ou annulée).
 - **Clôturé définitivement** — période verrouillée de façon permanente ; plus aucune transaction
-  rattachée ne peut être ajoutée, modifiée ou annulée.
+  rattachée ne peut être ajoutée ni annulée, et les montants ne changent jamais. Seules les dates, le
+  libellé, l'observation et la TVA d'une transaction restent corrigeables (voir chapitre 21).
 
 **Solde de début** : solde bancaire au premier jour de la période. Pour le tout premier
 rapprochement d'une banque, il correspond au solde initial saisi à la création de la banque. Pour
@@ -5142,7 +5142,10 @@ nouveau. Les soldes du rapprochement concerné sont recalculés.
 peut être corrigée avec les mêmes champs que lors de la validation — date de valeur, date
 d'opération, libellé, observation, TVA (taux ou montant). Le montant, la banque et la date
 d'émission ne sont jamais modifiables. Chaque correction est répercutée automatiquement sur
-l'opération d'origine, pour que les deux restent cohérentes (voir chapitre 21).
+l'opération d'origine, pour que les deux restent cohérentes (voir chapitre 21). La correction reste
+possible après la clôture définitive du rapprochement ; une date de valeur corrigée déclenche aussitôt
+le recalcul des agios des périodes ouvertes concernées, et un avertissement signale toute période
+d'agios déjà clôturée qui n'a pas pu être recalculée.
 
 **Retour « en cours » d'une opération rapprochée** : dans le module de chaque type d'opération, l'administrateur système peut basculer à la main le statut d'une opération (en cours ↔ réglée, prévu ↔ payé). Remettre « en cours » ou « prévu » une opération dont la transaction figure dans un rapprochement **supprime cette transaction** : c'est exactement l'annulation décrite ci-dessus — l'opération redevient à valider, ses dates de valeur et d'opération sont effacées, les soldes sont recalculés. C'est refusé si le rapprochement est clôturé définitivement, ou si plusieurs transactions pointent sur la même opération (cas ambigu, à traiter depuis le rapprochement). Une opération réglée à la main, sans transaction, garde la bascule libre (correction exceptionnelle). Le passage « en cours » → « réglée » n'est pas modifié : il ne crée pas de transaction.
 
@@ -5348,7 +5351,8 @@ Liste paginée et filtrable (libellé, source, observation, montant, dates d'op�
 transactions déjà validées et rattachées à la période affichée, avec ses totaux et un bouton
 **Exporter PDF** (les lignes filtrées, sans limite de pagination). Pour chaque transaction :
 - **Modifier** (crayon) : fenêtre « Modifier une transaction » — date d'émission (non modifiable),
-  TVA, date de valeur, date de l'opération, libellé, observation ;
+  TVA, date de valeur, date de l'opération, libellé, observation ; disponible aussi sur une période
+  clôturée définitivement ;
 - **Supprimer** (corbeille) : annule la transaction (voir section 2). Un message confirme la suppression.
 
 Les règles et leurs limites sont décrites aux chapitres 21 (Transactions) et 30 (Rapprochement).
@@ -5493,8 +5497,10 @@ besoin et le nombre de jours à solde négatif.
 7. Annuler une transaction remet l'opération d'origine dans son statut de départ et efface ses dates
    de valeur et d'opération ; c'est refusé si le rapprochement est clôturé définitivement.
 8. Corriger une transaction validée met à jour l'opération d'origine (dates, libellé, observation) ;
-   la TVA est recalculée sur le montant de la transaction, qui ne change pas. C'est refusé si le
-   rapprochement est clôturé définitivement.
+   la TVA est recalculée sur le montant de la transaction, qui ne change pas. C'est possible même si
+   le rapprochement est clôturé définitivement ; une date de valeur corrigée recalcule aussitôt les
+   agios des périodes ouvertes concernées, une période d'agios clôturée étant signalée sans être
+   recalculée.
 9. Retour « en cours » : la bascule manuelle d'une opération validée (administrateur système) supprime la transaction liée, avec les mêmes effets et les mêmes refus que l'annulation (règle 7) ; sans transaction liée, elle reste libre. La bascule inverse (vers « réglée ») ne crée jamais de transaction.
 10. Édition depuis le Récapitulatif : possible pour tous les types sauf les mises à disposition et
    les LCN en décaissement, avec deux nuances — pour les virements et les chèques, uniquement pour les

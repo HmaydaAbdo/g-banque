@@ -148,16 +148,7 @@ public class AgiosOrchestrateurService {
 
             for (Banque banque : banques) {
 
-                // Vider le cache de taux avant chaque banque pour éviter des données périmées
-                if (calculateur instanceof PrefinancementAgiosCalculateur prefiCalc) {
-                    prefiCalc.viderCache();
-                }
-                if (calculateur instanceof DroitConstateAgiosCalculateur dcCalc) {
-                    dcCalc.viderCache();
-                }
-                if (calculateur instanceof FactoringAgiosCalculateur factoringCalc) {
-                    factoringCalc.viderCache();
-                }
+                viderCacheTaux(calculateur);
 
                 try {
                     if (!calculateur.estEligible(banque)) {
@@ -259,6 +250,64 @@ public class AgiosOrchestrateurService {
                     agiosTrimestrielRepository.delete(t);
                     log.info("{} — {} période {}/{} vide : non conservée", type, banque.getNom(), num, annee);
                 });
+    }
+
+    /** Vide le cache de taux du calculateur avant chaque banque pour éviter des données périmées. */
+    private void viderCacheTaux(AgiosCalculateur calculateur) {
+        if (calculateur instanceof PrefinancementAgiosCalculateur prefiCalc) {
+            prefiCalc.viderCache();
+        }
+        if (calculateur instanceof DroitConstateAgiosCalculateur dcCalc) {
+            dcCalc.viderCache();
+        }
+        if (calculateur instanceof FactoringAgiosCalculateur factoringCalc) {
+            factoringCalc.viderCache();
+        }
+    }
+
+    /**
+     * Répercute immédiatement la correction d'une date de valeur de transaction (décision HMAYDA, 17/10/2026) :
+     * pour chaque date fournie (ancienne et nouvelle), recalcule la période existante qui la contient, pour tous
+     * les types éligibles de la banque. Une période inexistante n'est pas créée (le rattrapage de nuit s'en charge).
+     * Une période déjà clôturée n'est jamais recalculée : son agios définitif est déjà créé, la modification
+     * passe quand même et l'écart est signalé.
+     *
+     * @return un avertissement par période clôturée concernée (liste vide si aucune)
+     */
+    @Transactional
+    public List<String> recalculerPeriodesDesDates(Banque banque, Collection<LocalDate> dates) {
+        Set<String> avertissements = new LinkedHashSet<>();
+        Set<String> dejaTraitees = new HashSet<>();
+        for (AgiosCalculateur calculateur : calculateurs) {
+            TypeAgios type = calculateur.getType();
+            boolean cacheVide = false;
+            for (LocalDate date : dates) {
+                if (date == null) {
+                    continue;
+                }
+                int num = periodeActuelle(type, date);
+                int annee = date.getYear();
+                if (!dejaTraitees.add(type + "-" + num + "-" + annee)) {
+                    continue;
+                }
+                Optional<AgiosTrimestriel> periode = agiosTrimestrielRepository
+                        .findByTrimestreAndAnneeAndBanqueIdAndTypeAgios(num, annee, banque.getId(), type);
+                if (periode.isEmpty()) {
+                    continue;
+                }
+                if (!periode.get().isOuvert()) {
+                    avertissements.add("Agios " + type.getLibelle() + " " + libellePeriode(type, num, annee)
+                            + " : période clôturée, non recalculée — l'agios définitif est à vérifier.");
+                } else if (calculateur.estEligible(banque)) {
+                    if (!cacheVide) {
+                        viderCacheTaux(calculateur);
+                        cacheVide = true;
+                    }
+                    recalculerPeriodeSansInterrompre(banque, calculateur, num, annee);
+                }
+            }
+        }
+        return new ArrayList<>(avertissements);
     }
 
     /**

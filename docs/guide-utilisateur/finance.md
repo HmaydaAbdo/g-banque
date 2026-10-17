@@ -1362,8 +1362,17 @@ sur l'écran).
 
 Depuis l'écran de détail d'un rapprochement (module Rapprochement) ou l'écran **Rapprochement** des États des encours, une transaction peut être corrigée avec les mêmes champs que lors de sa validation : date de valeur, date d'opération, libellé, observation et TVA (un taux ou un montant). La date d'émission, le montant et la banque ne sont pas modifiables. Cette correction est automatiquement répercutée sur l'opération source correspondante — pas d'action supplémentaire requise.
 
-> **Modification impossible** si le rapprochement auquel appartient la transaction est déjà
-> **clôturé définitivement** — le message d'erreur l'indique explicitement.
+> **Rapprochement clôturé définitivement** : la correction reste possible (dates, libellé, observation,
+> TVA), le montant ne change jamais, les soldes restent identiques. Seule l'annulation est impossible.
+>
+> **Correction d'une date de valeur** : les agios des périodes encore ouvertes sont recalculés
+> immédiatement. Si la date (ancienne ou nouvelle) se trouve dans une période d'agios déjà clôturée,
+> la modification est enregistrée mais cette période n'est pas recalculée : un message orange
+> **« Agios à vérifier »** reste affiché jusqu'à ce que vous le fermiez — l'agios définitif de cette
+> période est alors à contrôler avec la comptabilité.
+>
+> **TVA** : modifier la TVA d'une transaction d'un mois clos change la TVA nette de ce mois ; prévenez
+> la comptabilité si elle a déjà été déclarée.
 
 ---
 
@@ -1912,7 +1921,7 @@ solde de début, solde de fin, total débit, total crédit, TVA déductible et T
 Bouton œil sur une ligne de l'historique. Affiche les soldes et totaux de la période, ainsi que la
 liste paginée et filtrable (libellé, observation, montant, source) des transactions qui lui sont
 rattachées. Depuis cet écran, une transaction peut être corrigée (voir "Modifier une transaction"
-ci-dessus) tant que le rapprochement n'est pas clôturé définitivement.
+ci-dessus), même si le rapprochement est clôturé définitivement.
 
 Le bouton **Période** ouvre un panneau de recherche par plage de dates, avec un filtre indépendant
 pour chacune des trois dates de la transaction : date d'émission (du/au), date d'opération (du/au)
@@ -2188,14 +2197,16 @@ Dans l'écran **Rapprochement**, deux boutons existent à la fin de chaque trans
   lors de la validation — date d'émission (non modifiable), TVA (taux ou montant), date de valeur,
   date de l'opération, libellé, observation. Le montant et la banque ne peuvent pas être modifiés.
   Cliquer sur **Enregistrer** : la correction est répercutée automatiquement sur l'opération d'origine.
+  Si la date de valeur change, les agios concernés sont recalculés ; un message **« Agios à vérifier »**
+  signale une période d'agios déjà clôturée (voir « Modifier une transaction »).
 - **Supprimer** (corbeille) : annule la transaction. Le message **« Transaction supprimé avec
   success »** s'affiche ; l'opération d'origine redevient « à valider » (ses dates de valeur et
   d'opération sont effacées) et réapparaît dans l'écran **Récapitulatifs** ; les soldes du
   rapprochement sont recalculés.
 
-> **Impossible si le rapprochement est clôturé définitivement** : ni modification ni annulation — un
-> message d'erreur l'indique. Tant que la période est En cours ou en Clôture provisoire, ces deux
-> actions sont possibles.
+> **Rapprochement clôturé définitivement** : l'annulation est impossible (un message d'erreur
+> l'indique) ; la modification reste possible, sans jamais changer le montant. Tant que la période est
+> En cours ou en Clôture provisoire, les deux actions sont possibles.
 
 ### Remettre une opération rapprochée « en cours » (administrateur système)
 

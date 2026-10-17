@@ -12,6 +12,7 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import staport.finance.gBanque.Agios.service.AgiosOrchestrateurService;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
 import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
@@ -65,6 +67,8 @@ public class TransactionServiceImpl implements ITransactionService {
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
     private final StaportPdfReportService staportPdfReportService;
+    /** {@code @Lazy} : l'orchestrateur d'agios ferme sinon un cycle de beans via les calculateurs et les lignes fonctionnelles. */
+    private final AgiosOrchestrateurService agiosOrchestrateurService;
 
     /** Un handler par {@link TransactionSource} — voir Javadoc de {@link TransactionSyncHandler}. */
     private final Map<TransactionSource, TransactionSyncHandler> syncHandlerRegistry;
@@ -72,10 +76,12 @@ public class TransactionServiceImpl implements ITransactionService {
     public TransactionServiceImpl(TransactionRepository transactionRepository,
                               TransactionMapper transactionMapper,
                               StaportPdfReportService staportPdfReportService,
+                              @Lazy AgiosOrchestrateurService agiosOrchestrateurService,
                               List<TransactionSyncHandler> syncHandlers) {
         this.transactionRepository = transactionRepository;
         this.transactionMapper = transactionMapper;
         this.staportPdfReportService = staportPdfReportService;
+        this.agiosOrchestrateurService = agiosOrchestrateurService;
         this.syncHandlerRegistry = syncHandlers.stream()
                 .collect(Collectors.toMap(TransactionSyncHandler::source, h -> h, (a, b) -> {
                     throw new IllegalStateException(
@@ -313,14 +319,11 @@ public class TransactionServiceImpl implements ITransactionService {
         Transaction transaction = transactionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction with id " + id + " not found"));
 
-        // Guard — rapprochement définitivement clôturé : aucune modification autorisée
-        // (même garde que ReverseTransactionService.annulerTransaction — cohérence des deux
-        // seuls points de mutation d'une Transaction déjà rattachée à un rapprochement clos).
-        if (transaction.getRapprochement().getStatut() == StatutRapprochement.CLOTURE_DEFINITIVE) {
-            throw new ValidationException(
-                    "Impossible de modifier la transaction " + id
-                    + " : le rapprochement est définitivement clôturé.");
-        }
+        // Aucun verrou sur CLOTURE_DEFINITIVE (décision HMAYDA, 17/10/2026) : corriger a posteriori les dates,
+        // libellé, observation et TVA d'un rapprochement clos est voulu. Le montant, la banque, le rapprochement
+        // et la source restent hors du DTO — c'est ce qui protège les soldes. L'annulation reste, elle, bloquée
+        // (ReverseTransactionService).
+        LocalDate ancienneDateValeur = transaction.getDateValeur();
 
         // Le montant (débit ou crédit) n'est pas éditable ici — seule la TVA portée dessus l'est.
         // Le sens (quel côté est non nul) ne change jamais après validation, donc le côté qui
@@ -358,7 +361,15 @@ public class TransactionServiceImpl implements ITransactionService {
             }
         }
 
-        return transactionMapper.toDto(saved);
+        // La date de valeur alimente le calcul des agios : les périodes ouvertes qui contenaient l'ancienne
+        // ou contiennent la nouvelle date sont recalculées tout de suite ; une période clôturée est signalée.
+        List<String> avertissements = List.of();
+        if (!Objects.equals(ancienneDateValeur, saved.getDateValeur())) {
+            avertissements = agiosOrchestrateurService.recalculerPeriodesDesDates(
+                    saved.getBanqueDePrelevement(), Arrays.asList(ancienneDateValeur, saved.getDateValeur()));
+        }
+
+        return transactionMapper.toDto(saved).avecAvertissements(avertissements);
     }
 
 
