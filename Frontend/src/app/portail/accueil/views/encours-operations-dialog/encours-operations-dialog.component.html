@@ -1,0 +1,124 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  [modal]="true"
+  [dismissableMask]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="false"
+  [showHeader]="false"
+  [style]="{ width: '680px', maxWidth: '96vw' }"
+  [contentStyle]="{ padding: '0' }"
+  styleClass="encours-dialog"
+  ariaLabel="Opérations en cours de la banque">
+
+  <div class="encours">
+
+    <header class="encours__head">
+      @if (compte?.logoBase64) {
+        <img class="encours__logo" [src]="'data:image/png;base64,' + compte!.logoBase64" [alt]="'Logo ' + compte!.nom"/>
+      }
+      <div class="encours__title">
+        <h2>{{ titre }}</h2>
+        <p>{{ libelleHorizon }} · jusqu'au {{ compte?.dateHorizon ? jourMois(compte!.dateHorizon) + '/' + compte!.dateHorizon.slice(0, 4) : '' }} · {{ nombreAffiche }} opération{{ nombreAffiche > 1 ? 's' : '' }}</p>
+      </div>
+      <div class="encours__total">
+        <span class="encours__amount" [class.encours__amount--pos]="vue === 'ENTREES' || (vue === 'TOUT' && totalAffiche >= 0)"
+              [class.encours__amount--neg]="vue === 'SORTIES' || (vue === 'TOUT' && totalAffiche < 0)">
+          {{ totalAffiche >= 0 ? '+' : '−' }}{{ montant(totalAffiche < 0 ? -totalAffiche : totalAffiche) }} {{ compte?.devise }}
+        </span>
+        <span class="encours__total-label">{{ vue === 'TOUT' ? 'Net sur la période' : 'Total sur la période' }}</span>
+      </div>
+      <button type="button" class="encours__close" aria-label="Fermer" (click)="fermer()"><i class="pi pi-times"></i></button>
+    </header>
+
+    <div class="encours__vues" role="group" aria-label="Sens des opérations">
+      <button type="button" class="vue" [class.vue--on]="vue === 'ENTREES'" [attr.aria-pressed]="vue === 'ENTREES'" (click)="choisirVue('ENTREES')">
+        <span>Entrées · {{ nombreEntrees }} op.</span>
+        <strong class="encours__amount--pos">+{{ montant(totalEntrees) }}</strong>
+      </button>
+      <button type="button" class="vue" [class.vue--on]="vue === 'SORTIES'" [attr.aria-pressed]="vue === 'SORTIES'" (click)="choisirVue('SORTIES')">
+        <span>Sorties · {{ nombreSorties }} op.</span>
+        <strong class="encours__amount--neg">−{{ montant(totalSorties) }}</strong>
+      </button>
+      <button type="button" class="vue" [class.vue--on]="vue === 'TOUT'" [attr.aria-pressed]="vue === 'TOUT'" (click)="choisirVue('TOUT')">
+        <span>Tout · {{ nombreEntrees + nombreSorties }} op.</span>
+        <strong [class.encours__amount--pos]="totalEntrees - totalSorties >= 0" [class.encours__amount--neg]="totalEntrees - totalSorties < 0">
+          {{ totalEntrees - totalSorties >= 0 ? '+' : '−' }}{{ montant(totalEntrees - totalSorties < 0 ? totalSorties - totalEntrees : totalEntrees - totalSorties) }}
+        </strong>
+      </button>
+    </div>
+
+    <div class="encours__body">
+      @if (chargement) {
+        <p class="encours__etat"><i class="pi pi-spin pi-spinner"></i> Chargement des opérations…</p>
+      } @else if (erreur) {
+        <p class="encours__etat encours__etat--erreur">Impossible de charger les opérations. Fermez cette fenêtre et réessayez.</p>
+      } @else if (periodesAffichees.length === 0) {
+        <p class="encours__etat">Aucune opération en cours sur la période.</p>
+      } @else {
+        @if (tronque) {
+          <p class="encours__etat encours__etat--erreur">Seules les {{ nombreEntrees + nombreSorties }} premières opérations sont affichées.</p>
+        }
+        <ol class="timeline">
+          @for (periode of periodesAffichees; track periode.code) {
+            <li class="periode" [class.periode--echue]="periode.echue">
+              <span class="periode__dot" aria-hidden="true"></span>
+              <div class="periode__head">
+                <span class="periode__titre">{{ periode.titre }}<span class="periode__precision">{{ periode.precision }}</span>
+                  @if (periode.echue) { <span class="periode__tag">à régulariser</span> }
+                </span>
+                @if (vue === 'TOUT') {
+                  <span class="periode__net">Net {{ periode.net >= 0 ? '+' : '−' }}{{ montant(periode.net < 0 ? -periode.net : periode.net) }}</span>
+                }
+              </div>
+
+              @for (b of blocs(periode); track b.sens) {
+                <section class="sens">
+                  <div class="sens__head" [class.sens__head--pos]="b.sens === 'ENTREES'" [class.sens__head--neg]="b.sens === 'SORTIES'">
+                    <span><i class="pi" [class.pi-arrow-down-left]="b.sens === 'ENTREES'" [class.pi-arrow-up-right]="b.sens === 'SORTIES'"></i>
+                      {{ b.sens === 'ENTREES' ? 'Entrées' : 'Sorties' }}</span>
+                    <span>{{ b.sens === 'ENTREES' ? '+' : '−' }}{{ montant(b.bloc.total) }}</span>
+                  </div>
+
+                  @for (groupe of b.bloc.sources; track groupe.source) {
+                    <div class="source" [class.source--replie]="estReplie(cle(periode, b.sens, groupe.source))">
+                      <button type="button" class="source__head" [attr.aria-expanded]="!estReplie(cle(periode, b.sens, groupe.source))" (click)="basculer(cle(periode, b.sens, groupe.source))">
+                        <i class="pi pi-chevron-down source__chevron"></i>
+                        <span class="source__nom">{{ groupe.libelle }}</span>
+                        <span class="source__nb">{{ groupe.operations.length }}</span>
+                        <span class="source__total" [class.encours__amount--pos]="b.sens === 'ENTREES'" [class.encours__amount--neg]="b.sens === 'SORTIES'">
+                          {{ b.sens === 'ENTREES' ? '+' : '−' }}{{ montant(groupe.total) }}
+                        </span>
+                      </button>
+                      @if (!estReplie(cle(periode, b.sens, groupe.source))) {
+                        <ul class="source__ops">
+                          @for (op of groupe.operations; track $index) {
+                            <li class="op">
+                              <span class="op__date">{{ jourMois(op.date) }}</span>
+                              <span class="op__libelle">{{ op.libelle }}@if (op.numero) {<small>N° {{ op.numero }}</small>}</span>
+                              <span class="op__montant" [class.encours__amount--pos]="b.sens === 'ENTREES'" [class.encours__amount--neg]="b.sens === 'SORTIES'">
+                                {{ b.sens === 'ENTREES' ? '+' : '−' }}{{ montant(op.montant) }}
+                              </span>
+                            </li>
+                          }
+                        </ul>
+                      }
+                    </div>
+                  }
+                </section>
+              }
+            </li>
+          }
+        </ol>
+      }
+    </div>
+
+    <footer class="encours__foot">
+      <span>Un clic sur une source replie ses opérations.</span>
+      <a class="encours__lien" [routerLink]="['/portail/etats-des-encours', compte?.banqueId, 'select']" (click)="fermer()">
+        Ouvrir les états des encours <i class="pi pi-arrow-right"></i>
+      </a>
+    </footer>
+  </div>
+</p-dialog>

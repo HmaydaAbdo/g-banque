@@ -45,9 +45,30 @@ règle cette tuile pour toutes les cartes à la fois :
    (solde prévu + facilité de caisse ; « Besoin » en rouge si elle est négative).
 
 Le trimestre est le trimestre civil en cours (janvier-mars, avril-juin, juillet-septembre,
-octobre-décembre). Votre choix est gardé si vous revenez sur le tableau de bord avec le bouton
-« précédent » ou si vous rechargez la page. Il sert aussi aux téléchargements **Récap détaillé** et
+octobre-décembre). **Fin de mois** est toujours affichée à l'ouverture du tableau de bord et après un
+rechargement de la page (F5) ; **Fin de trimestre** n'est active que si vous la choisissez vous-même, et votre
+choix est gardé si vous revenez sur le tableau de bord avec le bouton « précédent ». Il sert aussi aux téléchargements **Récap détaillé** et
 présélectionne la période du **Récap global** (voir ci-dessous).
+
+### Voir les opérations qui composent les encours d'une banque
+
+Sur la tuile de prévision d'une carte, les lignes **Encours entrées** et **Encours sorties** sont cliquables (une
+petite flèche et un survol les signalent).
+
+1. Cliquer sur **Encours entrées** ou **Encours sorties**. Une fenêtre s'ouvre avec les opérations jusqu'à la date
+   de l'horizon choisi.
+2. En haut de la fenêtre, trois boutons — **Entrées**, **Sorties**, **Tout** — donnent chacun le nombre
+   d'opérations et le total. Celui de la ligne cliquée est déjà sélectionné ; cliquer sur un autre pour changer de
+   vue.
+3. Les opérations sont rangées dans le temps : **Échues** d'abord (avec la mention « à régulariser »), puis chaque
+   semaine (fin de mois) ou chaque mois (fin de trimestre). Les périodes vides n'apparaissent pas.
+4. Dans chaque période, les **entrées** puis les **sorties** sont regroupées par **source** (Leasing, LCN, Virements,
+   Agios, etc.). Cliquer sur une source pour replier ou déplier ses opérations (date, libellé, numéro, montant).
+   Dans la vue **Tout**, chaque période indique aussi son solde **net**.
+5. Fermer avec la croix, la touche Échap ou un clic à côté de la fenêtre. Le lien **Ouvrir les états des
+   encours** mène à l'écran de la banque.
+
+Si les opérations ne se chargent pas, un message l'indique : fermer la fenêtre et recommencer.
 
 Pour aller plus loin :
 - le plan de trésorerie de toutes les banques s'ouvre depuis le menu latéral, rubrique **Trésorerie prévisionnelle** ;

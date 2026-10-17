@@ -263,6 +263,25 @@
   }
 }
 
+// Ligne cliquable (ouvre le popup des opérations en cours) : même rendu qu'une ligne, avec un survol discret.
+.bank-card__line--action {
+  width        : 100%;
+  background   : transparent;
+  font         : inherit;
+  text-align   : left;
+  cursor       : pointer;
+  border-radius: var(--radius-sm);
+
+  &:hover { background: var(--color-surface-2); }
+  &:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 1px; }
+}
+
+.bank-card__line-chevron {
+  margin-left: 4px;
+  font-size  : 11px;
+  color      : var(--color-text-muted);
+}
+
 .bank-card__line-label {
   font-size  : 11px;
   font-weight: var(--weight-medium);

@@ -23,6 +23,14 @@ export function horizonDepuisParam(valeur: string | null | undefined): HorizonPr
 }
 
 /**
+ * Horizon au chargement d'un écran qui le porte dans son adresse : un rechargement de la page (F5) revient toujours à
+ * la fin de mois — le choix de la fin de trimestre n'est conservé que par le retour arrière ou un lien partagé.
+ */
+export function horizonAuDemarrage(valeur: string | null | undefined, rechargement: boolean): HorizonPrevision {
+  return rechargement ? HORIZON_PAR_DEFAUT : horizonDepuisParam(valeur);
+}
+
+/**
  * Dernier jour de l'horizon à partir d'une date — même calcul que PeriodeRecap.horizon() côté
  * backend, utilisé uniquement pour l'affichage (libellés « jusqu'au 31/12 »).
  */

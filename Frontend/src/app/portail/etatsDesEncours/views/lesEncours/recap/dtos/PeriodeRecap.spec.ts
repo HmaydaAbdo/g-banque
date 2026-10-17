@@ -1,4 +1,4 @@
-import { finHorizon, horizonDepuisParam } from './PeriodeRecap';
+import { finHorizon, horizonAuDemarrage, horizonDepuisParam } from './PeriodeRecap';
 
 describe('PeriodeRecap', () => {
   const le14octobre = new Date(2026, 9, 14);
@@ -22,5 +22,11 @@ describe('PeriodeRecap', () => {
     expect(horizonDepuisParam('FIN_DE_TRIMESTRE')).toBe('FIN_DE_TRIMESTRE');
     expect(horizonDepuisParam('A_CE_JOUR')).toBe('FIN_DE_MOIS');
     expect(horizonDepuisParam(null)).toBe('FIN_DE_MOIS');
+  });
+
+  it("un rechargement de la page revient à la fin de mois, sinon l'adresse fait foi", () => {
+    expect(horizonAuDemarrage('FIN_DE_TRIMESTRE', true)).toBe('FIN_DE_MOIS');
+    expect(horizonAuDemarrage('FIN_DE_TRIMESTRE', false)).toBe('FIN_DE_TRIMESTRE');
+    expect(horizonAuDemarrage(null, false)).toBe('FIN_DE_MOIS');
   });
 });

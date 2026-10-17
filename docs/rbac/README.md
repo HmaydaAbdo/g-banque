@@ -2768,6 +2768,13 @@ d'horizon (tableau de bord, Récapitulatifs, Trésorerie prévisionnelle) ne fai
 lecture `periode` aux endpoints existants, et `?horizon=` à l'adresse des écrans ; il est proposé à tout
 utilisateur qui a accès à l'écran, sans condition de rôle.
 
+**Popup des opérations en cours d'une banque (17/10/2026) — aucune autorisation modifiée.** Les lignes
+« Encours entrées / sorties » des cartes du tableau de bord ouvrent un popup qui appelle l'endpoint existant
+`GET /recapitulatif/banque/{banqueId}` (même `@PreAuthorize`, paramètres `periode` et `sens` de lecture). Aucun
+nouvel endpoint, aucun guard ni élément de navigation ajouté ; le popup est visible de tout utilisateur qui voit le
+tableau de bord. L'horizon repart de la fin de mois après un rechargement de page : simple état d'interface, sans
+effet sur les droits.
+
 **Vue focus, filtres par source, état dans l'adresse (12/10/2026) — aucune autorisation modifiée.**
 L'écran Récapitulatifs garde son état (source ouverte, filtres globaux et de la source, page, tri, ligne à
 surligner) dans les paramètres d'adresse (`?source=…&page=…`) : ce sont de simples critères de lecture,

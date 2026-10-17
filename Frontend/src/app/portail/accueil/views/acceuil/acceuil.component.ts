@@ -15,7 +15,7 @@ import {RecapService} from "../../../etatsDesEncours/views/lesEncours/recap/serv
 import {
   HORIZON_OPTIONS,
   HorizonPrevision,
-  horizonDepuisParam,
+  horizonAuDemarrage,
   PeriodeRecap
 } from "../../../etatsDesEncours/views/lesEncours/recap/dtos/PeriodeRecap";
 import {catchError, finalize} from "rxjs/operators";
@@ -25,6 +25,20 @@ import {DialogModule} from "primeng/dialog";
 import {SelectButtonModule} from "primeng/selectbutton";
 import {PeriodeChoix, PeriodeSelectorComponent} from "../periode-selector/periode-selector.component";
 import {DropdownModule} from "primeng/dropdown";
+import {SensOperation} from "../../../transactions/dtos/SensOperation";
+import {EncoursOperationsDialogComponent} from "../encours-operations-dialog/encours-operations-dialog.component";
+
+/**
+ * Vrai tant que l'accueil n'a pas été affiché depuis le chargement de la page : seul ce premier affichage peut être un
+ * rechargement (F5). Le type de navigation du navigateur reste « reload » pendant toute la session de la page, il ne
+ * doit donc plus être consulté ensuite (retour arrière, navigation interne).
+ */
+let premierAffichageDepuisChargement = true;
+
+function pageRechargee(): boolean {
+  const entree = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+  return entree?.type === 'reload';
+}
 
 @Component({
   selector: 'app-accueil',
@@ -42,7 +56,8 @@ import {DropdownModule} from "primeng/dropdown";
     DialogModule,
     SelectButtonModule,
     DropdownModule,
-    PeriodeSelectorComponent
+    PeriodeSelectorComponent,
+    EncoursOperationsDialogComponent
   ],
   templateUrl: './acceuil.component.html',
   styleUrl: './acceuil.component.scss',
@@ -59,9 +74,14 @@ export class AcceuilComponent implements OnInit, OnDestroy {
   recapDetailleBanqueLoadingMap: Map<number, boolean> = new Map();
 
   // ── Horizon des cartes et des rapports détaillés : fin de mois (défaut) ou fin de trimestre ──
-  // Porté par l'adresse (?horizon=FIN_DE_TRIMESTRE) pour survivre au retour arrière et au F5.
+  // Porté par l'adresse (?horizon=FIN_DE_TRIMESTRE) pour survivre au retour arrière ; un rechargement (F5) revient à la fin de mois.
   readonly horizonOptions = HORIZON_OPTIONS;
   horizonControl = new FormControl<HorizonPrevision>('FIN_DE_MOIS', { nonNullable: true });
+
+  // ── Popup des opérations en cours d'une banque (lignes « Encours entrées » / « Encours sorties » des cartes) ──
+  showEncoursDialog = false;
+  encoursCompte: RecapitulatifCompte | null = null;
+  encoursSens: SensOperation = SensOperation.ENCAISSEMENT;
 
   // ── Choix de la période du Récap global (retour utilisateur du 31/08/2026) ──
   showRecapGlobalPeriodeModal: boolean = false;
@@ -83,7 +103,13 @@ export class AcceuilComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.items = [{ icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" } ]
-    this.horizonControl.setValue(horizonDepuisParam(this.route.snapshot.queryParamMap.get('horizon')), { emitEvent: false });
+    const param = this.route.snapshot.queryParamMap.get('horizon');
+    const rechargement = premierAffichageDepuisChargement && pageRechargee();
+    premierAffichageDepuisChargement = false;
+    this.horizonControl.setValue(horizonAuDemarrage(param, rechargement), { emitEvent: false });
+    if (rechargement && param) {
+      this.router.navigate([], { relativeTo: this.route, queryParams: { horizon: null }, replaceUrl: true });
+    }
     this.subscriptions.push(
       this.horizonControl.valueChanges.subscribe(horizon => {
         this.router.navigate([], {
@@ -99,6 +125,15 @@ export class AcceuilComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(s => s.unsubscribe());
+  }
+
+  /** Ouvre le popup des opérations en cours ; le clic ne doit pas suivre le lien de la carte. */
+  ouvrirEncours(event: Event, compte: RecapitulatifCompte, sens: 'ENCAISSEMENT' | 'DECAISSEMENT'): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.encoursCompte = compte;
+    this.encoursSens = SensOperation[sens];
+    this.showEncoursDialog = true;
   }
 
   get horizon(): HorizonPrevision {

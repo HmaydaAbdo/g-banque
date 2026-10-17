@@ -127,20 +127,26 @@
                               [ngTemplateOutletContext]="{ $implicit: account.soldePrevu }"/>
               </div>
 
-              <div class="bank-card__line">
+              <button type="button" class="bank-card__line bank-card__line--action"
+                      pTooltip="Voir les opérations en cours" tooltipPosition="left"
+                      (click)="ouvrirEncours($event, account, 'ENCAISSEMENT')">
                 <span class="bank-card__line-label">Encours entrées</span>
                 <span class="bank-card__line-value bank-card__amount--pos">
                   <ng-container [ngTemplateOutlet]="montant"
                                 [ngTemplateOutletContext]="{ $implicit: account.encoursPlus }"/>
                 </span>
-              </div>
-              <div class="bank-card__line">
+                <i class="pi pi-angle-right bank-card__line-chevron" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="bank-card__line bank-card__line--action"
+                      pTooltip="Voir les opérations en cours" tooltipPosition="left"
+                      (click)="ouvrirEncours($event, account, 'DECAISSEMENT')">
                 <span class="bank-card__line-label">Encours sorties</span>
                 <span class="bank-card__line-value bank-card__amount--neg">
                   <ng-container [ngTemplateOutlet]="montant"
                                 [ngTemplateOutletContext]="{ $implicit: 0 - account.encoursMoins }"/>
                 </span>
-              </div>
+                <i class="pi pi-angle-right bank-card__line-chevron" aria-hidden="true"></i>
+              </button>
               <div class="bank-card__line bank-card__line--total">
                 <span class="bank-card__line-label"
                       [class.bank-card__label--pos]="account.disponibilitePrevue >= 0"
@@ -207,6 +213,13 @@
   }
 
 </div>
+
+<!-- Opérations en cours d'une banque (clic sur « Encours entrées » / « Encours sorties » d'une carte) -->
+<app-encours-operations-dialog
+  [(visible)]="showEncoursDialog"
+  [compte]="encoursCompte"
+  [horizon]="horizon"
+  [sensInitial]="encoursSens"/>
 
 <!-- Modal choix période du Récap global (à ce jour / fin de mois) -->
 <p-dialog

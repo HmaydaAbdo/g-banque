@@ -154,6 +154,9 @@ chaque banque séparément.
 
 ### Ce que le système apporte
 
+- **Du chiffre à l'opération en un clic** : depuis chaque carte de banque, un clic sur les encours entrées ou
+  sorties ouvre la frise des opérations qui les composent, rangées par période, par sens et par source — la
+  direction comprend d'où vient un montant sans quitter le tableau de bord.
 - **Vue consolidée instantanée** : le tableau de bord Finance affiche en un seul écran la situation
   de tous les comptes bancaires actifs (solde actuel , plafond de facilité de caisse utilisé, effets et virements
   échus à venir).

@@ -5363,11 +5363,25 @@ L'en-tête du tableau de bord porte une liste déroulante d'horizon, **Fin de mo
 mois par défaut ; une liste plutôt que deux boutons, pour gagner de la place). Il règle, pour toutes les cartes de banque à la fois, la tuile de prévision (« Fin de mois ·
 31/10 » ou « Fin de trimestre · 31/12 ») : encours entrées et sorties jusqu'à l'horizon, solde prévu
 (solde actuel + encours entrées − encours sorties) et disponibilité prévue (solde prévu + facilité de
-caisse). La tuile « Aujourd'hui » ne change pas. Le choix est conservé dans l'adresse de la page
-(retour arrière, rechargement). Il sert aussi aux deux téléchargements « Récap détaillé » et
+caisse). La tuile « Aujourd'hui » ne change pas. La fin de mois est toujours l'horizon à l'ouverture et
+après un rechargement de la page (F5) ; la fin de trimestre n'est active que lorsqu'on la choisit
+explicitement, et ce choix est conservé par le retour arrière. Il sert aussi aux deux téléchargements « Récap détaillé » et
 présélectionne la période du « Récap global ». L'écran Trésorerie prévisionnelle (toutes les banques) est un
 élément du menu latéral, plus un bouton du tableau de bord ; l'icône de courbe au pied de chaque carte
 l'ouvre directement sur cette banque, avec le même horizon.
+
+**Opérations en cours d'une banque (popup).** Sur la tuile de prévision, les lignes « Encours entrées » et « Encours
+sorties » sont cliquables : elles ouvrent une fenêtre qui détaille les opérations qui composent ce montant, jusqu'à
+l'horizon de la carte. Les montants sont les mêmes que ceux de la carte. La fenêtre propose trois vues —
+**Entrées**, **Sorties** et **Tout** — chacune rappelant son nombre d'opérations et son total ; la vue présélectionnée
+est celle de la ligne cliquée. Les opérations sont présentées sur une frise chronologique : d'abord les **échues**
+(date antérieure à aujourd'hui, signalées « à régulariser »), puis une période par **semaine** (du lundi au dimanche,
+la première commençant aujourd'hui) pour la fin de mois, ou par **mois civil** pour la fin de trimestre ; une
+période sans opération n'apparaît pas. Dans chaque période, les opérations sont regroupées **par sens** (entrées,
+puis sorties) et, dans chaque sens, **par source** (la source au total le plus élevé en premier), chaque source
+indiquant son nombre d'opérations et son total ; un clic sur une source replie ou déplie ses opérations (date,
+libellé, numéro de pièce, montant). Dans la vue « Tout », chaque période rappelle son solde net (entrées moins
+sorties). Un lien en pied de fenêtre ouvre les états des encours de la banque.
 
 #### Téléchargements PDF (depuis le tableau de bord Finance)
 
@@ -5563,7 +5577,8 @@ besoin et le nombre de jours à solde négatif.
 | Ajouter / Éditer une opération depuis le Récapitulatif | ✅ | ✅ | ✅ |
 | Éditer une échéance de leasing ou de CMT | ✅ | ❌ | ❌ |
 | Basculer à la main le statut d'une opération (y compris son retour « en cours », qui supprime la transaction liée) | ✅ | ❌ | ❌ |
-| Modifier ou annuler une transaction validée (rapprochement non clôturé définitivement) | ✅ | ✅ | ✅ |
+| Modifier une transaction validée (dates, libellé, observation, TVA — même si le rapprochement est clôturé définitivement) | ✅ | ✅ | ✅ |
+| Annuler une transaction validée (rapprochement non clôturé définitivement) | ✅ | ✅ | ✅ |
 | Télécharger un récapitulatif ou un récapitulatif général détaillé (PDF) | ✅ | ✅ | ✅ |
 | Choisir l'horizon (fin de mois / fin de trimestre) du tableau de bord, du Récapitulatif et des rapports | ✅ | ✅ | ✅ |
 | Consulter la Trésorerie prévisionnelle et exporter son plan (PDF) | ✅ | ✅ | ✅ |
