@@ -5383,6 +5383,24 @@ indiquant son nombre d'opérations et son total ; un clic sur une source replie 
 libellé, numéro de pièce, montant). Dans la vue « Tout », chaque période rappelle son solde net (entrées moins
 sorties). Un lien en pied de fenêtre ouvre les états des encours de la banque.
 
+#### Tableau de bord Finance : consommation de la facilité de caisse
+
+Chaque carte de banque a deux tuiles qui portent les mêmes rubriques, pour se lire l'une en face de l'autre :
+**Aujourd'hui** (solde actuel, plafond de la facilité de caisse, part de la facilité encore disponible) et la tuile
+de l'**horizon** (solde prévu, encours entrées, encours sorties). Chacune se termine par une **barre de
+consommation de la facilité de caisse** et par une ligne de total.
+
+- **Consommation** : le découvert (le solde quand il est négatif) rapporté au plafond de la facilité de caisse, en
+  pourcentage ; un solde positif ne consomme rien (barre vide, 0 %). Pour la tuile « Aujourd'hui » on prend le solde
+  actuel, pour la tuile de l'horizon le solde prévu.
+- **Couleur de la barre** : bleue sous 70 % du plafond, orange de 70 % à 100 %, rouge au-delà du plafond (la barre
+  est alors pleine). Une banque sans facilité de caisse n'a pas de barre.
+- **Ligne de total** : **Disponibilité** (solde positif : solde + plafond, en vert) ; **Besoin couvert par FC**
+  (solde négatif que le plafond couvre : montant du découvert, en orange) ; **Besoin dépassement** (solde négatif
+  au-delà du plafond : part non couverte, en rouge).
+- Aucune rubrique antérieure n'est retirée : le plafond (« Facilité caisse »), les encours entrées et sorties, les
+  pastilles d'échus et les boutons du pied de carte sont conservés.
+
 #### Téléchargements PDF (depuis le tableau de bord Finance)
 
 - **Récap global** (bouton d'en-tête) : rapport consolidé de trésorerie pour l'ensemble des banques.

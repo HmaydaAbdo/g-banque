@@ -154,6 +154,9 @@ chaque banque séparément.
 
 ### Ce que le système apporte
 
+- **Risque de liquidité lisible d'un coup d'œil** : chaque carte de banque montre, aujourd'hui et à l'horizon
+  choisi, la part de la facilité de caisse consommée et distingue le besoin couvert par la facilité de celui qui la
+  dépasse — la direction voit immédiatement quelle banque approche de son plafond.
 - **Du chiffre à l'opération en un clic** : depuis chaque carte de banque, un clic sur les encours entrées ou
   sorties ouvre la frise des opérations qui les composent, rangées par période, par sens et par source — la
   direction comprend d'où vient un montant sans quitter le tableau de bord.

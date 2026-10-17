@@ -56,8 +56,8 @@
 // ── Carte banque ──────────────────────────────────────────
 .bank-card {
   background    : var(--color-surface);
-  border        : 1px solid var(--color-border-strong);
-  border-radius : var(--radius-lg);
+  border        : var(--border-width-hairline) solid var(--color-border-strong);
+  border-radius : var(--radius-xl);
   overflow      : hidden;
   display       : flex;
   flex-direction: column;
@@ -183,14 +183,12 @@
   }
 }
 
-// ── Corps : deux tuiles côte à côte ──────────────────────
+// ── Corps : deux tuiles contiguës (Aujourd'hui | horizon), séparées par un simple filet ──
 .bank-card__body {
   flex                 : 1;
-  padding              : 8px;
   cursor               : pointer;
   display              : grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap                  : 8px;
 
   @media (max-width: 480px) {
     grid-template-columns: minmax(0, 1fr);
@@ -198,44 +196,55 @@
 }
 
 .bank-card__col {
-  padding       : 8px 10px;
+  padding       : var(--space-4) var(--space-4) var(--space-3);
   display       : flex;
   flex-direction: column;
-  gap           : 2px;
-  border        : 1px solid var(--color-border);
-  border-radius : var(--radius-md);
+  gap           : var(--space-1);
   background    : var(--color-surface);
 
+  & + & {
+    border-left: var(--border-width-hairline) solid var(--color-border);
+  }
+
   &--forecast {
-    background  : var(--color-surface-2);
-    border-color: var(--color-border-strong);
+    background: var(--color-surface-2);
+  }
+
+  @media (max-width: 480px) {
+    & + & {
+      border-left: 0;
+      border-top : var(--border-width-hairline) solid var(--color-border);
+    }
   }
 }
 
 .bank-card__col-title {
-  font-size    : 11px;
+  display      : flex;
+  align-items  : center;
+  gap          : 6px;
+  font-size    : var(--text-sm);
   font-weight  : var(--weight-semibold);
   color        : var(--color-text-secondary);
-  margin-bottom: 2px;
+  margin-bottom: var(--space-3);
 
-  i { margin-right: 4px; }
+  i { font-size: var(--text-sm); }
 }
 
 .bank-card__hero-label {
-  font-size  : 11px;
+  font-size  : var(--text-xs);
   font-weight: var(--weight-medium);
   color      : var(--color-text-secondary);
 }
 
-// Solde principal : SEULE LIGNE SÉPARATRICE conservée en bas
+// Solde principal, en chiffres tabulaires ; un filet le sépare des indicateurs
 .bank-card__hero {
-  font-size           : 1.05rem;
-  font-weight         : var(--weight-bold);
+  font-size           : 1.5rem;
+  font-weight         : var(--weight-semibold);
   letter-spacing      : var(--tracking-tight);
-  line-height         : 1.2;
-  margin-bottom       : 6px;
-  padding-bottom      : 6px;
-  border-bottom       : 1px solid var(--color-border);
+  line-height         : 1.15;
+  margin-bottom       : var(--space-2);
+  padding-bottom      : var(--space-3);
+  border-bottom       : var(--border-width-hairline) solid var(--color-border);
   white-space         : nowrap;
   font-variant-numeric: tabular-nums;
 
@@ -243,65 +252,83 @@
   &--neg { color: var(--color-danger);  }
 }
 
-// Lignes d'indicateurs : AUCUNE LIGNE SÉPARATRICE
+// Lignes d'indicateurs : hauteur identique dans les deux tuiles pour que les lignes s'alignent d'une tuile à l'autre
 .bank-card__line {
   display        : flex;
   justify-content: space-between;
   align-items    : center;
   column-gap     : 6px;
-  padding        : 3px 0;
+  min-height     : 28px;
+  padding        : 0;
   border         : none;
 
+  // Total : filet au-dessus, collé en bas de la tuile
   &--total {
-    margin-top: auto;
-    border    : none;
+    margin-top : auto;
+    padding-top: var(--space-3);
+    border-top : var(--border-width-hairline) solid var(--color-border);
+    min-height : 40px;
 
     .bank-card__line-label,
     .bank-card__line-value {
-      font-weight: var(--weight-bold);
+      font-weight: var(--weight-semibold);
     }
+
+    .bank-card__line-value { font-size: var(--text-base); }
   }
 }
 
 // Ligne cliquable (ouvre le popup des opérations en cours) : même rendu qu'une ligne, avec un survol discret.
 .bank-card__line--action {
-  width        : 100%;
+  width        : calc(100% + var(--space-4));
+  margin-inline: calc(var(--space-2) * -1);
+  padding-inline: var(--space-2);
   background   : transparent;
   font         : inherit;
   text-align   : left;
   cursor       : pointer;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
 
-  &:hover { background: var(--color-surface-2); }
+  &:hover { background: var(--color-surface); }
   &:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 1px; }
 }
 
 .bank-card__line-chevron {
-  margin-left: 4px;
-  font-size  : 11px;
+  margin-left: var(--space-1);
+  font-size  : var(--text-xs);
   color      : var(--color-text-muted);
 }
 
 .bank-card__line-label {
-  font-size  : 11px;
+  font-size  : var(--text-sm);
   font-weight: var(--weight-medium);
   color      : var(--color-text-secondary);
   white-space: nowrap;
 }
 
-// Libellé « Disponibilité » (vert) / « Besoin » (rouge)
-// Déclarés APRÈS .bank-card__line-label pour l'emporter sur sa couleur.
-.bank-card__label--pos {
-  color: var(--color-success);
+// Sous-libellé du total : « couvert par FC » / « dépassement »
+.bank-card__total-sub {
+  display    : block;
+  margin-top : 1px;
+  font-size  : var(--text-xs);
+  font-weight: var(--weight-regular);
+  color      : inherit;
+  opacity    : 0.85;
 }
 
-.bank-card__label--neg {
-  color: var(--color-danger);
-}
+// Total : Disponibilité (vert), Besoin couvert par la FC (orange), Besoin en dépassement (rouge)
+.bank-card__total--DISPONIBILITE .bank-card__line-label,
+.bank-card__total--DISPONIBILITE .bank-card__line-value { color: var(--color-success); }
+
+.bank-card__total--BESOIN_COUVERT .bank-card__line-label,
+.bank-card__total--BESOIN_COUVERT .bank-card__line-value { color: var(--color-warning); }
+
+.bank-card__total--BESOIN_DEPASSEMENT .bank-card__line-label,
+.bank-card__total--BESOIN_DEPASSEMENT .bank-card__line-value { color: var(--color-danger); }
 
 .bank-card__line-value {
   margin-left         : auto;
-  font-size           : 12px;
+  font-size           : var(--text-sm);
   font-weight         : var(--weight-semibold);
   color               : var(--color-text-primary);
   white-space         : nowrap;
@@ -314,7 +341,56 @@
 
 .bank-card__kpi-none {
   margin-left: auto;
-  font-size  : 12px;
+  font-size  : var(--text-sm);
   font-weight: var(--weight-medium);
   color      : var(--color-text-secondary);
+}
+
+// ── Consommation de la facilité de caisse (une barre par tuile) ──
+.fc {
+  display       : flex;
+  flex-direction: column;
+  gap           : 5px;
+  padding       : var(--space-2) 0 var(--space-3);
+
+  &__head,
+  &__foot {
+    display        : flex;
+    justify-content: space-between;
+    align-items    : baseline;
+    font-size      : var(--text-xs);
+    color          : var(--color-text-secondary);
+  }
+
+  &__foot { color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+
+  &__head strong {
+    font-size           : var(--text-sm);
+    font-weight         : var(--weight-semibold);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__bar {
+    position     : relative;
+    height       : 6px;
+    border-radius: var(--radius-full);
+    background   : var(--color-border);
+    overflow     : hidden;
+  }
+
+  &__fill {
+    position     : absolute;
+    inset        : 0 auto 0 0;
+    border-radius: var(--radius-full);
+    transition   : width 0.4s ease;
+
+    &--faible   { background: var(--color-primary); }
+    &--eleve    { background: var(--color-warning); }
+    &--depasse  { background: var(--color-danger);  }
+  }
+
+  &__pct--aucun   { color: var(--color-text-secondary); }
+  &__pct--faible  { color: var(--color-primary); }
+  &__pct--eleve   { color: var(--color-warning); }
+  &__pct--depasse { color: var(--color-danger); }
 }

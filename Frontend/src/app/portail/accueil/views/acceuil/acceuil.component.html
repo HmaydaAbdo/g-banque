@@ -3,6 +3,37 @@
 <!-- Montant au format comptable : 1 234,00 ou (1 234,00) -->
 <ng-template #montant let-v>{{ v < 0 ?  (0 - v | number:'1.2-2':'fr-FR')  : (v | number:'1.2-2':'fr-FR') }}</ng-template>
 
+<!-- Barre de consommation de la facilité de caisse : palier faible (< 70 %), élevé (70 à 100 %), dépassé (> 100 %) -->
+<ng-template #barreFc let-s let-plafond="plafond">
+  <div class="fc">
+    <div class="fc__head">
+      <span>Facilité de caisse utilisée</span>
+      <strong [ngClass]="'fc__pct--' + s.palier">{{ s.pourcentage }} %</strong>
+    </div>
+    <div class="fc__bar" role="img" [attr.aria-label]="'Facilité de caisse utilisée à ' + s.pourcentage + ' pour cent'">
+      <span class="fc__fill" [ngClass]="'fc__fill--' + s.palier" [style.width.%]="s.largeur"></span>
+    </div>
+    <div class="fc__foot">
+      <span>0</span>
+      <span>Plafond <ng-container [ngTemplateOutlet]="montant" [ngTemplateOutletContext]="{ $implicit: plafond }"/></span>
+    </div>
+  </div>
+</ng-template>
+
+<!-- Ligne de total : Disponibilité, Besoin couvert par la FC, ou Besoin en dépassement -->
+<ng-template #totalDispo let-s>
+  <div class="bank-card__line bank-card__line--total bank-card__total" [ngClass]="'bank-card__total--' + s.statut">
+    <span class="bank-card__line-label">
+      {{ s.statut === 'DISPONIBILITE' ? 'Disponibilité' : 'Besoin' }}
+      @if (s.statut === 'BESOIN_COUVERT') { <small class="bank-card__total-sub">couvert par FC</small> }
+      @if (s.statut === 'BESOIN_DEPASSEMENT') { <small class="bank-card__total-sub">dépassement</small> }
+    </span>
+    <span class="bank-card__line-value">
+      <ng-container [ngTemplateOutlet]="montant" [ngTemplateOutletContext]="{ $implicit: s.montantTotal }"/>
+    </span>
+  </div>
+</ng-template>
+
 <div class="dash-page w-full h-full overflow-y-scroll">
 
   <!-- ── HEADER ──────────────────────────────────────────────────────────── -->
@@ -51,6 +82,7 @@
     <!-- ── GRILLE BANQUES ─────────────────────────────────────────────── -->
     <div class="dash-grid">
       @for (account of recapitulatifComptes; track account.banqueId) {
+       @if (situations.get(account.banqueId); as sit) {
 
         <div class="bank-card bank-card--anim">
 
@@ -97,20 +129,19 @@
                   <span class="bank-card__kpi-none">Aucune</span>
                 }
               </div>
+              @if (account.plafondFC && account.plafondFC > 0) {
+                <div class="bank-card__line">
+                  <span class="bank-card__line-label">FC disponible</span>
+                  <span class="bank-card__line-value">
+                    <ng-container [ngTemplateOutlet]="montant"
+                                  [ngTemplateOutletContext]="{ $implicit: sit.actuelle.reste }"/>
+                  </span>
+                </div>
+                <ng-container [ngTemplateOutlet]="barreFc"
+                              [ngTemplateOutletContext]="{ $implicit: sit.actuelle, plafond: account.plafondFC }"/>
+              }
 
-              <div class="bank-card__line bank-card__line--total">
-                <span class="bank-card__line-label"
-                      [class.bank-card__label--pos]="account.disponibiliteFC >= 0"
-                      [class.bank-card__label--neg]="account.disponibiliteFC < 0">
-                  {{ account.disponibiliteFC < 0 ? 'Besoin' : 'Disponibilité' }}
-                </span>
-                <span class="bank-card__line-value"
-                      [class.bank-card__amount--pos]="account.disponibiliteFC >= 0"
-                      [class.bank-card__amount--neg]="account.disponibiliteFC < 0">
-                  <ng-container [ngTemplateOutlet]="montant"
-                                [ngTemplateOutletContext]="{ $implicit: account.disponibiliteFC }"/>
-                </span>
-              </div>
+              <ng-container [ngTemplateOutlet]="totalDispo" [ngTemplateOutletContext]="{ $implicit: sit.actuelle }"/>
             </div>
 
             <!-- Tuile droite : prévision à l'horizon choisi (fin de mois ou fin de trimestre) -->
@@ -147,19 +178,11 @@
                 </span>
                 <i class="pi pi-angle-right bank-card__line-chevron" aria-hidden="true"></i>
               </button>
-              <div class="bank-card__line bank-card__line--total">
-                <span class="bank-card__line-label"
-                      [class.bank-card__label--pos]="account.disponibilitePrevue >= 0"
-                      [class.bank-card__label--neg]="account.disponibilitePrevue < 0">
-                  {{ account.disponibilitePrevue < 0 ? 'Besoin' : 'Disponibilité' }}
-                </span>
-                <span class="bank-card__line-value"
-                      [class.bank-card__amount--pos]="account.disponibilitePrevue >= 0"
-                      [class.bank-card__amount--neg]="account.disponibilitePrevue < 0">
-                  <ng-container [ngTemplateOutlet]="montant"
-                                [ngTemplateOutletContext]="{ $implicit: account.disponibilitePrevue }"/>
-                </span>
-              </div>
+              @if (account.plafondFC && account.plafondFC > 0) {
+                <ng-container [ngTemplateOutlet]="barreFc"
+                              [ngTemplateOutletContext]="{ $implicit: sit.prevue, plafond: account.plafondFC }"/>
+              }
+              <ng-container [ngTemplateOutlet]="totalDispo" [ngTemplateOutletContext]="{ $implicit: sit.prevue }"/>
             </div>
 
           </div>
@@ -207,6 +230,7 @@
 
         </div>
 
+       }
       }
     </div>
 

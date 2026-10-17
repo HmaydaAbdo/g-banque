@@ -26,6 +26,7 @@ import {SelectButtonModule} from "primeng/selectbutton";
 import {PeriodeChoix, PeriodeSelectorComponent} from "../periode-selector/periode-selector.component";
 import {DropdownModule} from "primeng/dropdown";
 import {SensOperation} from "../../../transactions/dtos/SensOperation";
+import {SituationFc, situationFc} from "../../fc-consommation";
 import {EncoursOperationsDialogComponent} from "../encours-operations-dialog/encours-operations-dialog.component";
 
 /**
@@ -66,6 +67,8 @@ function pageRechargee(): boolean {
 export class AcceuilComponent implements OnInit, OnDestroy {
 
   recapitulatifComptes: RecapitulatifCompte[] = [];
+  /** Situation vis-à-vis du plafond de FC, par banque : solde actuel et solde prévu. */
+  situations = new Map<number, { actuelle: SituationFc; prevue: SituationFc }>();
   items: MenuItem[] | undefined;
   isLoading: boolean = false;
 
@@ -149,6 +152,10 @@ export class AcceuilComponent implements OnInit, OnDestroy {
     this.banqueService.getAccueilBankInfo(this.horizon).subscribe({
       next: (data) => {
         this.recapitulatifComptes = data;
+        this.situations = new Map(data.map(a => [a.banqueId, {
+          actuelle: situationFc(a.soldeActuel, a.plafondFC),
+          prevue: situationFc(a.soldePrevu, a.plafondFC),
+        }]));
       },
       error: () => {}
     });

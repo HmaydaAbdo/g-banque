@@ -50,6 +50,21 @@ rechargement de la page (F5) ; **Fin de trimestre** n'est active que si vous la 
 choix est gardé si vous revenez sur le tableau de bord avec le bouton « précédent ». Il sert aussi aux téléchargements **Récap détaillé** et
 présélectionne la période du **Récap global** (voir ci-dessous).
 
+### Lire la consommation de la facilité de caisse
+
+Les deux tuiles d'une carte (**Aujourd'hui** et la tuile de l'horizon) se terminent chacune par une **barre** :
+elle montre quelle part du plafond de la facilité de caisse est utilisée, d'après le solde actuel ou le solde prévu.
+
+- Barre **vide (0 %)** : le solde est positif, la facilité de caisse n'est pas utilisée.
+- Barre **bleue** : moins de 70 % du plafond utilisé. Barre **orange** : de 70 % à 100 %. Barre **rouge et pleine** :
+  le plafond est dépassé.
+- Sous la barre, **0** et le **plafond** donnent l'échelle. Dans la tuile « Aujourd'hui », la ligne **FC disponible**
+  indique ce qu'il reste du plafond.
+- La ligne du bas annonce la situation : **Disponibilité** en vert, **Besoin — couvert par FC** en orange (le solde est
+  négatif mais le plafond le couvre ; le montant est le découvert), **Besoin — dépassement** en rouge (le plafond ne
+  suffit pas ; le montant est la part non couverte).
+- Une banque sans facilité de caisse affiche « Aucune » et n'a pas de barre.
+
 ### Voir les opérations qui composent les encours d'une banque
 
 Sur la tuile de prévision d'une carte, les lignes **Encours entrées** et **Encours sorties** sont cliquables (une
