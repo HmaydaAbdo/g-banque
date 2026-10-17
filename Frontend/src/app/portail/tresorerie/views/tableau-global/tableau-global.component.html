@@ -1,0 +1,60 @@
+<div class="tableau">
+  <div class="outils">
+    <button type="button" class="outils__lien" (click)="toutDeplier(!toutesDepliees)">{{ toutesDepliees ? 'Tout replier' : 'Tout déplier' }}</button>
+  </div>
+  <div class="grille" role="region" aria-label="Soldes par banque et par période" tabindex="0">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col" class="col-libelle">Banque</th>
+          <th scope="col">Solde actuel<small>aujourd'hui</small></th>
+          @for (c of colonnes; track c.code; let i = $index) {
+            <th scope="col">{{ titre(c, i) }}<small>{{ sous(c, i) }}</small></th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (l of lignes; track l.banque.banqueId) {
+          <tr class="banque">
+            <th scope="row">
+              <button type="button" class="deplier" [attr.aria-expanded]="depliees.has(l.banque.banqueId!)" (click)="basculer(l.banque.banqueId!)">
+                <i class="pi pi-chevron-down" [class.replie]="!depliees.has(l.banque.banqueId!)" aria-hidden="true"></i>{{ l.banque.banqueNom }}
+              </button>
+            </th>
+            <td [class.neg]="l.banque.soldeActuel < 0">{{ compact(l.banque.soldeActuel) }}</td>
+            @for (s of l.soldes; track k; let k = $index) {
+              <td class="solde" [ngClass]="'niveau--' + l.niveaux[k]">
+                <button type="button" class="solde__btn" (click)="ouvrirBanque.emit({ banqueId: l.banque.banqueId!, colonne: colonnes[k].code })"
+                        [attr.aria-label]="'Ouvrir ' + l.banque.banqueNom + ', ' + titre(colonnes[k], k)">
+                  <span [class.neg]="s < 0" [class.pos]="s >= 0">{{ compact(s) }}</span>
+                  @if (l.banque.plafondFC > 0) { <app-fc-barre class="cellule-fc" [situation]="fc(s, l.banque.plafondFC)" [entete]="false"/> }
+                </button>
+              </td>
+            }
+          </tr>
+          @if (depliees.has(l.banque.banqueId!)) {
+            <tr class="flux flux--entree">
+              <th scope="row">Entrées</th><td></td>
+              @for (v of l.entrees; track $index) { <td [class.pos]="v > 0">{{ v > 0 ? '+' + cellule(v) : '—' }}</td> }
+            </tr>
+            <tr class="flux flux--sortie">
+              <th scope="row">Sorties</th><td></td>
+              @for (v of l.sorties; track $index) { <td [class.neg]="v > 0">{{ v > 0 ? '−' + cellule(v) : '—' }}</td> }
+            </tr>
+          }
+        } @empty {
+          <tr><th scope="row" [attr.colspan]="colonnes.length + 2" class="vide">Aucune banque dans ce périmètre.</th></tr>
+        }
+        <tr class="total">
+          <th scope="row">Total groupe</th>
+          <td [class.neg]="soldeActuel < 0">{{ compact(soldeActuel) }}</td>
+          @for (v of totaux; track $index) { <td [class.neg]="v < 0" [class.pos]="v >= 0">{{ compact(v) }}</td> }
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="aide">
+    Fond orange : solde négatif couvert par la facilité de caisse ; fond rouge : plafond dépassé. Un clic sur une case ouvre le plan de la banque
+    sur cette période.@if (filtre) { Les entrées et sorties suivent les filtres ; les soldes restent ceux de toutes les opérations. }
+  </p>
+</div>

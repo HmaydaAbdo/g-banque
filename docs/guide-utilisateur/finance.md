@@ -130,73 +130,53 @@ directeurs Finance, administrateur système.*
 
 Cet écran répond à une question : **« est-ce que ça va ? »** Il part du solde actuel de chaque banque et
 y ajoute les encaissements et les décaissements encore à valider, période par période, jusqu'à la fin du
-mois ou du trimestre. Il ne modifie aucune opération : c'est une consultation, toujours à jour.
+mois ou du trimestre. Il ne modifie aucune opération : c'est une consultation, toujours à jour. Comme la page
+d'une banque, il propose une barre de filtres unique et deux vues : **Récit** et **Tableau**.
 
-### La console : tous les filtres et l'export au même endroit
+### La barre de filtres
 
-La barre en haut de l'écran reste visible quand vous faites défiler la page. Elle réunit :
-- **Horizon** : **Fin de mois** (une colonne par semaine, du lundi au dimanche) ou **Fin de trimestre**
-  (une colonne par mois) ;
-- **Devise** : seulement si vos banques n'ont pas toutes la même devise ;
-- **les filtres actifs** : tout réglage différent de la vue par défaut apparaît ici en pastille ; cliquez sur
-  la croix d'une pastille pour la retirer. Sans filtre, la console indique « Aucun filtre actif » ;
-- **Effacer les filtres** (visible dès qu'un filtre est actif) : revient à la vue par défaut ;
-- **Exporter PDF** : télécharge le plan du total (« Total groupe », ou « Total MAD » s'il y a plusieurs
-  devises). Survolez le bouton pour lire ce qui sera exporté. Le plan d'une banque s'exporte depuis sa page.
+Une seule ligne, toujours visible quand vous faites défiler la page :
+1. **Banques** : cochez une ou plusieurs banques pour restreindre l'écran ;
+2. **Sens** : tous, entrées ou sorties ;
+3. **Sources** : une ou plusieurs sources (le nombre d'opérations est indiqué) ;
+4. **Montant** : choisissez la comparaison (≥, >, =, ≤, <) puis saisissez le montant ;
+5. **Recherche** : un mot du libellé, de l'observation ou un numéro de pièce ;
+6. **Horizon** : fin de mois (une colonne par semaine, du lundi au dimanche) ou fin de trimestre (une colonne par
+   mois) ;
+7. **Devise** : seulement si vos banques n'ont pas toutes la même devise ;
+8. **Exporter PDF** : le plan du total (« Total groupe », ou « Total MAD » s'il y a plusieurs devises). Le plan
+   d'une banque s'exporte depuis sa page.
 
-Vos choix sont gardés si vous revenez sur l'écran avec « précédent » ou si vous rechargez la page.
+Les filtres actifs s'affichent en pastilles (une croix pour retirer chacun) avec le nombre d'opérations retenues et
+leurs totaux ; **Effacer les filtres** remet tout à zéro. Les soldes ne changent pas : ils comptent toujours toutes
+les opérations. Vos choix sont gardés si vous revenez sur l'écran avec « précédent » ou si vous rechargez la page.
 
-### Le total groupe
+### La vue Récit
 
-En haut de l'écran, une carte résume le total de la devise choisie. Un voyant vert, orange ou rouge
-résume la situation du total, et elle indique combien de banques sont **en besoin**, en **facilité utilisée**
-ou **sans souci**. Dessous, cinq indicateurs : **Solde actuel** (avec la facilité de caisse « FC »),
-**Solde prévu** (avec l'écart sur la période), **Solde le plus bas** (et son jour), **Besoin** — ou
-**Disponibilité la plus basse** s'il n'y a pas de besoin — et **Jours à solde négatif**.
+- **Une phrase** résume le groupe : d'où il part, combien sort et entre, où il termine. Elle rappelle qu'**une
+  facilité de caisse ne couvre que sa propre banque** : le groupe peut être positif pendant qu'une banque est en
+  besoin. Elle nomme les banques en dépassement et celles qui utilisent leur facilité, avec leur premier jour.
+- **À surveiller** : une carte par banque, de la plus urgente à la plus sereine, avec le solde final, la barre de
+  facilité de caisse et le statut — **Disponibilité** (vert), **Besoin · couvert par FC** (orange), **Besoin ·
+  dépassement** (rouge). Pour une banque en besoin, « depuis N j » indique depuis combien de jours (« nouveau » si
+  c'est apparu aujourd'hui). Cliquez sur une carte pour ouvrir le plan de la banque.
+- **La frise** : « À ce jour » (les opérations dont la date est atteinte, comptées dès aujourd'hui), puis chaque
+  semaine ou chaque mois. Chaque étape montre le solde du groupe et combien de banques sont en dépassement,
+  couvertes par la facilité de caisse ou sereines. **Cliquez sur une étape** pour lister ses banques (solde,
+  barre de facilité de caisse, flux, statut), les plus urgentes d'abord ; cliquez sur une banque pour ouvrir son
+  plan sur cette période et y lire les opérations. **Tout ouvrir / Tout fermer** agit sur toutes les étapes.
+- **Les jalons** (losanges datés) signalent, banque par banque, quand le solde passe sous zéro et quand la
+  facilité de caisse est dépassée, avec l'opération qui en est la cause. Cliquez sur un jalon pour ouvrir la banque.
 
-Attention : une facilité de caisse ne couvre que sa propre banque. Le total du groupe peut être positif
-pendant qu'une banque est en besoin ; c'est dans les cartes ci-dessous qu'il faut regarder.
+### La vue Tableau
 
-### Les cartes par banque
-
-Une carte par banque, la plus urgente en premier :
-- **rouge, « Besoin »** : le montant qui manque, le jour, et **depuis combien de jours** la banque est en
-  besoin (« depuis 3 j » ; « nouveau » si c'est apparu aujourd'hui). La facilité de caisse ne suffit pas ;
-- **orange, « Facilité de caisse utilisée »** : le solde passe en négatif mais la facilité le couvre ;
-- **vert, « Sans souci »** : le solde le plus bas reste positif. Quand une autre banque est en besoin, un
-  badge **Excédent** montre ce que cette banque peut virer sans toucher à sa facilité de caisse.
-
-Chaque carte donne aussi le solde actuel, le solde prévu, la part de facilité de caisse utilisée (barre et
-pourcentage) et la trajectoire du solde. **Cliquez sur une carte** pour ouvrir le plan de trésorerie de la
-banque (voir « Le plan de trésorerie d'une banque » ci-dessous).
-L'ancienneté « depuis N j » se calcule à partir d'un relevé enregistré chaque nuit : elle commence à compter
-dès la première nuit suivant la mise en service.
-
-### La grille « Banque › Source »
-
-Une ligne par banque, une colonne par période. La colonne **échues** regroupe les opérations dont la date
-est déjà atteinte mais qui n'ont pas encore été validées (elles sont comptées dès aujourd'hui).
-
-Chaque case affiche le **solde à la fin de la période** (abrégé : « 1,2 M » = 1,2 million ; « 123 k » =
-123 mille ; passez la souris dessus pour le montant exact) et une couleur :
-- **vert** : le solde est positif ;
-- **orange** : le solde est négatif, mais la facilité de caisse le couvre ;
-- **rouge** : même avec la facilité de caisse, il manque de l'argent.
-
-**Cliquez sur la flèche d'une banque** pour la déplier :
-vous voyez ses flux par source (leasing, CMT, chèques…), les encaissements en vert et les décaissements en
-rouge. Le bouton **Tout déplier / Tout replier** ouvre ou ferme toutes les banques d'un coup.
-
-Les **totaux** restent en bas (**Total groupe**, ou un total par devise si vos banques n'ont pas toutes la
-même devise : on n'additionne jamais des euros et des dirhams, et le code de devise s'affiche alors à côté de
-chaque banque).
-
-### Aller de la grille à la cause
-
-Cliquez sur **une carte de banque**, sur **le nom d'une banque** de la grille ou sur **une case de solde** : la page
-du plan de trésorerie de cette banque s'ouvre (sur la période de la case cliquée). Cliquez sur **un total** : le
-détail du total se déplie sous les cartes (indicateurs, plus grosses opérations, détail par famille) ; fermez-le avec
-la croix ou en recliquant sur le total.
+Une ligne par banque, une colonne par période. Chaque case donne le **solde à la fin de la période** (abrégé :
+« 1,2 M » = 1,2 million ; « 123 k » = 123 mille) avec sa barre de facilité de caisse ; **fond orange** : solde
+négatif couvert par la facilité de caisse ; **fond rouge** : même avec la facilité de caisse, il manque de l'argent.
+**Cliquez sur le nom d'une banque** pour la déplier en entrées et sorties par période ; **Tout déplier / Tout
+replier** agit sur toutes. **Cliquez sur une case** pour ouvrir le plan de la banque sur cette période. La dernière
+ligne est le **total du groupe** ; on n'additionne jamais des euros et des dirhams, un seul total de devise s'affiche à
+la fois.
 
 ### Le plan de trésorerie d'une banque
 
@@ -240,21 +220,9 @@ toujours toutes les opérations.
 
 Vos choix (vue, filtres, horizon, étapes ouvertes) sont gardés si vous revenez sur la page avec « précédent ».
 
-### Le détail du total
-
-Il contient quatre indicateurs (solde actuel, solde prévu, **solde le plus bas**, **besoin** ou disponibilité la plus
-basse), puis :
-- **Plus grosses opérations à venir** : les cinq plus grosses ; un décaissement le jour du solde le plus
-  bas est signalé « cause du solde le plus bas » ;
-- **Détail par source** : le plan de trésorerie du total, avec ses sources regroupées en quatre
-  familles — **Règlements** (chèques, LCN, virements…), **Financements** (leasing, CMT, préfinancement,
-  factoring, droits constatés, agios), **Charges bancaires** (commissions, prélèvements, frais, impôts
-  et taxes) et **Autres**. Chaque source est visible d'emblée ; cliquez sur une famille pour la replier.
-  Les montants négatifs sont en rouge, un montant nul s'affiche « — ».
-
 ### Exporter le plan en PDF
 
-Depuis la console de l'écran global, **Exporter PDF** télécharge le plan du total ; depuis la page d'une banque, il
+Depuis la barre de l'écran global, **Exporter PDF** télécharge le plan du total ; depuis la page d'une banque, il
 télécharge le plan complet de cette banque (sans les filtres). Le fichier est en format paysage, avec en titre le périmètre, l'horizon et sa date, la devise, et en
 bas le solde le plus bas, la disponibilité la plus basse, le besoin et le nombre de jours à solde négatif.
 

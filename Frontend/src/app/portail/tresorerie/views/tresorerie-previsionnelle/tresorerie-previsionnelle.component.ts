@@ -1,46 +1,39 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { NgClass } from '@angular/common';
-import { FormControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 import { MenuItem } from 'primeng/api';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { SkeletonModule } from 'primeng/skeleton';
+import { HorizonPrevision, horizonDepuisParam } from '../../../etatsDesEncours/views/lesEncours/recap/dtos/PeriodeRecap';
+import { RecaputilatifItem } from '../../../etatsDesEncours/views/lesEncours/recap/dtos/RecaputilatifItem';
+import { RecapService } from '../../../etatsDesEncours/views/lesEncours/recap/services/recap.service';
+import { TransactionSource, TransactionSourceLabels } from '../../../transactions/dtos/TransactionSource';
+import { ColonnePlan, PlanBanque, PlanTresorerie } from '../../dtos/PlanTresorerie';
+import { garder, montantDe, Operateur, OPERATEURS } from '../../plan-banque';
 import {
-  finHorizon,
-  HorizonPrevision,
-  horizonDepuisParam,
-} from '../../../etatsDesEncours/views/lesEncours/recap/dtos/PeriodeRecap';
-import { PlanBanque, PlanTresorerie } from '../../dtos/PlanTresorerie';
-import { FiltreActif } from '../../filtre-actif';
+  banquesDuPerimetre, FILTRES_GLOBAL_VIDES, FiltresGlobal,
+} from '../../plan-global';
 import { TresorerieService } from '../../services/tresorerie.service';
-import { compterParSituation, NiveauSituation } from '../../situation';
-import { CartesBanquesComponent } from '../cartes-banques/cartes-banques.component';
-import { DetailBanqueComponent } from '../detail-banque/detail-banque.component';
-import { ConsoleFiltresComponent } from '../console-filtres/console-filtres.component';
-import { TotalGroupeComponent } from '../total-groupe/total-groupe.component';
-import { CaseChoisie, PositionGridComponent } from '../position-grid/position-grid.component';
+import { BarreFiltresComponent, OptionFiltre, ResumeFiltre } from '../barre-filtres/barre-filtres.component';
+import { RecitGlobalComponent } from '../recit-global/recit-global.component';
+import { TableauGlobalComponent } from '../tableau-global/tableau-global.component';
 
-/** Ce que produit le bouton « Exporter PDF » : le total d'une devise. */
-export interface PerimetreExport {
-  devise: string;
-  libelle: string;
-}
+export type VueGlobale = 'recit' | 'tableau';
 
 /**
- * Trésorerie prévisionnelle : une console qui réunit **tous les filtres et l'export**, le total groupe en
- * tête, une carte par banque (classées par urgence), le détail du total (déplié sous les cartes), puis la
- * grille Banque › Source. Un clic sur une banque ouvre sa page dédiée (`banque/:banqueId`).
- *
- * Les filtres sont portés par l'adresse (`?horizon=FIN_DE_TRIMESTRE&devise=EUR`) : le retour arrière retrouve
- * la même vue. L'ancienne adresse `?banque=3&col=P2` est redirigée vers la page de la banque.
+ * Trésorerie prévisionnelle — toutes les banques, sur le modèle de la page d'une banque : une seule barre (banques,
+ * sens, sources, montant, recherche, horizon, devise, export) et deux vues séparées, **Récit** (résumé du groupe,
+ * bandeau « À surveiller », frise des périodes, jalons par banque) et **Tableau** (banques × périodes). Un clic sur une
+ * banque ouvre sa page (`banque/:banqueId`). Tout l'état est porté par l'adresse (`?horizon=…&vue=tableau&banques=1,2
+ * &sens=…&sources=…&op=…&montant=…&q=…&ouvert=P1`). Les filtres ne changent jamais les soldes.
  */
 @Component({
   selector: 'app-tresorerie-previsionnelle',
   standalone: true,
   imports: [
     NgClass, RouterLink, BreadcrumbModule, SkeletonModule,
-    ConsoleFiltresComponent, TotalGroupeComponent, CartesBanquesComponent, PositionGridComponent, DetailBanqueComponent,
+    BarreFiltresComponent, RecitGlobalComponent, TableauGlobalComponent,
   ],
   templateUrl: './tresorerie-previsionnelle.component.html',
   styleUrl: './tresorerie-previsionnelle.component.scss'
@@ -48,193 +41,238 @@ export interface PerimetreExport {
 export class TresoreriePrevisionnelleComponent implements OnInit, OnDestroy {
 
   private readonly tresorerieService = inject(TresorerieService);
+  private readonly recapService = inject(RecapService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly subscriptions: Subscription[] = [];
+  private chargement?: Subscription;
 
   readonly items: MenuItem[] = [
     { icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' },
     { label: 'Trésorerie prévisionnelle' },
   ];
 
-  readonly horizonControl = new FormControl<HorizonPrevision>('FIN_DE_MOIS', { nonNullable: true });
-  /** Devise du bandeau, de la courbe, des plus grosses opérations et de l'export ; vide = la première (le dirham). */
-  readonly deviseControl = new FormControl<string>('', { nonNullable: true });
+  horizon: HorizonPrevision = 'FIN_DE_MOIS';
+  vue: VueGlobale = 'recit';
+  /** Devise affichée ; vide = la première (le dirham). */
+  devise = '';
+  filtres: FiltresGlobal = { ...FILTRES_GLOBAL_VIDES };
+  /** Codes des étapes ouvertes dans le récit. */
+  ouvertes = new Set<string>();
 
   plan: PlanTresorerie | null = null;
+  operations: RecaputilatifItem[] = [];
   loading = false;
+  erreur = false;
   exporting = false;
-
-  /** Détail du total déplié : `undefined` = fermé, `null` = ouvert. */
-  panneau: null | undefined;
-  /** Devise du total ouvert dans le panneau. */
-  panneauDevise = '';
+  private ouverturePar = false;
 
   ngOnInit(): void {
-    const params = this.route.snapshot.queryParamMap;
-    this.horizonControl.setValue(horizonDepuisParam(params.get('horizon')), { emitEvent: false });
-    this.deviseControl.setValue(params.get('devise') ?? '', { emitEvent: false });
-    const banque = Number(params.get('banque'));
+    this.lireAdresse();
+    const banque = Number(this.route.snapshot.queryParamMap.get('banque'));
     if (Number.isInteger(banque) && banque > 0) {
       // Ancienne adresse du détail d'une banque : la banque a désormais sa page
-      this.ouvrirBanque(banque, params.get('col') ?? '', true);
+      this.ouvrirBanque({ banqueId: banque, colonne: this.route.snapshot.queryParamMap.get('col') ?? '' }, true);
       return;
     }
-
-    this.subscriptions.push(
-      // Le plan est recalculé côté serveur quand l'horizon change ; la devise n'est que de l'affichage
-      this.horizonControl.valueChanges.subscribe(() => { this.syncUrl(); this.charger(); }),
-      this.deviseControl.valueChanges.subscribe(() => this.syncUrl()),
-    );
     this.charger();
   }
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(s => s.unsubscribe());
+    this.chargement?.unsubscribe();
   }
 
-  /** Devises présentes ; le sélecteur n'apparaît que s'il y en a plusieurs. */
+  // ── Données dérivées ────────────────────────────────────────────────────
+
+  get colonnes(): ColonnePlan[] {
+    return this.plan?.colonnes ?? [];
+  }
+
   get devises(): string[] {
     return this.plan?.groupes.map(g => g.devise) ?? [];
   }
 
-  /** Total de la devise choisie (bandeau, courbe, plus grosses opérations). */
-  get groupeActif(): PlanBanque | null {
-    if (!this.plan) {
-      return null;
-    }
-    return this.plan.groupes.find(g => g.devise === this.deviseControl.value) ?? this.plan.groupes[0] ?? null;
+  get deviseActive(): string {
+    return this.devise && this.devises.includes(this.devise) ? this.devise : this.devises[0] ?? 'MAD';
   }
 
-  /** Banques de la devise choisie : celles des cartes et du compte du total. */
-  get banquesDevise(): PlanBanque[] {
-    const devise = this.groupeActif?.devise;
-    return this.plan?.banques.filter(b => b.devise === devise) ?? [];
+  /** Banques de la devise, restreintes au filtre « Banques » : le périmètre de la page. */
+  get banques(): PlanBanque[] {
+    return this.plan ? banquesDuPerimetre(this.plan.banques, this.deviseActive, this.filtres.banques) : [];
   }
 
-  get compte(): Record<NiveauSituation, number> {
-    return compterParSituation(this.banquesDevise);
+  /** Banques proposées au filtre : celles de la devise affichée. */
+  get banquesDisponibles(): OptionFiltre<number>[] {
+    return (this.plan ? banquesDuPerimetre(this.plan.banques, this.deviseActive, []) : [])
+      .map(b => ({ label: b.banqueNom, value: b.banqueId! }));
   }
 
-  /** Total affiché dans le panneau ouvert ; `null` si le panneau est fermé. */
-  get planDuPanneau(): PlanBanque | null {
-    if (!this.plan || this.panneau === undefined) {
-      return null;
-    }
-    return this.plan.groupes.find(g => g.devise === this.panneauDevise) ?? this.plan.groupes[0] ?? null;
+  /** Sources présentes dans les opérations du périmètre, avec leur nombre. */
+  get sourcesDisponibles(): OptionFiltre<TransactionSource>[] {
+    const ids = new Set(this.banques.map(b => b.banqueId));
+    const nombres = new Map<TransactionSource, number>();
+    this.operations.filter(o => ids.has(o.banqueId ?? null))
+      .forEach(o => nombres.set(o.source, (nombres.get(o.source) ?? 0) + 1));
+    return [...nombres.entries()]
+      .map(([value, n]) => ({ value, label: `${TransactionSourceLabels[value] ?? value} (${n})` }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }
 
-  /** Ce que l'export produira : le total de la devise ouverte, sinon celui de la devise choisie. */
-  get perimetreExport(): PerimetreExport | null {
-    const groupe = this.planDuPanneau ?? this.groupeActif;
-    if (!groupe) {
-      return null;
-    }
-    return { devise: groupe.devise, libelle: this.devises.length > 1 ? `Total ${groupe.devise}` : 'Total groupe' };
+  get operationsPerimetre(): RecaputilatifItem[] {
+    const ids = new Set(this.banques.map(b => b.banqueId));
+    return this.operations.filter(o => ids.has(o.banqueId ?? null));
   }
 
-  /** Filtres qui s'écartent de la vue par défaut (fin de mois, première devise, aucun panneau ouvert). */
-  get filtres(): FiltreActif[] {
-    const filtres: FiltreActif[] = [];
-    const horizon = this.horizonControl.value;
-    if (horizon !== 'FIN_DE_MOIS') {
-      filtres.push({
-        cle: 'horizon', libelle: 'Horizon',
-        valeur: `Fin de trimestre (${finHorizon(horizon).toLocaleDateString('fr-FR')})`,
-        retirer: () => this.horizonControl.setValue('FIN_DE_MOIS'),
-      });
-    }
-    if (this.devises.length > 1 && this.deviseControl.value && this.deviseControl.value !== this.devises[0]) {
-      filtres.push({ cle: 'devise', libelle: 'Devise', valeur: this.deviseControl.value, retirer: () => this.deviseControl.setValue('') });
-    }
-    return filtres;
+  get resumeFiltre(): ResumeFiltre {
+    const retenues = this.operationsPerimetre.filter(o => garder(o, this.filtres));
+    const somme = (sens: string) => retenues.filter(o => o.sens === sens).reduce((s, o) => s + montantDe(o), 0);
+    return { nombre: retenues.length, entrees: somme('ENCAISSEMENT'), sorties: somme('DECAISSEMENT') };
   }
 
-  reinitialiser(): void {
-    this.panneau = undefined;
-    this.deviseControl.setValue('', { emitEvent: false });
-    const recharger = this.horizonControl.value !== 'FIN_DE_MOIS';
-    this.horizonControl.setValue('FIN_DE_MOIS', { emitEvent: false });
-    this.syncUrl();
-    if (recharger) {
-      this.charger();
-    }
+  // ── Actions ─────────────────────────────────────────────────────────────
+
+  appliquer(changement: Partial<FiltresGlobal>): void {
+    this.filtres = { ...this.filtres, ...changement };
+    this.ecrireAdresse();
   }
 
-  /** Une banque ouvre sa page dédiée ; le total d'une devise se déplie sous les cartes (un second clic le referme). */
-  ouvrir(choix: CaseChoisie): void {
-    if (choix.banqueId !== null) {
-      this.ouvrirBanque(choix.banqueId, choix.colonne);
-      return;
+  effacer(): void {
+    this.filtres = { ...FILTRES_GLOBAL_VIDES };
+    this.ecrireAdresse();
+  }
+
+  choisirHorizon(horizon: HorizonPrevision): void {
+    this.horizon = horizon;
+    this.ouvertes.clear();
+    this.ecrireAdresse();
+    this.charger();
+  }
+
+  choisirDevise(devise: string): void {
+    this.devise = devise;
+    this.filtres = { ...this.filtres, banques: [], sources: [] };
+    this.ecrireAdresse();
+  }
+
+  choisirVue(vue: VueGlobale): void {
+    this.vue = vue;
+    this.ecrireAdresse();
+  }
+
+  basculer(code: string): void {
+    const ouvertes = new Set(this.ouvertes);
+    if (!ouvertes.delete(code)) {
+      ouvertes.add(code);
     }
-    if (this.panneau === null && this.panneauDevise === choix.devise) {
-      this.fermer();
-      return;
-    }
-    this.panneau = null;
-    this.panneauDevise = choix.devise;
+    this.ouvertes = ouvertes;
+    this.ecrireAdresse();
+  }
+
+  toutOuvrir(ouvrir: boolean): void {
+    this.ouvertes = new Set(ouvrir ? this.colonnes.map(c => c.code) : []);
+    this.ecrireAdresse();
   }
 
   /** Page du plan d'une banque, avec l'horizon de l'écran et, s'il y en a une, la période à ouvrir. */
-  ouvrirBanque(banqueId: number, colonne: string, remplacer = false): void {
-    const horizon = this.horizonControl.value;
-    this.router.navigate(['banque', banqueId], {
+  ouvrirBanque(choix: { banqueId: number; colonne: string }, remplacer = false): void {
+    this.router.navigate(['banque', choix.banqueId], {
       relativeTo: this.route,
-      queryParams: { horizon: horizon === 'FIN_DE_TRIMESTRE' ? horizon : null, col: colonne || null },
+      queryParams: { horizon: this.horizon === 'FIN_DE_TRIMESTRE' ? this.horizon : null, col: choix.colonne || null },
       replaceUrl: remplacer,
     });
   }
 
-  fermer(): void {
-    this.panneau = undefined;
+  get exportInfo(): string {
+    return `Plan du total ${this.deviseActive} à l'horizon choisi (sans les filtres) — une banque s'exporte depuis sa page`;
   }
 
   exporterPdf(): void {
-    const perimetre = this.perimetreExport;
-    if (!perimetre) {
-      return;
-    }
-    const periode = this.horizonControl.value;
+    const periode = this.horizon;
     this.exporting = true;
-    this.tresorerieService.exportPdf(periode, null, perimetre.devise).subscribe({
+    this.tresorerieService.exportPdf(periode, null, this.deviseActive).subscribe({
       next: blob => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Plan_tresorerie_${perimetre.devise}_${periode.toLowerCase()}.pdf`;
+        a.download = `Plan_tresorerie_${this.deviseActive}_${periode.toLowerCase()}.pdf`;
         a.click();
         window.URL.revokeObjectURL(url);
         this.exporting = false;
       },
       error: () => {
         this.exporting = false;
-      }
+      },
     });
   }
 
+  // ── Chargement et adresse ───────────────────────────────────────────────
+
   private charger(): void {
+    this.chargement?.unsubscribe();
     this.loading = true;
-    this.subscriptions.push(
-      this.tresorerieService.getPlan(this.horizonControl.value).subscribe({
-        next: plan => {
-          this.plan = plan;
-          this.loading = false;
-        },
-        error: () => {
-          this.loading = false;
+    this.erreur = false;
+    this.chargement = forkJoin({
+      plan: this.tresorerieService.getPlan(this.horizon),
+      operations: this.recapService.getEncoursToutesBanques(this.horizon),
+    }).subscribe({
+      next: ({ plan, operations }) => {
+        this.plan = plan;
+        this.operations = operations;
+        if (!this.ouverturePar && this.ouvertes.size === 0 && plan.colonnes.length > 1) {
+          // Ouverture par défaut : la première période qui contient une banque en dépassement, sinon la première
+          const banques = banquesDuPerimetre(plan.banques, this.deviseActive, this.filtres.banques);
+          const colonne = plan.colonnes.find((_, k) => banques.some(b => b.soldesFin[k] + Math.max(b.plafondFC, 0) < 0));
+          this.ouvertes = new Set(colonne ? [colonne.code] : []);
         }
-      })
-    );
+        this.ouverturePar = true;
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+        this.erreur = true;
+      },
+    });
   }
 
-  /** Écrit les filtres dans l'adresse sans ajouter d'entrée d'historique ; le total ouvert n'y figure pas. */
-  private syncUrl(): void {
-    const horizon = this.horizonControl.value;
+  private lireAdresse(): void {
+    const q = this.route.snapshot.queryParamMap;
+    this.horizon = horizonDepuisParam(q.get('horizon'));
+    this.vue = q.get('vue') === 'tableau' ? 'tableau' : 'recit';
+    this.devise = q.get('devise') ?? '';
+    const sens = q.get('sens');
+    const op = q.get('op') as Operateur | null;
+    const montant = Number(q.get('montant'));
+    this.filtres = {
+      banques: (q.get('banques') ?? '').split(',').map(Number).filter(n => Number.isInteger(n) && n > 0),
+      sens: sens === 'ENCAISSEMENT' || sens === 'DECAISSEMENT' ? sens : 'TOUS',
+      sources: (q.get('sources') ?? '').split(',').filter(Boolean) as TransactionSource[],
+      operateur: OPERATEURS.some(o => o.value === op) ? op! : '>=',
+      montant: q.get('montant') !== null && Number.isFinite(montant) && montant >= 0 ? montant : null,
+      texte: q.get('q') ?? '',
+    };
+    this.ouvertes = new Set((q.get('ouvert') ?? '').split(',').filter(Boolean));
+    this.ouverturePar = this.ouvertes.size > 0;
+  }
+
+  /** Écrit l'état dans l'adresse sans ajouter d'entrée d'historique ; les valeurs par défaut n'y figurent pas. */
+  private ecrireAdresse(): void {
+    const f = this.filtres;
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {
-        horizon: horizon === 'FIN_DE_TRIMESTRE' ? horizon : null,
-        devise: this.deviseControl.value || null,
+        horizon: this.horizon === 'FIN_DE_TRIMESTRE' ? this.horizon : null,
+        vue: this.vue === 'tableau' ? 'tableau' : null,
+        devise: this.devise || null,
+        banques: f.banques.length ? f.banques.join(',') : null,
+        sens: f.sens !== 'TOUS' ? f.sens : null,
+        sources: f.sources.length ? f.sources.join(',') : null,
+        op: f.montant !== null && f.operateur !== '>=' ? f.operateur : null,
+        montant: f.montant,
+        q: f.texte.trim() || null,
+        ouvert: this.ouvertes.size ? [...this.ouvertes].join(',') : null,
+        banque: null,
+        col: null,
       },
       replaceUrl: true,
     });

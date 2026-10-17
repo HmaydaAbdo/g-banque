@@ -1071,8 +1071,10 @@ opérations en attente d'une banque donnée, quel que soit leur type d'origine.
   elle est dépassée et opération qui le provoque, point bas — avec la consommation de la facilité de caisse suivie
   à chaque étape. Les équipes voient d'un coup d'œil quand agir et pourquoi, filtrent par source, sens ou montant
   sans jamais fausser les soldes, et retrouvent le plan classique en vue tableau.
-- **Une vue de position par banque** : une grille banques × périodes, colorée en vert, orange ou rouge,
-  qui permet de repérer le compte en difficulté d'un coup d'œil, avec le total du groupe. Les devises ne sont jamais additionnées : un total par devise, pour
+- **Une vue de position par banque** : un tableau banques × périodes, coloré en vert, orange ou rouge et doté de la
+  consommation de la facilité de caisse, qui permet de repérer le compte en difficulté d'un coup d'œil, avec le
+  total du groupe — et un récit du groupe, du plus urgent au plus serein, qui rappelle qu'une facilité de caisse ne
+  couvre que sa propre banque. Les devises ne sont jamais additionnées : un total par devise, pour
   qu'aucun chiffre ne soit faux.
 - **Une console unique et une grille Banque › Source** : tous les filtres (horizon, devise, banque, période)
   et l'export PDF sont réunis dans une seule barre toujours visible ; la grille montre d'un coup d'œil qui

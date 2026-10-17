@@ -398,6 +398,14 @@ public class RecapitulatifServiceImpl implements IRecapitulatifService {
     }
 
     @Override
+    public List<RecaputilatifItem> getEncoursToutesBanques(PeriodeRecap periode) {
+        Specification<RecapitulatifEncoursView> spec = RecapitulatifEncoursSpecification.outstandingUntil(horizon(periode));
+        return encoursRepository.findAll(spec, Sort.by("banqueId", "dateReference")).stream()
+                .map(mapper::toDto)
+                .toList();
+    }
+
+    @Override
     public List<RecaputilatifGlobal> getAllRecapitulatifsGlobaux(PeriodeRecap periode) {
         List<Long> allBankIds = this.banqueService.getAllBanqueIds();
 

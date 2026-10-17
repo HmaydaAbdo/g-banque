@@ -5,6 +5,7 @@ import staport.finance.gBanque.recapitulatif.dtos.request.RecapitulatifSearchDto
 import staport.finance.gBanque.recapitulatif.dtos.response.AgregatedRecapDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.EncoursPrevusDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifGlobal;
+import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifItem;
 import staport.finance.gBanque.recapitulatif.dtos.response.SourceRecapDto;
 import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
 
@@ -51,6 +52,12 @@ public interface IRecapitulatifService {
 
     /** Idem pour toutes les banques en une requête (banques sans encours absentes de la Map). */
     Map<Long, EncoursPrevusDto> getEncoursPrevusParBanque(PeriodeRecap periode);
+
+    /**
+     * Encours à valider de toutes les banques jusqu'à l'horizon (mêmes lignes que le plan de trésorerie), triés par
+     * banque puis par date de référence — page globale de la Trésorerie prévisionnelle, en un seul appel.
+     */
+    List<RecaputilatifItem> getEncoursToutesBanques(PeriodeRecap periode);
 
     /**
      * Indicateurs du récapitulatif ventilés par source (nombre d'encours, débit, crédit, échues

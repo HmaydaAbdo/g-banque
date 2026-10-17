@@ -104,12 +104,11 @@ describe('PlanBanqueComponent', () => {
     c.appliquer({ sens: 'DECAISSEMENT', operateur: '>', montant: 5000 });
     fixture.detectChanges();
     expect(navigate.calls.mostRecent().args[1]!.queryParams).toEqual(jasmine.objectContaining({ sens: 'DECAISSEMENT', op: '>', montant: 5000 }));
-    expect(c.pastilles.map(p => p.libelle)).toEqual(['Sorties', 'Montant > 5 000,00']);
     expect(c.resumeFiltre).toEqual({ nombre: 1, entrees: 0, sorties: 6000 });
     expect(c.plan!.soldesFin).toEqual(planTresorerieFixture().banques[0].soldesFin);
 
     c.effacer();
-    expect(c.actif).toBeFalse();
+    expect(c.filtres.sens).toBe('TOUS');
   });
 
   it("relit l'état de l'adresse : vue tableau, sources, montant, recherche, étapes ouvertes", () => {

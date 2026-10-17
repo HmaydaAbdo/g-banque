@@ -1,8 +1,6 @@
-<div class="treso route-enter">
+<div class="page route-enter">
 
-  <header class="treso__entete">
-    <span class="treso__surtitre">Finance · Prévisionnel</span>
-    <h1 class="treso__titre">Trésorerie prévisionnelle</h1>
+  <header class="page__entete">
     <p-breadcrumb [model]="items" styleClass="border-none p-0"
                   [style]="{'background':'transparent','padding':'0','font-size':'var(--text-breadcrumb)'}">
       <ng-template pTemplate="item" let-item>
@@ -16,36 +14,43 @@
         }
       </ng-template>
     </p-breadcrumb>
+    <div class="page__titre-ligne">
+      <span class="page__surtitre">Finance · Prévisionnel</span>
+      <h1 class="page__titre">Trésorerie prévisionnelle</h1>
+      @if (plan) {
+        <span class="page__meta">Toutes les banques · {{ deviseActive }} · calculé le {{ plan.dateCalcul.slice(8, 10) }}/{{ plan.dateCalcul.slice(5, 7) }}/{{ plan.dateCalcul.slice(0, 4) }}</span>
+      }
+      <div class="vues" role="tablist" aria-label="Vue de la trésorerie">
+        <button type="button" role="tab" class="vues__btn" [class.vues__btn--on]="vue === 'recit'"
+                [attr.aria-selected]="vue === 'recit'" (click)="choisirVue('recit')">
+          <i class="pi pi-history" aria-hidden="true"></i> Récit
+        </button>
+        <button type="button" role="tab" class="vues__btn" [class.vues__btn--on]="vue === 'tableau'"
+                [attr.aria-selected]="vue === 'tableau'" (click)="choisirVue('tableau')">
+          <i class="pi pi-table" aria-hidden="true"></i> Tableau
+        </button>
+      </div>
+    </div>
   </header>
 
-  <!-- Tous les filtres et l'export, au même endroit -->
-  <app-console-filtres [horizon]="horizonControl" [devise]="deviseControl" [devises]="devises" [filtres]="filtres"
-                       [perimetreExport]="perimetreExport?.libelle ?? ''" [exportEnCours]="exporting"
-                       [exportPossible]="!!perimetreExport"
-                       (exporter)="exporterPdf()" (effacer)="reinitialiser()"/>
+  <!-- Une seule barre : filtres, horizon, devise et export -->
+  <app-barre-filtres [filtres]="filtres" [sources]="sourcesDisponibles" [banques]="banquesDisponibles" [horizon]="horizon"
+                     [devises]="devises" [devise]="deviseActive" [resume]="resumeFiltre"
+                     [exportEnCours]="exporting" [exportPossible]="!!plan" [exportInfo]="exportInfo"
+                     (filtresChange)="appliquer($event)" (horizonChange)="choisirHorizon($event)"
+                     (deviseChange)="choisirDevise($event)" (effacer)="effacer()" (exporter)="exporterPdf()"/>
 
   @if (loading && !plan) {
-    <p-skeleton height="12rem" borderRadius="var(--radius-xl)"/>
-    <p-skeleton height="16rem" borderRadius="var(--radius-xl)"/>
-  }
-
-  @if (plan; as pl) {
-    @if (groupeActif; as total) {
-      <app-total-groupe [total]="total" [compte]="compte" [dateCalcul]="pl.dateCalcul" [dateHorizon]="pl.dateHorizon"
-                        [plusieursDevises]="devises.length > 1"/>
-      <app-cartes-banques [banques]="banquesDevise" [dateCalcul]="pl.dateCalcul"
-                          [selection]="panneau" (choisir)="ouvrir($event)"/>
-    }
-
-    @if (planDuPanneau; as detail) {
-      <app-detail-banque [plan]="detail" [colonnes]="pl.colonnes" (fermer)="fermer()"/>
-    }
-
-    <section class="carte">
-      <h2 class="carte__titre">Banque › Source</h2>
-      <app-position-grid [colonnes]="pl.colonnes" [banques]="pl.banques" [groupes]="pl.groupes"
-                         [selection]="panneau" [deviseSelection]="panneauDevise" (choisir)="ouvrir($event)"/>
-    </section>
-
+    <p-skeleton height="6rem" borderRadius="var(--radius-xl)"/>
+    <p-skeleton height="18rem" borderRadius="var(--radius-xl)"/>
+  } @else if (erreur || !plan) {
+    <p class="vide">Impossible de charger la trésorerie prévisionnelle. Rechargez la page pour réessayer.</p>
+  } @else if (vue === 'recit') {
+    <app-recit-global [banques]="banques" [colonnes]="colonnes" [operations]="operationsPerimetre" [filtres]="filtres"
+                      [ouvertes]="ouvertes" [dateCalcul]="plan.dateCalcul"
+                      (basculer)="basculer($event)" (toutOuvrir)="toutOuvrir($event)" (ouvrirBanque)="ouvrirBanque($event)"/>
+  } @else {
+    <app-tableau-global [banques]="banques" [colonnes]="colonnes" [operations]="operationsPerimetre" [filtres]="filtres"
+                        (ouvrirBanque)="ouvrirBanque($event)"/>
   }
 </div>

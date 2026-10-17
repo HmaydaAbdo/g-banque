@@ -13,6 +13,8 @@ export interface RecaputilatifItem {
    * le leasing, le CMT et les LCN. Toujours renseignée par le backend.
    */
   dateReference: string;
+  /** Banque de la ligne (renseignée par le backend ; utile quand une réponse réunit plusieurs banques). */
+  banqueId?: number;
   /** Peut être vide sur d'anciennes lignes. */
   libelle: string | null;
   /** Numéro de pièce porté par la source ; `null` quand la source n'en a pas. */

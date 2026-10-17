@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.recapitulatif.dtos.request.RecapitulatifSearchDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.AgregatedRecapDto;
 import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifGlobal;
+import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifItem;
 import staport.finance.gBanque.recapitulatif.dtos.response.SourceRecapDto;
 import staport.finance.gBanque.recapitulatif.enums.PeriodeRecap;
 import staport.finance.gBanque.recapitulatif.services.interfaces.IRecapitulatifService;
@@ -77,6 +78,16 @@ public class RecapitulatifController {
                 recapitulatifService.getRecapitulatifForCurrentMonthForGivenBanque(pageable, searchDto, banqueId);
 
         return new ResponseEntity<>(res, HttpStatus.OK);
+    }
+
+
+    @Operation(summary = "Encours à valider de toutes les banques jusqu'à l'horizon",
+            description = "Une ligne par encours, avec sa banque (`banqueId`) et sa date de référence, triées par banque puis " +
+                    "par date. `periode` : FIN_DE_MOIS (défaut) ou FIN_DE_TRIMESTRE. Alimente la page globale de la " +
+                    "Trésorerie prévisionnelle (filtres par opération et jalons), en un seul appel.")
+    @GetMapping("/toutes-banques")
+    public ResponseEntity<List<RecaputilatifItem>> getEncoursToutesBanques(@RequestParam(required = false) PeriodeRecap periode) {
+        return ResponseEntity.ok(recapitulatifService.getEncoursToutesBanques(periode));
     }
 
 

@@ -1,21 +1,31 @@
-// Écran Trésorerie prévisionnelle : cartes standard du design system.
-.treso {
-  position: relative; display: flex; flex-direction: column; gap: var(--space-4);
+// Trésorerie prévisionnelle (toutes les banques) : même squelette que la page d'une banque.
+.page {
+  display: flex; flex-direction: column; gap: var(--space-4);
   height: 100%; overflow-y: auto; padding: var(--space-5) var(--space-6) var(--space-12);
 
-  &__entete { display: flex; flex-direction: column; gap: 2px; }
-  &__surtitre { font-size: var(--text-2xs); font-weight: var(--weight-semibold); text-transform: uppercase; letter-spacing: var(--tracking-wider); color: var(--color-primary); }
+  &__entete { display: flex; flex-direction: column; gap: var(--space-2); }
+  &__titre-ligne { display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--space-2) var(--space-3); }
+  &__surtitre { flex-basis: 100%; font-size: var(--text-2xs); font-weight: var(--weight-semibold); text-transform: uppercase; letter-spacing: var(--tracking-wider); color: var(--color-primary); }
   &__titre { margin: 0; font-size: var(--text-display); font-weight: var(--weight-bold); letter-spacing: var(--tracking-tighter); line-height: var(--leading-tight); }
-
-
+  &__meta { font-size: var(--text-sm); color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
 }
 
-.carte {
-  position: relative; padding: var(--space-5);
+// Bascule Récit | Tableau : deux vues séparées
+.vues {
+  display: inline-flex; margin-left: auto; padding: 2px;
+  border: var(--border-width-hairline) solid var(--color-border-strong); border-radius: var(--radius-md);
   background: var(--color-surface);
-  border: 1px solid var(--color-border); border-radius: var(--radius-xl); box-shadow: var(--shadow-card);
 
-  &__titre { margin: 0 0 var(--space-3); font-size: var(--text-section); font-weight: var(--weight-semibold); letter-spacing: var(--tracking-tight); }
+  &__btn {
+    display: inline-flex; align-items: center; gap: var(--space-1);
+    padding: var(--space-1) var(--space-3); border: 0; border-radius: var(--radius-sm);
+    font: inherit; font-size: var(--text-sm); color: var(--color-text-secondary); background: transparent; cursor: pointer;
+    &:hover { color: var(--color-text-primary); }
+    &--on { background: var(--color-primary-light); color: var(--color-primary-text); font-weight: var(--weight-semibold); }
+    &:focus-visible { outline: 2px solid var(--color-border-focus); }
+  }
 }
 
-@media (max-width: 900px) { .treso { padding: var(--space-4); }  }
+.vide { margin: var(--space-6) 0; text-align: center; color: var(--color-text-secondary); }
+
+@media (max-width: 900px) { .page { padding: var(--space-4); } .vues { margin-left: 0; } }

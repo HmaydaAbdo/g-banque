@@ -26,6 +26,8 @@ import java.time.LocalDate;
  * <p>{@code dateReference} est la date qui range la ligne dans le temps et pilote l'horizon (émission pour la plupart
  * des sources, échéance pour le leasing, le CMT et les LCN — voir la vue SQL). Elle est toujours renseignée, contrairement
  * à {@code dateEcheance}, vide pour les sources sans échéance : le popup des encours de l'accueil s'en sert pour ses périodes.</p>
+ *
+ * <p>{@code banqueId} : la banque de la ligne — utile quand une réponse réunit plusieurs banques (trésorerie globale).</p>
  */
 public record RecaputilatifItem(
         Long id,
@@ -38,6 +40,7 @@ public record RecaputilatifItem(
         BigDecimal credit,
         String observations,
         TransactionSource source,
-        LocalDate dateReference
+        LocalDate dateReference,
+        Long banqueId
 ) {
 }

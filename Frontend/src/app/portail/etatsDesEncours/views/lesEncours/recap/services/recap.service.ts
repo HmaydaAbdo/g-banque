@@ -6,6 +6,7 @@ import {RecapitulatifSearchDto} from "../dtos/RecapitulatifSearchDto";
 import {AgregatedRecapDto} from "../dtos/AgregatedRecapDto";
 import {HORIZON_PAR_DEFAUT, HorizonPrevision, PeriodeRecap} from "../dtos/PeriodeRecap";
 import {RecapSourceDto} from "../dtos/RecapSourceDto";
+import {RecaputilatifItem} from "../dtos/RecaputilatifItem";
 
 @Injectable({
   providedIn: 'root'
@@ -109,6 +110,14 @@ export class RecapService {
     const url = `${environment.apiUrl}recap-general-detaille/all/pdf`;
     const params = new HttpParams().set('periode', periode);
     return this.http.get(url, { params, responseType: 'blob' });
+  }
+
+  /**
+   * Encours à valider de toutes les banques jusqu'à l'horizon, avec leur banque — page globale de la Trésorerie
+   * prévisionnelle, en un seul appel.
+   */
+  getEncoursToutesBanques(periode: PeriodeRecap): Observable<RecaputilatifItem[]> {
+    return this.http.get<RecaputilatifItem[]>(`${this.baseUrl}/toutes-banques`, { params: new HttpParams().set('periode', periode) });
   }
 
   /**

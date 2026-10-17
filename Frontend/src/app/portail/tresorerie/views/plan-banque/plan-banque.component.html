@@ -40,60 +40,11 @@
   </header>
 
   <!-- Une seule barre : filtres, horizon et export -->
-  <section class="barre" role="toolbar" aria-label="Filtres, horizon et export">
-    <p-dropdown [options]="sensOptions" optionLabel="label" optionValue="value" [ngModel]="filtres.sens"
-                (ngModelChange)="appliquer({ sens: $event })" ariaLabel="Sens" styleClass="barre__sens" appendTo="body"/>
-
-    <p-multiSelect [options]="sourcesDisponibles" optionLabel="label" optionValue="value" [ngModel]="filtres.sources"
-                   (ngModelChange)="appliquer({ sources: $event })" placeholder="Toutes les sources"
-                   selectedItemsLabel="{0} sources" [maxSelectedLabels]="1" [showHeader]="false"
-                   ariaLabel="Sources" styleClass="barre__sources" appendTo="body"/>
-
-    <div class="barre__montant" role="group" aria-label="Montant">
-      <p-dropdown [options]="operateurs" optionLabel="label" optionValue="value" [ngModel]="filtres.operateur"
-                  (ngModelChange)="appliquer({ operateur: $event })" ariaLabel="Comparaison du montant"
-                  styleClass="barre__op" appendTo="body"/>
-      <p-inputNumber [ngModel]="filtres.montant" (ngModelChange)="appliquer({ montant: $event })" mode="decimal"
-                     locale="fr-FR" [minFractionDigits]="0" [maxFractionDigits]="2" [min]="0" placeholder="Montant"
-                     ariaLabel="Montant" inputStyleClass="barre__montant-input"/>
-    </div>
-
-    <span class="p-input-icon-left barre__recherche">
-      <i class="pi pi-search" aria-hidden="true"></i>
-      <input pInputText type="search" [ngModel]="texte" (ngModelChange)="saisirTexte($event)"
-             placeholder="Libellé, n°, tiers" aria-label="Rechercher une opération"/>
-    </span>
-
-    <span class="barre__sep" aria-hidden="true"></span>
-
-    <p-dropdown [options]="horizonOptions" optionLabel="label" optionValue="value" [ngModel]="horizon"
-                (ngModelChange)="choisirHorizon($event)" ariaLabel="Horizon" styleClass="barre__horizon" appendTo="body"/>
-
-    <p-button label="Exporter PDF" icon="pi pi-file-pdf" size="small" [loading]="exporting" [disabled]="!plan"
-              pTooltip="Plan complet de la banque à l'horizon choisi (sans les filtres)" tooltipPosition="bottom"
-              (onClick)="exporterPdf()"/>
-  </section>
-
-  @if (actif) {
-    <div class="filtres" role="group" aria-label="Filtres actifs">
-      @for (p of pastilles; track p.cle) {
-        <span class="pastille">{{ p.libelle }}
-          <button type="button" class="pastille__retirer" (click)="p.retirer()" [attr.aria-label]="'Retirer le filtre ' + p.libelle">
-            <i class="pi pi-times" aria-hidden="true"></i>
-          </button>
-        </span>
-      }
-      @if (resumeFiltre; as r) {
-        <span class="filtres__resume">
-          <strong>{{ r.nombre }}</strong> opération{{ r.nombre > 1 ? 's' : '' }}
-          @if (r.entrees > 0) { · <strong class="pos">+{{ montantTexte(r.entrees) }}</strong> }
-          @if (r.sorties > 0) { · <strong class="neg">−{{ montantTexte(r.sorties) }}</strong> }
-          · les soldes restent ceux de toutes les opérations
-        </span>
-      }
-      <button type="button" class="filtres__effacer" (click)="effacer()">Effacer les filtres</button>
-    </div>
-  }
+  <app-barre-filtres [filtres]="filtres" [sources]="sourcesDisponibles" [horizon]="horizon" [resume]="resumeFiltre"
+                     [exportEnCours]="exporting" [exportPossible]="!!plan"
+                     exportInfo="Plan complet de la banque à l'horizon choisi (sans les filtres)"
+                     (filtresChange)="appliquer($event)" (horizonChange)="choisirHorizon($event)"
+                     (effacer)="effacer()" (exporter)="exporterPdf()"/>
 
   @if (tronque) {
     <p class="avert"><i class="pi pi-exclamation-triangle" aria-hidden="true"></i>

@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { registerLocaleData } from '@angular/common';
+import localeFr from '@angular/common/locales/fr';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { of } from 'rxjs';
@@ -6,167 +8,158 @@ import { testProviders } from '../../../../../testing/test-providers';
 import { TresoreriePrevisionnelleComponent } from './tresorerie-previsionnelle.component';
 import { planBanqueFixture, planTresorerieFixture } from '../../testing/plan-tresorerie.fixture';
 
-describe('TresoreriePrevisionnelleComponent', () => {
+registerLocaleData(localeFr, 'fr-FR');
+
+describe('TresoreriePrevisionnelleComponent (toutes les banques)', () => {
   let http: HttpTestingController;
 
+  const operations = [
+    { id: 7, banqueId: 1, dateEmission: '2026-11-01', dateEcheance: '2026-11-20', dateReference: '2026-11-20', libelle: 'Loyer engins', numero: null,
+      sens: 'DECAISSEMENT', debit: 6000, credit: null, observations: '', source: 'LEASING' },
+    { id: 8, banqueId: 2, dateEmission: '2026-10-14', dateEcheance: null, dateReference: '2026-10-14', libelle: 'Client Atlas', numero: 'CHQ 12',
+      sens: 'ENCAISSEMENT', debit: null, credit: 1000, observations: '', source: 'CHEQUE' },
+  ];
+
   function creer(queryParams: Record<string, string> = {}) {
-    TestBed.configureTestingModule({
-      imports: [TresoreriePrevisionnelleComponent],
-      providers: [
-        ...testProviders,
-        {
-          provide: ActivatedRoute,
-          useValue: { snapshot: { queryParamMap: convertToParamMap(queryParams) }, queryParamMap: of(convertToParamMap(queryParams)) },
-        },
-      ],
-    });
-    http = TestBed.inject(HttpTestingController);
-    const fixture = TestBed.createComponent(TresoreriePrevisionnelleComponent);
-    fixture.detectChanges();
-    return fixture;
-  }
-
-  const planReq = () => http.expectOne(r => r.url.endsWith('tresorerie-previsionnelle'));
-
-  afterEach(() => http.verify());
-
-  it("charge le plan à l'horizon de l'adresse et affiche console, total groupe en tête, cartes par banque et grille, détail fermé", () => {
-    const fixture = creer({ horizon: 'FIN_DE_TRIMESTRE' });
-    const req = planReq();
-    expect(req.request.params.get('periode')).toBe('FIN_DE_TRIMESTRE');
-    req.flush(planTresorerieFixture());
-    fixture.detectChanges();
-
-    const el: HTMLElement = fixture.nativeElement;
-    expect(el.querySelectorAll('app-console-filtres').length).toBe(1);
-    expect(el.querySelector('app-total-groupe .etat__titre')!.textContent).toContain('Total groupe');
-    // Le total est avant les cartes, la banque en besoin est la première carte
-    expect(el.querySelector('app-total-groupe')!.compareDocumentPosition(el.querySelector('app-cartes-banques')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(Array.from(el.querySelectorAll('.carte-banque__nom')).map(n => n.textContent!.trim())).toEqual(['Banque A', 'Banque B']);
-    expect(el.querySelectorAll('app-position-grid').length).toBe(1);
-    expect(el.querySelectorAll('.grille tbody .grille__ligne--n1').length).toBe(2);
-    expect(el.querySelector('app-detail-banque')).toBeNull();
-  });
-
-  it("tous les filtres et l'export sont dans la console, et nulle part ailleurs", () => {
-    const fixture = creer();
-    planReq().flush(planTresorerieFixture());
-    fixture.detectChanges();
-
-    const el: HTMLElement = fixture.nativeElement;
-    const console = el.querySelector('app-console-filtres')!;
-    expect(console.textContent).toContain('Exporter PDF');
-    expect(console.textContent).toContain('Fin de trimestre');
-    // Aucun autre bouton d'export ni sélecteur d'horizon hors de la console
-    expect(Array.from(el.querySelectorAll('p-button')).filter(b => b.textContent!.includes('Exporter')).length).toBe(1);
-    expect(Array.from(el.querySelectorAll('p-selectbutton')).filter(s => !console.contains(s)).length).toBe(0);
-  });
-
-  it("l'ancienne adresse d'une banque (?banque=1&col=P1) redirige vers sa page dédiée, sans charger le plan global", () => {
-    const params = convertToParamMap({ banque: '1', col: 'P1', horizon: 'FIN_DE_TRIMESTRE' });
+    const params = convertToParamMap(queryParams);
     TestBed.configureTestingModule({
       imports: [TresoreriePrevisionnelleComponent],
       providers: [...testProviders, { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: params }, queryParamMap: of(params) } }],
     });
     http = TestBed.inject(HttpTestingController);
     const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
-    TestBed.createComponent(TresoreriePrevisionnelleComponent).detectChanges();
+    const fixture = TestBed.createComponent(TresoreriePrevisionnelleComponent);
+    fixture.detectChanges();
+    return { fixture, navigate };
+  }
 
+  const planReq = () => http.expectOne(r => r.url.endsWith('tresorerie-previsionnelle'));
+  const encoursReq = () => http.expectOne(r => r.url.endsWith('/recapitulatif/toutes-banques'));
+
+  function repondre(fixture: ReturnType<typeof creer>['fixture'], plan = planTresorerieFixture()) {
+    planReq().flush(plan);
+    encoursReq().flush(operations);
+    fixture.detectChanges();
+  }
+
+  afterEach(() => http.verify());
+
+  it("charge le plan et les encours de toutes les banques à l'horizon de l'adresse", () => {
+    const { fixture } = creer({ horizon: 'FIN_DE_TRIMESTRE' });
+    const plan = planReq();
+    const encours = encoursReq();
+    expect(plan.request.params.get('periode')).toBe('FIN_DE_TRIMESTRE');
+    expect(encours.request.params.get('periode')).toBe('FIN_DE_TRIMESTRE');
+    plan.flush(planTresorerieFixture());
+    encours.flush(operations);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.banques.length).toBe(2);
+  });
+
+  it('affiche la barre unique, la phrase du groupe, le bandeau « À surveiller » et la frise', () => {
+    const { fixture } = creer();
+    repondre(fixture);
+    const el: HTMLElement = fixture.nativeElement;
+
+    expect(el.querySelectorAll('app-barre-filtres').length).toBe(1);
+    expect(el.querySelector('app-recit-global')).not.toBeNull();
+    expect(el.querySelector('app-tableau-global')).toBeNull();
+    expect(el.querySelector('.resume')!.textContent).toContain('Une facilité de caisse ne couvre que sa propre banque');
+    expect(Array.from(el.querySelectorAll('.wb strong')).map(n => n.textContent!.trim())).toEqual(['Banque A', 'Banque B']);
+    expect(el.querySelectorAll('.etape').length).toBe(2);
+    // Un seul bouton d'export, dans la barre
+    expect(Array.from(el.querySelectorAll('p-button')).filter(b => b.textContent!.includes('Exporter')).length).toBe(1);
+  });
+
+  it('un clic sur une banque du bandeau ouvre sa page ; un jalon ouvre la banque sur sa période', () => {
+    const { fixture, navigate } = creer();
+    repondre(fixture);
+    const el: HTMLElement = fixture.nativeElement;
+
+    el.querySelector<HTMLButtonElement>('.wb')!.click();
+    expect(navigate).toHaveBeenCalledWith(['banque', 1], jasmine.objectContaining({ queryParams: { horizon: null, col: null } }));
+
+    el.querySelector<HTMLButtonElement>('.jalon__btn')?.click();
+    expect(navigate.calls.mostRecent().args[0]).toEqual(['banque', jasmine.any(Number)]);
+  });
+
+  it('bascule vers le tableau, filtre, et écrit tout dans l\'adresse', () => {
+    const { fixture, navigate } = creer();
+    repondre(fixture);
+    const c = fixture.componentInstance;
+
+    c.choisirVue('tableau');
+    c.appliquer({ banques: [2], sens: 'ENCAISSEMENT', operateur: '>', montant: 500 });
+    fixture.detectChanges();
+
+    expect(navigate.calls.mostRecent().args[1]!.queryParams).toEqual(jasmine.objectContaining({
+      vue: 'tableau', banques: '2', sens: 'ENCAISSEMENT', op: '>', montant: 500,
+    }));
+    expect(c.banques.map(b => b.banqueNom)).toEqual(['Banque B']);
+    expect(fixture.nativeElement.querySelector('app-tableau-global')).not.toBeNull();
+    expect(c.resumeFiltre).toEqual({ nombre: 1, entrees: 1000, sorties: 0 });
+  });
+
+  it("relit l'état de l'adresse : vue, banques, sources, étapes ouvertes", () => {
+    const { fixture } = creer({ vue: 'tableau', banques: '1,2', sources: 'LEASING', ouvert: 'ECHU', q: 'loyer' });
+    repondre(fixture);
+    const c = fixture.componentInstance;
+
+    expect(c.vue).toBe('tableau');
+    expect(c.filtres.banques).toEqual([1, 2]);
+    expect(c.filtres.sources).toEqual(['LEASING' as never]);
+    expect(c.filtres.texte).toBe('loyer');
+    expect([...c.ouvertes]).toEqual(['ECHU']);
+  });
+
+  it("l'ancienne adresse d'une banque (?banque=1&col=P1) redirige vers sa page, sans charger le plan", () => {
+    const { navigate } = creer({ banque: '1', col: 'P1', horizon: 'FIN_DE_TRIMESTRE' });
     expect(navigate).toHaveBeenCalledWith(['banque', 1], jasmine.objectContaining({
       queryParams: { horizon: 'FIN_DE_TRIMESTRE', col: 'P1' }, replaceUrl: true,
     }));
     http.expectNone(r => r.url.endsWith('tresorerie-previsionnelle'));
   });
 
-  it('un clic sur une banque (carte ou grille) ouvre sa page avec la période choisie', () => {
-    const fixture = creer();
-    planReq().flush(planTresorerieFixture());
-    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+  it("changer d'horizon recharge le plan côté serveur et l'écrit dans l'adresse", () => {
+    const { fixture, navigate } = creer();
+    repondre(fixture);
 
-    fixture.componentInstance.ouvrir({ banqueId: 2, colonne: 'P1', devise: 'MAD' });
-
-    expect(navigate).toHaveBeenCalledWith(['banque', 2], jasmine.objectContaining({ queryParams: { horizon: null, col: 'P1' } }));
-    expect(fixture.componentInstance.planDuPanneau).toBeNull();
-  });
-
-  it("le total d'une devise se déplie sous les cartes ; un second clic le referme", () => {
-    const fixture = creer();
-    planReq().flush(planTresorerieFixture());
-    const c = fixture.componentInstance;
-
-    c.ouvrir({ banqueId: null, colonne: '', devise: 'MAD' });
-    fixture.detectChanges();
-    expect(c.planDuPanneau!.banqueNom).toBe('Toutes les banques');
-    expect(fixture.nativeElement.querySelector('app-detail-banque')).not.toBeNull();
-    http.expectNone(r => r.url.includes('/recapitulatif/banque/'));
-
-    c.ouvrir({ banqueId: null, colonne: '', devise: 'MAD' });
-    expect(c.planDuPanneau).toBeNull();
-  });
-
-  it("changer d'horizon dans la console recharge le plan côté serveur et l'écrit dans l'adresse", () => {
-    const fixture = creer();
-    planReq().flush(planTresorerieFixture());
-    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
-
-    fixture.componentInstance.horizonControl.setValue('FIN_DE_TRIMESTRE');
-    const req = planReq();
-    expect(req.request.params.get('periode')).toBe('FIN_DE_TRIMESTRE');
-    req.flush(planTresorerieFixture());
+    fixture.componentInstance.choisirHorizon('FIN_DE_TRIMESTRE');
+    expect(planReq().request.params.get('periode')).toBe('FIN_DE_TRIMESTRE');
+    encoursReq().flush([]);
     expect(navigate.calls.mostRecent().args[1]!.queryParams!['horizon']).toBe('FIN_DE_TRIMESTRE');
   });
 
   it("l'export porte sur le total de la devise (une banque s'exporte depuis sa page)", () => {
-    const fixture = creer();
-    planReq().flush(planTresorerieFixture());
-    const c = fixture.componentInstance;
-
-    expect(c.perimetreExport).toEqual({ devise: 'MAD', libelle: 'Total groupe' });
-    c.exporterPdf();
-    const total = http.expectOne(r => r.url.endsWith('/pdf'));
-    expect(total.request.params.has('banqueId')).toBeFalse();
-    expect(total.request.params.get('devise')).toBe('MAD');
+    const { fixture } = creer();
+    repondre(fixture);
+    fixture.componentInstance.exporterPdf();
+    const req = http.expectOne(r => r.url.endsWith('/pdf'));
+    expect(req.request.params.has('banqueId')).toBeFalse();
+    expect(req.request.params.get('devise')).toBe('MAD');
   });
 
-  it("rappelle en pastille l'horizon qui s'écarte de la vue par défaut, et le retire", () => {
-    const fixture = creer({ horizon: 'FIN_DE_TRIMESTRE' });
-    planReq().flush(planTresorerieFixture());
-    fixture.detectChanges();
-    spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
-
-    const c = fixture.componentInstance;
-    expect(c.filtres.map(f => f.cle)).toEqual(['horizon']);
-    expect((fixture.nativeElement as HTMLElement).querySelector('.console__filtres')!.textContent).toContain('Fin de trimestre');
-    c.filtres[0].retirer();
-    planReq().flush(planTresorerieFixture());
-    expect(c.filtres).toEqual([]);
-  });
-
-  it('« Effacer les filtres » remet tout par défaut et recharge le plan', () => {
-    const fixture = creer({ horizon: 'FIN_DE_TRIMESTRE' });
-    planReq().flush(planTresorerieFixture());
-    fixture.detectChanges();
-    spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
-
-    fixture.componentInstance.reinitialiser();
-    expect(planReq().request.params.get('periode')).toBe('FIN_DE_MOIS');
-    expect(fixture.componentInstance.filtres).toEqual([]);
-  });
-
-  it('plusieurs devises : le sélecteur de devise est dans la console et choisit le total affiché', () => {
-    const fixture = creer();
+  it('plusieurs devises : un sélecteur dans la barre ; changer de devise réinitialise banques et sources', () => {
+    const { fixture } = creer();
     const plan = planTresorerieFixture();
     plan.groupes = [planBanqueFixture(null, 'Banques en MAD', 0), { ...planBanqueFixture(null, 'Banques en EUR', 0), devise: 'EUR' }];
-    planReq().flush(plan);
-    fixture.detectChanges();
-    spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    plan.banques = [...plan.banques, { ...planBanqueFixture(3, 'Banque E', 0), devise: 'EUR' }];
+    repondre(fixture, plan);
     const c = fixture.componentInstance;
 
     expect(c.devises).toEqual(['MAD', 'EUR']);
-    expect((fixture.nativeElement as HTMLElement).querySelector('app-console-filtres')!.textContent).toContain('Devise');
-    expect(c.groupeActif!.devise).toBe('MAD');
-    c.deviseControl.setValue('EUR');
-    expect(c.groupeActif!.devise).toBe('EUR');
-    expect(c.perimetreExport).toEqual({ devise: 'EUR', libelle: 'Total EUR' });
+    c.appliquer({ banques: [1] });
+    c.choisirDevise('EUR');
+    expect(c.deviseActive).toBe('EUR');
+    expect(c.filtres.banques).toEqual([]);
+    expect(c.banques.map(b => b.banqueNom)).toEqual(['Banque E']);
+  });
+
+  it('erreur de chargement : message au lieu de la page', () => {
+    const { fixture } = creer();
+    planReq().flush('erreur', { status: 500, statusText: 'KO' });
+    http.match(() => true);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Impossible de charger');
   });
 });

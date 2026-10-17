@@ -2,19 +2,11 @@ import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { forkJoin, Subject, Subscription } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { forkJoin, Subscription } from 'rxjs';
 import { MenuItem } from 'primeng/api';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
-import { ButtonModule } from 'primeng/button';
-import { DropdownModule } from 'primeng/dropdown';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { InputTextModule } from 'primeng/inputtext';
-import { MultiSelectModule } from 'primeng/multiselect';
 import { SkeletonModule } from 'primeng/skeleton';
-import { TooltipModule } from 'primeng/tooltip';
 import {
-  HORIZON_OPTIONS,
   HorizonPrevision,
   horizonDepuisParam,
 } from '../../../etatsDesEncours/views/lesEncours/recap/dtos/PeriodeRecap';
@@ -23,12 +15,13 @@ import { RecapService } from '../../../etatsDesEncours/views/lesEncours/recap/se
 import { TransactionSource, TransactionSourceLabels } from '../../../transactions/dtos/TransactionSource';
 import { ColonnePlan, PlanBanque } from '../../dtos/PlanTresorerie';
 import {
-  colonneDuPointBas, FILTRES_VIDES, filtreActif, FiltresPlan, garder, montantDe, Operateur, OPERATEURS, SensFiltre,
+  colonneDuPointBas, FILTRES_VIDES, FiltresPlan, garder, montantDe, Operateur, OPERATEURS,
 } from '../../plan-banque';
 import { EncoursNavigationService } from '../../services/encours-navigation.service';
 import { TresorerieService } from '../../services/tresorerie.service';
 import { RecitBanqueComponent } from '../recit-banque/recit-banque.component';
 import { TableauBanqueComponent } from '../tableau-banque/tableau-banque.component';
+import { BarreFiltresComponent, OptionFiltre, ResumeFiltre } from '../barre-filtres/barre-filtres.component';
 
 /** Nombre maximal d'opérations demandées d'un coup (un seul appel, sans pagination). */
 const TAILLE_MAX = 2000;
@@ -48,9 +41,8 @@ export type VuePlan = 'recit' | 'tableau';
   selector: 'app-plan-banque',
   standalone: true,
   imports: [
-    NgClass, DatePipe, DecimalPipe, FormsModule, RouterLink, BreadcrumbModule, ButtonModule, DropdownModule,
-    InputNumberModule, InputTextModule, MultiSelectModule, SkeletonModule, TooltipModule,
-    RecitBanqueComponent, TableauBanqueComponent,
+    NgClass, DatePipe, DecimalPipe, FormsModule, RouterLink, BreadcrumbModule, SkeletonModule,
+    RecitBanqueComponent, TableauBanqueComponent, BarreFiltresComponent,
   ],
   templateUrl: './plan-banque.component.html',
   styleUrl: './plan-banque.component.scss'
@@ -62,24 +54,13 @@ export class PlanBanqueComponent implements OnInit, OnDestroy {
   private readonly tresorerieService = inject(TresorerieService);
   private readonly recapService = inject(RecapService);
   private readonly navigation = inject(EncoursNavigationService);
-  private readonly texte$ = new Subject<string>();
   private readonly subscriptions: Subscription[] = [];
   private chargement?: Subscription;
-
-  readonly horizonOptions = HORIZON_OPTIONS;
-  readonly operateurs = OPERATEURS;
-  readonly sensOptions: { label: string; value: SensFiltre }[] = [
-    { label: 'Tous les sens', value: 'TOUS' },
-    { label: 'Entrées', value: 'ENCAISSEMENT' },
-    { label: 'Sorties', value: 'DECAISSEMENT' },
-  ];
 
   banqueId = 0;
   horizon: HorizonPrevision = 'FIN_DE_MOIS';
   vue: VuePlan = 'recit';
   filtres: FiltresPlan = { ...FILTRES_VIDES };
-  /** Saisie de recherche, appliquée après une courte pause de frappe. */
-  texte = '';
   /** Codes des étapes ouvertes dans le récit. */
   ouvertes = new Set<string>();
   /** Période demandée par l'écran global (`?col=P2`), ouverte au premier chargement. */
@@ -97,7 +78,6 @@ export class PlanBanqueComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.subscriptions.push(
-      this.texte$.pipe(debounceTime(250)).subscribe(t => this.appliquer({ texte: t })),
       this.route.paramMap.subscribe(p => {
         this.banqueId = Number(p.get('banqueId'));
         this.lireAdresse();
@@ -114,7 +94,7 @@ export class PlanBanqueComponent implements OnInit, OnDestroy {
   // ── Barre de filtres ────────────────────────────────────────────────────
 
   /** Sources présentes dans les opérations de la banque, avec leur nombre, pour la liste déroulante. */
-  get sourcesDisponibles(): { label: string; value: TransactionSource }[] {
+  get sourcesDisponibles(): OptionFiltre<TransactionSource>[] {
     const nombres = new Map<TransactionSource, number>();
     this.operations.forEach(o => nombres.set(o.source, (nombres.get(o.source) ?? 0) + 1));
     return [...nombres.entries()]
@@ -122,33 +102,8 @@ export class PlanBanqueComponent implements OnInit, OnDestroy {
       .sort((a, b) => a.label.localeCompare(b.label));
   }
 
-  get actif(): boolean {
-    return filtreActif(this.filtres);
-  }
-
-  /** Pastilles des filtres actifs, chacune retirable. */
-  get pastilles(): { cle: string; libelle: string; retirer: () => void }[] {
-    const p: { cle: string; libelle: string; retirer: () => void }[] = [];
-    const f = this.filtres;
-    if (f.sens !== 'TOUS') {
-      p.push({ cle: 'sens', libelle: f.sens === 'ENCAISSEMENT' ? 'Entrées' : 'Sorties', retirer: () => this.appliquer({ sens: 'TOUS' }) });
-    }
-    f.sources.forEach(s => p.push({
-      cle: `src-${s}`, libelle: TransactionSourceLabels[s] ?? s,
-      retirer: () => this.appliquer({ sources: f.sources.filter(x => x !== s) }),
-    }));
-    if (f.montant !== null) {
-      const op = OPERATEURS.find(o => o.value === f.operateur)?.label ?? f.operateur;
-      p.push({ cle: 'montant', libelle: `Montant ${op} ${this.montantTexte(f.montant)}`, retirer: () => this.appliquer({ montant: null }) });
-    }
-    if (f.texte.trim()) {
-      p.push({ cle: 'texte', libelle: `« ${f.texte.trim()} »`, retirer: () => { this.texte = ''; this.appliquer({ texte: '' }); } });
-    }
-    return p;
-  }
-
   /** Résumé des opérations retenues par les filtres. */
-  get resumeFiltre(): { nombre: number; entrees: number; sorties: number } {
+  get resumeFiltre(): ResumeFiltre {
     const retenues = this.operations.filter(o => garder(o, this.filtres));
     const somme = (sens: string) => retenues.filter(o => o.sens === sens).reduce((s, o) => s + montantDe(o), 0);
     return { nombre: retenues.length, entrees: somme('ENCAISSEMENT'), sorties: somme('DECAISSEMENT') };
@@ -159,13 +114,7 @@ export class PlanBanqueComponent implements OnInit, OnDestroy {
     this.ecrireAdresse();
   }
 
-  saisirTexte(valeur: string): void {
-    this.texte = valeur;
-    this.texte$.next(valeur);
-  }
-
   effacer(): void {
-    this.texte = '';
     this.filtres = { ...FILTRES_VIDES };
     this.ecrireAdresse();
   }
@@ -236,10 +185,6 @@ export class PlanBanqueComponent implements OnInit, OnDestroy {
     });
   }
 
-  montantTexte(v: number): string {
-    return Math.abs(v).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-
   // ── Chargement et adresse ───────────────────────────────────────────────
 
   private charger(): void {
@@ -283,13 +228,12 @@ export class PlanBanqueComponent implements OnInit, OnDestroy {
     const sens = q.get('sens');
     const op = q.get('op') as Operateur | null;
     const montant = Number(q.get('montant'));
-    this.texte = q.get('q') ?? '';
     this.filtres = {
       sens: sens === 'ENCAISSEMENT' || sens === 'DECAISSEMENT' ? sens : 'TOUS',
       sources: (q.get('sources') ?? '').split(',').filter(Boolean) as TransactionSource[],
       operateur: OPERATEURS.some(o => o.value === op) ? op! : '>=',
       montant: q.get('montant') !== null && Number.isFinite(montant) && montant >= 0 ? montant : null,
-      texte: this.texte,
+      texte: q.get('q') ?? '',
     };
     this.ouvertes = new Set((q.get('ouvert') ?? '').split(',').filter(Boolean));
     this.colonneDemandee = q.get('col') ?? '';

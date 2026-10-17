@@ -1,0 +1,113 @@
+<div class="recit">
+
+  @if (resume; as r) {
+    <p class="resume">
+      Le groupe part de <strong [class.pos]="r.soldeDepart >= 0" [class.neg]="r.soldeDepart < 0">{{ compact(r.soldeDepart) }}</strong>
+      sur {{ banques.length }} banque{{ banques.length > 1 ? 's' : '' }}. D'ici au {{ jourMois(dateHorizon) }} :
+      @if (r.nombreSorties > 0) { <strong class="neg">{{ compact(r.totalSorties) }}</strong> de sorties } @else { aucune sortie }
+      et
+      @if (r.nombreEntrees > 0) { <strong class="pos">{{ compact(r.totalEntrees) }}</strong> d'entrées } @else { aucune entrée }
+      ; le groupe termine à <strong [class.pos]="r.soldeFinal >= 0" [class.neg]="r.soldeFinal < 0">{{ compact(r.soldeFinal) }}</strong>.
+      Une facilité de caisse ne couvre que sa propre banque :
+      @if (r.depassements.length > 0) { <strong class="neg">{{ noms(r.depassements) }}</strong> {{ r.depassements.length > 1 ? 'dépassent leur plafond' : 'dépasse son plafond' }} dès le <strong>{{ jourMois(premiereDate(r.depassements)) }}</strong>. }
+      @if (r.couvertes.length > 0) { <strong class="warn">{{ noms(r.couvertes) }}</strong> {{ r.couvertes.length > 1 ? 'utilisent leur facilité' : 'utilise sa facilité' }} à partir du <strong>{{ jourMois(premiereDate(r.couvertes)) }}</strong>. }
+      @if (r.depassements.length === 0 && r.couvertes.length === 0) { aucune banque n'utilise la sienne. }
+    </p>
+  }
+
+  <h2 class="titre-section">À surveiller <small>de la plus urgente à la plus sereine — un clic ouvre le plan de la banque</small></h2>
+  <div class="watch">
+    @for (b of surveillance; track b.banqueId) {
+      <button type="button" class="wb" (click)="ouvrirBanque.emit({ banqueId: b.banqueId!, colonne: '' })"
+              [attr.aria-label]="'Ouvrir le plan de ' + b.banqueNom">
+        <span class="wb__ligne">
+          <strong>{{ b.banqueNom }}</strong>
+          <span [class.pos]="b.soldeFinal >= 0" [class.neg]="b.soldeFinal < 0">{{ compact(b.soldeFinal) }}</span>
+        </span>
+        @if (b.plafondFC > 0) {
+          <app-fc-barre [situation]="statut(b)" [entete]="false"/>
+        } @else {
+          <span class="wb__sans">Sans facilité de caisse</span>
+        }
+        <span class="wb__pied">
+          <span class="statut" [ngClass]="'statut--' + statut(b).statut">
+            {{ statut(b).statut === 'DISPONIBILITE' ? 'Disponibilité' : statut(b).statut === 'BESOIN_COUVERT' ? 'Besoin · couvert par FC' : 'Besoin · dépassement' }}
+          </span>
+          @if (anciennete(b)) { <span class="wb__anc">{{ anciennete(b) }}</span> }
+        </span>
+      </button>
+    }
+  </div>
+
+  <div class="outils">
+    <button type="button" class="outils__lien" (click)="toutOuvrir.emit(!toutesOuvertes)">
+      {{ toutesOuvertes ? 'Tout fermer' : 'Tout ouvrir' }}
+    </button>
+  </div>
+
+  <ol class="frise">
+    @for (el of frise; track el.type === 'jalon' ? 'j-' + el.jalon.banqueId + el.jalon.code : 'e-' + el.etape.colonne.code) {
+      @if (el.type === 'jalon') {
+        <li class="jalon" [ngClass]="'jalon--' + el.jalon.niveau">
+          <span class="jalon__losange" aria-hidden="true"></span>
+          <button type="button" class="jalon__btn" (click)="ouvrirBanque.emit({ banqueId: el.jalon.banqueId, colonne: colonnes[el.jalon.colonne].code })"
+                  [attr.aria-label]="el.jalon.banqueNom + ' : ' + el.jalon.texte + ', le ' + jourMois(el.jalon.date) + ' — ouvrir la banque'">
+            <span class="jalon__date">{{ jourMois(el.jalon.date) }}</span>
+            <strong class="jalon__banque">{{ el.jalon.banqueNom }}</strong>
+            <span class="jalon__texte">{{ el.jalon.texte }}</span>
+            <i class="pi pi-arrow-right jalon__go" aria-hidden="true"></i>
+          </button>
+        </li>
+      } @else {
+        <li class="etape" [class.etape--ouverte]="estOuverte(el.etape)" [class.etape--attenuee]="filtre && el.etape.nombreFiltrees === 0"
+            [class.etape--depasse]="el.etape.compte.depasse > 0" [class.etape--couvert]="el.etape.compte.depasse === 0 && el.etape.compte.couvert > 0">
+          <span class="etape__noeud" aria-hidden="true"></span>
+          <button type="button" class="etape__entete" (click)="basculer.emit(el.etape.colonne.code)"
+                  [attr.aria-expanded]="estOuverte(el.etape)">
+            <span class="etape__ligne">
+              <span class="etape__titre">{{ libelleEtape(el.etape) }}</span>
+              <span class="etape__sous">{{ sousTitreEtape(el.etape) }}</span>
+              <span class="etape__flux" [class.neg]="el.etape.flux < 0" [class.pos]="el.etape.flux > 0">{{ el.etape.flux === 0 ? 'aucun flux' : 'flux ' + signe(el.etape.flux) }}</span>
+              <i class="pi pi-chevron-down etape__chevron" aria-hidden="true"></i>
+            </span>
+            <span class="etape__groupe">
+              groupe {{ compact(el.etape.ouverture) }} → <strong [class.pos]="el.etape.cloture >= 0" [class.neg]="el.etape.cloture < 0">{{ compact(el.etape.cloture) }}</strong>
+            </span>
+            <span class="comptes">
+              @if (el.etape.compte.depasse > 0) { <span class="statut statut--BESOIN_DEPASSEMENT">{{ el.etape.compte.depasse }} en dépassement</span> }
+              @if (el.etape.compte.couvert > 0) { <span class="statut statut--BESOIN_COUVERT">{{ el.etape.compte.couvert }} couverte{{ el.etape.compte.couvert > 1 ? 's' : '' }} par la FC</span> }
+              <span class="statut statut--DISPONIBILITE">{{ el.etape.compte.positif }} sereine{{ el.etape.compte.positif > 1 ? 's' : '' }}</span>
+              @if (filtre) { <span class="etape__filtre">{{ el.etape.nombreFiltrees }} opération{{ el.etape.nombreFiltrees > 1 ? 's' : '' }} retenue{{ el.etape.nombreFiltrees > 1 ? 's' : '' }}</span> }
+            </span>
+          </button>
+
+          @if (estOuverte(el.etape)) {
+            <ul class="banques">
+              @for (l of el.etape.banques; track l.banque.banqueId) {
+                <li>
+                  <button type="button" class="banque" (click)="ouvrirBanque.emit({ banqueId: l.banque.banqueId!, colonne: el.etape.colonne.code })"
+                          [attr.aria-label]="'Ouvrir ' + l.banque.banqueNom + ' sur ' + libelleEtape(el.etape)">
+                    <strong class="banque__nom">{{ l.banque.banqueNom }}</strong>
+                    <span class="banque__fc">
+                      @if (l.banque.plafondFC > 0) { <app-fc-barre [situation]="fc(l.cloture, l.banque.plafondFC)" [entete]="false"/> }
+                      @else { <span class="wb__sans">Sans FC</span> }
+                    </span>
+                    <span class="banque__solde">
+                      <span class="banque__ouv">{{ compact(l.ouverture) }} →</span>
+                      <strong [class.pos]="l.cloture >= 0" [class.neg]="l.cloture < 0">{{ compact(l.cloture) }}</strong>
+                      <small [class.pos]="l.flux > 0" [class.neg]="l.flux < 0">{{ signe(l.flux) }}</small>
+                    </span>
+                    <span class="statut" [ngClass]="'statut--' + fc(l.cloture, l.banque.plafondFC).statut">
+                      {{ fc(l.cloture, l.banque.plafondFC).statut === 'DISPONIBILITE' ? 'Disponibilité' : fc(l.cloture, l.banque.plafondFC).statut === 'BESOIN_COUVERT' ? 'Besoin · couvert FC' : 'Besoin · dépassement' }}
+                    </span>
+                    <i class="pi pi-arrow-right banque__go" aria-hidden="true"></i>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </li>
+      }
+    }
+  </ol>
+</div>
