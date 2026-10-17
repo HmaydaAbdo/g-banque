@@ -13,6 +13,11 @@ restaurée depuis la sauvegarde du 10/10 et passée dans le volume nommé `gbanq
 préfinancements et transactions, périodes d'agios vides). Pour tout nouveau déploiement : vérifier d'abord la sauvegarde du jour
 (`./backups/postgres`), puis dans les logs « Successfully applied … » / version courante.
 
+**À déployer (17/10/2026) :** V15 — le factoring 72 (déblocage 6 007 550,15, GUERCIF-NADOR) devient le décompte
+« DECOMPTE GUERCIF-NADOR » (TVA 20 %) ; la transaction 5303 (rapprochement 62, 09/2026) le suit, le factoring est supprimé.
+Après déploiement : lancer « Recalculer tout » (agios factoring de septembre, banque 3) et lancer les contrôles de l'en-tête
+de `V15__reaffectation_transaction_5303_decompte_factoring_72.sql`.
+
 **Reste à faire :**
 1. Supprimer sur le serveur l'ancien dossier `docker-data\postgres` et `gbanque-init.sql.gz` (contrôle du volume validé).
 2. Le nginx frontal doit servir le frontend et `/gbanque/api` sur la **même origine** et transmettre `Set-Cookie` /
