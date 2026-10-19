@@ -35,7 +35,7 @@ class Transaction5303MigrationTest extends AbstractMigrationTest {
                     + "6007550.15, 0.00, 0.00, '2026-09-07', '2026-09-07', '2026-09-08')");
         }
 
-        migrer(url, null);
+        migrer(url, "15");
 
         try (var c = connexion(url); Statement st = c.createStatement()) {
             assertThat(texte(st, "SELECT transaction_source FROM transaction WHERE id = 5303")).isEqualTo("DECOMPTES");
