@@ -25,6 +25,10 @@ interface RecapContractDisplayData extends ContratLeasingRequestDTO {
   nomOrganismeLeasing?: string;
   totalMensualitesCalculated?: Decimal; // Sum of (duree * mensualite) only
   expectedTotalAmountService?: Decimal | null; // L'Indemnité from service
+  coutFinancement?: Decimal | null; // endettement - prix d'achat
+  dateAvance?: Date | null;
+  datePremiereMensualite?: Date | null;
+  dateValeurResiduelle?: Date | null;
   dateDebut: Date | null;
 }
 
@@ -123,8 +127,15 @@ export class RecapStepComponent implements OnInit, OnDestroy {
 
         return forkJoin([bankName$, organismeName$]).pipe(
           map(([nomBanque, nomOrganisme]) => {
+            const achat = contract.montantAchatTTC ? new Decimal(contract.montantAchatTTC) : null;
+            const debut = contract.dateDebut ? new Date(contract.dateDebut) : null;
+            const periode = contract.periodeEnMois;
             const recapData: RecapContractDisplayData = {
               ...contract,
+              coutFinancement: achat && expectedTotalAmountFromService ? expectedTotalAmountFromService.minus(achat) : null,
+              dateAvance: contract.avanceTTC ? debut : null,
+              datePremiereMensualite: debut ? this.ajouterMois(debut, contract.avanceTTC ? 1 : 0) : null,
+              dateValeurResiduelle: debut && periode ? this.ajouterMois(debut, periode) : null,
               nomBanqueDePrelevement: nomBanque,
               nomOrganismeLeasing: nomOrganisme,
               totalMensualitesCalculated: totalMensualitesCalculated,
@@ -149,6 +160,14 @@ export class RecapStepComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach(sub => sub.unsubscribe());
     this.componentDestroyed$.next();
     this.componentDestroyed$.complete();
+  }
+
+  /** Même règle que le serveur (LocalDate.plusMonths) : le jour est ramené à la fin du mois si besoin. */
+  private ajouterMois(date: Date, mois: number): Date {
+    const cible = new Date(date.getFullYear(), date.getMonth() + mois, 1);
+    const dernierJour = new Date(cible.getFullYear(), cible.getMonth() + 1, 0).getDate();
+    cible.setDate(Math.min(date.getDate(), dernierJour));
+    return cible;
   }
 
   getContractTypeDisplayName(type: TypeContratLeasing | null | undefined): string {

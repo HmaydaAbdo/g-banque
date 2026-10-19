@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
+import staport.finance.gBanque.moyensDePaiements.lecture.TypeMoyenPaiement;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -46,6 +47,15 @@ public interface EcheanceLeasingRepository extends JpaRepository<EcheanceLeasing
     long countByStatutPaiement(StatutEcheanceLeasing statut);
 
     List<EcheanceLeasing> findByContratLeasingId(Long contratId);
+
+    /** Échéance n°{@code numeroEcheance} d'un contrat (l'avance est toujours la n°1). */
+    Optional<EcheanceLeasing> findByContratLeasingIdAndNumeroEcheance(Long contratId, Integer numeroEcheance);
+
+    /** Ce chèque / cette LCN / ce virement règle-t-il déjà l'avance d'un contrat ? */
+    boolean existsByMoyenPaiementTypeAndMoyenPaiementId(TypeMoyenPaiement type, Long moyenPaiementId);
+
+    /** Le contrat a-t-il une avance rattachée à un moyen de paiement ? */
+    boolean existsByContratLeasingIdAndMoyenPaiementIdIsNotNull(Long contratId);
 
     /**
      * Nombre d'échéances PREVU dont la date tombe entre aujourd'hui et aujourd'hui+nbJours (inclus).

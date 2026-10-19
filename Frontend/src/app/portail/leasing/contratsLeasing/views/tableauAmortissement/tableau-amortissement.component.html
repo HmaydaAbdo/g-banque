@@ -48,6 +48,47 @@
         </div>
       }
 
+      @if (avance) {
+        <section class="avance-card" [class.avance-card--payee]="avance.statut === 'PAYE'" aria-label="Règlement de l'avance">
+          <div class="avance-card__main">
+            <span class="avance-card__kicker">Avance · échéance n°1</span>
+            <strong class="avance-card__montant num">{{ avance.montantTTC | number:'1.2-2' }} MAD</strong>
+            <span class="avance-card__date">Échéance du {{ avance.dateEcheance | date:'dd/MM/yyyy' }}</span>
+          </div>
+
+          <div class="avance-card__moyen">
+            @if (avance.moyenPaiement; as moyen) {
+              <div class="avance-card__moyen-titre">
+                <i class="pi pi-link" aria-hidden="true"></i>
+                Réglée par {{ libelleMoyen[moyen.type] }} {{ moyen.numero ? 'n° ' + moyen.numero : '(sans numéro)' }}
+                <p-tag [value]="moyen.statut === 'REGLE' ? 'Réglé' : 'En cours'" [severity]="moyen.statut === 'REGLE' ? 'success' : 'info'"></p-tag>
+              </div>
+              <div class="avance-card__moyen-detail">
+                {{ moyen.nomBanque || '—' }} · bénéficiaire {{ moyen.beneficiaire || '—' }}
+                @if (moyen.dateValeur) { · valeur {{ moyen.dateValeur | date:'dd/MM/yyyy' }} }
+              </div>
+              <p class="avance-card__aide">
+                Cette avance est représentée par son moyen de paiement : son statut suit celui-ci et elle n'est pas comptée deux fois dans les encours.
+              </p>
+              @if (moyen.statut !== 'REGLE') {
+                <p-button label="Détacher" icon="pi pi-times" severity="secondary" [outlined]="true" size="small"
+                          [loading]="avanceEnCours" (onClick)="confirmerDetachement()"></p-button>
+              }
+            } @else {
+              <div class="avance-card__moyen-titre">
+                <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+                Aucun moyen de paiement rattaché
+              </div>
+              <p class="avance-card__aide">
+                Saisissez d'abord le chèque, la LCN ou le virement de l'avance dans son module, puis rattachez-le ici.
+                Son montant doit être exactement celui de l'avance.
+              </p>
+              <p-button label="Rattacher un moyen de paiement" icon="pi pi-link" size="small" (onClick)="ouvrirChoixMoyen()"></p-button>
+            }
+          </div>
+        </section>
+      }
+
       <div class="pg-filters">
         <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
         <form [formGroup]="searchForm" class="flex flex-row justify-content-between align-items-center gap-2 w-full">
@@ -119,6 +160,7 @@
           <ng-template pTemplate="header">
             <tr>
               <th pSortableColumn="id">Id <p-sortIcon field="id"></p-sortIcon></th>
+              <th pSortableColumn="numeroEcheance">N° <p-sortIcon field="numeroEcheance"></p-sortIcon></th>
               <th pSortableColumn="dateEcheance">Date Échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
               <th pSortableColumn="montantHT">Montant HT <p-sortIcon field="montantHT"></p-sortIcon></th>
               <th pSortableColumn="montantTVA">Montant TVA <p-sortIcon field="montantTVA"></p-sortIcon></th>
@@ -132,6 +174,12 @@
           <ng-template pTemplate="body" let-echeance>
             <tr>
               <td>{{ echeance.id }}</td>
+              <td>
+                {{ echeance.numeroEcheance }}
+                @if (avance && echeance.numeroEcheance === 1) {
+                  <p-tag value="Avance" severity="warning" styleClass="ml-1"></p-tag>
+                }
+              </td>
               <td>{{ echeance.dateEcheance | date:'dd/MM/yyyy' }}</td>
               <td><span class="num">{{ echeance.montantHT | number:'1.2-2' }}</span></td>
               <td><span class="num">{{ echeance.montantTVA | number:'1.2-2' }}</span></td>
@@ -139,6 +187,9 @@
               <td><p-tag [value]="echeance.statutPaiement" [severity]="getStatutSeverity(echeance.statutPaiement)"></p-tag></td>
               @if (isAdmin()) {
                 <td class="col-action">
+                  @if (echeance.moyenPaiementId) {
+                    <span class="text-color-secondary text-xs">Suit son moyen de paiement</span>
+                  } @else {
                   <div class="cell-actions">
                     <p-inputSwitch
                       [ngModel]="echeance.statutPaiement === 'PAYE'"
@@ -158,18 +209,19 @@
                       ></p-button>
                     }
                   </div>
+                  }
                 </td>
               }
             </tr>
           </ng-template>
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td [attr.colspan]="isAdmin() ? 7 : 6" class="text-center p-4">Aucune échéance trouvée pour ce contrat ou ces critères de recherche.</td>
+              <td [attr.colspan]="isAdmin() ? 8 : 7" class="text-center p-4">Aucune échéance trouvée pour ce contrat ou ces critères de recherche.</td>
             </tr>
           </ng-template>
           <ng-template pTemplate="loadingbody">
             <tr>
-              <td [attr.colspan]="isAdmin() ? 7 : 6" class="text-center p-4">Chargement des échéances. Veuillez patienter...</td>
+              <td [attr.colspan]="isAdmin() ? 8 : 7" class="text-center p-4">Chargement des échéances. Veuillez patienter...</td>
             </tr>
           </ng-template>
         </p-table>
@@ -177,3 +229,37 @@
     </div>
   }
 </div>
+
+<p-dialog header="Rattacher un moyen de paiement à l'avance" [(visible)]="afficherChoixMoyen" [modal]="true"
+          [style]="{ width: '56rem', maxWidth: '95vw' }" [draggable]="false">
+  <p class="text-sm text-color-secondary mt-0">
+    Décaissements non annulés dont le montant est exactement celui de l'avance et qui ne règlent pas déjà une autre avance.
+  </p>
+  <p-table [value]="moyensDisponibles" [loading]="chargementMoyens" styleClass="p-datatable-sm p-datatable-gridlines text-sm">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Type</th><th>N°</th><th>Banque</th><th>Bénéficiaire</th><th>Émission</th><th>Statut</th><th></th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-moyen>
+      <tr>
+        <td>{{ $any(libelleMoyen)[moyen.type] }}</td>
+        <td>{{ moyen.numero || '—' }}</td>
+        <td>{{ moyen.nomBanque || '—' }}</td>
+        <td>{{ moyen.beneficiaire || '—' }}</td>
+        <td>{{ moyen.dateEmission | date:'dd/MM/yyyy' }}</td>
+        <td><p-tag [value]="moyen.statut === 'REGLE' ? 'Réglé' : 'En cours'" [severity]="moyen.statut === 'REGLE' ? 'success' : 'info'"></p-tag></td>
+        <td class="text-right">
+          <p-button label="Choisir" size="small" [loading]="avanceEnCours" (onClick)="rattacherMoyen(moyen)"></p-button>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="7" class="text-center p-4">
+          Aucun chèque, LCN ou virement disponible pour ce montant. Saisissez-le d'abord dans son module.
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</p-dialog>

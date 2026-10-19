@@ -15,9 +15,11 @@ import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.contratLeasing.service.ContratLeasingService;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.*;
+import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.IAvanceLeasingService;
 import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.IEcheanceLeasingService;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Tag(name = "Échéances de leasing", description = "Consultation et gestion des échéances de leasing")
 @SecurityRequirement(name = "bearerAuth")
@@ -30,11 +32,14 @@ public class EcheanceLeasingController {
     private static final String ADMIN_ONLY = "hasAuthority('SYSTEM_ADMIN')";
 
     private final IEcheanceLeasingService echeanceLeasingService;
+    private final IAvanceLeasingService avanceLeasingService;
     private final ContratLeasingService contratLeasingService;
 
     public EcheanceLeasingController(IEcheanceLeasingService echeanceLeasingService,
+                                     IAvanceLeasingService avanceLeasingService,
                                      ContratLeasingService contratLeasingService) {
         this.echeanceLeasingService = echeanceLeasingService;
+        this.avanceLeasingService = avanceLeasingService;
         this.contratLeasingService = contratLeasingService;
     }
 
@@ -98,5 +103,43 @@ public class EcheanceLeasingController {
     @GetMapping("/{id}")
     public ResponseEntity<EcheanceLeasingResponseDTO> getEcheanceLeasingById(@PathVariable Long id) {
         return ResponseEntity.ok(echeanceLeasingService.getEcheanceLeasingById(id));
+    }
+
+    @Operation(summary = "Avance d'un contrat et son moyen de paiement",
+            description = "Retourne l'échéance n°1 (avance) du contrat, son statut effectif et le chèque / la LCN / le virement rattaché")
+    @ApiResponse(responseCode = "400", description = "Le contrat n'a pas d'avance")
+    @ApiResponse(responseCode = "404", description = "Contrat introuvable")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @GetMapping("/avance/{contratId}")
+    public ResponseEntity<AvanceLeasingResponseDTO> getAvance(@PathVariable Long contratId) {
+        return ResponseEntity.ok(avanceLeasingService.getAvance(contratId));
+    }
+
+    @Operation(summary = "Moyens de paiement disponibles pour l'avance",
+            description = "Décaissements non annulés du montant exact de l'avance et pas encore rattachés à une avance")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @GetMapping("/avance/{contratId}/moyens-disponibles")
+    public ResponseEntity<List<MoyenPaiementAvanceDTO>> getMoyensPaiementDisponibles(@PathVariable Long contratId) {
+        return ResponseEntity.ok(avanceLeasingService.getMoyensPaiementDisponibles(contratId));
+    }
+
+    @Operation(summary = "Rattacher un moyen de paiement à l'avance",
+            description = "Rattache un chèque, une LCN ou un virement (décaissement du montant exact de l'avance) à l'avance du contrat")
+    @ApiResponse(responseCode = "400", description = "Montant, sens ou statut incompatible, ou moyen de paiement déjà utilisé")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @PutMapping("/avance/{contratId}/moyen-paiement")
+    public ResponseEntity<AvanceLeasingResponseDTO> rattacherMoyenPaiement(
+            @PathVariable Long contratId,
+            @Valid @RequestBody AvanceMoyenPaiementRequestDTO dto) {
+        return ResponseEntity.ok(avanceLeasingService.rattacherMoyenPaiement(contratId, dto));
+    }
+
+    @Operation(summary = "Détacher le moyen de paiement de l'avance",
+            description = "Refusé si le moyen de paiement est déjà réglé")
+    @ApiResponse(responseCode = "400", description = "Aucun moyen rattaché, ou moyen déjà réglé")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @DeleteMapping("/avance/{contratId}/moyen-paiement")
+    public ResponseEntity<AvanceLeasingResponseDTO> detacherMoyenPaiement(@PathVariable Long contratId) {
+        return ResponseEntity.ok(avanceLeasingService.detacherMoyenPaiement(contratId));
     }
 }

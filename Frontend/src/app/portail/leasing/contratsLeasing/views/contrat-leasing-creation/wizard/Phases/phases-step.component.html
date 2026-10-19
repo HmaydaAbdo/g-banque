@@ -11,6 +11,20 @@
       ></p-button>
     </div>
 
+    @if (dureeACouvrir) {
+      <div class="mb-3 flex align-items-center gap-2 text-sm text-color-secondary">
+        <i class="pi pi-calendar" aria-hidden="true"></i>
+        <span>
+          Les phases doivent couvrir <strong>{{ dureeACouvrir }} mois</strong>
+          @if (avanceSaisie) {
+            ({{ currentPeriodeEnMois }} mois de contrat moins le mois de l'avance).
+          } @else {
+            (la période du contrat).
+          }
+        </span>
+      </div>
+    }
+
     @if (showPhasesRequiredForTypeError()) {
       <div class="mb-3">
         <p-message severity="error" [text]="phasesRequiredForTypeMessage"></p-message>

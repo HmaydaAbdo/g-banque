@@ -48,6 +48,10 @@ public abstract class EcheanceLeasingMapper {
 
     public String computeLibelle(EcheanceLeasing entity) {
         ContratLeasing contrat = entity.getContratLeasing();
+        if (contrat.hasAvance() && entity.getNumeroEcheance() == 1) {
+            return contrat.getContratCadre().getOrganisme().getNom()
+                    + ", avance pour le contrat N° " + contrat.getNumeroContrat();
+        }
         if (entity.getNumeroEcheance().equals(contrat.getPeriodeEnMois() + 1)) {
             return contrat.getContratCadre().getOrganisme().getNom()
                     + ", V.R. pour le contrat N° " + contrat.getNumeroContrat();

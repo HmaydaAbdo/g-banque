@@ -1,5 +1,9 @@
 package staport.finance.gBanque.moyensDePaiements.virements.repositories;
 
+import java.math.BigDecimal;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
+import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -17,6 +21,9 @@ import java.util.Optional;
 
 @Repository
 public interface VirementRepository extends JpaRepository<Virement, Long>, JpaSpecificationExecutor<Virement> {
+
+    /** Moyens de paiement du sens donné, d'un montant exact, dont le statut n'est pas {@code statut} — règlement d'une avance de leasing. */
+    List<Virement> findByTypeAndMontantAndStatutNot(Type type, BigDecimal montant, StatutMoyenPaiement statut);
 
     boolean existsByNumero(String numero);
 

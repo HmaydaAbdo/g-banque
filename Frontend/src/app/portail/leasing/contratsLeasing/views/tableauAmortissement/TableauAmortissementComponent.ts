@@ -5,7 +5,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
-import { debounceTime, distinctUntilChanged, finalize } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, finalize, switchMap } from 'rxjs/operators';
+import { EMPTY } from 'rxjs';
 
 // PrimeNG Modules
 import { CardModule } from 'primeng/card';
@@ -22,6 +23,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { RippleModule } from 'primeng/ripple';
+import { DialogModule } from 'primeng/dialog';
 
 import { TableauAmortissement } from '../../dtos/table-amortissement';
 import { EcheanceLeasingResponse } from '../../dtos/EcheanceLeasingResponse';
@@ -30,6 +32,8 @@ import { EcheanceLeasingService } from '../../services/EcheanceLeasingService';
 import { EcheanceLeasingSearchDTO } from '../../dtos/echeance-leasing-search';
 import { AuthService } from '../../../../../auth/services/auth.service';
 import { CalendarModule } from 'primeng/calendar';
+import { ContratLeasingService } from '../../services/contrat-leasing.service';
+import { AvanceLeasingResponse, LIBELLE_TYPE_MOYEN_PAIEMENT, MoyenPaiementAvance } from '../../dtos/avance-leasing';
 
 
 @Component({
@@ -55,7 +59,8 @@ import { CalendarModule } from 'primeng/calendar';
     BreadcrumbModule,
     CalendarModule,
     RippleModule,
-    ConfirmDialogModule
+    ConfirmDialogModule,
+    DialogModule
   ],
   providers: [MessageService, ConfirmationService]
 })
@@ -64,6 +69,7 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly echeanceLeasingService = inject(EcheanceLeasingService);
+  private readonly contratLeasingService = inject(ContratLeasingService);
   private readonly messageService = inject(MessageService);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly fb = inject(FormBuilder);
@@ -76,6 +82,14 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
   loading: boolean = true;
   exporting: boolean = false;
   errorMessage: string | null = null;
+
+  /** Avance du contrat (échéance n°1) et son moyen de paiement ; null si le contrat n'a pas d'avance. */
+  avance: AvanceLeasingResponse | null = null;
+  readonly libelleMoyen = LIBELLE_TYPE_MOYEN_PAIEMENT;
+  afficherChoixMoyen = false;
+  moyensDisponibles: MoyenPaiementAvance[] = [];
+  chargementMoyens = false;
+  avanceEnCours = false;
 
   searchForm!: FormGroup;
   statutLeasingOptions = Object.values(StatutEcheanceLeasing).map(status => ({ label: status, value: status }));
@@ -103,6 +117,7 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
         this.contratId = +id;
         this.initSearchForm();
         this.loadTableauAmortissement(this.lastLazyLoadEvent);
+        this.chargerAvance();
       } else {
         this.errorMessage = 'Contract ID not provided in the URL.';
         this.loading = false;
@@ -134,6 +149,54 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
       this.loadTableauAmortissement(this.lastLazyLoadEvent);
     });
     this.subscriptions.push(searchSub);
+  }
+
+  /** Charge l'avance seulement si le contrat en a une (évite une requête en erreur pour les autres contrats). */
+  private chargerAvance(): void {
+    this.contratLeasingService.getContratLeasingById(this.contratId).pipe(
+      switchMap(contrat => contrat.avanceTTC ? this.echeanceLeasingService.getAvance(this.contratId) : EMPTY)
+    ).subscribe(avance => this.avance = avance);
+  }
+
+  /** Ouvre le choix du chèque / de la LCN / du virement du montant exact de l'avance. */
+  ouvrirChoixMoyen(): void {
+    this.afficherChoixMoyen = true;
+    this.chargementMoyens = true;
+    this.echeanceLeasingService.getMoyensPaiementDisponibles(this.contratId).pipe(
+      finalize(() => this.chargementMoyens = false)
+    ).subscribe(moyens => this.moyensDisponibles = moyens);
+  }
+
+  rattacherMoyen(moyen: MoyenPaiementAvance): void {
+    this.avanceEnCours = true;
+    this.echeanceLeasingService.rattacherMoyenPaiement(this.contratId, { type: moyen.type, moyenPaiementId: moyen.id }).pipe(
+      finalize(() => this.avanceEnCours = false)
+    ).subscribe(avance => {
+      this.avance = avance;
+      this.afficherChoixMoyen = false;
+      this.messageService.add({ severity: 'success', summary: 'Avance rattachée', detail: `${this.libelleMoyen[moyen.type]} ${moyen.numero ?? ''} règle désormais l'avance.` });
+      this.loadTableauAmortissement(this.lastLazyLoadEvent);
+    });
+  }
+
+  confirmerDetachement(): void {
+    this.confirmationService.confirm({
+      message: "Détacher le moyen de paiement de l'avance ? L'avance réapparaîtra comme échéance à payer et le moyen de paiement restera dans son module.",
+      header: 'Confirmation',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Oui',
+      rejectLabel: 'Non',
+      accept: () => {
+        this.avanceEnCours = true;
+        this.echeanceLeasingService.detacherMoyenPaiement(this.contratId).pipe(
+          finalize(() => this.avanceEnCours = false)
+        ).subscribe(avance => {
+          this.avance = avance;
+          this.messageService.add({ severity: 'success', summary: 'Moyen de paiement détaché', detail: "L'avance n'est plus rattachée." });
+          this.loadTableauAmortissement(this.lastLazyLoadEvent);
+        });
+      }
+    });
   }
 
   /** Affiche/masque le panneau de recherche par période (fermé par défaut). */

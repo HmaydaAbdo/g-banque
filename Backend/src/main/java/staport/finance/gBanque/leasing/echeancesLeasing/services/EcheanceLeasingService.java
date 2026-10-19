@@ -138,6 +138,11 @@ import java.math.BigDecimal;
                         " car il contient des échéances déjà payées. c-à-d qu'on a déjà commencé l'amortissement pour ce contrat. Veuillez contacter l'administrateur.");
             }
 
+            if (echeanceLeasingRepository.existsByContratLeasingIdAndMoyenPaiementIdIsNotNull(contratId)) {
+                throw new ValidationException("Impossible de modifier le contrat " + contratId + " : son avance est rattachée à un moyen de paiement. "
+                        + "Détachez-le du contrat avant de le modifier.");
+            }
+
             deleteEcheancesAndCommissionByContrat(contrat);
 
             // 2. Régénérer les nouvelles échéances et commissions
@@ -165,6 +170,23 @@ import java.math.BigDecimal;
             log.debug(" Date de référence (1 mois avant la date début) : {}", dateReference);
 
             int numeroEcheanceGlobal = 0;
+
+            // Avance optionnelle : échéance n°1, à la date de début du contrat (les mensualités démarrent un mois plus tard)
+            if (contrat.hasAvance()) {
+                numeroEcheanceGlobal++;
+                EcheanceLeasing avance = new EcheanceLeasing(
+                        contrat,
+                        numeroEcheanceGlobal,
+                        dateReference.plusMonths(numeroEcheanceGlobal),
+                        contrat.getAvanceTTC().setScale(SCALE, RoundingMode.HALF_UP),
+                        StatutEcheanceLeasing.PREVU
+                );
+                avance.setLibelle(echeanceLeasingMapper.computeLibelle(avance));
+                avance.setObservation("Avance leasing - échéance n°1/" + (contrat.getPeriodeEnMois() + 1)
+                        + " - contrat N° " + contrat.getNumeroContrat());
+                echeances.add(avance);
+                log.info(" Avance de {} générée (échéance n°1)", avance.getMontantTTC());
+            }
 
             // Trier les phases par numeroPhase
             List<ContratLeasingPhase> sortedPhases = contrat.getPhases().stream()
@@ -284,6 +306,9 @@ import java.math.BigDecimal;
 
             // Créer une commission pour chaque échéance
             for (EcheanceLeasing echeance : echeances) {
+                if (contrat.hasAvance() && echeance.getNumeroEcheance() == 1) {
+                    continue; // l'avance est réglée par un chèque / une LCN / un virement : pas de commission de prélèvement
+                }
                 try {
                     CommissionRequestDto commissionDto = creerCommissionDto(contrat, echeance, montantCommission);
                     commissionService.createCommission(commissionDto);
@@ -387,6 +412,8 @@ import java.math.BigDecimal;
                         return new ResourceNotFoundException("EcheanceLeasing with ID " + echeanceId + " not found.");
                     });
 
+            refuserSiRattacheeAMoyenPaiement(echeance);
+
             // Retour « en cours » d'une opération déjà rapprochée : sa transaction est annulée (même effet que l'annulation
             // de la validation) ; sans transaction liée, la bascule reste libre (correction manuelle).
             if (echeance.getStatutPaiement() == StatutEcheanceLeasing.PAYE
@@ -419,6 +446,8 @@ import java.math.BigDecimal;
                         return new ResourceNotFoundException("EcheanceLeasing with ID " + id + " not found.");
                     });
 
+            refuserSiRattacheeAMoyenPaiement(echeance);
+
             if (echeance.getStatutPaiement() == StatutEcheanceLeasing.PAYE) {
                 log.warn("Tentative de modification d'une échéance déjà payée — ID : {}", id);
                 throw new ValidationException("Impossible de modifier une échéance dont le statut est PAYE.");
@@ -434,6 +463,15 @@ import java.math.BigDecimal;
             EcheanceLeasing saved = echeanceLeasingRepository.save(echeance);
             log.info("Échéance ID : {} mise à jour avec succès", id);
             return echeanceLeasingMapper.toDto(saved);
+        }
+
+        /** L'avance rattachée est représentée par son moyen de paiement : son statut et son montant ne se modifient pas ici. */
+        private void refuserSiRattacheeAMoyenPaiement(EcheanceLeasing echeance) {
+            if (echeance.isRattacheAMoyenPaiement()) {
+                throw new ValidationException("Cette échéance est l'avance du contrat, représentée par son moyen de paiement "
+                        + "(" + echeance.getMoyenPaiementType() + " n°" + echeance.getMoyenPaiementId() + "). "
+                        + "Détachez-le du contrat avant de la modifier.");
+            }
         }
 
         /**

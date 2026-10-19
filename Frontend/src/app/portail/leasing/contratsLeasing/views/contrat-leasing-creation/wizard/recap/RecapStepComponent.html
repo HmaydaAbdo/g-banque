@@ -44,6 +44,16 @@
         <span class="recap__label">Type de Contrat</span>
         <span class="recap__value">{{ getContractTypeDisplayName(contractData.typeContrat) }}</span>
       </div>
+      @if (contractData.avanceTTC) {
+        <div class="recap__row">
+          <span class="recap__label">Avance (échéance n°1)</span>
+          <span class="recap__value">{{ formatCurrency(contractData.avanceTTC) }} le {{ formatDate(contractData.dateAvance) }}</span>
+        </div>
+      }
+      <div class="recap__row">
+        <span class="recap__label">Première mensualité</span>
+        <span class="recap__value">{{ formatDate(contractData.datePremiereMensualite) }}</span>
+      </div>
       <div class="recap__row">
         <span class="recap__label">Valeur Résiduelle</span>
         <span class="recap__value">
@@ -57,9 +67,19 @@
         <span class="recap__tile-label">Montant Achat TTC</span>
         <span class="recap__tile-value">{{ formatCurrency(contractData.montantAchatTTC) }}</span>
       </div>
+      @if (contractData.avanceTTC) {
+        <div class="recap__tile">
+          <span class="recap__tile-label">Avance</span>
+          <span class="recap__tile-value">{{ formatCurrency(contractData.avanceTTC) }}</span>
+        </div>
+      }
       <div class="recap__tile">
         <span class="recap__tile-label">Endettement</span>
         <span class="recap__tile-value">{{ formatCurrency(contractData.expectedTotalAmountService) }}</span>
+      </div>
+      <div class="recap__tile">
+        <span class="recap__tile-label">Coût du financement</span>
+        <span class="recap__tile-value">{{ formatCurrency(contractData.coutFinancement) }}</span>
       </div>
     </div>
 

@@ -1,7 +1,7 @@
 // src/app/contrat-leasing-creation/wizard/GeneralDetail/GeneralDetailsStepComponent.ts
 
 import { Component, Input, OnInit, OnDestroy, Output, EventEmitter, inject } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormBuilder } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators, FormBuilder } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subscription, Subject } from 'rxjs';
 import { distinctUntilChanged, takeUntil, debounceTime } from 'rxjs/operators'; // Import debounceTime
@@ -11,10 +11,32 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { MessageModule } from 'primeng/message';
 import { Message } from 'primeng/api';
 import { MessagesModule } from 'primeng/messages';
+import { InputSwitchModule } from 'primeng/inputswitch';
 
 import { LeasingContractWizardService } from "../../../../services/LeasingContractWizardService";
 import { Decimal } from 'decimal.js';
 import { toLocalDateString } from '../../../../../../global/types/date.utils';
+
+/**
+ * L'avance est incluse dans le prix d'achat (donc strictement inférieure) et occupe un mois de la période.
+ * Erreurs portées par le groupe, affichées sous le champ d'avance.
+ */
+function avanceCoherente(group: AbstractControl): ValidationErrors | null {
+  if (!group.get('avecAvance')?.value) {
+    return null;
+  }
+  const avance = group.get('avanceTTC')?.value;
+  const achat = group.get('montantAchatTTC')?.value;
+  const periode = group.get('periodeEnMois')?.value;
+  const erreurs: ValidationErrors = {};
+  if (avance != null && achat != null && avance >= achat) {
+    erreurs['avanceTropGrande'] = true;
+  }
+  if (periode != null && periode < 2) {
+    erreurs['periodeTropCourte'] = true;
+  }
+  return Object.keys(erreurs).length > 0 ? erreurs : null;
+}
 
 @Component({
   selector: 'app-general-details-step',
@@ -26,9 +48,11 @@ import { toLocalDateString } from '../../../../../../global/types/date.utils';
     CalendarModule,
     InputNumberModule,
     MessageModule,
-    MessagesModule
+    MessagesModule,
+    InputSwitchModule
   ],
   templateUrl: './general-details-step.component.html',
+  styleUrls: ['./general-details-step.component.scss'],
 })
 export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
 
@@ -58,7 +82,14 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
       montantAchatTTC: [null, [Validators.required, Validators.min(0.01)]],
       dateDebut: [null, Validators.required],
       periodeEnMois: [null, [Validators.required, Validators.min(1), Validators.max(360)]],
-      valeurResiduelle: [{ value: null, disabled: true }] // Ensure it's disabled and read-only
+      valeurResiduelle: [{ value: null, disabled: true }], // Ensure it's disabled and read-only
+      avecAvance: [false],
+      avanceTTC: [{ value: null, disabled: true }]
+    }, { validators: [avanceCoherente] });
+
+    // L'avance n'est saisissable (et obligatoire) que si le contrat en comporte une
+    this.avecAvanceControl.valueChanges.pipe(takeUntil(this.componentDestroyed$)).subscribe(avec => {
+      this.appliquerEtatAvance(avec, true);
     });
 
 
@@ -80,6 +111,7 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
           prevMontantAchatTTC === currMontantAchatTTC &&
           prevDateDebutISO === currDateDebutISO &&
           prev.periodeEnMois === curr.periodeEnMois &&
+          prev.avanceTTC === curr.avanceTTC &&
           prevValeurResiduelle === currValeurResiduelle;
       }),
       takeUntil(this.componentDestroyed$)
@@ -91,7 +123,9 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
         montantAchatTTC?: number | null,
         dateDebut?: Date | null,
         periodeEnMois?: number | null,
-        valeurResiduelle?: number | null
+        valeurResiduelle?: number | null,
+        avecAvance?: boolean,
+        avanceTTC?: number | null
       } = {};
 
       if (currentFormValue.numeroContrat !== contract.numeroContrat) {
@@ -121,9 +155,22 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
         patchObject.valeurResiduelle = contractValResiduelleNum;
       }
 
+      const contractAvance = contract.avanceTTC ?? null;
+      if (currentFormValue.avanceTTC !== contractAvance) {
+        patchObject.avanceTTC = contractAvance;
+      }
+      const contractAvecAvance = contractAvance !== null;
+      if (currentFormValue.avecAvance !== contractAvecAvance) {
+        patchObject.avecAvance = contractAvecAvance;
+      }
+
       if (Object.keys(patchObject).length > 0) {
         // Use { emitEvent: false } to prevent this patch from triggering valueChanges subscription below
         this.formGroup.patchValue(patchObject, { emitEvent: false });
+        // Le patch silencieux ne déclenche pas l'abonnement ci-dessus (ex. ouverture d'un contrat existant)
+        if (patchObject.avecAvance !== undefined) {
+          this.appliquerEtatAvance(patchObject.avecAvance, false);
+        }
       } else {
       }
       // ALWAYS recalculate on service update to ensure consistency
@@ -168,6 +215,8 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
           prevMontantAchatTTC === currMontantAchatTTC &&
           prevDateDebutISO === currDateDebutISO &&
           prev.periodeEnMois === curr.periodeEnMois &&
+          prev.avecAvance === curr.avecAvance &&
+          prev.avanceTTC === curr.avanceTTC &&
           prevValeurResiduelle === currValeurResiduelle;
       }),
       takeUntil(this.componentDestroyed$)
@@ -184,7 +233,8 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
         montantAchatTTC: montantAchatTTCForService,
         dateDebut: value.dateDebut,
         periodeEnMois: value.periodeEnMois,
-        valeurResiduelle: valeurResiduelleForService
+        valeurResiduelle: valeurResiduelleForService,
+        avanceTTC: value.avecAvance ? (value.avanceTTC ?? null) : null
       });
 
     });
@@ -206,6 +256,21 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach(sub => sub.unsubscribe());
     this.componentDestroyed$.next();
     this.componentDestroyed$.complete();
+  }
+
+  /** Active (obligatoire) ou désactive le champ d'avance ; `effacer` vide sa valeur quand on décoche. */
+  private appliquerEtatAvance(avec: boolean, effacer: boolean): void {
+    if (avec) {
+      this.avanceTTCControl.enable({ emitEvent: false });
+      this.avanceTTCControl.setValidators([Validators.required, Validators.min(0.01)]);
+    } else {
+      if (effacer) {
+        this.avanceTTCControl.setValue(null, { emitEvent: false });
+      }
+      this.avanceTTCControl.clearValidators();
+      this.avanceTTCControl.disable({ emitEvent: false });
+    }
+    this.avanceTTCControl.updateValueAndValidity({ emitEvent: false });
   }
 
   //  calculate valeurResiduelle
@@ -251,6 +316,14 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
 
   get valeurResiduelleControl(): FormControl {
     return this.formGroup.get('valeurResiduelle') as FormControl;
+  }
+
+  get avecAvanceControl(): FormControl {
+    return this.formGroup.get('avecAvance') as FormControl;
+  }
+
+  get avanceTTCControl(): FormControl {
+    return this.formGroup.get('avanceTTC') as FormControl;
   }
 
   markFormAsTouched(): void {

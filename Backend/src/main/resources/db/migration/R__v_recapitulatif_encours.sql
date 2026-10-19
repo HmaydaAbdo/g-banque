@@ -90,6 +90,9 @@
 -- -----------------------------------------------------------------------------
 -- Historique
 -- -----------------------------------------------------------------------------
+-- 19/10/2026 (HMAYDA + Claude) — branche LEASING : une avance rattachée à un
+--                        chèque / une LCN / un virement non annulé n'est plus
+--                        listée (le moyen de paiement la représente) — voir V16.
 -- 21/09/2026 (HMAYDA + Claude) — AJOUT de 3 colonnes de recherche invisibles
 --                        (`recherche_complementaire`, `commission_operation`,
 --                        `impot_taxe_motif`) pour restaurer, dans le récap
@@ -193,6 +196,10 @@ JOIN contrat_leasing cl ON cl.id = el.contrat_leasing_id
 JOIN contrat_cadre cc ON cc.id = cl.contrat_cadre_id
 JOIN organisme_leasing ol ON ol.id = cc.organisme_id
 WHERE el.statut_paiement = 'PREVU'
+  -- Avance rattachée à un chèque / une LCN / un virement non annulé : c'est ce moyen de paiement qui la représente
+  -- dans les encours (branches 3 à 5) — l'échéance n°1 n'est donc jamais comptée deux fois.
+  AND NOT EXISTS (SELECT 1 FROM v_echeance_leasing_moyen vm
+                  WHERE vm.echeance_id = el.id AND vm.statut_moyen <> 'ANNULE')
 
 UNION ALL
 

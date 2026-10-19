@@ -28,6 +28,12 @@
         <td><b>Montant Achat TTC:</b></td>
         <td><span class="num">{{ contratDetails.montantAchatTTC | number:'1.2-2' }}</span></td>
       </tr>
+      @if (contratDetails.avanceTTC) {
+        <tr>
+          <td><b>Avance (échéance n°1):</b></td>
+          <td><span class="num">{{ contratDetails.avanceTTC | number:'1.2-2' }}</span></td>
+        </tr>
+      }
       <tr>
         <td><b>Date Début:</b></td>
         <td>{{ contratDetails.dateDebut | date:'dd/MM/yyyy' }}</td>

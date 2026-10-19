@@ -1,5 +1,9 @@
 package staport.finance.gBanque.moyensDePaiements.cheques.repositories;
 
+import java.math.BigDecimal;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
+import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -14,6 +18,9 @@ import java.util.Optional;
 
 @Repository
 public interface ChequeRepository extends JpaRepository<Cheque, Long>, JpaSpecificationExecutor<Cheque> {
+
+    /** Moyens de paiement du sens donné, d'un montant exact, dont le statut n'est pas {@code statut} — règlement d'une avance de leasing. */
+    List<Cheque> findByTypeAndMontantAndStatutNot(Type type, BigDecimal montant, StatutMoyenPaiement statut);
 
     /**
      * Finds a Cheque by its unique numero.

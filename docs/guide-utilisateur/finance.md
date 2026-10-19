@@ -493,6 +493,10 @@ Un contrat cadre fixe le plafond d'engagement et la période de validité (date 
 2. Renseigner : numéro de contrat, banque de prélèvement, organisme, bien financé, montant TTC, date de début, période en mois, type de contrat, phases.
 3. Valider → les échéances et la valeur résiduelle sont calculées automatiquement.
 
+Si le contrat démarre par une **avance**, activez l'interrupteur **Ce contrat démarre par une avance** à l'étape **Détails Généraux** et saisissez son montant TTC. L'avance fait partie du prix d'achat et de la période : elle occupe le **premier mois** du contrat (à la date de début), les mensualités commencent un mois plus tard. À l'étape **Phases**, les durées doivent alors totaliser la période **moins 1 mois**. Messages possibles : « L'avance doit être strictement inférieure au montant d'achat TTC », « Un contrat avec avance doit durer au moins 2 mois », « La durée totale des phases … ne correspond pas à la durée à couvrir ».
+
+À droite de chaque étape, un **panneau d'aide** résume ce qu'il faut saisir, et le **plan du contrat** se met à jour pendant la saisie : avance, mensualités, valeur résiduelle (avec leurs dates), jauge « Durée couverte par les phases » (verte quand elle est complète, rouge si elle dépasse), prix d'achat, endettement et coût du financement. Sur un écran étroit, ce panneau passe sous le contenu de l'étape.
+
 La création se fait sous forme d'assistant en six étapes, affichées en haut de l'écran : **Organisme**, **Détails Généraux**, **Banque de prélèvement**, **Type de Contrat**, **Phases**, **Récapitulatif**. La barre de navigation (**Précédent**, **Suivant**, puis **Soumettre** à la dernière étape) reste ancrée en bas de l'écran et donc toujours visible, quelle que soit la longueur de l'étape affichée ; seul le contenu de l'étape défile. Le bouton **Suivant** est désactivé tant que l'étape en cours comporte une erreur ; le bouton **Soumettre** est désactivé tant que le contrat comporte une erreur de validation, quelle que soit l'étape concernée.
 
 La dernière étape, **Récapitulatif**, présente sur un seul écran, sans section à replier :
@@ -514,6 +518,23 @@ Les listes (contrats encours, en attente de main levée, archivés) affichent, p
 | LINEAIRE | 1 seule phase, durée = période totale |
 | PROGRESSIF | Plusieurs phases, mensualités croissantes ou constantes |
 | DEGRESSIF | Plusieurs phases, mensualités décroissantes ou constantes |
+
+### Régler l'avance d'un contrat de leasing
+
+Une avance se règle par un **chèque, une LCN ou un virement national** (décaissement), saisi dans son module habituel (Chèques, LCN ou Virements) pour un **montant exactement égal à l'avance**. Ensuite :
+
+1. Ouvrir **Leasing → Contrats → Tableau d'amortissement** du contrat. Une carte **Avance** s'affiche au-dessus du tableau ; la ligne n°1 est repérée par l'étiquette **Avance**.
+2. Cliquer sur **Rattacher un moyen de paiement**. La liste propose les chèques, LCN et virements non annulés du bon montant qui ne règlent pas déjà une autre avance. Cliquer sur **Choisir** devant celui qui convient.
+3. La carte affiche alors le moyen rattaché (type, numéro, banque, bénéficiaire, statut). Le statut de l'avance **suit celui du moyen de paiement** : elle passe en **Payé** quand le chèque, la LCN ou le virement est réglé, et revient en **Prévu** s'il repasse en cours.
+4. Tant que le moyen de paiement n'est pas réglé, le bouton **Détacher** permet de le retirer (après confirmation). Une fois réglé, il ne peut plus être détaché.
+
+À savoir :
+
+- l'avance ne se valide pas comme une échéance de loyer : c'est le chèque, la LCN ou le virement que l'on valide dans le rapprochement ;
+- dans les encours et la trésorerie prévisionnelle, **seul le moyen de paiement apparaît** — l'avance n'est pas comptée deux fois ;
+- si le moyen de paiement est annulé, l'avance redevient une échéance à payer et réapparaît dans les encours de leasing ;
+- tant qu'un moyen de paiement est rattaché à l'avance, le contrat ne peut pas être modifié : détachez-le d'abord ;
+- messages possibles : « Le montant du moyen de paiement doit être égal à l'avance du contrat », « Seul un décaissement peut régler l'avance », « Ce moyen de paiement règle déjà l'avance d'un contrat », « Le moyen de paiement est déjà réglé : l'avance est payée et ne peut plus être détachée ».
 
 ### Modifier ou supprimer un contrat de leasing
 

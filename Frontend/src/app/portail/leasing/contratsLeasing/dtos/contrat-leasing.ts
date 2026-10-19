@@ -12,6 +12,8 @@ export interface ContratLeasingRequestDTO {
   dateDebut: Date | null;
   periodeEnMois: number | null;
   valeurResiduelle: number | null;
+  /** Avance optionnelle (échéance n°1) : incluse dans le montant d'achat et dans la période. */
+  avanceTTC: number | null;
   typeContrat: TypeContratLeasing | null;
   phases: ContratLeasingPhaseRequestDTO[] ;
 }
@@ -34,6 +36,8 @@ export interface ContratLeasingResponseDTO {
   dateFin: string;
   typeContrat: TypeContratLeasing;
   valeurResiduelle: number;
+  /** Avance (échéance n°1), null si le contrat n'en a pas. */
+  avanceTTC: number | null;
   phases?: ContratLeasingPhaseResponseDTO[];
   completed: boolean;
 }

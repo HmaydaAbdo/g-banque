@@ -62,6 +62,9 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
 
   currentTypeContrat: TypeContratLeasing | null = null;
   currentPeriodeEnMois: number | null = null;
+  /** Mois que les phases doivent couvrir : période moins le mois de l'avance éventuelle. */
+  dureeACouvrir: number | null = null;
+  avanceSaisie = false;
 
   private subscriptions: Subscription[] = [];
   private componentDestroyed$ = new Subject<void>();
@@ -89,7 +92,8 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
 
         const phasesChanged = JSON.stringify(prevPhasesNormalized) !== JSON.stringify(currPhasesNormalized);
         const typeContratChanged = prevContract.typeContrat !== currContract.typeContrat;
-        const periodeEnMoisChanged = prevContract.periodeEnMois !== currContract.periodeEnMois;
+        const periodeEnMoisChanged = prevContract.periodeEnMois !== currContract.periodeEnMois
+          || prevContract.avanceTTC !== currContract.avanceTTC;
         const errorsChanged = JSON.stringify(prevErrors) !== JSON.stringify(currErrors);
 
         return !phasesChanged && !typeContratChanged && !periodeEnMoisChanged && !errorsChanged;
@@ -101,6 +105,8 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
       this.currentTypeContrat = contract.typeContrat || null;
 
       this.currentPeriodeEnMois = contract.periodeEnMois || null;
+      this.avanceSaisie = !!contract.avanceTTC;
+      this.dureeACouvrir = contract.periodeEnMois ? contract.periodeEnMois - (this.avanceSaisie ? 1 : 0) : null;
 
       if (previousTypeContrat !== null && previousTypeContrat !== this.currentTypeContrat) {
         if (contract.phases.length > 0) {

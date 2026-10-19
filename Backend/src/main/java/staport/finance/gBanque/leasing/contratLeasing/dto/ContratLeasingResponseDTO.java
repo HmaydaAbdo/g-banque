@@ -29,6 +29,8 @@ public record ContratLeasingResponseDTO(
         LocalDate dateFin,
         TypeContratLeasing typeContrat,
         BigDecimal valeurResiduelle,
+        /** Avance (échéance n°1), {@code null} si le contrat n'en a pas. */
+        BigDecimal avanceTTC,
         List<ContratLeasingPhaseResponseDTO> phases,
         OffsetDateTime dateCreation,
         OffsetDateTime dateModification,
@@ -39,7 +41,7 @@ public record ContratLeasingResponseDTO(
     public ContratLeasingResponseDTO withPlafond(BigDecimal plafondEnCours) {
         return new ContratLeasingResponseDTO(id, numeroContrat, banqueDePrelevementId, nomBanqueDePrelevement,
                 organismeLeasingId, nomOrganismeLeasing, contratCadreId, plafondEnCours, immobilisation,
-                montantAchatTTC, dateDebut, periodeEnMois, dateFin, typeContrat, valeurResiduelle, phases,
+                montantAchatTTC, dateDebut, periodeEnMois, dateFin, typeContrat, valeurResiduelle, avanceTTC, phases,
                 dateCreation, dateModification, completed);
     }
 }

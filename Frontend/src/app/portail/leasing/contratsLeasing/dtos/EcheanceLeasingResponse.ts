@@ -1,4 +1,5 @@
 import {StatutEcheanceLeasing} from "./StatutEcheanceLeasing";
+import {TypeMoyenPaiementAvance} from "./avance-leasing";
 
 export interface EcheanceLeasingResponse {
   id: number;
@@ -16,4 +17,7 @@ export interface EcheanceLeasingResponse {
   libelle:string
   dateCreation: string;
   dateModification: string;
+  /** Moyen de paiement qui règle l'échéance (avance uniquement), null sinon. */
+  moyenPaiementType: TypeMoyenPaiementAvance | null;
+  moyenPaiementId: number | null;
 }

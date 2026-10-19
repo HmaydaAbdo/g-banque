@@ -271,6 +271,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
             log.warn("Type de contrat manquant dans la requête");
             throw new ValidationException("Le type de contrat est obligatoire.");
         }
+        validateAvance(requestDTO);
         switch (requestDTO.typeContrat()) {
             case LINEAIRE -> validateLineaireContrat(requestDTO);
             case PROGRESSIF -> validateProgressifContrat(requestDTO);
@@ -282,6 +283,28 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         }
     }
 
+    /**
+     * L'avance est incluse dans le prix d'achat (donc strictement inférieure) et occupe l'échéance n°1 : elle compte
+     * pour un mois de la période, qui doit en garder au moins un pour les mensualités.
+     */
+    private void validateAvance(ContratLeasingRequestDTO requestDTO) {
+        if (requestDTO.avanceTTC() == null) {
+            return;
+        }
+        if (requestDTO.avanceTTC().compareTo(requestDTO.montantAchatTTC()) >= 0) {
+            throw new ValidationException("L'avance doit être strictement inférieure au montant d'achat TTC.");
+        }
+        if (requestDTO.periodeEnMois() < 2) {
+            throw new ValidationException(
+                    "Un contrat avec avance doit durer au moins 2 mois : 1 mois pour l'avance et au moins 1 pour les mensualités.");
+        }
+    }
+
+    /** Mois couverts par les phases de mensualités : la période, moins le mois de l'avance s'il y en a une. */
+    private static int dureeMensualites(ContratLeasingRequestDTO requestDTO) {
+        return requestDTO.periodeEnMois() - (requestDTO.avanceTTC() != null ? 1 : 0);
+    }
+
     private void validateLineaireContrat(ContratLeasingRequestDTO requestDTO) {
         if (requestDTO.phases() == null || requestDTO.phases().size() != 1) {
             throw new ValidationException("Un contrat de type LINEAIRE doit avoir exactement une seule phase.");
@@ -290,10 +313,10 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         if (singlePhase.numeroPhase() == null || singlePhase.numeroPhase() != 1) {
             throw new ValidationException("Pour un contrat LINEAIRE, la phase unique doit avoir le numéro 1.");
         }
-        if (!singlePhase.dureeMois().equals(requestDTO.periodeEnMois())) {
+        if (!singlePhase.dureeMois().equals(dureeMensualites(requestDTO))) {
             throw new ValidationException(String.format(
-                    "Pour un contrat LINEAIRE, la durée de la phase unique (%d mois) doit correspondre à la période totale du contrat (%d mois).",
-                    singlePhase.dureeMois(), requestDTO.periodeEnMois()
+                    "Pour un contrat LINEAIRE, la durée de la phase unique (%d mois) doit correspondre à la période du contrat hors avance (%d mois).",
+                    singlePhase.dureeMois(), dureeMensualites(requestDTO)
             ));
         }
     }
@@ -349,10 +372,10 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
             totalPhaseDuration.addAndGet(phase.dureeMois());
         }
 
-        if (!Integer.valueOf(totalPhaseDuration.get()).equals(requestDTO.periodeEnMois())) {
+        if (!Integer.valueOf(totalPhaseDuration.get()).equals(dureeMensualites(requestDTO))) {
             throw new ValidationException(String.format(
-                    "La somme des durées des phases (%d mois) ne correspond pas à la période totale du contrat (%d mois).",
-                    totalPhaseDuration.get(), requestDTO.periodeEnMois()
+                    "La somme des durées des phases (%d mois) ne correspond pas à la période du contrat hors avance (%d mois).",
+                    totalPhaseDuration.get(), dureeMensualites(requestDTO)
             ));
         }
 

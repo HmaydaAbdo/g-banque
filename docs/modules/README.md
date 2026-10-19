@@ -631,6 +631,8 @@ Ce module couvre l'intégralité du cycle de vie de ces crédits : de la souscri
 | PRÉVU | Échéance non encore réglée |
 | PAYÉ | Prélèvement effectué, intégré dans le rapprochement bancaire |
 
+Le statut de l'avance (échéance n°1) fait exception : une fois rattachée à son chèque, sa LCN ou son virement, elle **suit directement le statut de ce moyen de paiement** (PAYÉE quand il est réglé, PRÉVUE sinon).
+
 **Encours CMT** : pour une banque donnée, somme totale des montants des échéances encore PRÉVUES jusqu'à la fin du mois en cours, tous crédits actifs confondus.
 
 **Main levée** : clôture du crédit une fois toutes les échéances PAYÉES. Le crédit est alors archivé et reste consultable.
@@ -1025,6 +1027,8 @@ Un organisme ne peut avoir qu'un seul contrat cadre ACTIF à la fois. Sans contr
 
 **Échéance** : un mois de loyer à payer (ou la valeur résiduelle finale).
 
+**Avance** : premier paiement facultatif d'un contrat, versé à la date de début. Elle est **comprise dans le prix d'achat TTC** (elle ne s'y ajoute pas) et **dans la durée du contrat** : elle occupe l'échéance n°1, et les mensualités commencent un mois plus tard. Elle se règle par un **chèque, une LCN ou un virement national**, saisi dans son propre module puis rattaché au contrat.
+
 | Statut | Signification |
 |--------|---------------|
 | PRÉVU | Échéance non encore réglée |
@@ -1045,9 +1049,13 @@ Un organisme ne peut avoir qu'un seul contrat cadre ACTIF à la fois. Sans contr
     (plafond + dates de validité)
         ↓
 [3] Signer un Contrat de leasing
-    (organisme, banque de prélèvement, bien, montant, durée, type)
+    (organisme, banque de prélèvement, bien, montant, durée, type,
+     avance éventuelle)
     → Génération automatique du tableau d'amortissement
     → Génération automatique des commissions (si règle configurée)
+        ↓
+[3 bis] Si le contrat a une avance : saisir son chèque / sa LCN / son virement
+    dans son module, puis le rattacher au contrat (échéance n°1)
         ↓
 [4] Suivi mensuel des échéances
     → Chaque échéance est validée lors du rapprochement bancaire → statut PAYÉ
@@ -1110,6 +1118,10 @@ Un organisme ne peut avoir qu'un seul contrat cadre ACTIF à la fois. Sans contr
 
 Le wizard conserve les données saisies si on revient en arrière.
 
+À droite de chaque étape, un **panneau d'aide** explique ce qu'il faut saisir et les points d'attention de l'étape, et un **plan du contrat** se met à jour en direct : avance (si elle existe), mensualités, valeur résiduelle avec leurs dates, jauge de la durée couverte par les phases, prix d'achat, endettement et coût du financement. À l'étape **Détails généraux**, un interrupteur « Ce contrat démarre par une avance » fait apparaître le montant de l'avance.
+
+Sur l'écran **Tableau d'amortissement**, un contrat avec avance affiche une carte **Avance** : montant, date, et moyen de paiement rattaché (type, numéro, banque, bénéficiaire, statut). C'est depuis cette carte que l'on rattache ou détache le chèque, la LCN ou le virement.
+
 #### Export PDF
 
 Les écrans **Organismes**, **Contrats cadres**, **Liste des contrats actifs**, **Contrats en
@@ -1153,6 +1165,18 @@ affichée. L'export du tableau d'amortissement reprend également les totaux aff
 17. Si aucune règle n'existe pour la banque, aucune commission n'est créée et aucune erreur n'est déclenchée.
 18. Lors de la régénération des échéances suite à une modification de contrat, les anciennes commissions sont supprimées avant qu'on en crée de nouvelles.
 
+#### Avance
+
+20. L'avance est facultative. Quand elle existe, elle est **strictement inférieure au prix d'achat TTC** (elle en fait partie) et le contrat dure **au moins 2 mois** (1 mois pour l'avance, au moins 1 pour les mensualités).
+21. L'avance est l'**échéance n°1**, datée du jour de début du contrat. La première mensualité tombe un mois plus tard ; la valeur résiduelle reste l'échéance finale, et le nombre total de lignes du tableau d'amortissement ne change pas.
+22. La durée du contrat **inclut** l'avance : la somme des durées des phases de mensualités doit être égale à la durée du contrat **moins un mois**.
+23. La valeur résiduelle reste égale à 1 % du **prix d'achat complet**. L'avance est soumise à la TVA comme les mensualités. **Aucune commission de prélèvement** n'est générée pour l'avance.
+24. L'endettement du contrat comprend l'avance (avance + mensualités + valeur résiduelle). Aucune contrainte n'est imposée sur son montant par rapport au prix d'achat : il en résulte du calcul.
+25. L'avance se règle **uniquement** par un chèque, une LCN ou un virement national de type décaissement, dont le montant est **exactement** celui de l'avance. Le rattachement se fait depuis le contrat (tableau d'amortissement), jamais depuis le chèque, la LCN ou le virement. Un chèque, une LCN ou un virement ne peut régler qu'une seule avance, et ne peut pas être annulé.
+26. Une fois rattachée, l'avance est **représentée par son moyen de paiement** : elle suit son statut (jamais de statut à resynchroniser), elle ne se valide plus comme une échéance de loyer, et dans les encours et la trésorerie **seul le moyen de paiement figure** — l'avance n'est jamais comptée deux fois. Si le moyen de paiement est annulé, l'avance redevient une échéance à payer et réapparaît dans les encours de leasing.
+27. Le moyen de paiement peut être détaché tant qu'il n'est pas réglé. Dès qu'il est réglé, l'avance est payée et, comme toute échéance payée, elle verrouille la modification et la suppression du contrat (règles 11 et 12). Tant que l'avance est rattachée, le contrat ne peut pas non plus être modifié : il faut d'abord détacher le moyen de paiement.
+28. Les contrats déjà existants ne sont pas modifiés : la fonction d'avance ne s'applique qu'aux nouveaux contrats.
+
 #### Notification main levée
 
 19. Chaque dimanche, le système détecte automatiquement les contrats dont toutes les échéances sont PAYÉES et envoie une notification pour déclencher la procédure de main levée.
@@ -1185,6 +1209,7 @@ La valeur résiduelle, le taux de TVA et les deux seuils d'alerte ne sont plus d
 | **Contrats leasing** — supprimer | ✅ | ❌ | ❌ |
 | **Contrats leasing** — clôturer (main levée) | ✅ | ✅ | ✅ |
 | **Échéances** — consulter, valider (rapprochement) | ✅ | ✅ | ✅ |
+| **Avance** — rattacher / détacher son chèque, sa LCN ou son virement | ✅ | ✅ | ✅ |
 | **Échéances** — modifier manuellement | ✅ | ❌ | ❌ |
 | **Échéances** — basculer statut manuellement | ✅ | ❌ | ❌ |
 | **Batch main levée** — déclencher manuellement | ✅ | ❌ | ❌ |
@@ -1203,6 +1228,7 @@ Les actions suivantes sont historisées avec l'auteur et la date, et restent con
 - création, modification ou archivage d'un contrat cadre ;
 - création, modification, suppression ou clôture (main levée) d'un contrat de leasing ;
 - modification ou basculement de statut d'une échéance ;
+- rattachement ou détachement du moyen de paiement d'une avance ;
 - modification de la configuration leasing (valeur résiduelle, taux de TVA).
 
 La consultation seule (listes, tableau d'amortissement, encours, export PDF) n'est pas historisée.

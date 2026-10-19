@@ -586,6 +586,10 @@ private static final String ADMIN_ONLY = "hasAuthority('SYSTEM_ADMIN')";
 | GET | `/echeances-leasing/tableau-amortissement/{contratId}` | `FINANCE_OR_ADMIN` | Tableau d'amortissement complet d'un contrat (seul point d'entrée — voir note ci-dessous). |
 | PUT | `/echeances-leasing/{id}/toggle-status` | `ADMIN_ONLY` | Bascule PREVU ↔ PAYE — action sensible réservée à l'admin système. |
 | PUT | `/echeances-leasing/{id}` | `ADMIN_ONLY` | Modification d'une échéance `PREVU` (montant, dates, libellé). Bloqué si `PAYE`. |
+| GET | `/echeances-leasing/avance/{contratId}` | `FINANCE_OR_ADMIN` | Avance (échéance n°1) d'un contrat et son moyen de paiement (nouveau 19/10/2026). Refusé si le contrat n'a pas d'avance. |
+| GET | `/echeances-leasing/avance/{contratId}/moyens-disponibles` | `FINANCE_OR_ADMIN` | Décaissements non annulés du montant exact de l'avance et pas déjà rattachés à une avance (nouveau 19/10/2026). |
+| PUT | `/echeances-leasing/avance/{contratId}/moyen-paiement` | `FINANCE_OR_ADMIN` | Rattache un chèque / une LCN / un virement à l'avance — même niveau que la validation d'une échéance (Finance + admin). Audité (`EcheanceLeasing`, UPDATE). Nouveau 19/10/2026. |
+| DELETE | `/echeances-leasing/avance/{contratId}/moyen-paiement` | `FINANCE_OR_ADMIN` | Détache le moyen de paiement de l'avance, refusé s'il est déjà réglé. Audité. Nouveau 19/10/2026. |
 | GET | `/echeances-leasing/encours` | `FINANCE_OR_ADMIN` | Encours de leasing par banque, filtrable par organisme/période/montant. |
 | GET | `/echeances-leasing/tableau-amortissement/{contratId}/export/pdf` | `FINANCE_OR_ADMIN` | Export PDF du tableau d'amortissement complet — mêmes critères que la consultation, sans pagination, avec les totaux Endettement/Payé/Restant. |
 | GET | `/echeances-leasing/encours/export/pdf` | `FINANCE_OR_ADMIN` | Nouveau (23/07/2026) — export PDF de l'encours de leasing d'une banque, mêmes critères que `/echeances-leasing/encours`, sans pagination. Écran "Décaissements / Échéances Leasing" du module États des encours. |
@@ -626,6 +630,13 @@ Créé pendant le sweep Leasing (2026-07-04) pour remplacer `leasing.contract.va
 | `/portail/leasing/contratsLeasing` (parent — `encours`, `en-attente-de-ML`, `archives`, `creation/*`, `:id/tableau-amortissement`) | `departmentGuard('Finance')` | Idem. |
 | `/portail/leasing/echeances/edit/:id` — nouveau (21/09/2026) | `departmentGuard('Finance')` + `systemAdminGuard` (les deux posés directement sur la route) | `SYSTEM_ADMIN` uniquement — remplace le dialogue d'édition d'échéance de `TableauAmortissementComponent`, même restriction que le `PUT /echeances-leasing/{id}` (`ADMIN_ONLY`) qu'elle appelle. Atteignable aussi depuis `RecapitulatifComponent` (`CREATE_EDIT_ELIGIBILITY[LEASING]`), qui vérifie `authService.isSystemAdmin()` avant d'afficher le bouton « Éditer ». |
 | `/portail/admin/leasing-config` (parent `admin.routes.ts`) | `systemAdminGuard` (posé au niveau de `/portail/admin` dans `portail.routes.ts`) | `SYSTEM_ADMIN` uniquement. |
+
+**Avance d'un contrat (nouveau 19/10/2026)** — pas de nouvelle route : la carte « Avance » et le dialogue de rattachement vivent dans `TableauAmortissementComponent` (route `:id/tableau-amortissement`, `departmentGuard('Finance')`). Conditions d'affichage :
+
+- carte « Avance » : affichée seulement si le contrat a une avance ; boutons **Rattacher** / **Détacher** visibles pour toute personne ayant accès à la route (Finance + admin), alignés sur `FINANCE_OR_ADMIN` des endpoints `/echeances-leasing/avance/**` — aucune divergence ;
+- colonne Actions du tableau (bascule de statut et crayon d'édition, `isAdmin()`) : remplacée par « Suit son moyen de paiement » pour une échéance rattachée (`moyenPaiementId` non nul), car le backend refuse ces deux actions (`toggle-status`, `PUT /{id}`) sur une avance rattachée — divergence volontaire d'affichage, le backend reste la garde.
+
+Aucun endpoint n'est ajouté aux modules Chèques / LCN / Virements : leur lecture par le module Leasing passe par des façades internes (`ChequeAvanceReader`, `LcnAvanceReader`, `VirementAvanceReader`), sans exposition HTTP.
 
 ---
 

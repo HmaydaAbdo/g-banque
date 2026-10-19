@@ -138,5 +138,51 @@
         }
       </div>
     </div>
+
+    <section class="avance" [class.avance--active]="avecAvanceControl.value">
+      <div class="avance__head">
+        <div class="avance__text">
+          <label for="avecAvance" class="avance__title font-semibold">Ce contrat démarre par une avance</label>
+          <p class="avance__help">
+            L'avance est le premier paiement du contrat (échéance n°1). Elle est comprise dans le prix d'achat et dans la
+            période, puis réglée par chèque, LCN ou virement national.
+          </p>
+        </div>
+        <p-inputSwitch inputId="avecAvance" formControlName="avecAvance" ariaLabel="Ce contrat démarre par une avance"></p-inputSwitch>
+      </div>
+
+      @if (avecAvanceControl.value) {
+        <div class="grid formgrid mt-3">
+          <div class="field col-12 md:col-6">
+            <label for="avanceTTC" class="font-semibold">Montant de l'avance TTC <span class="p-error">*</span></label>
+            <p-inputNumber
+              id="avanceTTC"
+              formControlName="avanceTTC"
+              mode="currency"
+              currency="MAD"
+              locale="fr-MA"
+              [min]="0.01"
+              [ngClass]="{'ng-invalid ng-dirty': avanceTTCControl.invalid && (avanceTTCControl.dirty || avanceTTCControl.touched)}"
+            ></p-inputNumber>
+            @if (avanceTTCControl.invalid && (avanceTTCControl.dirty || avanceTTCControl.touched)) {
+              <p-message severity="error" text="Le montant de l'avance est requis et doit être positif."></p-message>
+            }
+            @if (formGroup.errors?.['avanceTropGrande'] && (avanceTTCControl.dirty || avanceTTCControl.touched)) {
+              <p-message severity="error" text="L'avance doit être strictement inférieure au montant d'achat TTC."></p-message>
+            }
+            @if (formGroup.errors?.['periodeTropCourte'] && (avanceTTCControl.dirty || avanceTTCControl.touched)) {
+              <p-message severity="error" text="Avec une avance, la période doit être d'au moins 2 mois."></p-message>
+            }
+          </div>
+          <div class="field col-12 md:col-6 avance__rappel">
+            <i class="pi pi-info-circle" aria-hidden="true"></i>
+            <span>
+              L'avance est payée à la date de début ; les mensualités commencent un mois plus tard. Une fois le contrat
+              créé, rattachez-lui son chèque, sa LCN ou son virement depuis le tableau d'amortissement.
+            </span>
+          </div>
+        </div>
+      }
+    </section>
   </div>
 </div>

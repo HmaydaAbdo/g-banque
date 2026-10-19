@@ -3,9 +3,12 @@ package staport.finance.gBanque.leasing.echeancesLeasing.entities;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.annotations.Formula;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
+import staport.finance.gBanque.moyensDePaiements.lecture.TypeMoyenPaiement;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -50,10 +53,32 @@ public class EcheanceLeasing {
     @Column(name = "montant_ttc", nullable = false, precision = 19, scale = 2)
     private BigDecimal montantTTC;
 
+    /** Statut saisi, écrit par le rapprochement. Ignoré tant que l'échéance est rattachée à un moyen de paiement. */
     @NotNull(message = "Le statut de paiement est obligatoire")
     @Enumerated(EnumType.STRING)
     @Column(name = "statut_paiement", nullable = false)
-    private StatutEcheanceLeasing statutPaiement; // État de l'échéance (prévue, payée, en retard, etc.)
+    private StatutEcheanceLeasing statutSaisi;
+
+    /**
+     * Statut effectif lu en base, exposé sous le nom {@code statutPaiement} pour que toutes les requêtes
+     * (agrégats, filtres, main levée) tiennent compte du moyen de paiement rattaché : une avance rattachée est
+     * PAYÉE quand son chèque / sa LCN / son virement est RÉGLÉ, PRÉVUE sinon (jamais de statut copié à resynchroniser).
+     */
+    @NotAudited
+    @Enumerated(EnumType.STRING)
+    @Formula("CASE WHEN moyen_paiement_id IS NULL THEN statut_paiement "
+            + "ELSE COALESCE((SELECT CASE WHEN vm.statut_moyen = 'REGLE' THEN 'PAYE' ELSE 'PREVU' END "
+            + "FROM v_echeance_leasing_moyen vm WHERE vm.echeance_id = id), 'PREVU') END")
+    private StatutEcheanceLeasing statutPaiement;
+
+    /** Type du moyen de paiement qui règle cette échéance (avance uniquement), {@code null} sinon. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "moyen_paiement_type", length = 20)
+    private TypeMoyenPaiement moyenPaiementType;
+
+    /** Identifiant du chèque / de la LCN / du virement qui règle cette échéance, {@code null} sinon. */
+    @Column(name = "moyen_paiement_id")
+    private Long moyenPaiementId;
 
     @Column(nullable = false)
     private String observation;
@@ -77,11 +102,11 @@ public class EcheanceLeasing {
         this.numeroEcheance = numeroEcheance;
         this.dateEcheance = dateEcheance;
         this.montantTTC = montantTTC;
-        this.statutPaiement = statutPaiement;
+        this.statutSaisi = statutPaiement;
     }
 
     public boolean isPaid(){
-        return this.statutPaiement==StatutEcheanceLeasing.PAYE;
+        return getStatutPaiement()==StatutEcheanceLeasing.PAYE;
     }
     // --- Getters et Setters ---
     public Long getId() { return id; }
@@ -109,8 +134,25 @@ public class EcheanceLeasing {
     public void setDateValeur(LocalDate dateValeur) {
         this.dateValeur = dateValeur;
     }
-    public StatutEcheanceLeasing getStatutPaiement() { return statutPaiement; }
-    public void setStatutPaiement(StatutEcheanceLeasing statutPaiement) { this.statutPaiement = statutPaiement; }
+    /** Statut effectif : celui du moyen de paiement si l'échéance y est rattachée, le statut saisi sinon. */
+    public StatutEcheanceLeasing getStatutPaiement() {
+        if (moyenPaiementId == null || statutPaiement == null) {
+            return statutSaisi;
+        }
+        return statutPaiement;
+    }
+    public void setStatutPaiement(StatutEcheanceLeasing statutPaiement) { this.statutSaisi = statutPaiement; }
+    public TypeMoyenPaiement getMoyenPaiementType() { return moyenPaiementType; }
+    public Long getMoyenPaiementId() { return moyenPaiementId; }
+    public boolean isRattacheAMoyenPaiement() { return moyenPaiementId != null; }
+    public void rattacherMoyenPaiement(TypeMoyenPaiement type, Long id) {
+        this.moyenPaiementType = type;
+        this.moyenPaiementId = id;
+    }
+    public void detacherMoyenPaiement() {
+        this.moyenPaiementType = null;
+        this.moyenPaiementId = null;
+    }
     public OffsetDateTime getDateCreation() { return dateCreation; }
     public void setDateCreation(OffsetDateTime dateCreation) { this.dateCreation = dateCreation; }
     public OffsetDateTime getDateModification() { return dateModification; }
@@ -164,7 +206,7 @@ public class EcheanceLeasing {
     public String toString() {
         return "EcheanceLeasing{" +
                 "id=" + id +
-                ", statutPaiement=" + statutPaiement +
+                ", statutPaiement=" + getStatutPaiement() +
                 ", montantTTC=" + montantTTC +
                 ", dateEcheance=" + dateEcheance +
                 ", numeroEcheance=" + numeroEcheance +

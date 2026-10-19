@@ -1,0 +1,42 @@
+// Section « avance » de l'étape Détails généraux : un interrupteur déroule le montant de l'avance.
+.avance {
+  padding      : var(--space-4);
+  border       : 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background   : var(--color-surface-2);
+  transition   : border-color 0.2s ease, background 0.2s ease;
+
+  &--active {
+    border-style: solid;
+    border-color: var(--color-gold-border);
+    background  : var(--color-gold-light);
+  }
+
+  &__head {
+    display        : flex;
+    align-items    : center;
+    justify-content: space-between;
+    gap            : var(--space-4);
+  }
+
+  &__title {
+    display: block;
+    cursor : pointer;
+  }
+
+  &__help {
+    margin   : var(--space-1) 0 0;
+    font-size: var(--text-sm);
+    color    : var(--color-text-secondary);
+  }
+
+  &__rappel {
+    display    : flex;
+    align-items: flex-start;
+    gap        : var(--space-2);
+    font-size  : var(--text-sm);
+    color      : var(--color-text-secondary);
+
+    .pi { margin-top: 0.15rem; color: var(--color-info); }
+  }
+}

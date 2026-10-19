@@ -364,6 +364,7 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
           banqueDePrelevementId: contrat.banqueDePrelevementId,
           typeContrat: contrat.typeContrat,
           valeurResiduelle: contrat.valeurResiduelle,
+          avanceTTC: contrat.avanceTTC ?? null,
           phases: (contrat.phases ?? []).map(p => ({
             id: p.id,
             numeroPhase: p.numeroPhase,

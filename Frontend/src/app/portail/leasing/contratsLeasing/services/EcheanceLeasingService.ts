@@ -7,6 +7,7 @@ import { EcheanceLeasingUpdateRequest } from "../dtos/EcheanceLeasingUpdateReque
 import { TableauAmortissement } from "../dtos/table-amortissement";
 import { EcheanceLeasingSearchDTO } from "../dtos/echeance-leasing-search";
 import { toLocalDateString } from "../../../global/types/date.utils";
+import { AvanceLeasingResponse, AvanceMoyenPaiementRequest, MoyenPaiementAvance } from "../dtos/avance-leasing";
 
 
 @Injectable({
@@ -96,6 +97,26 @@ export class EcheanceLeasingService {
    */
   getEcheanceLeasingById(id: number): Observable<EcheanceLeasingResponse> {
     return this.http.get<EcheanceLeasingResponse>(`${this.apiUrl}/${id}`);
+  }
+
+  /** Avance (échéance n°1) d'un contrat et son moyen de paiement — réservé aux contrats qui ont une avance. */
+  getAvance(contratId: number): Observable<AvanceLeasingResponse> {
+    return this.http.get<AvanceLeasingResponse>(`${this.apiUrl}/avance/${contratId}`);
+  }
+
+  /** Décaissements non annulés du montant exact de l'avance et pas encore rattachés à une avance. */
+  getMoyensPaiementDisponibles(contratId: number): Observable<MoyenPaiementAvance[]> {
+    return this.http.get<MoyenPaiementAvance[]>(`${this.apiUrl}/avance/${contratId}/moyens-disponibles`);
+  }
+
+  /** Rattache un chèque, une LCN ou un virement à l'avance du contrat. */
+  rattacherMoyenPaiement(contratId: number, dto: AvanceMoyenPaiementRequest): Observable<AvanceLeasingResponse> {
+    return this.http.put<AvanceLeasingResponse>(`${this.apiUrl}/avance/${contratId}/moyen-paiement`, dto);
+  }
+
+  /** Détache le moyen de paiement de l'avance (refusé s'il est déjà réglé). */
+  detacherMoyenPaiement(contratId: number): Observable<AvanceLeasingResponse> {
+    return this.http.delete<AvanceLeasingResponse>(`${this.apiUrl}/avance/${contratId}/moyen-paiement`);
   }
 
   /**

@@ -80,6 +80,14 @@ public class ContratLeasing {
     @Column(name = "valeur_residuelle")
     private BigDecimal valeurResiduelle;
 
+    /**
+     * Avance optionnelle : échéance n°1, à la date de début du contrat. Incluse dans le montant d'achat et dans
+     * la durée du contrat ; {@code null} quand le contrat n'a pas d'avance.
+     */
+    @DecimalMin(value = "0.01", message = "L'avance doit être supérieure à zéro")
+    @Column(name = "avance_ttc")
+    private BigDecimal avanceTTC;
+
     @OneToMany(mappedBy = "contratLeasing", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<EcheanceLeasing> echeances = new ArrayList<>();
 
@@ -110,6 +118,9 @@ public class ContratLeasing {
     public void setPeriodeEnMois(Integer periodeEnMois) { this.periodeEnMois = periodeEnMois; }
     public BigDecimal getValeurResiduelle() { return valeurResiduelle; }
     public void setValeurResiduelle(BigDecimal valeurResiduelle) { this.valeurResiduelle = valeurResiduelle; }
+    public BigDecimal getAvanceTTC() { return avanceTTC; }
+    public void setAvanceTTC(BigDecimal avanceTTC) { this.avanceTTC = avanceTTC; }
+    public boolean hasAvance() { return avanceTTC != null; }
     public TypeContratLeasing getTypeContrat() { return typeContrat; }
     public void setTypeContrat(TypeContratLeasing typeContrat) { this.typeContrat = typeContrat; }
     public Banque getBanqueDePrelevement() { return banqueDePrelevement; }

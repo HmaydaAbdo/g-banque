@@ -1,6 +1,7 @@
 package staport.finance.gBanque.leasing.echeancesLeasing.dto;
 
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
+import staport.finance.gBanque.moyensDePaiements.lecture.TypeMoyenPaiement;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -21,5 +22,8 @@ public record EcheanceLeasingResponseDTO(
         OffsetDateTime dateCreation,
         OffsetDateTime dateModification,
         String libelle,
-        String observation
+        String observation,
+        /** Moyen de paiement qui règle l'échéance (avance uniquement), {@code null} sinon. */
+        TypeMoyenPaiement moyenPaiementType,
+        Long moyenPaiementId
 ) {}

@@ -77,6 +77,11 @@ public class LeasingValidationService implements ILeasingValidationService {
                             + " et contrat ID: " + dto.contratLeasingId());
                 });
 
+        if (contratLeasing.hasAvance() && echeanceLeasing.getNumeroEcheance() == 1) {
+            throw new ValidationException("L'avance se règle par un chèque, une LCN ou un virement rattaché au contrat : "
+                    + "validez ce moyen de paiement au lieu de l'échéance.");
+        }
+
         if (echeanceLeasing.getStatutPaiement() == StatutEcheanceLeasing.PAYE) {
             log.warn("Tentative de validation d'une échéance déjà payée — ID: {}", dto.echeanceId());
             throw new ValidationException("L'échéance ID " + dto.echeanceId() + " est déjà payée.");

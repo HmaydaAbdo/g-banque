@@ -35,6 +35,9 @@ public record ContratLeasingRequestDTO(
         @NotNull(message = "La valeur résiduelle est obligatoire")
         @Positive(message = "La valeur résiduelle doit être positive.")
         BigDecimal valeurResiduelle,
+        /** Avance optionnelle (échéance n°1) : incluse dans le montant d'achat et dans la période. */
+        @DecimalMin(value = "0.01", message = "L'avance doit être supérieure à zéro")
+        BigDecimal avanceTTC,
         @Valid
         @NotEmpty(message = "La liste des phases ne doit pas être vide")
         List<ContratLeasingPhaseRequestDTO> phases
