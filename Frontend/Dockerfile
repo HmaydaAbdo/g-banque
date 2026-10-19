@@ -18,6 +18,10 @@ LABEL org.opencontainers.image.title="g-banque-frontend" \
       org.opencontainers.image.description="G-Banque — Angular servi par nginx" \
       org.opencontainers.image.source="https://github.com/HmaydaAbdo/g-banque"
 
+# Date du jour passée par la CI : change chaque jour, ce qui invalide la couche mise en cache ci-dessous.
+# Sans elle, le cache de build réutilise un « apk upgrade » ancien et l'image embarque des paquets
+# OS déjà corrigés en amont (échec du scan Trivy).
+ARG OS_PATCH_DATE=local
 RUN apk upgrade --no-cache \
     && rm /etc/nginx/conf.d/default.conf \
     && addgroup -S nginxgroup && adduser -S nginxuser -G nginxgroup \

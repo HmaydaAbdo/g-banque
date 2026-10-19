@@ -57,7 +57,7 @@ Les comptes de test créés pour une recette sont supprimés à la fin de la rec
 * Build multi-étapes : le runtime ne contient ni compilateur, ni outils de build, ni sources.
 * Utilisateur **non-root** dans l'image finale.
 * `HEALTHCHECK` sans outil supplémentaire (`wget` de busybox), cohérent avec `docker-compose.yml`.
-* `apk upgrade --no-cache` dans l'étape runtime pour embarquer les correctifs de l'OS.
+* `apk upgrade --no-cache` dans l'étape runtime pour embarquer les correctifs de l'OS, précédé de `ARG OS_PATCH_DATE` (la CI y passe la date du jour) : sans lui, le cache de build `gha` réutilise un `apk upgrade` ancien et le scan Trivy échoue sur des paquets déjà corrigés en amont (cas libexpat, 19/10/2026).
 * `.dockerignore` strict (pas de `target/`, `node_modules/`, tests, `.env`).
 * Aucun secret dans l'image ni dans les `ARG`/`ENV` : la configuration passe par les variables d'environnement de `docker-compose.yml`.
 

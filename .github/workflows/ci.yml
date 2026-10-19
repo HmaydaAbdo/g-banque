@@ -183,12 +183,17 @@ jobs:
 
       - uses: docker/setup-buildx-action@v4
 
+      # Invalide chaque jour la couche « apk upgrade » du cache de build (voir les Dockerfile)
+      - name: Date des correctifs OS
+        run: echo "OS_PATCH_DATE=$(date -u +%F)" >> "$GITHUB_ENV"
+
       - name: Build (chargé en local pour scan)
         uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.context }}
           load: true
           tags: ${{ env.IMAGE }}:ci
+          build-args: OS_PATCH_DATE=${{ env.OS_PATCH_DATE }}
           cache-from: type=gha,scope=${{ matrix.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}
 
@@ -220,6 +225,7 @@ jobs:
         with:
           context: ${{ matrix.context }}
           push: true
+          build-args: OS_PATCH_DATE=${{ env.OS_PATCH_DATE }}
           tags: |
             ${{ env.DOCKERHUB_NAMESPACE }}/${{ env.IMAGE }}:latest
             ${{ env.DOCKERHUB_NAMESPACE }}/${{ env.IMAGE }}:${{ github.sha }}

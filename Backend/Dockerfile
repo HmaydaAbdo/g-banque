@@ -31,6 +31,10 @@ LABEL org.opencontainers.image.title="g-banque-backend" \
       org.opencontainers.image.source="https://github.com/HmaydaAbdo/g-banque"
 
 # Correctifs de sécurité de l'OS à jour ; pas de curl (le healthcheck utilise wget de busybox)
+# Date du jour passée par la CI : change chaque jour, ce qui invalide la couche mise en cache ci-dessous.
+# Sans elle, le cache de build réutilise un « apk upgrade » ancien et l'image embarque des paquets
+# OS déjà corrigés en amont (échec du scan Trivy).
+ARG OS_PATCH_DATE=local
 RUN apk upgrade --no-cache \
     && addgroup -S spring && adduser -S spring -G spring
 
