@@ -70,6 +70,8 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
   moyens: (MoyenPaiementAvance | undefined)[] = [];
   chargementMoyens = false;
   private pagesChargees = new Set<number>();
+  /** Numéro saisi dans la zone de recherche de la liste. */
+  private recherche = '';
 
   formGroup!: FormGroup;
   private subscriptions: Subscription[] = [];
@@ -85,7 +87,6 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
       periodeEnMois: [null, [Validators.required, Validators.min(1), Validators.max(360)]],
       valeurResiduelle: [{ value: null, disabled: true }], // Ensure it's disabled and read-only
       typeMoyenAvance: [null as TypeMoyenPaiementAvance | null],
-      rechercheMoyen: [''],
       moyenAvance: [{ value: null as MoyenPaiementAvance | null, disabled: true }]
     });
 
@@ -98,9 +99,6 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
         this.moyens = [];
       }
     });
-    this.rechercheMoyenControl.valueChanges.pipe(
-      debounceTime(300), distinctUntilChanged(), takeUntil(this.componentDestroyed$)
-    ).subscribe(() => this.rechargerMoyens());
     // Le choix dans la liste est enregistré tout de suite ; la liste revient à « Choisir… » (le moyen retenu s'affiche en dessous)
     this.moyenAvanceControl.valueChanges.pipe(takeUntil(this.componentDestroyed$)).subscribe(moyen => {
       if (moyen) {
@@ -261,6 +259,20 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
 
   // ── Avance : liste déroulante à chargement progressif ───────────────────────
 
+  /** Recherche par numéro, côté serveur : la liste est rechargée avec les seuls moyens de paiement correspondants. */
+  rechercherMoyen(event: { filter?: string }): void {
+    this.recherche = (event.filter ?? '').trim();
+    this.rechargerMoyens();
+  }
+
+  /** À la fermeture de la liste, la zone de recherche se vide : on retrouve la liste complète. */
+  reinitialiserRecherche(): void {
+    if (this.recherche) {
+      this.recherche = '';
+      this.rechargerMoyens();
+    }
+  }
+
   /** Retire l'avance du contrat. */
   retirerAvance(): void {
     this.wizardService.updateContract({ avanceMoyenPaiement: null });
@@ -289,7 +301,7 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
     this.chargementMoyens = true;
     const taille = GeneralDetailsStepComponent.TAILLE_PAGE;
     this.echeanceLeasingService.getMoyensPaiementDisponibles(
-      type, (this.rechercheMoyenControl.value ?? '').trim(), this.wizardService.getCurrentContract().id ?? null, page, taille
+      type, this.recherche, this.wizardService.getCurrentContract().id ?? null, page, taille
     ).pipe(takeUntil(this.componentDestroyed$)).subscribe({
       next: res => {
         const total = res.page.totalElements;
@@ -352,10 +364,6 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
 
   get typeMoyenAvanceControl(): FormControl {
     return this.formGroup.get('typeMoyenAvance') as FormControl;
-  }
-
-  get rechercheMoyenControl(): FormControl {
-    return this.formGroup.get('rechercheMoyen') as FormControl;
   }
 
   get moyenAvanceControl(): FormControl {

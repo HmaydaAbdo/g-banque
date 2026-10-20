@@ -145,7 +145,7 @@
         <div>
           <h4 id="avance-titre" class="avance__title">Avance (facultative)</h4>
           <p class="avance__help">
-            Choisissez le chèque, la LCN ou le virement qui règle l'avance, parmi ceux déjà créés (réglés ou en cours).
+            Choisissez le type, puis le chèque, la LCN ou le virement qui règle l'avance, par son numéro, parmi ceux déjà créés (réglés ou en cours).
             Son montant devient l'avance : elle est comprise dans le prix d'achat et dans la durée du contrat, et constitue
             l'échéance n°1. Laissez vide si le contrat n'a pas d'avance.
           </p>
@@ -153,7 +153,7 @@
       </div>
 
       <div class="grid formgrid">
-        <div class="field col-12 md:col-3">
+        <div class="field col-12 md:col-4">
           <label for="typeMoyenAvance" class="font-semibold">Type</label>
           <p-dropdown
             inputId="typeMoyenAvance"
@@ -167,13 +167,8 @@
           ></p-dropdown>
         </div>
 
-        <div class="field col-12 md:col-3">
-          <label for="rechercheMoyen" class="font-semibold">Rechercher</label>
-          <input type="text" pInputText id="rechercheMoyen" formControlName="rechercheMoyen" placeholder="N° ou bénéficiaire" />
-        </div>
-
-        <div class="field col-12 md:col-6">
-          <label for="moyenAvance" class="font-semibold">Moyen de paiement</label>
+        <div class="field col-12 md:col-8">
+          <label for="moyenAvance" class="font-semibold">Moyen de paiement (par numéro)</label>
           <p-dropdown
             inputId="moyenAvance"
             formControlName="moyenAvance"
@@ -183,6 +178,11 @@
             [lazy]="true"
             [loading]="chargementMoyens"
             (onLazyLoad)="chargerMoyens($event)"
+            [filter]="true"
+            filterBy="numero"
+            filterPlaceholder="Rechercher par numéro"
+            (onFilter)="rechercherMoyen($event)"
+            (onHide)="reinitialiserRecherche()"
             scrollHeight="264px"
             placeholder="Choisir un moyen de paiement"
             emptyMessage="Aucun moyen de paiement disponible"

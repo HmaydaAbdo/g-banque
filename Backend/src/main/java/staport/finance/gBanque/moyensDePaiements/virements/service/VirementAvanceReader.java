@@ -56,9 +56,7 @@ public class VirementAvanceReader implements MoyenPaiementReader {
             }
             if (recherche != null && !recherche.isBlank()) {
                 String motif = "%" + recherche.trim().toLowerCase() + "%";
-                predicats.add(cb.or(
-                        cb.like(cb.lower(root.get("numero")), motif),
-                        cb.like(cb.lower(root.get("beneficiaire")), motif)));
+                predicats.add(cb.like(cb.lower(root.get("numero")), motif));
             }
             return cb.and(predicats.toArray(new Predicate[0]));
         };
