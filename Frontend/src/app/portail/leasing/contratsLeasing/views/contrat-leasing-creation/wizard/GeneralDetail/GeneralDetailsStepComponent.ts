@@ -1,6 +1,6 @@
 // src/app/contrat-leasing-creation/wizard/GeneralDetail/GeneralDetailsStepComponent.ts
 
-import { Component, Input, OnInit, OnDestroy, Output, EventEmitter, inject } from '@angular/core';
+import { Component, ElementRef, Input, OnInit, OnDestroy, Output, EventEmitter, ViewChild, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormBuilder } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subscription, Subject } from 'rxjs';
@@ -20,6 +20,13 @@ import { Decimal } from 'decimal.js';
 import { toLocalDateString } from '../../../../../../global/types/date.utils';
 import { EcheanceLeasingService } from '../../../../services/EcheanceLeasingService';
 import { LIBELLE_TYPE_MOYEN_PAIEMENT, MoyenPaiementAvance, TypeMoyenPaiementAvance } from '../../../../dtos/avance-leasing';
+
+/** Case de la liste des moyens de paiement dont la page n'est pas encore arrivée du serveur. */
+interface MoyenEnAttente {
+  enAttente: true;
+}
+
+const EN_ATTENTE: MoyenEnAttente = { enAttente: true };
 
 @Component({
   selector: 'app-general-details-step',
@@ -66,12 +73,17 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
   readonly libelleType = LIBELLE_TYPE_MOYEN_PAIEMENT;
   /** Moyen de paiement retenu pour l'avance (null : pas d'avance). */
   avanceChoisie: MoyenPaiementAvance | null = null;
-  /** Options de la liste : une case par résultat du serveur, remplie à mesure que l'on fait défiler. */
-  moyens: (MoyenPaiementAvance | undefined)[] = [];
+  /**
+   * Options de la liste : une case par résultat du serveur, remplie à mesure que l'on fait défiler. Les cases pas encore
+   * chargées portent un marqueur (jamais `undefined` : le composant de liste plante sur une case vide).
+   */
+  moyens: (MoyenPaiementAvance | MoyenEnAttente)[] = [];
   chargementMoyens = false;
   private pagesChargees = new Set<number>();
-  /** Numéro saisi dans la zone de recherche de la liste. */
+  /** Texte saisi dans la zone de recherche de la liste (numéro ou montant). */
   private recherche = '';
+  private readonly recherche$ = new Subject<string>();
+  @ViewChild('champRecherche') private champRecherche?: ElementRef<HTMLInputElement>;
 
   formGroup!: FormGroup;
   private subscriptions: Subscription[] = [];
@@ -99,11 +111,16 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
         this.moyens = [];
       }
     });
+    this.recherche$.pipe(debounceTime(300), takeUntil(this.componentDestroyed$)).subscribe(texte => {
+      this.recherche = texte.trim();
+      this.rechargerMoyens();
+    });
     // Le choix dans la liste est enregistré tout de suite ; la liste revient à « Choisir… » (le moyen retenu s'affiche en dessous)
     this.moyenAvanceControl.valueChanges.pipe(takeUntil(this.componentDestroyed$)).subscribe(moyen => {
-      if (moyen) {
+      if (moyen && !('enAttente' in moyen)) {
         this.wizardService.updateContract({ avanceMoyenPaiement: moyen });
-        this.moyenAvanceControl.setValue(null, { emitEvent: false });
+        // Après la fin du clic : remettre la valeur à null pendant la sélection laisserait la liste afficher « [object Object] »
+        Promise.resolve().then(() => this.moyenAvanceControl.setValue(null, { emitEvent: false }));
       }
     });
 
@@ -259,17 +276,20 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
 
   // ── Avance : liste déroulante à chargement progressif ───────────────────────
 
-  /** Recherche par numéro, côté serveur : la liste est rechargée avec les seuls moyens de paiement correspondants. */
-  rechercherMoyen(event: { filter?: string }): void {
-    this.recherche = (event.filter ?? '').trim();
-    this.rechargerMoyens();
+  /** Recherche par numéro ou montant, côté serveur : la liste est rechargée avec les seuls moyens de paiement correspondants. */
+  rechercherMoyen(texte: string): void {
+    this.recherche$.next(texte);
+  }
+
+  /** À l'ouverture de la liste, le curseur se place dans la zone de recherche. */
+  focaliserRecherche(): void {
+    setTimeout(() => this.champRecherche?.nativeElement.focus());
   }
 
   /** À la fermeture de la liste, la zone de recherche se vide : on retrouve la liste complète. */
   reinitialiserRecherche(): void {
     if (this.recherche) {
-      this.recherche = '';
-      this.rechargerMoyens();
+      this.recherche$.next('');
     }
   }
 
@@ -305,7 +325,7 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
     ).pipe(takeUntil(this.componentDestroyed$)).subscribe({
       next: res => {
         const total = res.page.totalElements;
-        const options = this.moyens.length === total ? [...this.moyens] : Array.from<MoyenPaiementAvance | undefined>({ length: total });
+        const options = this.moyens.length === total ? [...this.moyens] : Array.from<MoyenPaiementAvance | MoyenEnAttente>({ length: total }).fill(EN_ATTENTE);
         res.content.forEach((moyen, i) => options[page * taille + i] = moyen);
         this.moyens = options;
         this.chargementMoyens = false;

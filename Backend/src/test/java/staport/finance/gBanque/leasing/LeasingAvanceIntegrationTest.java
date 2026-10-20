@@ -225,6 +225,22 @@ class LeasingAvanceIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    @DisplayName("Modifier le contrat en gardant le même moyen de paiement (ex. autres phases) : la mention reste, sans doublon")
+    void modification_memeMoyen_conserveLaMentionUneSeuleFois() throws Exception {
+        long cheque = cheque("3000.00", "DECAISSEMENT", "ENCOURS");
+        long contrat = creerContrat("AV-SAME", "10000.00", 4, "CHEQUE", cheque, 3, "2500.00");
+
+        mockMvc.perform(put("/contratsLeasing/{id}", contrat).cookie(admin).contentType(MediaType.APPLICATION_JSON)
+                        .content(corpsContrat(numeroDuContrat(contrat), "10000.00", 4, "CHEQUE", cheque, 3, "2600.00")))
+                .andExpect(status().isOk());
+
+        String libelle = jdbc.queryForObject("SELECT libelle FROM cheques WHERE id = " + cheque, String.class);
+        assertThat(libelle.split("Avance — échéance n°1", -1)).hasSize(2);   // une seule mention
+        assertThat(echeances(contrat).get(1).get("montant_ttc")).hasToString("2600.00");
+        assertThat(echeances(contrat).get(0)).containsEntry("moyen_paiement_type", "CHEQUE");
+    }
+
+    @Test
     @DisplayName("Avance déjà payée (moyen réglé) : le contrat ne peut plus être modifié")
     void modification_refuseeSiAvancePayee() throws Exception {
         long cheque = cheque("3000.00", "DECAISSEMENT", "REGLE");
@@ -281,6 +297,23 @@ class LeasingAvanceIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.content[?(@.id == " + libre1 + ")]").exists())
                 .andExpect(jsonPath("$.content[?(@.id == " + libre2 + ")]").exists())
                 .andExpect(jsonPath("$.content[?(@.id == " + pris + ")]").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("La recherche porte aussi sur le montant : « 7777,77 », « 7777.77 », « 7 777,77 » ou « 7777 » retrouvent le moyen de paiement")
+    void moyensDisponibles_rechercheParMontant() throws Exception {
+        long cible = cheque("7777.77", "DECAISSEMENT", "ENCOURS");
+
+        for (String saisie : List.of("7777,77", "7777.77", "7 777,77", "7777")) {
+            mockMvc.perform(get("/echeances-leasing/avance/moyens-disponibles").cookie(admin)
+                            .param("type", "CHEQUE").param("recherche", saisie).param("size", "50"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content[?(@.id == " + cible + ")]").exists());
+        }
+        mockMvc.perform(get("/echeances-leasing/avance/moyens-disponibles").cookie(admin)
+                        .param("type", "CHEQUE").param("recherche", "7777,78").param("size", "50"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[?(@.id == " + cible + ")]").doesNotExist());
     }
 
     // ── Données ────────────────────────────────────────────────────────────────

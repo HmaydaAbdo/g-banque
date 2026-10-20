@@ -21,7 +21,7 @@ public interface MoyenPaiementReader {
     /**
      * Décaissements non annulés (réglés ou en cours), les plus récents d'abord — candidats au règlement d'une avance.
      *
-     * @param recherche texte cherché dans le numéro ({@code null} ou vide : pas de filtre)
+     * @param recherche texte cherché dans le numéro ou le montant ({@code null} ou vide : pas de filtre)
      * @param idsExclus moyens de paiement à écarter (déjà rattachés à une autre avance)
      */
     Page<MoyenPaiementResume> findDecaissementsNonAnnules(String recherche, Collection<Long> idsExclus, Pageable pageable);

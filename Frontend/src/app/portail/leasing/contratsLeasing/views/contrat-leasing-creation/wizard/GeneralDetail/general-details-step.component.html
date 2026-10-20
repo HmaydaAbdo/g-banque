@@ -145,7 +145,7 @@
         <div>
           <h4 id="avance-titre" class="avance__title">Avance (facultative)</h4>
           <p class="avance__help">
-            Choisissez le type, puis le chèque, la LCN ou le virement qui règle l'avance, par son numéro, parmi ceux déjà créés (réglés ou en cours).
+            Choisissez le type, puis le chèque, la LCN ou le virement qui règle l'avance, par son numéro ou son montant, parmi ceux déjà créés (réglés ou en cours).
             Son montant devient l'avance : elle est comprise dans le prix d'achat et dans la durée du contrat, et constitue
             l'échéance n°1. Laissez vide si le contrat n'a pas d'avance.
           </p>
@@ -168,37 +168,42 @@
         </div>
 
         <div class="field col-12 md:col-8">
-          <label for="moyenAvance" class="font-semibold">Moyen de paiement (par numéro)</label>
+          <label for="moyenAvance" class="font-semibold">Moyen de paiement (par numéro ou montant)</label>
           <p-dropdown
             inputId="moyenAvance"
             formControlName="moyenAvance"
             [options]="moyens"
+            optionDisabled="enAttente"
             [virtualScroll]="true"
             [virtualScrollItemSize]="44"
             [lazy]="true"
             [loading]="chargementMoyens"
             (onLazyLoad)="chargerMoyens($event)"
             [filter]="true"
-            filterBy="numero"
-            filterPlaceholder="Rechercher par numéro"
-            (onFilter)="rechercherMoyen($event)"
+            (onShow)="focaliserRecherche()"
             (onHide)="reinitialiserRecherche()"
             scrollHeight="264px"
             placeholder="Choisir un moyen de paiement"
             emptyMessage="Aucun moyen de paiement disponible"
             appendTo="body"
           >
-            <ng-template pTemplate="item" let-moyen>
-              <div class="avance__option">
-                <span class="avance__option-titre">{{ moyen.numero || 'Sans numéro' }} · {{ moyen.beneficiaire || '—' }}</span>
-                <span class="avance__option-detail">
-                  {{ moyen.montant | number:'1.2-2' }} MAD · {{ moyen.nomBanque || '—' }}
-                  <p-tag [value]="moyen.statut === 'REGLE' ? 'Réglé' : 'En cours'" [severity]="moyen.statut === 'REGLE' ? 'success' : 'info'"></p-tag>
-                </span>
-              </div>
+            <ng-template pTemplate="filter">
+              <input #champRecherche type="text" pInputText class="w-full" autocomplete="off"
+                     placeholder="Rechercher par numéro ou montant" aria-label="Rechercher par numéro ou montant"
+                     (input)="rechercherMoyen($any($event.target).value)" />
             </ng-template>
-            <ng-template pTemplate="loadingItem">
-              <div class="avance__option avance__option--chargement">Chargement…</div>
+            <ng-template pTemplate="item" let-moyen>
+              @if (moyen.enAttente) {
+                <div class="avance__option avance__option--chargement">Chargement…</div>
+              } @else {
+                <div class="avance__option">
+                  <span class="avance__option-titre">{{ moyen.numero || 'Sans numéro' }} · {{ moyen.beneficiaire || '—' }}</span>
+                  <span class="avance__option-detail">
+                    {{ moyen.montant | number:'1.2-2' }} MAD · {{ moyen.nomBanque || '—' }}
+                    <p-tag [value]="moyen.statut === 'REGLE' ? 'Réglé' : 'En cours'" [severity]="moyen.statut === 'REGLE' ? 'success' : 'info'"></p-tag>
+                  </span>
+                </div>
+              }
             </ng-template>
           </p-dropdown>
         </div>

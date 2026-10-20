@@ -13,6 +13,7 @@ import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
 import staport.finance.gBanque.moyensDePaiements.cheques.repositories.ChequeRepository;
 import staport.finance.gBanque.moyensDePaiements.lecture.MoyenPaiementReader;
 import staport.finance.gBanque.moyensDePaiements.lecture.MoyenPaiementResume;
+import staport.finance.gBanque.moyensDePaiements.lecture.RechercheMoyenPaiement;
 import staport.finance.gBanque.moyensDePaiements.lecture.TypeMoyenPaiement;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
@@ -54,9 +55,9 @@ public class ChequeAvanceReader implements MoyenPaiementReader {
             if (!idsExclus.isEmpty()) {
                 predicats.add(cb.not(root.get("id").in(idsExclus)));
             }
-            if (recherche != null && !recherche.isBlank()) {
-                String motif = "%" + recherche.trim().toLowerCase() + "%";
-                predicats.add(cb.like(cb.lower(root.get("numero")), motif));
+            Predicate recherchee = RechercheMoyenPaiement.parNumeroOuMontant(cb, root.get("numero"), root.get("montant"), recherche);
+            if (recherchee != null) {
+                predicats.add(recherchee);
             }
             return cb.and(predicats.toArray(new Predicate[0]));
         };

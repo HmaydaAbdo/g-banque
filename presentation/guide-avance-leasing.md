@@ -39,7 +39,7 @@ Créez le **chèque, la LCN ou le virement** (décaissement) dans son module hab
 1. **Leasing → Contrats → Nouveau contrat**.
 2. À l'étape **Détails généraux**, section **Avance (facultative)** :
    - choisissez le **type** (chèque, LCN, virement) ;
-   - choisissez le moyen de paiement par son **numéro** dans la liste (elle se charge au fil du défilement ; la zone de recherche en haut filtre sur le numéro).
+   - choisissez le moyen de paiement dans la liste (elle se charge au fil du défilement) ; la zone de recherche en haut cherche par **numéro ou montant**.
 3. Le moyen retenu s'affiche avec son montant : **c'est l'avance**. *(« Retirer l'avance » annule le choix.)*
 4. À l'étape **Phases**, les durées doivent totaliser **la durée du contrat moins 1 mois**.
 5. Vérifiez au **Récapitulatif**, puis **Soumettre**.

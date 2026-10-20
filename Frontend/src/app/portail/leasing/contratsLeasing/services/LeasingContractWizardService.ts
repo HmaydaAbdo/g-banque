@@ -191,8 +191,8 @@ export class LeasingContractWizardService {
       const totalPhasesDuration = contract.phases.reduce((sum, phase) => sum + (phase.dureeMois || 0), 0);
       if (totalPhasesDuration !== dureeACouvrir) {
         const precision = contract.avanceMoyenPaiement
-          ? `période de ${contract.periodeEnMois} mois moins le mois de l'avance`
-          : 'période du contrat';
+          ? `la période de ${contract.periodeEnMois} mois moins le mois de l'avance`
+          : 'la période du contrat';
         errors.push(`phases:La durée totale des phases (${totalPhasesDuration} mois) ne correspond pas à la durée à couvrir (${dureeACouvrir} mois, soit ${precision}).`);
       }
     }

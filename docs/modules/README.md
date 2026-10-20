@@ -1115,7 +1115,7 @@ Un organisme ne peut avoir qu'un seul contrat cadre ACTIF à la fois. Sans contr
 
 Le wizard conserve les données saisies si on revient en arrière.
 
-À l'étape **Détails généraux**, une section **Avance (facultative)** permet de choisir le chèque, la LCN ou le virement qui règle l'avance : on indique d'abord le type, puis on choisit le moyen de paiement par son numéro dans une liste qui se charge au fil du défilement (la zone de recherche de la liste filtre sur le numéro) (réglés ou en cours, hors ceux déjà utilisés pour l'avance d'un autre contrat). Le moyen retenu s'affiche avec son montant, qui devient l'avance.
+À l'étape **Détails généraux**, une section **Avance (facultative)** permet de choisir le chèque, la LCN ou le virement qui règle l'avance : on indique d'abord le type, puis on choisit le moyen de paiement dans une liste qui se charge au fil du défilement ; la zone de recherche en haut de la liste cherche par **numéro ou par montant** (réglés ou en cours, hors ceux déjà utilisés pour l'avance d'un autre contrat). Le moyen retenu s'affiche avec son montant, qui devient l'avance.
 
 Sur l'écran **Tableau d'amortissement**, un contrat avec avance affiche une carte **Avance** (lecture seule) : montant, date, et moyen de paiement (type, numéro, banque, bénéficiaire, statut). Pour changer de moyen de paiement, on modifie le contrat.
 

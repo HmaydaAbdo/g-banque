@@ -27,7 +27,7 @@ Des contrats de leasing démarrent par une **avance**, réglée par chèque, LCN
 ## 3. Évolutions du 20/10/2026 (retours de HMAYDA)
 
 - **Assistant de droite supprimé** (panneau d'aide + plan en direct) : le wizard revient à une seule colonne.
-- **Champ d'avance affiché par défaut** à l'étape *Détails généraux* : type → **liste déroulante à chargement progressif** recherchable par numéro (pages de 20, pour la performance) des chèques / LCN / virements existants, réglés ou en cours.
+- **Champ d'avance affiché par défaut** à l'étape *Détails généraux* : type → **liste déroulante à chargement progressif** recherchable par numéro ou montant (pages de 20, pour la performance) des chèques / LCN / virements existants, réglés ou en cours.
 - **Mention dans la transaction** : libellé et observation de la transaction du moyen de paiement (et du moyen lui-même) indiquent « Avance … échéance n°1 du contrat N° x ». Si le moyen est réglé, la transaction existante est mise à jour ; s'il est en cours, la mention est posée sur lui et se retrouve à la validation.
 - **Changement de moyen** : par modification du contrat (tant que non réglé) ; l'ancien retrouve ses textes d'origine. La suppression du contrat retire aussi la mention.
 
@@ -38,7 +38,7 @@ Des contrats de leasing démarrent par une **avance**, réglée par chèque, LCN
 **Backend**
 - Génération du plan avec avance, contrôles de saisie, pas de commission sur l'avance.
 - Le contrat reçoit `avanceMoyenPaiement` (type + identifiant) ; le service d'avance contrôle le moyen (décaissement, non annulé, non déjà utilisé), pose le montant et la mention.
-- Endpoints : `GET /echeances-leasing/avance/{contratId}` et `GET /echeances-leasing/avance/moyens-disponibles` (paginé, recherche par numéro, par type).
+- Endpoints : `GET /echeances-leasing/avance/{contratId}` et `GET /echeances-leasing/avance/moyens-disponibles` (paginé, recherche par numéro ou montant, par type).
 - Lecture des chèques / LCN / virements par des façades dédiées ; mise à jour des textes de la transaction via `ITransactionService.modifierTextes` (qui propage au moyen de paiement).
 - Garde-fous : l'avance ne se valide pas comme un loyer et ne se bascule pas à la main.
 
