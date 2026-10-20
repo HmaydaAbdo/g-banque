@@ -45,6 +45,7 @@ import staport.finance.gBanque.leasing.contratLeasing.service.ContratLeasingServ
 import staport.finance.gBanque.leasing.contratLeasing.specification.ContratLeasingSpecification;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.MontantsContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
+import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.IAvanceLeasingService;
 import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.IEcheanceLeasingService;
 import staport.finance.gBanque.leasing.contratCadre.entities.ContratCadre;
 import staport.finance.gBanque.leasing.contratCadre.services.IContratCadreService;
@@ -85,12 +86,14 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
     private final IBanqueService banqueService;
     private final IContratCadreService contratCadreService;
     private final IEcheanceLeasingService echeanceLeasingService;
+    private final IAvanceLeasingService avanceLeasingService;
     private final ILeasingConfigService leasingConfigService;
     private final OrganismeLeasingService organismeLeasingService;
     private final StaportPdfReportService staportPdfReportService;
     private final StaportExcelReportService staportExcelReportService;
 
     public ContratLeasingServiceImpl(IEcheanceLeasingService echeanceLeasingService,
+                                     IAvanceLeasingService avanceLeasingService,
                                      ContratLeasingRepository contratLeasingRepository,
                                      ContratLeasingMapper contratLeasingMapper,
                                      IBanqueService banqueService,
@@ -104,6 +107,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         this.banqueService = banqueService;
         this.contratCadreService = contratCadreService;
         this.echeanceLeasingService = echeanceLeasingService;
+        this.avanceLeasingService = avanceLeasingService;
         this.leasingConfigService = leasingConfigService;
         this.organismeLeasingService = organismeLeasingService;
         this.staportPdfReportService = staportPdfReportService;
@@ -136,18 +140,23 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
                 requestDTO.typeContrat(), requestDTO.numeroContrat());
 
         validateTypeSpecificContratLeasingRequest(requestDTO);
+        BigDecimal avance = resoudreAvance(requestDTO);
 
         Banque banque = banqueService.findOrThrow(requestDTO.banqueDePrelevementId());
         ContratCadre contratCadre = contratCadreService.resolveActif(requestDTO.organismeLeasingId());
 
         ContratLeasing contratLeasing = contratLeasingMapper.toEntity(requestDTO, banque);
         contratLeasing.setContratCadre(contratCadre);
+        contratLeasing.setAvanceTTC(avance);
         setValeurResiduelleBasedOnType(contratLeasing, requestDTO.montantAchatTTC());
 
         ContratLeasing savedContrat = contratLeasingRepository.save(contratLeasing);
         log.info("Contrat de leasing créé — ID : {}", savedContrat.getId());
 
         echeanceLeasingService.generateEcheances(savedContrat);
+        if (avance != null) {
+            avanceLeasingService.rattacher(savedContrat.getId(), requestDTO.avanceMoyenPaiement());
+        }
 
         return toDto(savedContrat);
     }
@@ -157,7 +166,8 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
     public ContratLeasingResponseDTO getContratLeasingById(Long id) {
         ContratLeasing contrat = findContratOrThrow(id);
         log.debug("Contrat récupéré — numéro : {}", contrat.getNumeroContrat());
-        return toDto(contrat);
+        ContratLeasingResponseDTO dto = toDto(contrat);
+        return contrat.hasAvance() ? dto.withAvanceMoyenPaiement(avanceLeasingService.getAvance(id).moyenPaiement()) : dto;
     }
 
     @Override
@@ -169,15 +179,24 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         ContratLeasing existingContrat = findContratOrThrow(id);
         validateTypeSpecificContratLeasingRequest(requestDTO);
 
+        // L'ancien moyen de paiement de l'avance est libéré (mention retirée) avant tout : le nouveau choix, qui peut
+        // être le même, est ensuite contrôlé et rattaché à l'échéance n°1 régénérée.
+        avanceLeasingService.liberer(existingContrat);
+        BigDecimal avance = resoudreAvance(requestDTO);
+
         Banque banque = banqueService.findOrThrow(requestDTO.banqueDePrelevementId());
         ContratCadre contratCadre = contratCadreService.resolveActif(requestDTO.organismeLeasingId());
 
         contratLeasingMapper.updateEntityFromDto(requestDTO, existingContrat, banque);
         existingContrat.setContratCadre(contratCadre);
+        existingContrat.setAvanceTTC(avance);
         setValeurResiduelleBasedOnType(existingContrat, existingContrat.getMontantAchatTTC());
 
         ContratLeasing updatedContrat = contratLeasingRepository.save(existingContrat);
         echeanceLeasingService.regenerateEcheances(updatedContrat);
+        if (avance != null) {
+            avanceLeasingService.rattacher(updatedContrat.getId(), requestDTO.avanceMoyenPaiement());
+        }
 
         log.info("Contrat de leasing mis à jour — ID : {}", id);
         return toDto(updatedContrat);
@@ -201,6 +220,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
             );
         }
 
+        avanceLeasingService.liberer(contrat);
         echeanceLeasingService.deleteEcheancesAndCommissionByContrat(contrat);
         contratLeasingRepository.deleteById(id);
 
@@ -271,7 +291,6 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
             log.warn("Type de contrat manquant dans la requête");
             throw new ValidationException("Le type de contrat est obligatoire.");
         }
-        validateAvance(requestDTO);
         switch (requestDTO.typeContrat()) {
             case LINEAIRE -> validateLineaireContrat(requestDTO);
             case PROGRESSIF -> validateProgressifContrat(requestDTO);
@@ -287,22 +306,28 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
      * L'avance est incluse dans le prix d'achat (donc strictement inférieure) et occupe l'échéance n°1 : elle compte
      * pour un mois de la période, qui doit en garder au moins un pour les mensualités.
      */
-    private void validateAvance(ContratLeasingRequestDTO requestDTO) {
-        if (requestDTO.avanceTTC() == null) {
-            return;
+    /**
+     * Contrôle le moyen de paiement choisi pour l'avance et renvoie son montant (l'avance), ou {@code null} sans avance.
+     * Strictement inférieure au prix d'achat, elle occupe un mois de la période : il en faut au moins un autre pour les mensualités.
+     */
+    private BigDecimal resoudreAvance(ContratLeasingRequestDTO requestDTO) {
+        if (requestDTO.avanceMoyenPaiement() == null) {
+            return null;
         }
-        if (requestDTO.avanceTTC().compareTo(requestDTO.montantAchatTTC()) >= 0) {
-            throw new ValidationException("L'avance doit être strictement inférieure au montant d'achat TTC.");
+        BigDecimal avance = avanceLeasingService.resoudreMoyen(requestDTO.avanceMoyenPaiement()).montant();
+        if (avance.compareTo(requestDTO.montantAchatTTC()) >= 0) {
+            throw new ValidationException("L'avance (" + avance + ") doit être strictement inférieure au montant d'achat TTC.");
         }
         if (requestDTO.periodeEnMois() < 2) {
             throw new ValidationException(
                     "Un contrat avec avance doit durer au moins 2 mois : 1 mois pour l'avance et au moins 1 pour les mensualités.");
         }
+        return avance;
     }
 
     /** Mois couverts par les phases de mensualités : la période, moins le mois de l'avance s'il y en a une. */
     private static int dureeMensualites(ContratLeasingRequestDTO requestDTO) {
-        return requestDTO.periodeEnMois() - (requestDTO.avanceTTC() != null ? 1 : 0);
+        return requestDTO.periodeEnMois() - (requestDTO.avanceMoyenPaiement() != null ? 1 : 0);
     }
 
     private void validateLineaireContrat(ContratLeasingRequestDTO requestDTO) {

@@ -93,7 +93,7 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
         const phasesChanged = JSON.stringify(prevPhasesNormalized) !== JSON.stringify(currPhasesNormalized);
         const typeContratChanged = prevContract.typeContrat !== currContract.typeContrat;
         const periodeEnMoisChanged = prevContract.periodeEnMois !== currContract.periodeEnMois
-          || prevContract.avanceTTC !== currContract.avanceTTC;
+          || prevContract.avanceMoyenPaiement?.id !== currContract.avanceMoyenPaiement?.id;
         const errorsChanged = JSON.stringify(prevErrors) !== JSON.stringify(currErrors);
 
         return !phasesChanged && !typeContratChanged && !periodeEnMoisChanged && !errorsChanged;
@@ -105,7 +105,7 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
       this.currentTypeContrat = contract.typeContrat || null;
 
       this.currentPeriodeEnMois = contract.periodeEnMois || null;
-      this.avanceSaisie = !!contract.avanceTTC;
+      this.avanceSaisie = !!contract.avanceMoyenPaiement;
       this.dureeACouvrir = contract.periodeEnMois ? contract.periodeEnMois - (this.avanceSaisie ? 1 : 0) : null;
 
       if (previousTypeContrat !== null && previousTypeContrat !== this.currentTypeContrat) {

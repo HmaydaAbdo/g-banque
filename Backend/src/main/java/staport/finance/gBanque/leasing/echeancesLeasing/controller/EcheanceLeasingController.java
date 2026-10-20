@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -17,9 +18,9 @@ import staport.finance.gBanque.leasing.contratLeasing.service.ContratLeasingServ
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.*;
 import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.IAvanceLeasingService;
 import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.IEcheanceLeasingService;
+import staport.finance.gBanque.moyensDePaiements.lecture.TypeMoyenPaiement;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Tag(name = "Échéances de leasing", description = "Consultation et gestion des échéances de leasing")
 @SecurityRequirement(name = "bearerAuth")
@@ -116,30 +117,14 @@ public class EcheanceLeasingController {
     }
 
     @Operation(summary = "Moyens de paiement disponibles pour l'avance",
-            description = "Décaissements non annulés du montant exact de l'avance et pas encore rattachés à une avance")
+            description = "Décaissements non annulés (réglés ou en cours) du type demandé qui ne règlent pas déjà l'avance d'un autre contrat, par pages (liste déroulante du wizard)")
     @PreAuthorize(FINANCE_OR_ADMIN)
-    @GetMapping("/avance/{contratId}/moyens-disponibles")
-    public ResponseEntity<List<MoyenPaiementAvanceDTO>> getMoyensPaiementDisponibles(@PathVariable Long contratId) {
-        return ResponseEntity.ok(avanceLeasingService.getMoyensPaiementDisponibles(contratId));
-    }
-
-    @Operation(summary = "Rattacher un moyen de paiement à l'avance",
-            description = "Rattache un chèque, une LCN ou un virement (décaissement du montant exact de l'avance) à l'avance du contrat")
-    @ApiResponse(responseCode = "400", description = "Montant, sens ou statut incompatible, ou moyen de paiement déjà utilisé")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    @PutMapping("/avance/{contratId}/moyen-paiement")
-    public ResponseEntity<AvanceLeasingResponseDTO> rattacherMoyenPaiement(
-            @PathVariable Long contratId,
-            @Valid @RequestBody AvanceMoyenPaiementRequestDTO dto) {
-        return ResponseEntity.ok(avanceLeasingService.rattacherMoyenPaiement(contratId, dto));
-    }
-
-    @Operation(summary = "Détacher le moyen de paiement de l'avance",
-            description = "Refusé si le moyen de paiement est déjà réglé")
-    @ApiResponse(responseCode = "400", description = "Aucun moyen rattaché, ou moyen déjà réglé")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    @DeleteMapping("/avance/{contratId}/moyen-paiement")
-    public ResponseEntity<AvanceLeasingResponseDTO> detacherMoyenPaiement(@PathVariable Long contratId) {
-        return ResponseEntity.ok(avanceLeasingService.detacherMoyenPaiement(contratId));
+    @GetMapping("/avance/moyens-disponibles")
+    public ResponseEntity<Page<MoyenPaiementAvanceDTO>> getMoyensPaiementDisponibles(
+            @RequestParam TypeMoyenPaiement type,
+            @RequestParam(required = false) String recherche,
+            @RequestParam(required = false) Long contratId,
+            Pageable pageable) {
+        return ResponseEntity.ok(avanceLeasingService.getMoyensPaiementDisponibles(type, recherche, contratId, pageable));
     }
 }

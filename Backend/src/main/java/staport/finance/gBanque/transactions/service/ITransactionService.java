@@ -9,6 +9,9 @@ import staport.finance.gBanque.transactions.dtos.TransactionSearchDto;
 import staport.finance.gBanque.transactions.dtos.TransactionUpdateRequestDto;
 
 import java.math.BigDecimal;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+import java.util.function.UnaryOperator;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -41,6 +44,17 @@ public interface ITransactionService {
     byte[] exportBankTransactionsPdf(Long banqueId, TransactionSearchDto searchDto);
 
     TransactionResponseDto updateTransactionById(Long id, TransactionUpdateRequestDto updateRequestDto);
+
+    /**
+     * Réécrit le libellé et l'observation des transactions d'une opération source (ex. mention d'avance de leasing sur
+     * la transaction d'un chèque réglé), puis propage les textes à l'entité source comme le fait
+     * {@link #updateTransactionById}. Sans transaction pour cette source, ne fait rien.
+     *
+     * @param libelle     fonction appliquée au libellé actuel (renvoie le texte tel quel pour ne rien changer)
+     * @param observation idem pour l'observation
+     */
+    void modifierTextes(Collection<TransactionSource> sources, Long referent,
+                        UnaryOperator<String> libelle, UnaryOperator<String> observation);
 
     BigDecimal computeBalance(Long banqueId);
 

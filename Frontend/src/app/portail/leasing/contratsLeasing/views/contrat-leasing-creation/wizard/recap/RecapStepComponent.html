@@ -44,10 +44,17 @@
         <span class="recap__label">Type de Contrat</span>
         <span class="recap__value">{{ getContractTypeDisplayName(contractData.typeContrat) }}</span>
       </div>
-      @if (contractData.avanceTTC) {
+      @if (contractData.avanceMoyenPaiement; as moyen) {
         <div class="recap__row">
           <span class="recap__label">Avance (échéance n°1)</span>
-          <span class="recap__value">{{ formatCurrency(contractData.avanceTTC) }} le {{ formatDate(contractData.dateAvance) }}</span>
+          <span class="recap__value">{{ formatCurrency(moyen.montant) }} le {{ formatDate(contractData.dateAvance) }}</span>
+        </div>
+        <div class="recap__row">
+          <span class="recap__label">Réglée par</span>
+          <span class="recap__value">
+            {{ libelleMoyen[moyen.type] }} {{ moyen.numero ? 'n° ' + moyen.numero : '(sans numéro)' }} ·
+            {{ moyen.statut === 'REGLE' ? 'réglé' : 'en cours' }}
+          </span>
         </div>
       }
       <div class="recap__row">
@@ -67,10 +74,10 @@
         <span class="recap__tile-label">Montant Achat TTC</span>
         <span class="recap__tile-value">{{ formatCurrency(contractData.montantAchatTTC) }}</span>
       </div>
-      @if (contractData.avanceTTC) {
+      @if (contractData.avanceMoyenPaiement; as moyen) {
         <div class="recap__tile">
           <span class="recap__tile-label">Avance</span>
-          <span class="recap__tile-value">{{ formatCurrency(contractData.avanceTTC) }}</span>
+          <span class="recap__tile-value">{{ formatCurrency(moyen.montant) }}</span>
         </div>
       }
       <div class="recap__tile">

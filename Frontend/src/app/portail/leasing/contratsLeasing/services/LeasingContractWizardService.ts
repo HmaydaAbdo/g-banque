@@ -9,36 +9,6 @@ import {TypeContratLeasing} from "../dtos/type-contrat-leasing";
 import {SubmissionSuccessResponse} from "../dtos/SubmissionSuccessResponse";
 import {ContratLeasingService} from "./contrat-leasing.service";
 
-/**
- * Aperçu en direct du plan du contrat (panneau latéral du wizard) : décomposition avance / mensualités / valeur
- * résiduelle, endettement et dates clés. Calculé uniquement à partir de l'état du wizard.
- */
-export interface ApercuContrat {
-  achat: Decimal | null;
-  avance: Decimal | null;
-  /** Mois couverts par les phases de mensualités. */
-  moisMensualites: number;
-  totalMensualites: Decimal;
-  valeurResiduelle: Decimal | null;
-  /** Avance + mensualités + valeur résiduelle. */
-  endettement: Decimal;
-  /** Endettement moins prix d'achat : coût du financement (null tant que le prix d'achat n'est pas saisi). */
-  coutFinancement: Decimal | null;
-  /** Mois que les phases doivent couvrir : période moins le mois de l'avance. */
-  dureeACouvrir: number | null;
-  dateAvance: Date | null;
-  datePremiereMensualite: Date | null;
-  dateValeurResiduelle: Date | null;
-}
-
-/** Ajoute des mois en ramenant le jour à la fin du mois si besoin (comme LocalDate.plusMonths côté serveur). */
-function ajouterMois(date: Date, mois: number): Date {
-  const cible = new Date(date.getFullYear(), date.getMonth() + mois, 1);
-  const dernierJour = new Date(cible.getFullYear(), cible.getMonth() + 1, 0).getDate();
-  cible.setDate(Math.min(date.getDate(), dernierJour));
-  return cible;
-}
-
 // Define the initial empty contract state
 const initialContract: ContratLeasingRequestDTO = {
   numeroContrat: null,
@@ -50,7 +20,7 @@ const initialContract: ContratLeasingRequestDTO = {
   banqueDePrelevementId: null,
   typeContrat: null,
   valeurResiduelle: null,
-  avanceTTC: null,
+  avanceMoyenPaiement: null,
   phases: []
 };
 
@@ -71,9 +41,6 @@ export class LeasingContractWizardService {
   //  Observable for expectedTotalAmount (L'Indemnité)
   // It will automatically update whenever the contract$ changes
   public expectedTotalAmount$: Observable<Decimal | null>;
-
-  /** Aperçu en direct du plan (avance, mensualités, valeur résiduelle, endettement, dates clés). */
-  public apercu$: Observable<ApercuContrat>;
 
 
   private contratLeasingService = inject(ContratLeasingService);
@@ -100,47 +67,13 @@ export class LeasingContractWizardService {
 
         // Add valeurResiduelle
         const valeurResiduelle = contract.valeurResiduelle || new Decimal(0); // Treat null/undefined valeurResiduelle as 0
-        const avance = new Decimal(contract.avanceTTC || 0);
+        const avance = new Decimal(contract.avanceMoyenPaiement?.montant || 0);
         const expectedTotal = totalMensualities.plus(valeurResiduelle).plus(avance);
 
         return expectedTotal;
       }),
       distinctUntilChanged((prev, curr) => prev?.eq(curr || new Decimal(0))) // Prevent emission if value hasn't numerically changed
     );
-
-    this.apercu$ = this.contract$.pipe(map(contract => this.calculerApercu(contract)));
-  }
-
-  private calculerApercu(contract: ContratLeasingRequestDTO): ApercuContrat {
-    const avance = contract.avanceTTC ? new Decimal(contract.avanceTTC) : null;
-    const achat = contract.montantAchatTTC ? new Decimal(contract.montantAchatTTC) : null;
-    const valeurResiduelle = contract.valeurResiduelle != null ? new Decimal(contract.valeurResiduelle) : null;
-
-    let totalMensualites = new Decimal(0);
-    let moisMensualites = 0;
-    for (const phase of contract.phases) {
-      const duree = phase.dureeMois || 0;
-      moisMensualites += duree;
-      totalMensualites = totalMensualites.plus(new Decimal(phase.mensualiteTTC || 0).times(duree));
-    }
-
-    const endettement = totalMensualites.plus(valeurResiduelle ?? 0).plus(avance ?? 0);
-    const debut = contract.dateDebut ? new Date(contract.dateDebut) : null;
-    const periode = contract.periodeEnMois;
-
-    return {
-      achat,
-      avance,
-      moisMensualites,
-      totalMensualites,
-      valeurResiduelle,
-      endettement,
-      coutFinancement: achat && endettement.gt(0) ? endettement.minus(achat) : null,
-      dureeACouvrir: periode ? periode - (avance ? 1 : 0) : null,
-      dateAvance: avance ? debut : null,
-      datePremiereMensualite: debut ? ajouterMois(debut, avance ? 1 : 0) : null,
-      dateValeurResiduelle: debut && periode ? ajouterMois(debut, periode) : null
-    };
   }
 
   getCurrentContract(): ContratLeasingRequestDTO {
@@ -254,22 +187,20 @@ export class LeasingContractWizardService {
 
     // Rule 2: Total duration of phases must match contract period, minus the avance month (if period is set)
     if (contract.periodeEnMois !== null && contract.periodeEnMois !== undefined && contract.periodeEnMois > 0) {
-      const dureeACouvrir = contract.periodeEnMois - (contract.avanceTTC ? 1 : 0);
+      const dureeACouvrir = contract.periodeEnMois - (contract.avanceMoyenPaiement ? 1 : 0);
       const totalPhasesDuration = contract.phases.reduce((sum, phase) => sum + (phase.dureeMois || 0), 0);
       if (totalPhasesDuration !== dureeACouvrir) {
-        const precision = contract.avanceTTC
+        const precision = contract.avanceMoyenPaiement
           ? `période de ${contract.periodeEnMois} mois moins le mois de l'avance`
           : 'période du contrat';
         errors.push(`phases:La durée totale des phases (${totalPhasesDuration} mois) ne correspond pas à la durée à couvrir (${dureeACouvrir} mois, soit ${precision}).`);
       }
     }
 
-    // Avance : incluse dans le prix d'achat (donc strictement inférieure) et compte pour un mois de la période
-    if (contract.avanceTTC != null) {
-      if (contract.avanceTTC <= 0) {
-        errors.push("general-details:L'avance doit être supérieure à zéro.");
-      } else if (contract.montantAchatTTC != null && contract.avanceTTC >= contract.montantAchatTTC) {
-        errors.push("general-details:L'avance doit être strictement inférieure au montant d'achat TTC.");
+    // Avance : montant du moyen de paiement choisi ; incluse dans le prix d'achat (donc strictement inférieure) et compte pour un mois de la période
+    if (contract.avanceMoyenPaiement) {
+      if (contract.montantAchatTTC != null && contract.avanceMoyenPaiement.montant >= contract.montantAchatTTC) {
+        errors.push("general-details:L'avance (montant du moyen de paiement choisi) doit être strictement inférieure au montant d'achat TTC.");
       }
       if (contract.periodeEnMois != null && contract.periodeEnMois < 2) {
         errors.push("general-details:Un contrat avec avance doit durer au moins 2 mois (1 mois d'avance et au moins 1 mois de mensualités).");

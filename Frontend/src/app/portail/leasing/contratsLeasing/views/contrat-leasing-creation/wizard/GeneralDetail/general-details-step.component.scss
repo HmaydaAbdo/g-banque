@@ -1,27 +1,27 @@
-// Section « avance » de l'étape Détails généraux : un interrupteur déroule le montant de l'avance.
+// Section « avance » de l'étape Détails généraux : choix d'un chèque / d'une LCN / d'un virement existant.
 .avance {
   padding      : var(--space-4);
-  border       : 1px dashed var(--color-border-strong);
+  border       : 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background   : var(--color-surface-2);
-  transition   : border-color 0.2s ease, background 0.2s ease;
-
-  &--active {
-    border-style: solid;
-    border-color: var(--color-gold-border);
-    background  : var(--color-gold-light);
-  }
 
   &__head {
-    display        : flex;
-    align-items    : center;
-    justify-content: space-between;
-    gap            : var(--space-4);
+    display    : flex;
+    align-items: flex-start;
+    gap        : var(--space-3);
+    margin-bottom: var(--space-3);
+  }
+
+  &__icone {
+    margin-top: 0.15rem;
+    color     : var(--color-gold);
+    font-size : var(--text-lg);
   }
 
   &__title {
-    display: block;
-    cursor : pointer;
+    margin     : 0;
+    font-size  : var(--text-md);
+    font-weight: var(--weight-semibold);
   }
 
   &__help {
@@ -30,13 +30,62 @@
     color    : var(--color-text-secondary);
   }
 
-  &__rappel {
+  // ── Lignes de la liste déroulante ───────────────────────────────────────
+  &__option {
+    display       : flex;
+    flex-direction: column;
+    gap           : 2px;
+    min-height    : 44px;
+    justify-content: center;
+
+    &--chargement { color: var(--color-text-muted); }
+  }
+
+  &__option-titre { font-weight: var(--weight-semibold); }
+
+  &__option-detail {
     display    : flex;
-    align-items: flex-start;
+    align-items: center;
+    gap        : var(--space-2);
+    font-size  : var(--text-xs);
+    color      : var(--color-text-secondary);
+  }
+
+  // ── Moyen de paiement retenu ────────────────────────────────────────────
+  &__choisie {
+    display        : flex;
+    align-items    : center;
+    justify-content: space-between;
+    gap            : var(--space-4);
+    margin-top     : var(--space-2);
+    padding        : var(--space-3) var(--space-4);
+    border         : 1px solid var(--color-gold-border);
+    border-left    : 4px solid var(--color-gold);
+    border-radius  : var(--radius-md);
+    background     : var(--color-gold-light);
+  }
+
+  &__choisie-texte {
+    display       : flex;
+    flex-direction: column;
+    gap           : 2px;
+  }
+
+  &__choisie-kicker {
+    font-size     : var(--text-xs);
+    font-weight   : var(--weight-semibold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color         : var(--color-text-secondary);
+  }
+
+  &__choisie-montant { font-size: var(--text-xl); }
+
+  &__choisie-detail {
+    display    : flex;
+    align-items: center;
     gap        : var(--space-2);
     font-size  : var(--text-sm);
     color      : var(--color-text-secondary);
-
-    .pi { margin-top: 0.15rem; color: var(--color-info); }
   }
 }

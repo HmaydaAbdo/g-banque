@@ -6,25 +6,7 @@
   </div>
 
   <div class="lw__body">
-    <div class="lw__main">
-      <router-outlet (activate)="onActivate($event)"></router-outlet>
-    </div>
-
-    <aside class="lw__aside" aria-label="Aide et aperçu du contrat">
-      @if (guides[activeIndex]; as guide) {
-        <section class="lw__guide">
-          <span class="lw__guide-step">Étape {{ activeIndex + 1 }} sur {{ items.length }}</span>
-          <h3 class="lw__guide-title">{{ guide.titre }}</h3>
-          <p class="lw__guide-text">{{ guide.texte }}</p>
-          <ul class="lw__guide-tips">
-            @for (conseil of guide.conseils; track conseil) {
-              <li>{{ conseil }}</li>
-            }
-          </ul>
-        </section>
-      }
-      <app-contract-apercu></app-contract-apercu>
-    </aside>
+    <router-outlet (activate)="onActivate($event)"></router-outlet>
   </div>
 
   <div class="lw__actions">

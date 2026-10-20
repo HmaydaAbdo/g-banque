@@ -45,74 +45,14 @@
     margin     : var(--space-1) 0 var(--space-4);
   }
 
-  // Zone scrollable : contenu de l'étape à gauche, aide + aperçu du plan à droite (replié sous 1100 px).
   &__body {
-    flex                 : 1 1 0;
-    min-height           : 0;
-    overflow-y           : auto;
-    background           : var(--color-surface);
-    border-left          : 1px solid var(--color-border);
-    border-right         : 1px solid var(--color-border);
-    padding              : var(--space-4) var(--space-5);
-    display              : grid;
-    grid-template-columns: minmax(0, 1fr) 20rem;
-    gap                  : var(--space-5);
-    align-items          : start;
-
-    @media (max-width: 1100px) {
-      grid-template-columns: minmax(0, 1fr);
-    }
-  }
-
-  &__main {
-    min-width: 0;
-  }
-
-  &__aside {
-    position      : sticky;
-    top           : 0;
-    display       : flex;
-    flex-direction: column;
-    gap           : var(--space-4);
-  }
-
-  // ── Aide contextuelle ─────────────────────────────────────────────────────
-  &__guide {
-    padding      : var(--space-4);
-    border       : 1px solid var(--color-border);
-    border-left  : 4px solid var(--color-primary);
-    border-radius: var(--radius-lg);
-    background   : var(--color-primary-light);
-  }
-
-  &__guide-step {
-    font-size     : var(--text-xs);
-    font-weight   : var(--weight-semibold);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color         : var(--color-primary-text);
-  }
-
-  &__guide-title {
-    margin     : var(--space-1) 0 var(--space-2);
-    font-size  : var(--text-md);
-    font-weight: var(--weight-bold);
-    color      : var(--color-text-primary);
-  }
-
-  &__guide-text {
-    margin   : 0 0 var(--space-2);
-    font-size: var(--text-sm);
-    color    : var(--color-text-secondary);
-  }
-
-  &__guide-tips {
-    margin     : 0;
-    padding-left: var(--space-4);
-    font-size  : var(--text-xs);
-    color      : var(--color-text-secondary);
-
-    li + li { margin-top: var(--space-1); }
+    flex        : 1 1 0;
+    min-height  : 0;
+    overflow-y  : auto;
+    background  : var(--color-surface);
+    border-left : 1px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+    padding     : var(--space-4) var(--space-5);
   }
 
   &__actions {

@@ -3,6 +3,7 @@ package staport.finance.gBanque.leasing.contratLeasing.dto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import staport.finance.gBanque.leasing.contratLeasing.enums.TypeContratLeasing;
+import staport.finance.gBanque.leasing.echeancesLeasing.dto.AvanceMoyenPaiementRequestDTO;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -35,9 +36,12 @@ public record ContratLeasingRequestDTO(
         @NotNull(message = "La valeur résiduelle est obligatoire")
         @Positive(message = "La valeur résiduelle doit être positive.")
         BigDecimal valeurResiduelle,
-        /** Avance optionnelle (échéance n°1) : incluse dans le montant d'achat et dans la période. */
-        @DecimalMin(value = "0.01", message = "L'avance doit être supérieure à zéro")
-        BigDecimal avanceTTC,
+        /**
+         * Avance optionnelle (échéance n°1) : chèque, LCN ou virement existant qui la règle. Son montant devient celui de
+         * l'avance, incluse dans le montant d'achat et dans la période.
+         */
+        @Valid
+        AvanceMoyenPaiementRequestDTO avanceMoyenPaiement,
         @Valid
         @NotEmpty(message = "La liste des phases ne doit pas être vide")
         List<ContratLeasingPhaseRequestDTO> phases

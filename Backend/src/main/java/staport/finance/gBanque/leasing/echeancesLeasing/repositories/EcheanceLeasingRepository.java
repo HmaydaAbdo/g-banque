@@ -54,8 +54,14 @@ public interface EcheanceLeasingRepository extends JpaRepository<EcheanceLeasing
     /** Ce chèque / cette LCN / ce virement règle-t-il déjà l'avance d'un contrat ? */
     boolean existsByMoyenPaiementTypeAndMoyenPaiementId(TypeMoyenPaiement type, Long moyenPaiementId);
 
-    /** Le contrat a-t-il une avance rattachée à un moyen de paiement ? */
-    boolean existsByContratLeasingIdAndMoyenPaiementIdIsNotNull(Long contratId);
+    /**
+     * Identifiants des moyens de paiement du type donné déjà rattachés à une avance, hors celle du contrat
+     * {@code exceptContratId} (qui peut conserver son propre moyen de paiement).
+     */
+    @Query("SELECT e.moyenPaiementId FROM EcheanceLeasing e WHERE e.moyenPaiementType = :type "
+            + "AND (:exceptContratId IS NULL OR e.contratLeasing.id <> :exceptContratId)")
+    List<Long> findMoyenPaiementIdsRattaches(@Param("type") TypeMoyenPaiement type,
+                                             @Param("exceptContratId") Long exceptContratId);
 
     /**
      * Nombre d'échéances PREVU dont la date tombe entre aujourd'hui et aujourd'hui+nbJours (inclus).

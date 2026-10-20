@@ -45,6 +45,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import static staport.finance.gBanque.transactions.spec.TransactionSpecifications.*;
@@ -309,6 +310,23 @@ public class TransactionServiceImpl implements ITransactionService {
         return transactionRepository.findById(id)
                 .map(transactionMapper::toDto)
                 .orElseThrow(() -> new ResourceNotFoundException("La transaction avec l'ID " + id + " n'a pas été trouvée"));
+    }
+
+    @Override
+    @Transactional
+    public void modifierTextes(Collection<TransactionSource> sources, Long referent,
+                               UnaryOperator<String> libelle, UnaryOperator<String> observation) {
+        for (Transaction transaction : transactionRepository.findByTransactionSourceInAndReferent(sources, referent)) {
+            transaction.setLibelle(libelle.apply(transaction.getLibelle()));
+            transaction.setObservation(observation.apply(transaction.getObservation()));
+            Transaction saved = transactionRepository.save(transaction);
+
+            TransactionSyncHandler handler = syncHandlerRegistry.get(saved.getTransactionSource());
+            if (handler != null) {
+                handler.sync(referent, saved.getDateValeur(), saved.getDateOperations(),
+                        saved.getLibelle(), saved.getObservation());
+            }
+        }
     }
 
     @Override

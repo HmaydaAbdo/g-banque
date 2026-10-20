@@ -631,7 +631,7 @@ Ce module couvre l'intégralité du cycle de vie de ces crédits : de la souscri
 | PRÉVU | Échéance non encore réglée |
 | PAYÉ | Prélèvement effectué, intégré dans le rapprochement bancaire |
 
-Le statut de l'avance (échéance n°1) fait exception : une fois rattachée à son chèque, sa LCN ou son virement, elle **suit directement le statut de ce moyen de paiement** (PAYÉE quand il est réglé, PRÉVUE sinon).
+Le statut de l'avance (échéance n°1) fait exception : elle **suit directement le statut de son moyen de paiement** (PAYÉE quand il est réglé, PRÉVUE sinon).
 
 **Encours CMT** : pour une banque donnée, somme totale des montants des échéances encore PRÉVUES jusqu'à la fin du mois en cours, tous crédits actifs confondus.
 
@@ -1027,7 +1027,7 @@ Un organisme ne peut avoir qu'un seul contrat cadre ACTIF à la fois. Sans contr
 
 **Échéance** : un mois de loyer à payer (ou la valeur résiduelle finale).
 
-**Avance** : premier paiement facultatif d'un contrat, versé à la date de début. Elle est **comprise dans le prix d'achat TTC** (elle ne s'y ajoute pas) et **dans la durée du contrat** : elle occupe l'échéance n°1, et les mensualités commencent un mois plus tard. Elle se règle par un **chèque, une LCN ou un virement national**, saisi dans son propre module puis rattaché au contrat.
+**Avance** : premier paiement facultatif d'un contrat, versé à la date de début. Elle est **comprise dans le prix d'achat TTC** (elle ne s'y ajoute pas) et **dans la durée du contrat** : elle occupe l'échéance n°1, et les mensualités commencent un mois plus tard. Elle est définie par le **chèque, la LCN ou le virement national qui la règle**, choisi directement dans le contrat parmi ceux qui existent déjà (réglés ou en cours) : **le montant de l'avance est celui de ce moyen de paiement**.
 
 | Statut | Signification |
 |--------|---------------|
@@ -1050,12 +1050,9 @@ Un organisme ne peut avoir qu'un seul contrat cadre ACTIF à la fois. Sans contr
         ↓
 [3] Signer un Contrat de leasing
     (organisme, banque de prélèvement, bien, montant, durée, type,
-     avance éventuelle)
+     avance éventuelle : choix du chèque / LCN / virement qui la règle)
     → Génération automatique du tableau d'amortissement
     → Génération automatique des commissions (si règle configurée)
-        ↓
-[3 bis] Si le contrat a une avance : saisir son chèque / sa LCN / son virement
-    dans son module, puis le rattacher au contrat (échéance n°1)
         ↓
 [4] Suivi mensuel des échéances
     → Chaque échéance est validée lors du rapprochement bancaire → statut PAYÉ
@@ -1118,9 +1115,9 @@ Un organisme ne peut avoir qu'un seul contrat cadre ACTIF à la fois. Sans contr
 
 Le wizard conserve les données saisies si on revient en arrière.
 
-À droite de chaque étape, un **panneau d'aide** explique ce qu'il faut saisir et les points d'attention de l'étape, et un **plan du contrat** se met à jour en direct : avance (si elle existe), mensualités, valeur résiduelle avec leurs dates, jauge de la durée couverte par les phases, prix d'achat, endettement et coût du financement. À l'étape **Détails généraux**, un interrupteur « Ce contrat démarre par une avance » fait apparaître le montant de l'avance.
+À l'étape **Détails généraux**, une section **Avance (facultative)** permet de choisir le chèque, la LCN ou le virement qui règle l'avance : on indique d'abord le type, on peut chercher par numéro ou bénéficiaire, puis on choisit dans une liste qui se charge au fil du défilement (réglés ou en cours, hors ceux déjà utilisés pour l'avance d'un autre contrat). Le moyen retenu s'affiche avec son montant, qui devient l'avance.
 
-Sur l'écran **Tableau d'amortissement**, un contrat avec avance affiche une carte **Avance** : montant, date, et moyen de paiement rattaché (type, numéro, banque, bénéficiaire, statut). C'est depuis cette carte que l'on rattache ou détache le chèque, la LCN ou le virement.
+Sur l'écran **Tableau d'amortissement**, un contrat avec avance affiche une carte **Avance** (lecture seule) : montant, date, et moyen de paiement (type, numéro, banque, bénéficiaire, statut). Pour changer de moyen de paiement, on modifie le contrat.
 
 #### Export PDF
 
@@ -1172,10 +1169,11 @@ affichée. L'export du tableau d'amortissement reprend également les totaux aff
 22. La durée du contrat **inclut** l'avance : la somme des durées des phases de mensualités doit être égale à la durée du contrat **moins un mois**.
 23. La valeur résiduelle reste égale à 1 % du **prix d'achat complet**. L'avance est soumise à la TVA comme les mensualités. **Aucune commission de prélèvement** n'est générée pour l'avance.
 24. L'endettement du contrat comprend l'avance (avance + mensualités + valeur résiduelle). Aucune contrainte n'est imposée sur son montant par rapport au prix d'achat : il en résulte du calcul.
-25. L'avance se règle **uniquement** par un chèque, une LCN ou un virement national de type décaissement, dont le montant est **exactement** celui de l'avance. Le rattachement se fait depuis le contrat (tableau d'amortissement), jamais depuis le chèque, la LCN ou le virement. Un chèque, une LCN ou un virement ne peut régler qu'une seule avance, et ne peut pas être annulé.
-26. Une fois rattachée, l'avance est **représentée par son moyen de paiement** : elle suit son statut (jamais de statut à resynchroniser), elle ne se valide plus comme une échéance de loyer, et dans les encours et la trésorerie **seul le moyen de paiement figure** — l'avance n'est jamais comptée deux fois. Si le moyen de paiement est annulé, l'avance redevient une échéance à payer et réapparaît dans les encours de leasing.
-27. Le moyen de paiement peut être détaché tant qu'il n'est pas réglé. Dès qu'il est réglé, l'avance est payée et, comme toute échéance payée, elle verrouille la modification et la suppression du contrat (règles 11 et 12). Tant que l'avance est rattachée, le contrat ne peut pas non plus être modifié : il faut d'abord détacher le moyen de paiement.
-28. Les contrats déjà existants ne sont pas modifiés : la fonction d'avance ne s'applique qu'aux nouveaux contrats.
+25. L'avance est définie par un **chèque, une LCN ou un virement national déjà créé**, de type décaissement, non annulé, **réglé ou en cours**, et qui ne règle pas déjà l'avance d'un autre contrat. Il se choisit dans le contrat (jamais depuis le chèque, la LCN ou le virement) et **son montant devient le montant de l'avance**.
+26. L'avance est **représentée par son moyen de paiement** : elle suit son statut (PAYÉE quand il est réglé, PRÉVUE sinon — jamais de statut à resynchroniser), elle ne se valide plus comme une échéance de loyer, et dans les encours et la trésorerie **seul le moyen de paiement figure** : l'avance n'est jamais comptée deux fois. Il n'existe **qu'une seule transaction bancaire, celle du moyen de paiement**.
+27. Le **libellé et l'observation** de cette transaction (et du moyen de paiement) indiquent qu'il s'agit d'une avance réglée via ce moyen de paiement, et qu'elle représente l'échéance n°1 du contrat N° x. Si le moyen de paiement est encore en cours, la mention est déjà inscrite sur lui et se retrouve sur la transaction créée à sa validation.
+28. Tant que le moyen de paiement n'est pas réglé, le contrat reste modifiable et on peut choisir un autre moyen : l'ancien retrouve ses textes d'origine. Si le moyen de paiement est annulé, l'avance redevient une échéance à payer et réapparaît dans les encours de leasing. Dès qu'il est réglé, l'avance est payée et, comme toute échéance payée, elle verrouille la modification et la suppression du contrat (règles 11 et 12). La suppression d'un contrat retire la mention d'avance du moyen de paiement.
+29. Les contrats déjà existants ne sont pas modifiés : la fonction d'avance ne s'applique qu'aux nouveaux contrats.
 
 #### Notification main levée
 
@@ -1209,7 +1207,7 @@ La valeur résiduelle, le taux de TVA et les deux seuils d'alerte ne sont plus d
 | **Contrats leasing** — supprimer | ✅ | ❌ | ❌ |
 | **Contrats leasing** — clôturer (main levée) | ✅ | ✅ | ✅ |
 | **Échéances** — consulter, valider (rapprochement) | ✅ | ✅ | ✅ |
-| **Avance** — rattacher / détacher son chèque, sa LCN ou son virement | ✅ | ✅ | ✅ |
+| **Avance** — choisir le chèque, la LCN ou le virement qui la règle (dans le contrat) | ✅ | ✅ | ✅ |
 | **Échéances** — modifier manuellement | ✅ | ❌ | ❌ |
 | **Échéances** — basculer statut manuellement | ✅ | ❌ | ❌ |
 | **Batch main levée** — déclencher manuellement | ✅ | ❌ | ❌ |
@@ -1228,7 +1226,6 @@ Les actions suivantes sont historisées avec l'auteur et la date, et restent con
 - création, modification ou archivage d'un contrat cadre ;
 - création, modification, suppression ou clôture (main levée) d'un contrat de leasing ;
 - modification ou basculement de statut d'une échéance ;
-- rattachement ou détachement du moyen de paiement d'une avance ;
 - modification de la configuration leasing (valeur résiduelle, taux de TVA).
 
 La consultation seule (listes, tableau d'amortissement, encours, export PDF) n'est pas historisée.

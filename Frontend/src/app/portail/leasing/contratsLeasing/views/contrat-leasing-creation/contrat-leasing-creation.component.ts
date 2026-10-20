@@ -20,7 +20,6 @@ import { BanqueStepComponent } from './wizard/BanqueOfDebit/BanqueStepComponent'
 import { ContractTypeStepComponent } from './wizard/contract-type/contract-type-step.component';
 import { PhasesStepComponent } from './wizard/Phases/PhasesStepComponent';
 import { RecapStepComponent } from "./wizard/recap/RecapStepComponent";
-import { ContractApercuComponent } from './wizard/apercu/ContractApercuComponent';
 
 
 
@@ -40,8 +39,7 @@ interface WizardStepComponent {
     CommonModule,
     StepsModule,
     ButtonModule,
-    ConfirmDialogModule,
-    ContractApercuComponent
+    ConfirmDialogModule
   ],
   providers: [MessageService, ConfirmationService]
 })
@@ -52,47 +50,6 @@ export class ContratLeasingCreationComponent implements OnInit, OnDestroy {
   private readonly messageService = inject(MessageService);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly wizardService = inject(LeasingContractWizardService);
-
-  /** Aide contextuelle affichée à côté de chaque étape (même ordre que {@link items}). */
-  readonly guides: { titre: string; texte: string; conseils: string[] }[] = [
-    {
-      titre: "Choisissez l'organisme",
-      texte: "Le contrat est signé dans le cadre d'un contrat cadre en cours avec l'organisme de leasing.",
-      conseils: ["Seuls les organismes disposant d'un contrat cadre actif et non échu peuvent être retenus."]
-    },
-    {
-      titre: "Décrivez le bien et la durée",
-      texte: "Saisissez le bien financé, son prix d'achat TTC et la période du contrat.",
-      conseils: [
-        "La valeur résiduelle est calculée automatiquement (1 % du prix d'achat).",
-        "Une avance se règle par chèque, LCN ou virement : elle occupe le premier mois du contrat.",
-        "L'avance est comprise dans le prix d'achat et dans la période."
-      ]
-    },
-    {
-      titre: "Banque de prélèvement",
-      texte: "C'est le compte sur lequel les mensualités seront prélevées.",
-      conseils: ["L'avance, elle, est réglée par le compte du chèque, de la LCN ou du virement que vous rattacherez au contrat."]
-    },
-    {
-      titre: "Type de contrat",
-      texte: "Linéaire : une mensualité constante. Progressif : mensualités croissantes. Dégressif : mensualités décroissantes.",
-      conseils: ["Changer de type efface les phases déjà saisies."]
-    },
-    {
-      titre: "Définissez les phases",
-      texte: "Chaque phase est une période à mensualité constante.",
-      conseils: [
-        "La somme des durées des phases doit couvrir la période du contrat, moins le mois de l'avance s'il y en a une.",
-        "Surveillez la jauge « Durée couverte » du plan du contrat."
-      ]
-    },
-    {
-      titre: "Vérifiez et validez",
-      texte: "Relisez le plan complet : à la validation, le tableau d'amortissement est généré automatiquement.",
-      conseils: ["Si le contrat a une avance, rattachez ensuite son chèque, sa LCN ou son virement depuis le tableau d'amortissement."]
-    }
-  ];
 
   items: MenuItem[] = [];
   activeIndex: number = 0;

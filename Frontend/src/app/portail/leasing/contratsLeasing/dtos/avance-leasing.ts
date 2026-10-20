@@ -29,11 +29,6 @@ export interface AvanceLeasingResponse {
   moyenPaiement: MoyenPaiementAvance | null;
 }
 
-export interface AvanceMoyenPaiementRequest {
-  type: TypeMoyenPaiementAvance;
-  moyenPaiementId: number;
-}
-
 export const LIBELLE_TYPE_MOYEN_PAIEMENT: Record<TypeMoyenPaiementAvance, string> = {
   CHEQUE: 'Chèque',
   LCN: 'LCN',

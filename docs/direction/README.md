@@ -302,14 +302,12 @@ commissions et alertes d'échéance sont pris en charge automatiquement par le s
   (progressif), décroissant (dégressif), avec un tableau adapté automatiquement à chacune.
 - **Suivi intégré au rapprochement** : chaque échéance est validée directement dans le
   rapprochement mensuel, transaction créée automatiquement — aucune double saisie.
-- **Contrats avec avance pris en charge** : un contrat peut démarrer par une avance, réglée par
-  chèque, LCN ou virement national. Le plan se construit tout seul (avance au premier mois,
-  mensualités ensuite, valeur résiduelle en fin de contrat), le moyen de paiement de l'avance
-  est rattaché au contrat, et le statut de l'avance suit celui de son règlement — l'avance
+- **Contrats avec avance pris en charge** : un contrat peut démarrer par une avance. On choisit
+  simplement le chèque, la LCN ou le virement qui la règle parmi ceux déjà saisis, réglés ou en
+  cours : le plan se construit tout seul (avance au premier mois, mensualités ensuite, valeur
+  résiduelle en fin de contrat), le statut de l'avance suit celui de son règlement, et une seule
+  transaction existe — celle du moyen de paiement, qui porte la mention de l'avance. L'avance
   n'est jamais comptée deux fois dans les encours ni dans la trésorerie prévisionnelle.
-- **Saisie guidée** : l'assistant de création affiche en permanence l'aide de l'étape et le plan
-  du contrat en direct (échéancier, endettement, coût du financement) — le contrat se vérifie
-  avant d'être validé.
 - **Commissions automatiques** : pour chaque contrat, les commissions bancaires dues sur les loyers
   sont calculées et enregistrées automatiquement selon les règles configurées (voir module
   Commission) — aucun risque d'omission.

@@ -138,11 +138,6 @@ import java.math.BigDecimal;
                         " car il contient des échéances déjà payées. c-à-d qu'on a déjà commencé l'amortissement pour ce contrat. Veuillez contacter l'administrateur.");
             }
 
-            if (echeanceLeasingRepository.existsByContratLeasingIdAndMoyenPaiementIdIsNotNull(contratId)) {
-                throw new ValidationException("Impossible de modifier le contrat " + contratId + " : son avance est rattachée à un moyen de paiement. "
-                        + "Détachez-le du contrat avant de le modifier.");
-            }
-
             deleteEcheancesAndCommissionByContrat(contrat);
 
             // 2. Régénérer les nouvelles échéances et commissions

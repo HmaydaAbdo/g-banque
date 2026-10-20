@@ -1,7 +1,7 @@
 // src/app/contrat-leasing-creation/wizard/GeneralDetail/GeneralDetailsStepComponent.ts
 
 import { Component, Input, OnInit, OnDestroy, Output, EventEmitter, inject } from '@angular/core';
-import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators, FormBuilder } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormBuilder } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subscription, Subject } from 'rxjs';
 import { distinctUntilChanged, takeUntil, debounceTime } from 'rxjs/operators'; // Import debounceTime
@@ -11,32 +11,15 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { MessageModule } from 'primeng/message';
 import { Message } from 'primeng/api';
 import { MessagesModule } from 'primeng/messages';
-import { InputSwitchModule } from 'primeng/inputswitch';
+import { DropdownModule } from 'primeng/dropdown';
+import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
 
 import { LeasingContractWizardService } from "../../../../services/LeasingContractWizardService";
 import { Decimal } from 'decimal.js';
 import { toLocalDateString } from '../../../../../../global/types/date.utils';
-
-/**
- * L'avance est incluse dans le prix d'achat (donc strictement inférieure) et occupe un mois de la période.
- * Erreurs portées par le groupe, affichées sous le champ d'avance.
- */
-function avanceCoherente(group: AbstractControl): ValidationErrors | null {
-  if (!group.get('avecAvance')?.value) {
-    return null;
-  }
-  const avance = group.get('avanceTTC')?.value;
-  const achat = group.get('montantAchatTTC')?.value;
-  const periode = group.get('periodeEnMois')?.value;
-  const erreurs: ValidationErrors = {};
-  if (avance != null && achat != null && avance >= achat) {
-    erreurs['avanceTropGrande'] = true;
-  }
-  if (periode != null && periode < 2) {
-    erreurs['periodeTropCourte'] = true;
-  }
-  return Object.keys(erreurs).length > 0 ? erreurs : null;
-}
+import { EcheanceLeasingService } from '../../../../services/EcheanceLeasingService';
+import { LIBELLE_TYPE_MOYEN_PAIEMENT, MoyenPaiementAvance, TypeMoyenPaiementAvance } from '../../../../dtos/avance-leasing';
 
 @Component({
   selector: 'app-general-details-step',
@@ -49,7 +32,9 @@ function avanceCoherente(group: AbstractControl): ValidationErrors | null {
     InputNumberModule,
     MessageModule,
     MessagesModule,
-    InputSwitchModule
+    DropdownModule,
+    ButtonModule,
+    TagModule
   ],
   templateUrl: './general-details-step.component.html',
   styleUrls: ['./general-details-step.component.scss'],
@@ -69,6 +54,22 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
 
   private readonly fb = inject(FormBuilder);
   private readonly wizardService = inject(LeasingContractWizardService);
+  private readonly echeanceLeasingService = inject(EcheanceLeasingService);
+
+  // ── Avance : choix d'un chèque / d'une LCN / d'un virement existant (liste déroulante à chargement progressif) ──
+  private static readonly TAILLE_PAGE = 20;
+  readonly typesMoyen: { label: string; value: TypeMoyenPaiementAvance }[] = [
+    { label: 'Chèque', value: 'CHEQUE' },
+    { label: 'LCN', value: 'LCN' },
+    { label: 'Virement', value: 'VIREMENT' }
+  ];
+  readonly libelleType = LIBELLE_TYPE_MOYEN_PAIEMENT;
+  /** Moyen de paiement retenu pour l'avance (null : pas d'avance). */
+  avanceChoisie: MoyenPaiementAvance | null = null;
+  /** Options de la liste : une case par résultat du serveur, remplie à mesure que l'on fait défiler. */
+  moyens: (MoyenPaiementAvance | undefined)[] = [];
+  chargementMoyens = false;
+  private pagesChargees = new Set<number>();
 
   formGroup!: FormGroup;
   private subscriptions: Subscription[] = [];
@@ -83,13 +84,29 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
       dateDebut: [null, Validators.required],
       periodeEnMois: [null, [Validators.required, Validators.min(1), Validators.max(360)]],
       valeurResiduelle: [{ value: null, disabled: true }], // Ensure it's disabled and read-only
-      avecAvance: [false],
-      avanceTTC: [{ value: null, disabled: true }]
-    }, { validators: [avanceCoherente] });
+      typeMoyenAvance: [null as TypeMoyenPaiementAvance | null],
+      rechercheMoyen: [''],
+      moyenAvance: [{ value: null as MoyenPaiementAvance | null, disabled: true }]
+    });
 
-    // L'avance n'est saisissable (et obligatoire) que si le contrat en comporte une
-    this.avecAvanceControl.valueChanges.pipe(takeUntil(this.componentDestroyed$)).subscribe(avec => {
-      this.appliquerEtatAvance(avec, true);
+    this.typeMoyenAvanceControl.valueChanges.pipe(takeUntil(this.componentDestroyed$)).subscribe(type => {
+      if (type) {
+        this.moyenAvanceControl.enable({ emitEvent: false });
+        this.rechargerMoyens();
+      } else {
+        this.moyenAvanceControl.disable({ emitEvent: false });
+        this.moyens = [];
+      }
+    });
+    this.rechercheMoyenControl.valueChanges.pipe(
+      debounceTime(300), distinctUntilChanged(), takeUntil(this.componentDestroyed$)
+    ).subscribe(() => this.rechargerMoyens());
+    // Le choix dans la liste est enregistré tout de suite ; la liste revient à « Choisir… » (le moyen retenu s'affiche en dessous)
+    this.moyenAvanceControl.valueChanges.pipe(takeUntil(this.componentDestroyed$)).subscribe(moyen => {
+      if (moyen) {
+        this.wizardService.updateContract({ avanceMoyenPaiement: moyen });
+        this.moyenAvanceControl.setValue(null, { emitEvent: false });
+      }
     });
 
 
@@ -111,11 +128,13 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
           prevMontantAchatTTC === currMontantAchatTTC &&
           prevDateDebutISO === currDateDebutISO &&
           prev.periodeEnMois === curr.periodeEnMois &&
-          prev.avanceTTC === curr.avanceTTC &&
+          prev.avanceMoyenPaiement?.id === curr.avanceMoyenPaiement?.id &&
+          prev.avanceMoyenPaiement?.type === curr.avanceMoyenPaiement?.type &&
           prevValeurResiduelle === currValeurResiduelle;
       }),
       takeUntil(this.componentDestroyed$)
     ).subscribe(contract => {
+      this.avanceChoisie = contract.avanceMoyenPaiement ?? null;
       const currentFormValue = this.formGroup.getRawValue(); // Use getRawValue to include disabled controls
       const patchObject: {
         numeroContrat?: string | null,
@@ -123,9 +142,7 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
         montantAchatTTC?: number | null,
         dateDebut?: Date | null,
         periodeEnMois?: number | null,
-        valeurResiduelle?: number | null,
-        avecAvance?: boolean,
-        avanceTTC?: number | null
+        valeurResiduelle?: number | null
       } = {};
 
       if (currentFormValue.numeroContrat !== contract.numeroContrat) {
@@ -155,22 +172,9 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
         patchObject.valeurResiduelle = contractValResiduelleNum;
       }
 
-      const contractAvance = contract.avanceTTC ?? null;
-      if (currentFormValue.avanceTTC !== contractAvance) {
-        patchObject.avanceTTC = contractAvance;
-      }
-      const contractAvecAvance = contractAvance !== null;
-      if (currentFormValue.avecAvance !== contractAvecAvance) {
-        patchObject.avecAvance = contractAvecAvance;
-      }
-
       if (Object.keys(patchObject).length > 0) {
         // Use { emitEvent: false } to prevent this patch from triggering valueChanges subscription below
         this.formGroup.patchValue(patchObject, { emitEvent: false });
-        // Le patch silencieux ne déclenche pas l'abonnement ci-dessus (ex. ouverture d'un contrat existant)
-        if (patchObject.avecAvance !== undefined) {
-          this.appliquerEtatAvance(patchObject.avecAvance, false);
-        }
       } else {
       }
       // ALWAYS recalculate on service update to ensure consistency
@@ -215,8 +219,6 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
           prevMontantAchatTTC === currMontantAchatTTC &&
           prevDateDebutISO === currDateDebutISO &&
           prev.periodeEnMois === curr.periodeEnMois &&
-          prev.avecAvance === curr.avecAvance &&
-          prev.avanceTTC === curr.avanceTTC &&
           prevValeurResiduelle === currValeurResiduelle;
       }),
       takeUntil(this.componentDestroyed$)
@@ -233,8 +235,7 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
         montantAchatTTC: montantAchatTTCForService,
         dateDebut: value.dateDebut,
         periodeEnMois: value.periodeEnMois,
-        valeurResiduelle: valeurResiduelleForService,
-        avanceTTC: value.avecAvance ? (value.avanceTTC ?? null) : null
+        valeurResiduelle: valeurResiduelleForService
       });
 
     });
@@ -258,19 +259,50 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
     this.componentDestroyed$.complete();
   }
 
-  /** Active (obligatoire) ou désactive le champ d'avance ; `effacer` vide sa valeur quand on décoche. */
-  private appliquerEtatAvance(avec: boolean, effacer: boolean): void {
-    if (avec) {
-      this.avanceTTCControl.enable({ emitEvent: false });
-      this.avanceTTCControl.setValidators([Validators.required, Validators.min(0.01)]);
-    } else {
-      if (effacer) {
-        this.avanceTTCControl.setValue(null, { emitEvent: false });
-      }
-      this.avanceTTCControl.clearValidators();
-      this.avanceTTCControl.disable({ emitEvent: false });
+  // ── Avance : liste déroulante à chargement progressif ───────────────────────
+
+  /** Retire l'avance du contrat. */
+  retirerAvance(): void {
+    this.wizardService.updateContract({ avanceMoyenPaiement: null });
+  }
+
+  /** Demandes de l'élément défilant : charge les pages correspondant aux lignes visibles. */
+  chargerMoyens(event: { first: number; last: number }): void {
+    const taille = GeneralDetailsStepComponent.TAILLE_PAGE;
+    for (let page = Math.floor(event.first / taille); page <= Math.floor(event.last / taille); page++) {
+      this.chargerPage(page);
     }
-    this.avanceTTCControl.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private rechargerMoyens(): void {
+    this.pagesChargees.clear();
+    this.moyens = [];
+    this.chargerPage(0);
+  }
+
+  private chargerPage(page: number): void {
+    const type = this.typeMoyenAvanceControl.value as TypeMoyenPaiementAvance | null;
+    if (!type || this.pagesChargees.has(page)) {
+      return;
+    }
+    this.pagesChargees.add(page);
+    this.chargementMoyens = true;
+    const taille = GeneralDetailsStepComponent.TAILLE_PAGE;
+    this.echeanceLeasingService.getMoyensPaiementDisponibles(
+      type, (this.rechercheMoyenControl.value ?? '').trim(), this.wizardService.getCurrentContract().id ?? null, page, taille
+    ).pipe(takeUntil(this.componentDestroyed$)).subscribe({
+      next: res => {
+        const total = res.page.totalElements;
+        const options = this.moyens.length === total ? [...this.moyens] : Array.from<MoyenPaiementAvance | undefined>({ length: total });
+        res.content.forEach((moyen, i) => options[page * taille + i] = moyen);
+        this.moyens = options;
+        this.chargementMoyens = false;
+      },
+      error: () => {
+        this.pagesChargees.delete(page);
+        this.chargementMoyens = false;
+      }
+    });
   }
 
   //  calculate valeurResiduelle
@@ -318,12 +350,16 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
     return this.formGroup.get('valeurResiduelle') as FormControl;
   }
 
-  get avecAvanceControl(): FormControl {
-    return this.formGroup.get('avecAvance') as FormControl;
+  get typeMoyenAvanceControl(): FormControl {
+    return this.formGroup.get('typeMoyenAvance') as FormControl;
   }
 
-  get avanceTTCControl(): FormControl {
-    return this.formGroup.get('avanceTTC') as FormControl;
+  get rechercheMoyenControl(): FormControl {
+    return this.formGroup.get('rechercheMoyen') as FormControl;
+  }
+
+  get moyenAvanceControl(): FormControl {
+    return this.formGroup.get('moyenAvance') as FormControl;
   }
 
   markFormAsTouched(): void {

@@ -68,22 +68,15 @@
                 @if (moyen.dateValeur) { · valeur {{ moyen.dateValeur | date:'dd/MM/yyyy' }} }
               </div>
               <p class="avance-card__aide">
-                Cette avance est représentée par son moyen de paiement : son statut suit celui-ci et elle n'est pas comptée deux fois dans les encours.
+                Cette avance est représentée par son moyen de paiement : son statut suit celui-ci et elle n'est pas comptée
+                deux fois dans les encours. Pour changer de moyen de paiement, modifiez le contrat.
               </p>
-              @if (moyen.statut !== 'REGLE') {
-                <p-button label="Détacher" icon="pi pi-times" severity="secondary" [outlined]="true" size="small"
-                          [loading]="avanceEnCours" (onClick)="confirmerDetachement()"></p-button>
-              }
             } @else {
               <div class="avance-card__moyen-titre">
                 <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
                 Aucun moyen de paiement rattaché
               </div>
-              <p class="avance-card__aide">
-                Saisissez d'abord le chèque, la LCN ou le virement de l'avance dans son module, puis rattachez-le ici.
-                Son montant doit être exactement celui de l'avance.
-              </p>
-              <p-button label="Rattacher un moyen de paiement" icon="pi pi-link" size="small" (onClick)="ouvrirChoixMoyen()"></p-button>
+              <p class="avance-card__aide">Cette avance se retrouve dans les encours de leasing tant qu'aucun moyen de paiement ne la règle.</p>
             }
           </div>
         </section>
@@ -229,37 +222,3 @@
     </div>
   }
 </div>
-
-<p-dialog header="Rattacher un moyen de paiement à l'avance" [(visible)]="afficherChoixMoyen" [modal]="true"
-          [style]="{ width: '56rem', maxWidth: '95vw' }" [draggable]="false">
-  <p class="text-sm text-color-secondary mt-0">
-    Décaissements non annulés dont le montant est exactement celui de l'avance et qui ne règlent pas déjà une autre avance.
-  </p>
-  <p-table [value]="moyensDisponibles" [loading]="chargementMoyens" styleClass="p-datatable-sm p-datatable-gridlines text-sm">
-    <ng-template pTemplate="header">
-      <tr>
-        <th>Type</th><th>N°</th><th>Banque</th><th>Bénéficiaire</th><th>Émission</th><th>Statut</th><th></th>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-moyen>
-      <tr>
-        <td>{{ $any(libelleMoyen)[moyen.type] }}</td>
-        <td>{{ moyen.numero || '—' }}</td>
-        <td>{{ moyen.nomBanque || '—' }}</td>
-        <td>{{ moyen.beneficiaire || '—' }}</td>
-        <td>{{ moyen.dateEmission | date:'dd/MM/yyyy' }}</td>
-        <td><p-tag [value]="moyen.statut === 'REGLE' ? 'Réglé' : 'En cours'" [severity]="moyen.statut === 'REGLE' ? 'success' : 'info'"></p-tag></td>
-        <td class="text-right">
-          <p-button label="Choisir" size="small" [loading]="avanceEnCours" (onClick)="rattacherMoyen(moyen)"></p-button>
-        </td>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="emptymessage">
-      <tr>
-        <td colspan="7" class="text-center p-4">
-          Aucun chèque, LCN ou virement disponible pour ce montant. Saisissez-le d'abord dans son module.
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
-</p-dialog>

@@ -206,14 +206,25 @@ export class ContratLeasingService {
     );
   }
 
+  /** Corps de la requête : le moyen de paiement de l'avance est réduit à son type et son identifiant. */
+  private corps(contrat: ContratLeasingRequestDTO): object {
+    const { avanceMoyenPaiement, ...reste } = contrat;
+    return {
+      ...reste,
+      avanceMoyenPaiement: avanceMoyenPaiement
+        ? { type: avanceMoyenPaiement.type, moyenPaiementId: avanceMoyenPaiement.id }
+        : null
+    };
+  }
+
   createContratLeasing(contrat: ContratLeasingRequestDTO): Observable<ContratLeasingResponseDTO> {
-    return this.http.post<ContratLeasingResponseDTO>(this.apiUrl, contrat).pipe(
+    return this.http.post<ContratLeasingResponseDTO>(this.apiUrl, this.corps(contrat)).pipe(
       map(response => this.processContratLeasingResponse(response))
     );
   }
 
   updateContratLeasing(id: number, contrat: ContratLeasingRequestDTO): Observable<ContratLeasingResponseDTO> {
-    return this.http.put<ContratLeasingResponseDTO>(`${this.apiUrl}/${id}`, contrat).pipe(
+    return this.http.put<ContratLeasingResponseDTO>(`${this.apiUrl}/${id}`, this.corps(contrat)).pipe(
       map(response => this.processContratLeasingResponse(response))
     );
   }

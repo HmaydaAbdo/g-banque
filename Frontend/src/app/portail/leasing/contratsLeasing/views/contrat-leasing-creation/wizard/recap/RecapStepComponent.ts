@@ -18,6 +18,7 @@ import { OrganismeLeasingService } from "../../../../../organismesLeasing/servic
 import { Decimal } from 'decimal.js';
 import { ContratLeasingRequestDTO } from "../../../../dtos/contrat-leasing";
 import { TypeContratLeasing } from '../../../../dtos/type-contrat-leasing';
+import { LIBELLE_TYPE_MOYEN_PAIEMENT } from '../../../../dtos/avance-leasing';
 import { parseLocalDate } from '../../../../../../global/types/date.utils';
 
 interface RecapContractDisplayData extends ContratLeasingRequestDTO {
@@ -60,6 +61,7 @@ export class RecapStepComponent implements OnInit, OnDestroy {
   private componentDestroyed$ = new Subject<void>();
 
   public TypeContratLeasing = TypeContratLeasing;
+  readonly libelleMoyen = LIBELLE_TYPE_MOYEN_PAIEMENT;
 
   private readonly wizardService = inject(LeasingContractWizardService);
   private readonly banqueService = inject(BanqueService);
@@ -133,8 +135,8 @@ export class RecapStepComponent implements OnInit, OnDestroy {
             const recapData: RecapContractDisplayData = {
               ...contract,
               coutFinancement: achat && expectedTotalAmountFromService ? expectedTotalAmountFromService.minus(achat) : null,
-              dateAvance: contract.avanceTTC ? debut : null,
-              datePremiereMensualite: debut ? this.ajouterMois(debut, contract.avanceTTC ? 1 : 0) : null,
+              dateAvance: contract.avanceMoyenPaiement ? debut : null,
+              datePremiereMensualite: debut ? this.ajouterMois(debut, contract.avanceMoyenPaiement ? 1 : 0) : null,
               dateValeurResiduelle: debut && periode ? this.ajouterMois(debut, periode) : null,
               nomBanqueDePrelevement: nomBanque,
               nomOrganismeLeasing: nomOrganisme,

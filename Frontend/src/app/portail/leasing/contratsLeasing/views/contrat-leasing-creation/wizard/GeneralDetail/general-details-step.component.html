@@ -139,48 +139,83 @@
       </div>
     </div>
 
-    <section class="avance" [class.avance--active]="avecAvanceControl.value">
+    <section class="avance" aria-labelledby="avance-titre">
       <div class="avance__head">
-        <div class="avance__text">
-          <label for="avecAvance" class="avance__title font-semibold">Ce contrat démarre par une avance</label>
+        <i class="pi pi-wallet avance__icone" aria-hidden="true"></i>
+        <div>
+          <h4 id="avance-titre" class="avance__title">Avance (facultative)</h4>
           <p class="avance__help">
-            L'avance est le premier paiement du contrat (échéance n°1). Elle est comprise dans le prix d'achat et dans la
-            période, puis réglée par chèque, LCN ou virement national.
+            Choisissez le chèque, la LCN ou le virement qui règle l'avance, parmi ceux déjà créés (réglés ou en cours).
+            Son montant devient l'avance : elle est comprise dans le prix d'achat et dans la durée du contrat, et constitue
+            l'échéance n°1. Laissez vide si le contrat n'a pas d'avance.
           </p>
         </div>
-        <p-inputSwitch inputId="avecAvance" formControlName="avecAvance" ariaLabel="Ce contrat démarre par une avance"></p-inputSwitch>
       </div>
 
-      @if (avecAvanceControl.value) {
-        <div class="grid formgrid mt-3">
-          <div class="field col-12 md:col-6">
-            <label for="avanceTTC" class="font-semibold">Montant de l'avance TTC <span class="p-error">*</span></label>
-            <p-inputNumber
-              id="avanceTTC"
-              formControlName="avanceTTC"
-              mode="currency"
-              currency="MAD"
-              locale="fr-MA"
-              [min]="0.01"
-              [ngClass]="{'ng-invalid ng-dirty': avanceTTCControl.invalid && (avanceTTCControl.dirty || avanceTTCControl.touched)}"
-            ></p-inputNumber>
-            @if (avanceTTCControl.invalid && (avanceTTCControl.dirty || avanceTTCControl.touched)) {
-              <p-message severity="error" text="Le montant de l'avance est requis et doit être positif."></p-message>
-            }
-            @if (formGroup.errors?.['avanceTropGrande'] && (avanceTTCControl.dirty || avanceTTCControl.touched)) {
-              <p-message severity="error" text="L'avance doit être strictement inférieure au montant d'achat TTC."></p-message>
-            }
-            @if (formGroup.errors?.['periodeTropCourte'] && (avanceTTCControl.dirty || avanceTTCControl.touched)) {
-              <p-message severity="error" text="Avec une avance, la période doit être d'au moins 2 mois."></p-message>
-            }
-          </div>
-          <div class="field col-12 md:col-6 avance__rappel">
-            <i class="pi pi-info-circle" aria-hidden="true"></i>
-            <span>
-              L'avance est payée à la date de début ; les mensualités commencent un mois plus tard. Une fois le contrat
-              créé, rattachez-lui son chèque, sa LCN ou son virement depuis le tableau d'amortissement.
+      <div class="grid formgrid">
+        <div class="field col-12 md:col-3">
+          <label for="typeMoyenAvance" class="font-semibold">Type</label>
+          <p-dropdown
+            inputId="typeMoyenAvance"
+            formControlName="typeMoyenAvance"
+            [options]="typesMoyen"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Chèque, LCN, virement"
+            [showClear]="true"
+            appendTo="body"
+          ></p-dropdown>
+        </div>
+
+        <div class="field col-12 md:col-3">
+          <label for="rechercheMoyen" class="font-semibold">Rechercher</label>
+          <input type="text" pInputText id="rechercheMoyen" formControlName="rechercheMoyen" placeholder="N° ou bénéficiaire" />
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label for="moyenAvance" class="font-semibold">Moyen de paiement</label>
+          <p-dropdown
+            inputId="moyenAvance"
+            formControlName="moyenAvance"
+            [options]="moyens"
+            [virtualScroll]="true"
+            [virtualScrollItemSize]="44"
+            [lazy]="true"
+            [loading]="chargementMoyens"
+            (onLazyLoad)="chargerMoyens($event)"
+            scrollHeight="264px"
+            placeholder="Choisir un moyen de paiement"
+            emptyMessage="Aucun moyen de paiement disponible"
+            appendTo="body"
+          >
+            <ng-template pTemplate="item" let-moyen>
+              <div class="avance__option">
+                <span class="avance__option-titre">{{ moyen.numero || 'Sans numéro' }} · {{ moyen.beneficiaire || '—' }}</span>
+                <span class="avance__option-detail">
+                  {{ moyen.montant | number:'1.2-2' }} MAD · {{ moyen.nomBanque || '—' }}
+                  <p-tag [value]="moyen.statut === 'REGLE' ? 'Réglé' : 'En cours'" [severity]="moyen.statut === 'REGLE' ? 'success' : 'info'"></p-tag>
+                </span>
+              </div>
+            </ng-template>
+            <ng-template pTemplate="loadingItem">
+              <div class="avance__option avance__option--chargement">Chargement…</div>
+            </ng-template>
+          </p-dropdown>
+        </div>
+      </div>
+
+      @if (avanceChoisie; as moyen) {
+        <div class="avance__choisie">
+          <div class="avance__choisie-texte">
+            <span class="avance__choisie-kicker">Avance retenue · échéance n°1</span>
+            <strong class="avance__choisie-montant">{{ moyen.montant | number:'1.2-2' }} MAD</strong>
+            <span class="avance__choisie-detail">
+              {{ libelleType[moyen.type] }} {{ moyen.numero ? 'n° ' + moyen.numero : '(sans numéro)' }} · {{ moyen.nomBanque || '—' }} · {{ moyen.beneficiaire || '—' }}
+              <p-tag [value]="moyen.statut === 'REGLE' ? 'Réglé' : 'En cours'" [severity]="moyen.statut === 'REGLE' ? 'success' : 'info'"></p-tag>
             </span>
           </div>
+          <p-button label="Retirer l'avance" icon="pi pi-times" severity="secondary" [outlined]="true" size="small"
+                    (onClick)="retirerAvance()"></p-button>
         </div>
       }
     </section>

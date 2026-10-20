@@ -1,18 +1,27 @@
 package staport.finance.gBanque.moyensDePaiements.virements.service;
 
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
+import staport.finance.gBanque.moyensDePaiements.virements.repositories.VirementRepository;
 import staport.finance.gBanque.moyensDePaiements.lecture.MoyenPaiementReader;
 import staport.finance.gBanque.moyensDePaiements.lecture.MoyenPaiementResume;
 import staport.finance.gBanque.moyensDePaiements.lecture.TypeMoyenPaiement;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
-import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
-import staport.finance.gBanque.moyensDePaiements.virements.repositories.VirementRepository;
 
-import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.UnaryOperator;
 
 /** Lecture des virements par un autre domaine (règlement de l'avance d'un contrat de leasing). */
 @Component
@@ -37,15 +46,39 @@ public class VirementAvanceReader implements MoyenPaiementReader {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MoyenPaiementResume> findDecaissementsNonAnnulesDeMontant(BigDecimal montant) {
-        return virementRepository.findByTypeAndMontantAndStatutNot(Type.DECAISSEMENT, montant, StatutMoyenPaiement.ANNULE)
-                .stream().map(VirementAvanceReader::toResume).toList();
+    public Page<MoyenPaiementResume> findDecaissementsNonAnnules(String recherche, Collection<Long> idsExclus, Pageable pageable) {
+        Specification<Virement> spec = (root, query, cb) -> {
+            List<Predicate> predicats = new ArrayList<>();
+            predicats.add(cb.equal(root.get("type"), Type.DECAISSEMENT));
+            predicats.add(cb.notEqual(root.get("statut"), StatutMoyenPaiement.ANNULE));
+            if (!idsExclus.isEmpty()) {
+                predicats.add(cb.not(root.get("id").in(idsExclus)));
+            }
+            if (recherche != null && !recherche.isBlank()) {
+                String motif = "%" + recherche.trim().toLowerCase() + "%";
+                predicats.add(cb.or(
+                        cb.like(cb.lower(root.get("numero")), motif),
+                        cb.like(cb.lower(root.get("beneficiaire")), motif)));
+            }
+            return cb.and(predicats.toArray(new Predicate[0]));
+        };
+        Pageable parId = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "id"));
+        return virementRepository.findAll(spec, parId).map(VirementAvanceReader::toResume);
     }
 
-    private static MoyenPaiementResume toResume(Virement v) {
-        return new MoyenPaiementResume(TypeMoyenPaiement.VIREMENT, v.getId(), v.getNumero(), v.getMontant(),
-                v.getStatut(), v.getType() == Type.DECAISSEMENT, v.getDateEmission(), v.getDateOperation(),
-                v.getDateValeur(), v.getBeneficiaire(),
-                v.getBanqueEmettrice() != null ? v.getBanqueEmettrice().getNom() : null);
+    @Override
+    @Transactional
+    public void modifierTextes(Long id, UnaryOperator<String> libelle, UnaryOperator<String> observation) {
+        Virement virement = virementRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Virement introuvable avec l'ID: " + id));
+        virement.setLibelle(libelle.apply(virement.getLibelle()));
+        virement.setObservation(observation.apply(virement.getObservation()));
+        virementRepository.save(virement);
+    }
+
+    private static MoyenPaiementResume toResume(Virement c) {
+        return new MoyenPaiementResume(TypeMoyenPaiement.VIREMENT, c.getId(), c.getNumero(), c.getMontant(),
+                c.getStatut(), c.getType() == Type.DECAISSEMENT, c.getDateEmission(), c.getDateOperation(),
+                c.getDateValeur(), c.getBeneficiaire(), c.getBanqueEmettrice() != null ? c.getBanqueEmettrice().getNom() : null);
     }
 }

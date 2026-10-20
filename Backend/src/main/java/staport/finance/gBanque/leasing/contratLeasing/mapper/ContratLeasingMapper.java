@@ -34,6 +34,7 @@ public abstract class ContratLeasingMapper {
     @Mapping(target = "echeances",           ignore = true)
     @Mapping(target = "phases",              ignore = true)
     @Mapping(target = "contratCadre",        ignore = true)
+    @Mapping(target = "avanceTTC",           ignore = true) // montant du moyen de paiement choisi, posé par le service
     @Mapping(target = "dateCreation",        ignore = true)
     @Mapping(target = "dateModification",    ignore = true)
     public abstract ContratLeasing toEntity(ContratLeasingRequestDTO requestDTO, Banque banque);
@@ -46,6 +47,7 @@ public abstract class ContratLeasingMapper {
     @Mapping(target = "nomOrganismeLeasing",    source = "contratCadre.organisme.nom")
     @Mapping(target = "contratCadreId",         source = "contratCadre.id")
     @Mapping(target = "plafond",                ignore = true) // plafond en cours : renseigné par le service (ContratLeasingServiceImpl)
+    @Mapping(target = "avanceMoyenPaiement",    ignore = true) // renseigné par le service à la consultation d'un contrat
     @Mapping(target = "dateFin",
              expression = "java(entity.getDateDebut().plusMonths(entity.getPeriodeEnMois()))")
     public abstract ContratLeasingResponseDTO toDto(ContratLeasing entity);
@@ -59,6 +61,7 @@ public abstract class ContratLeasingMapper {
     @Mapping(target = "echeances",           ignore = true)
     @Mapping(target = "phases",              ignore = true)
     @Mapping(target = "contratCadre",        ignore = true)
+    @Mapping(target = "avanceTTC",           ignore = true) // montant du moyen de paiement choisi, posé par le service
     @Mapping(target = "dateCreation",        ignore = true)
     @Mapping(target = "dateModification",    ignore = true)
     public abstract void updateEntityFromDto(ContratLeasingRequestDTO requestDTO,
