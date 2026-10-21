@@ -2,6 +2,7 @@ package staport.finance.gBanque.cautions.commissions.strategy;
 
 import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.commision.entities.Commission;
+import staport.finance.gBanque.commision.enums.TypeCommission;
 
 import java.time.YearMonth;
 
@@ -119,7 +120,25 @@ public interface CommissionCautionStrategie {
     }
 
     /**
+     * Nombre de mois couverts par chaque commission périodique : 1 (mensuelle, par défaut) ou 3
+     * (trimestrielle, trimestres civils). Le batch ne traite une banque trimestrielle qu'en fin de
+     * trimestre (mars, juin, septembre, décembre) ; {@code calculer} reçoit alors le dernier mois du trimestre.
+     */
+    default int periodiciteMois() {
+        return 1;
+    }
+
+    /** Type porté par les commissions périodiques de cette banque ({@code MENSUELLE} par défaut). */
+    default TypeCommission typeCommissionPeriodique() {
+        return TypeCommission.MENSUELLE;
+    }
+
+    /**
      * Indique si cette banque applique un prorata temporis à l'entrée (premier mois).
+     *
+     * <p>Le prorata d'entrée est généré par le <strong>batch</strong> à la fin de la période de prise
+     * (mois ou trimestre), avec {@code dateEmission = dateDePrise} ; si une commission existe déjà à
+     * cette date pour la caution, il est ignoré.
      *
      * <p>Lorsque {@code true}, la commission du premier mois est calculée uniquement
      * sur les jours allant de la {@code dateDePrise} jusqu'à la fin de ce mois,

@@ -162,35 +162,8 @@ public class CautionServiceImpl implements ICautionService {
         Caution sauvegardee = cautionRepository.save(caution);
         log.info("Caution créée — id: {}, numeroCaution: {}", sauvegardee.getId(), sauvegardee.getNumeroCaution());
 
-        // 5. Prorata d'entrée — généré immédiatement à la création si la stratégie le supporte.
-        //    dateEmission = dateDePrise (≠ fin de mois du batch) pour éviter tout conflit d'idempotence.
-        strategieFactory.trouver(banque.getNom()).ifPresent(strategie -> {
-            if (strategie.supporteProrataEntree()) {
-                // Objet transitoire — ses champs portent le calcul métier de la stratégie ;
-                // il n'est jamais persisté directement (encapsulation du module commission).
-                Commission prorataCalcule = strategie.calculerProrataEntree(sauvegardee);
-
-                CommissionResponseDto prorataPersiste = commissionService.creerCommissionCaution(
-                        sauvegardee.getId(), banque.getId(), prorataCalcule.getMontant(),
-                        prorataCalcule.getDateEmission(), prorataCalcule.getLibelle(),
-                        prorataCalcule.getObservation(), TypeCommission.PRORATA_ENTREE);
-                log.info("Prorata d'entrée créé — caution id: {}, dateEmission: {}, montant: {}",
-                        sauvegardee.getId(), prorataPersiste.dateEmission(), prorataPersiste.montant());
-
-                // TVA sur prorata — uniquement pour les banques dont la stratégie l'exige (ex. BMCI)
-                if (strategie.genererTva()) {
-                    BigDecimal montantTva = prorataPersiste.montant()
-                            .multiply(TAUX_TVA)
-                            .setScale(2, RoundingMode.HALF_UP);
-
-                    impotEtTaxeService.creerTvaSurCommission(
-                            banque.getId(), montantTva, Motif.TVA_COMMISSION_CAUTION,
-                            prorataPersiste.dateEmission(), "TVA " + prorataPersiste.libelle(),
-                            "TVA/prorata/caution/creation", prorataPersiste.id(), sauvegardee.getId());
-                    log.info("TVA prorata créée — montant: {}", montantTva);
-                }
-            }
-        });
+        // 5. Le prorata d'entrée n'est plus créé ici : il est généré par le batch de commissions en fin de période
+        //    (mois ou trimestre de prise), avec dateEmission = dateDePrise.
 
         // 6. Rechargement avec associations pour la réponse (garantit la cohérence du DTO)
         return toDto(sauvegardee.getId());

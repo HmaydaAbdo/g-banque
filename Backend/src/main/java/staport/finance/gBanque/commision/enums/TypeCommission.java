@@ -13,11 +13,14 @@ package staport.finance.gBanque.commision.enums;
  */
 public enum TypeCommission {
 
-    /** Prorata calculé à la création de la caution (premier mois partiel), une seule fois. */
+    /** Prorata du premier mois (ou trimestre) partiel, daté du jour de prise ; généré une seule fois par le batch. */
     PRORATA_ENTREE,
 
     /** Commission mensuelle récurrente générée par le batch tant que la caution est active. */
     MENSUELLE,
+
+    /** Commission trimestrielle (trimestre civil) générée par le batch en fin de trimestre — banques facturées par trimestre. */
+    TRIMESTRIELLE,
 
     /** Commission générée à la clôture (main levée) de la caution — au plus une par caution. */
     CLOTURE

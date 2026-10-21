@@ -374,8 +374,9 @@ mensuelle, et suivi du statut de chaque caution sont pris en charge directement 
 ### Ce que le système apporte
 
 - **Commissions calculées automatiquement** : chaque banque partenaire (AWB, BMCI, CDM, SAHAM
-  BANK) applique sa propre formule et son propre calendrier de facturation — génération
-  automatique chaque fin de mois (AWB, BMCI) ou début de mois (CDM), y compris les cas
+  BANK, BP) applique sa propre formule et son propre calendrier de facturation — génération
+  automatique chaque fin de mois (AWB, BMCI, SAHAM BANK), début de mois (CDM) ou fin de trimestre
+  civil (BP), y compris les cas
   particuliers de prorata (caution ouverte et clôturée dans le même mois, premier mois d'une
   caution) et les règles propres à chaque banque, comme la non-facturation du jour de délivrance
   chez AWB — les commissions prévues correspondent ainsi au montant réellement prélevé par la

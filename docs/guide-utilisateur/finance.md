@@ -661,9 +661,17 @@ pour la date de prise (du/au) et la date de main levée (du/au).
    - **Taux** de commission (obligatoire, entre 0 et 100 %)
 3. Valider.
 
-> Si la banque choisie applique un prorata d'entrée (voir guide Administration pour la liste des
-> banques concernées), une commission couvrant les premiers jours du mois est générée
-> automatiquement dès la création.
+> Aucune commission n'est créée à la validation du formulaire. Si la banque choisie applique un
+> prorata d'entrée (voir guide Administration pour la liste des banques concernées), il est généré
+> automatiquement **à la fin de la période de prise** (fin du mois, 1er du mois suivant pour CDM,
+> fin du trimestre pour BP), avec **la date de prise comme date d'émission**.
+>
+> **BP** : facturée **par trimestre civil**. Le 31 mars, 30 juin, 30 septembre et 31 décembre, une
+> commission « Trimestrielle » est générée pour le trimestre qui s'achève ; une caution prise
+> pendant le trimestre reçoit à la place son prorata d'entrée, du jour de prise (inclus) à la fin du
+> trimestre. À la clôture, la commission court du début du trimestre (ou du jour de prise) jusqu'à
+> la date de main levée incluse. BP n'applique aucun minimum. La première génération a lieu le
+> 31/12/2026.
 >
 > **Cas AWB** : aucune commission n'est générée à la création ; la commission du premier mois
 > est calculée par la génération de fin de mois. AWB ne facturant pas le jour de délivrance, elle

@@ -1494,11 +1494,12 @@ cautions.
 [1] Créer la caution
     (banque, nature, marché [optionnel], numéro, désignation, organisme, montant, taux, date de prise)
         ↓
-    → Si la stratégie de la banque le prévoit : génération immédiate d'un prorata d'entrée
-      (commission couvrant les jours du mois de prise) + TVA si la banque l'exige
+    → Aucune commission à la création : si la stratégie de la banque le prévoit, le prorata d'entrée
+      (jours de la période de prise, daté du jour de prise) est généré par le traitement automatique
+      à la fin de cette période, + TVA si la banque l'exige
         ↓
-[2] Suivi mensuel — génération automatique des commissions
-    (fin de mois pour AWB/BMCI, début de mois pour CDM — voir section 6)
+[2] Suivi périodique — génération automatique des commissions
+    (fin de mois pour AWB/BMCI/SAHAM BANK, début de mois pour CDM, fin de trimestre pour BP — voir section 6)
         ↓
 [3] Clôture (main levée)
     → Génération de la commission de clôture (prorata jusqu'à la date de main levée)
@@ -1564,11 +1565,18 @@ déclenche son recalcul automatique.
 6. La clôture (main levée) est interdite si la caution est déjà clôturée.
 7. La clôture exige qu'une stratégie de commission soit enregistrée pour la banque de la caution ;
    à défaut, l'opération est bloquée.
-8. Si la caution est créée et clôturée dans le même mois calendaire, le prorata d'entrée déjà
-   généré (et non encore payé) est supprimé avant de générer la commission de clôture, afin
-   d'éviter une double facturation des mêmes jours. S'il est déjà payé, il n'est pas supprimé.
-9. La génération mensuelle des commissions est idempotente : une caution ne reçoit jamais deux
-   commissions pour la même date d'émission.
+8. Si la caution est créée et clôturée dans la même période, aucun prorata d'entrée n'est généré
+   (le traitement ne considère que les cautions actives). Un prorata d'entrée antérieur, déjà
+   généré pour une caution clôturée dans le même mois et non encore payé, est supprimé avant de
+   générer la commission de clôture, afin d'éviter une double facturation des mêmes jours. S'il
+   est déjà payé, il n'est pas supprimé.
+9. La génération des commissions est idempotente : une caution ne reçoit jamais deux commissions
+   pour la même date d'émission. Le prorata d'entrée est ignoré s'il existe déjà une commission de
+   la caution à la date de prise.
+10. Le **prorata d'entrée** n'est plus créé à la création de la caution : il est généré par le
+   traitement automatique **à la fin de la période de prise** (fin du mois pour BMCI et SAHAM BANK,
+   1er du mois suivant pour CDM, fin du trimestre civil pour BP), avec **la date de prise comme date
+   d'émission**. AWB calcule déjà ce premier mois dans son traitement mensuel.
 
 ---
 
@@ -1582,9 +1590,19 @@ banque :
 | Banque | Génération | Date d'émission | Mois facturé | Prorata d'entrée | Prorata de sortie | TVA générée |
 |---|---|---|---|---|---|---|
 | **AWB** | Fin de mois | Dernier jour du mois de référence | Mois courant | Géré par le traitement mensuel (pas à la création), jour de délivrance non facturé | Oui (jusqu'à la date de main levée) | Non |
-| **BMCI** | Fin de mois | Dernier jour du mois M+1 | Mois suivant (M+1) | Oui, à la création (`dateEmission = dateDePrise`) | Non (mois entier à la clôture) | Oui (10 % du montant HT) |
-| **CDM** | Début de mois | Premier jour du mois de référence | Mois courant | Oui, à la création (`dateEmission = dateDePrise`) | Non (mois entier à la clôture) | Non |
-| **SAHAM BANK** | Fin de mois | Dernier jour du mois de référence | Mois suivant (M+1), sauf 1er mois | Oui, à la création (`dateEmission = dateDePrise`) | Non (mois entier à la clôture) | Non |
+| **BMCI** | Fin de mois | Dernier jour du mois M+1 | Mois suivant (M+1) | Oui, par le traitement de fin de mois (`dateEmission = dateDePrise`) | Non (mois entier à la clôture) | Oui (10 % du montant HT) |
+| **CDM** | Début de mois | Premier jour du mois de référence | Mois courant | Oui, par le traitement du 1er du mois suivant (`dateEmission = dateDePrise`) | Non (mois entier à la clôture) | Non |
+| **SAHAM BANK** | Fin de mois | Dernier jour du mois de référence | Mois suivant (M+1), sauf 1er mois | Oui, par le traitement de fin de mois (`dateEmission = dateDePrise`) | Non (mois entier à la clôture) | Non |
+| **BP** | Fin de trimestre civil (31/03, 30/06, 30/09, 31/12) | Dernier jour du trimestre | Trimestre civil entier (90 à 92 jours réels) | Oui, par le traitement de fin de trimestre (`dateEmission = dateDePrise`), du jour de prise (inclus) à la fin du trimestre | Oui (du début du trimestre — ou du jour de prise s'il est postérieur — jusqu'à la date de main levée incluse, `dateEmission = date de main levée`) | Non (montant TTC) |
+
+**Particularité BP — facturation trimestrielle.** BP est la seule banque facturée par trimestre : le
+traitement automatique de fin de mois ne la traite qu'en mars, juin, septembre et décembre, pour le
+trimestre civil qui s'achève. Les commissions générées portent le type **Trimestrielle** (à côté de
+« prorata d'entrée », « mensuelle » et « clôture »). Une caution prise pendant le trimestre ne reçoit
+que son prorata d'entrée pour ce trimestre (pas de commission trimestrielle en plus) ; la première
+génération a lieu le 31/12/2026 pour le trimestre octobre–décembre 2026, sans rattrapage du passé, et
+les commissions déjà existantes ne sont pas modifiées. BP n'applique aucun montant minimum (diviseur
+36 000, minimum 0 dans la configuration).
 
 Cas particulier commun à toutes les banques : si la date de prise et la date de main levée tombent
 dans le même mois calendaire, le nombre de jours facturés à la clôture est calculé entre les deux
