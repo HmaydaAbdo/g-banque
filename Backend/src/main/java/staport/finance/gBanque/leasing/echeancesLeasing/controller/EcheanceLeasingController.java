@@ -85,6 +85,15 @@ public class EcheanceLeasingController {
         return ResponseEntity.ok(echeanceLeasingService.toggleStatus(id));
     }
 
+    @Operation(summary = "Rattraper les commissions leasing des échéances prévues",
+            description = "Crée les commissions manquantes selon les règles en vigueur. Les échéances payées ne sont pas touchées et "
+                    + "l'action peut être rejouée sans doublon. Réservé aux administrateurs système")
+    @PreAuthorize(ADMIN_ONLY)
+    @PostMapping("/commissions/rattrapage")
+    public ResponseEntity<RattrapageCommissionsLeasingDTO> rattraperCommissions() {
+        return ResponseEntity.ok(echeanceLeasingService.rattraperCommissions());
+    }
+
     @Operation(summary = "Modifier une échéance au statut PREVU",
             description = "Permet à l'administrateur de modifier les champs d'une échéance non encore validée (statut PREVU). Bloqué si l'échéance est PAYE.")
     @ApiResponse(responseCode = "404", description = "Échéance introuvable")

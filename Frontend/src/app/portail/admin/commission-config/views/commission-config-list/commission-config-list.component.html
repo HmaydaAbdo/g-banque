@@ -13,6 +13,17 @@
     </div>
     <div class="pg-header__actions">
       <button pButton pRipple
+              label="Appliquer aux échéances leasing existantes"
+              icon="pi pi-refresh"
+              size="small"
+              severity="secondary"
+              [outlined]="true"
+              [loading]="rattrapageEnCours"
+              pTooltip="Crée les commissions manquantes des échéances leasing prévues, selon les règles ci-dessous"
+              tooltipPosition="bottom"
+              (click)="confirmerRattrapage($event)">
+      </button>
+      <button pButton pRipple
               label="Nouvelle règle"
               icon="pi pi-plus"
               size="small"

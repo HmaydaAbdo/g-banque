@@ -15,6 +15,14 @@ export interface CommissionConfigSearchCriteria {
   search?: string | null;
 }
 
+/** Bilan du rattrapage des commissions leasing sur les échéances prévues existantes. */
+export interface RattrapageCommissionsLeasing {
+  contratsTraites: number;
+  contratsSansRegle: number;
+  commissionsCreees: number;
+  dejaPresentes: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CommissionConfigService {
   private http   = inject(HttpClient);
@@ -52,6 +60,11 @@ export class CommissionConfigService {
 
   update(id: number, dto: CommissionConfigRequest): Observable<CommissionConfigResponse> {
     return this.http.put<CommissionConfigResponse>(`${this.apiUrl}/${id}`, dto);
+  }
+
+  /** Crée les commissions leasing manquantes des échéances prévues (les échéances payées ne sont pas touchées). */
+  rattraperCommissionsLeasing(): Observable<RattrapageCommissionsLeasing> {
+    return this.http.post<RattrapageCommissionsLeasing>(`${environment.apiUrl}echeances-leasing/commissions/rattrapage`, null);
   }
 
   delete(id: number): Observable<void> {

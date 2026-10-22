@@ -98,6 +98,12 @@ public class CommissionService implements ICommissionService {
         this.staportPdfReportService = staportPdfReportService;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByOperationAndLibelleAndDateEmission(TransactionSource operation, String libelle, LocalDate dateEmission) {
+        return commissionRepository.existsByOperationAndLibelleAndDateEmission(operation, libelle, dateEmission);
+    }
+
     // --- Create ---
     @Transactional
     @AuditableAction(operation = AuditOperation.CREATE, entity = Commission.class)

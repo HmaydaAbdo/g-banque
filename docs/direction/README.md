@@ -310,7 +310,9 @@ commissions et alertes d'échéance sont pris en charge automatiquement par le s
   n'est jamais comptée deux fois dans les encours ni dans la trésorerie prévisionnelle.
 - **Commissions automatiques** : pour chaque contrat, les commissions bancaires dues sur les loyers
   sont calculées et enregistrées automatiquement selon les règles configurées (voir module
-  Commission) — aucun risque d'omission.
+  Commission) — aucun risque d'omission. Lorsqu'une règle de commission est ajoutée ou revue
+  après coup, une action d'administration l'étend aux échéances déjà prévues, sans doublon et sans
+  toucher aux échéances payées : les commissions attendues restent complètes dans la durée.
 - **Alerte main levée automatique** : chaque dimanche à 14h00, les contrats entièrement soldés
   déclenchent une notification — élimine le risque de contrat terminé non clôturé.
 - **Vue encours par banque** : l'encours total de leasing est consultable en temps réel, filtrable

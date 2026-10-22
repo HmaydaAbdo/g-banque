@@ -39,6 +39,9 @@ public interface CommisionRepository extends JpaRepository<Commission, Long>, Jp
     List<Commission> findByLibelleLike(String libellePattern);
 
     boolean existsByOperationAndLibelle(TransactionSource operation, String libelle);
+
+    /** Garde d'idempotence des commissions liées à un contrat (même opération, même libellé, même date d'émission). */
+    boolean existsByOperationAndLibelleAndDateEmission(TransactionSource operation, String libelle, LocalDate dateEmission);
     /**
      * Vérifie si une caution possède au moins une commission non réglée (status = PREVU).
      * Utilisé pour bloquer la désactivation d'une caution tant qu'une commission est en cours.

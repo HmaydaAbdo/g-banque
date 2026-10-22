@@ -1174,6 +1174,7 @@ affichée. L'export du tableau d'amortissement reprend également les totaux aff
 27. Le **libellé et l'observation** de cette transaction (et du moyen de paiement) indiquent qu'il s'agit d'une avance réglée via ce moyen de paiement, et qu'elle représente l'échéance n°1 du contrat N° x. Si le moyen de paiement est encore en cours, la mention est déjà inscrite sur lui et se retrouve sur la transaction créée à sa validation.
 28. Tant que le moyen de paiement n'est pas réglé, le contrat reste modifiable et on peut choisir un autre moyen : l'ancien retrouve ses textes d'origine. Si le moyen de paiement est annulé, l'avance redevient une échéance à payer et réapparaît dans les encours de leasing. Dès qu'il est réglé, l'avance est payée et, comme toute échéance payée, elle verrouille la modification et la suppression du contrat (règles 11 et 12). La suppression d'un contrat retire la mention d'avance du moyen de paiement.
 29. Les contrats déjà existants ne sont pas modifiés : la fonction d'avance ne s'applique qu'aux nouveaux contrats.
+30. Une règle de commission leasing créée ou modifiée **après** la saisie d'un contrat ne s'applique pas d'elle-même aux échéances déjà générées. Un administrateur peut les rattraper depuis l'écran des règles de commission (« Appliquer aux échéances leasing existantes ») : la commission manquante est alors créée pour chaque échéance **prévue** (avance exclue), au montant de la règle en vigueur et à la date de l'échéance. Les échéances **payées** ne sont jamais touchées, une échéance qui a déjà sa commission est ignorée, et l'action peut être rejouée sans créer de doublon. Les banques sans règle leasing (AWB, CDM) ne reçoivent rien.
 
 #### Notification main levée
 
@@ -4257,6 +4258,8 @@ Les règles de commission sont entièrement gérées depuis l'interface d'admini
 - Le **montant** en MAD
 
 La suppression d'une règle est immédiate et sans impact sur les commissions déjà générées.
+
+La création ou la modification d'une règle n'a, elle non plus, aucun effet sur les commissions leasing des échéances déjà générées : elle ne s'applique qu'aux contrats saisis ensuite. Pour l'étendre aux échéances prévues existantes, l'administrateur déclenche l'action **« Appliquer aux échéances leasing existantes »** (voir le chapitre Leasing, règle 30) ; elle ne crée jamais de doublon et ne touche pas aux échéances payées.
 
 ---
 

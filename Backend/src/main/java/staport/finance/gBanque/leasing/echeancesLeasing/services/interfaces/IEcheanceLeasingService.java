@@ -6,6 +6,7 @@ import staport.finance.gBanque.leasing.echeancesLeasing.dto.EcheanceLeasingRespo
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.EcheanceLeasingSearchDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.EcheanceLeasingUpdateRequestDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.MontantsContratLeasing;
+import staport.finance.gBanque.leasing.echeancesLeasing.dto.RattrapageCommissionsLeasingDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.TableauAmortissementDTO;
 
 import java.util.Collection;
@@ -62,4 +63,10 @@ public interface IEcheanceLeasingService {
     Map<Long, MontantsContratLeasing> getMontantsByContratIds(Collection<Long> contratIds);
 
     void deleteEcheancesAndCommissionByContrat(ContratLeasing contrat);
+
+    /**
+     * Crée les commissions manquantes des échéances prévues de tous les contrats, selon les règles de commission
+     * leasing en vigueur. Les échéances payées ne sont pas touchées ; rejouer l'action ne crée aucun doublon.
+     */
+    RattrapageCommissionsLeasingDTO rattraperCommissions();
 }

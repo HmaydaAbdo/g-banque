@@ -51,6 +51,7 @@ import java.math.BigDecimal;
     import java.util.Collection;
     import java.util.Comparator;
     import java.util.HashMap;
+    import java.util.LinkedHashMap;
     import java.util.List;
         import java.util.Map;
 
@@ -272,60 +273,93 @@ import java.math.BigDecimal;
          * @param echeances La liste des échéances générées et sauvegardées
          */
         private void generateCommissionsForEcheances(ContratLeasing contrat, List<EcheanceLeasing> echeances) {
+            creerCommissionsManquantes(contrat, echeances);
+        }
+
+        /**
+         * Rattrape les commissions des échéances <strong>prévues</strong> déjà existantes : une règle ajoutée après la
+         * saisie d'un contrat ne s'applique pas seule aux échéances déjà générées. Les échéances payées ne sont jamais
+         * touchées, et une échéance qui a déjà sa commission (même libellé, même date) est ignorée : l'action peut être
+         * rejouée sans créer de doublon.
+         */
+        @Override
+        @Transactional
+        public RattrapageCommissionsLeasingDTO rattraperCommissions() {
+            Map<Long, List<EcheanceLeasing>> parContrat = new LinkedHashMap<>();
+            for (EcheanceLeasing echeance : echeanceLeasingRepository.findByStatutPaiement(StatutEcheanceLeasing.PREVU)) {
+                parContrat.computeIfAbsent(echeance.getContratLeasing().getId(), id -> new ArrayList<>()).add(echeance);
+            }
+
+            int sansRegle = 0;
+            int creees = 0;
+            int dejaPresentes = 0;
+            for (List<EcheanceLeasing> echeances : parContrat.values()) {
+                ContratLeasing contrat = echeances.get(0).getContratLeasing();
+                int[] bilan = creerCommissionsManquantes(contrat, echeances);
+                if (bilan == null) {
+                    sansRegle++;
+                } else {
+                    creees += bilan[0];
+                    dejaPresentes += bilan[1];
+                }
+            }
+
+            log.info("Rattrapage des commissions leasing — contrats : {}, sans règle : {}, créées : {}, déjà présentes : {}",
+                    parContrat.size(), sansRegle, creees, dejaPresentes);
+            return new RattrapageCommissionsLeasingDTO(parContrat.size(), sansRegle, creees, dejaPresentes);
+        }
+
+        /**
+         * Crée la commission de chaque échéance qui n'en a pas encore (avance n°1 exclue : elle est réglée par un
+         * chèque / une LCN / un virement).
+         *
+         * @return {créées, déjà présentes}, ou {@code null} si aucune règle de commission leasing ne s'applique au contrat
+         */
+        private int[] creerCommissionsManquantes(ContratLeasing contrat, List<EcheanceLeasing> echeances) {
             String nomBanque = contrat.getBanqueDePrelevement().getNom();
             String nomOrganisme = contrat.getContratCadre().getOrganisme().getNom();
 
-            log.debug("Vérification de l'éligibilité pour la génération de commissions");
-            log.debug("  → Banque : {}, Organisme : {}", nomBanque, nomOrganisme);
-
-            // Vérifier si la banque a une commission configurée
             if (!commissionConfigService.hasCommission(nomBanque, TransactionSource.LEASING)) {
                 log.debug("Aucune commission configurée pour la banque '{}'. Génération ignorée.", nomBanque);
-                return;
+                return null;
             }
 
-            // Récupérer le montant en tenant compte de l'organisme
             BigDecimal montantCommission = commissionConfigService
                     .resolveCommission(nomBanque, nomOrganisme, TransactionSource.LEASING)
                     .orElse(null);
-
             if (montantCommission == null) {
                 log.warn("Impossible de déterminer le montant de commission pour {} / {}", nomBanque, nomOrganisme);
-                return;
+                return null;
             }
 
-            log.debug("Commission configurée pour la banque '{}' / organisme '{}'", nomBanque, nomOrganisme);
-
-            int commissionsCreees = 0;
-            int commissionsEchec = 0;
-
-            // Créer une commission pour chaque échéance
+            int creees = 0;
+            int dejaPresentes = 0;
+            int echecs = 0;
             for (EcheanceLeasing echeance : echeances) {
                 if (contrat.hasAvance() && echeance.getNumeroEcheance() == 1) {
-                    continue; // l'avance est réglée par un chèque / une LCN / un virement : pas de commission de prélèvement
+                    continue;
+                }
+                CommissionRequestDto commissionDto = creerCommissionDto(contrat, echeance, montantCommission);
+                if (commissionService.existsByOperationAndLibelleAndDateEmission(
+                        commissionDto.operation(), commissionDto.libelle(), commissionDto.dateEmission())) {
+                    dejaPresentes++;
+                    continue;
                 }
                 try {
-                    CommissionRequestDto commissionDto = creerCommissionDto(contrat, echeance, montantCommission);
                     commissionService.createCommission(commissionDto);
-                    commissionsCreees++;
-
-                    log.debug("Commission créée pour l'échéance {}", echeance.getNumeroEcheance());
-
+                    creees++;
                 } catch (Exception e) {
-                    commissionsEchec++;
+                    echecs++;
                     log.error("Erreur lors de la création de la commission pour l'échéance {} : {}",
                             echeance.getNumeroEcheance(), e.getMessage());
                 }
             }
 
-            log.info("Génération des commissions terminée - Créées : {}, Échecs : {}, Total : {}",
-                    commissionsCreees, commissionsEchec, echeances.size());
-
-            if (commissionsEchec > 0) {
-                log.warn("  {} commission(s) n'ont pas pu être créées pour le contrat {}",
-                        commissionsEchec, contrat.getNumeroContrat());
-            }
+            log.info("Commissions leasing du contrat {} — créées : {}, déjà présentes : {}, échecs : {}",
+                    contrat.getNumeroContrat(), creees, dejaPresentes, echecs);
+            return new int[] { creees, dejaPresentes };
         }
+
         /**
          * Crée un DTO de commission à partir d'une échéance.
          *

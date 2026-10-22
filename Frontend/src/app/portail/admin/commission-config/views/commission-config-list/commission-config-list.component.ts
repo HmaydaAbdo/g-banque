@@ -67,6 +67,7 @@ export class CommissionConfigListComponent implements OnInit {
   sortOrder = 1;
 
   loading = false;
+  rattrapageEnCours = false;
   dialogVisible = false;
   editingId: number | null = null;
 
@@ -231,6 +232,37 @@ export class CommissionConfigListComponent implements OnInit {
         this.messageService.add({ severity: 'success', summary: 'Enregistré', detail: 'Règle sauvegardée.' });
         this.dialogVisible = false;
         this.reloadCurrentPage();
+      }
+    });
+  }
+
+  /**
+   * Les règles de commission leasing ne s'appliquent d'elles-mêmes qu'aux contrats saisis après leur création :
+   * cette action les applique aux échéances prévues déjà générées (sans doublon, échéances payées intactes).
+   */
+  confirmerRattrapage(event: Event): void {
+    this.confirmationService.confirm({
+      target: event.target as EventTarget,
+      message: 'Créer les commissions leasing manquantes des échéances <b>prévues</b> selon les règles en vigueur ? '
+        + 'Les échéances payées ne sont pas touchées et les commissions déjà présentes ne sont pas dupliquées.',
+      header: 'Appliquer les règles aux échéances existantes',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Appliquer',
+      rejectLabel: 'Annuler',
+      accept: () => {
+        this.rattrapageEnCours = true;
+        this.svc.rattraperCommissionsLeasing().subscribe({
+          next: bilan => {
+            this.rattrapageEnCours = false;
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Commissions leasing appliquées',
+              detail: `${bilan.commissionsCreees} commission(s) créée(s), ${bilan.dejaPresentes} déjà présente(s), `
+                + `${bilan.contratsSansRegle} contrat(s) sans règle.`
+            });
+          },
+          error: () => { this.rattrapageEnCours = false; }
+        });
       }
     });
   }

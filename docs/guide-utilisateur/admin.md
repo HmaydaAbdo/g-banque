@@ -163,6 +163,15 @@ Chaque règle est caractérisée par une **condition** qui détermine quand elle
 
 Cliquer sur l'icône **crayon** sur la ligne concernée, modifier les valeurs, puis **Enregistrer**.
 
+### Appliquer les règles aux échéances leasing existantes
+
+Une règle créée ou modifiée ne s'applique d'elle-même qu'aux contrats de leasing saisis ensuite. Pour que les échéances **déjà prévues** reçoivent aussi leur commission :
+
+1. Cliquer sur **Appliquer aux échéances leasing existantes** (en haut de la page).
+2. Confirmer. Un message indique le nombre de commissions créées, le nombre d'échéances qui avaient déjà leur commission et le nombre de contrats sans règle applicable.
+
+Les échéances **payées** ne sont jamais modifiées, l'avance d'un contrat est exclue, et l'action peut être relancée à volonté : une échéance qui a déjà sa commission n'en reçoit pas une seconde. Les banques sans règle leasing ne reçoivent aucune commission.
+
 ### Supprimer une règle
 
 Cliquer sur l'icône **corbeille** et confirmer. La suppression est immédiate et irréversible — si une commission est en cours de génération, la règle supprimée ne s'applique plus aux nouvelles opérations.

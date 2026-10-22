@@ -8,6 +8,7 @@ import staport.finance.gBanque.commision.dtos.CommissionResponseDto;
 import staport.finance.gBanque.commision.dtos.CommissionSearchDto;
 import staport.finance.gBanque.commision.dtos.EncoursCommissionDto;
 import staport.finance.gBanque.commision.enums.TypeCommission;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -58,6 +59,9 @@ public interface ICommissionService {
      * @param numeroContrat Le numéro du contrat de leasing
      */
     void deleteCommissionsByContratLeasing(String numeroContrat);
+
+    /** Garde d'idempotence : une commission de cette opération existe déjà avec ce libellé à cette date d'émission. */
+    boolean existsByOperationAndLibelleAndDateEmission(TransactionSource operation, String libelle, LocalDate dateEmission);
 
     // ── Façade dédiée aux commissions générées automatiquement sur caution ─────
 

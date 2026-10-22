@@ -2183,6 +2183,7 @@ Endpoint de validation (rapprochement) : voir Chapitre 28 — Validation (`Valid
 | POST | `/commission-config` | `SYSTEM_ADMIN` (classe) | Création d'une règle réservée à l'admin système. |
 | PUT | `/commission-config/{id}` | `SYSTEM_ADMIN` (classe) | Modification d'une règle réservée à l'admin système. |
 | DELETE | `/commission-config/{id}` | `SYSTEM_ADMIN` (classe) | Suppression d'une règle réservée à l'admin système. |
+| POST | `/echeances-leasing/commissions/rattrapage` (`EcheanceLeasingController`) | `SYSTEM_ADMIN` | Crée les commissions leasing manquantes des échéances prévues ; modifie des données financières, donc réservé à l'admin système comme la gestion des règles qu'il applique. Déclenché depuis l'écran des règles de commission. |
 
 ---
 
@@ -2217,6 +2218,7 @@ les routes du module Administration.
 | Commutateur de statut (PREVU ↔ PAYE) | `isAdmin()` | `CommissionListComponent` |
 | Bouton "Exporter PDF" (liste) | Aucune condition — accès écran seul (`FINANCE_OR_ADMIN`) | `CommissionListComponent` |
 | Bouton "Exporter PDF" (encours) | Aucune condition — accès écran seul (`FINANCE_OR_ADMIN`) | `EncoursCommissionsComponent` |
+| Bouton "Appliquer aux échéances leasing existantes" | Aucune condition — l'écran `/portail/admin/commission-config` est déjà réservé à `SYSTEM_ADMIN` (guard parent) ; l'endpoint est `SYSTEM_ADMIN` aussi | `CommissionConfigListComponent` |
 
 Aucune divergence backend/frontend : les deux premières actions ci-dessus sont réservées à
 `SYSTEM_ADMIN` des deux côtés, cohérent avec l'endpoint `PATCH /commissions/{id}/toggle-status` et
