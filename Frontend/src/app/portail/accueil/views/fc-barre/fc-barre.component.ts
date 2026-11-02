@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { montantCompact } from '../../../tresorerie/format';
-import { SituationFc } from '../../fc-consommation';
+import { SituationFc, libellePourcentage } from '../../fc-consommation';
 
 /**
  * Barre de consommation de la facilité de caisse, commune aux cartes de l'accueil et au plan de trésorerie d'une
@@ -16,10 +16,10 @@ import { SituationFc } from '../../fc-consommation';
     @if (entete) {
       <span class="fc__tete">
         <span>{{ situation.palier === 'aucun' ? 'FC non utilisée' : 'FC utilisée ' + texte(situation.utilise) }}</span>
-        <strong [ngClass]="'fc__pct--' + situation.palier">{{ situation.pourcentage }} %</strong>
+        <strong [ngClass]="'fc__pct--' + situation.palier">{{ libelle(situation.pourcentage) }} %</strong>
       </span>
     }
-    <span class="fc__barre" role="img" [attr.aria-label]="'Facilité de caisse utilisée à ' + situation.pourcentage + ' pour cent'">
+    <span class="fc__barre" role="img" [attr.aria-label]="'Facilité de caisse utilisée à ' + libelle(situation.pourcentage) + ' pour cent'">
       <span class="fc__rempli" [ngClass]="'fc__rempli--' + situation.palier" [style.width.%]="situation.largeur"></span>
     </span>
   `,
@@ -45,6 +45,8 @@ export class FcBarreComponent {
   @Input() entete = true;
   /** Montant utilisé : complet (« 4 000 000,00 ») sur les cartes, compact (« 4,00 M ») dans le plan. */
   @Input() format: 'complet' | 'compact' = 'complet';
+
+  readonly libelle = libellePourcentage;
 
   texte(v: number): string {
     return this.format === 'compact'

@@ -5460,6 +5460,9 @@ consommation de la facilité de caisse** et par une ligne de total.
 - **Récap global** (bouton d'en-tête) : rapport consolidé de trésorerie pour l'ensemble des banques.
   Un choix de période est demandé avant le téléchargement, dans une fenêtre à trois cartes (un seul
   choix, chacune rappelant sa date de fin) — **à ce jour**, **fin de mois** ou **fin de trimestre**
+- **Découvert inférieur à 1 % du plafond** : le pourcentage est affiché avec une décimale (« 0,2 % »), jamais
+  arrondi à 0 % tant que la facilité de caisse est entamée, et la barre garde une largeur minimale visible (2 %).
+- **Signe du solde** : un solde actuel ou prévu négatif est affiché en rouge, précédé du signe « − ».
   (présélection : l'horizon du tableau de bord).
 - **Récap détaillé** (bouton d'en-tête) : récapitulatif général détaillé pour l'ensemble des
   banques, jusqu'à l'horizon du tableau de bord. Les catégories à 0,00 pour toutes les banques n'y

@@ -85,7 +85,7 @@
           <tr>
             <th scope="row">FC utilisée</th>
             @for (v of plan.soldesFin; track $index) {
-              <td [ngClass]="'fc__pct--' + fc(v).palier">{{ fc(v).pourcentage }} %</td>
+              <td [ngClass]="'fc__pct--' + fc(v).palier">{{ libellePct(fc(v).pourcentage) }} %</td>
             }
             <td class="col-total"></td>
           </tr>

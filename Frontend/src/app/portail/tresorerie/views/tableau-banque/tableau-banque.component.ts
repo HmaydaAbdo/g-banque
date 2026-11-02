@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core
 import { NgClass } from '@angular/common';
 import { RecaputilatifItem } from '../../../etatsDesEncours/views/lesEncours/recap/dtos/RecaputilatifItem';
 import { TransactionSource } from '../../../transactions/dtos/TransactionSource';
-import { SituationFc, situationFc } from '../../../accueil/fc-consommation';
+import { SituationFc, libellePourcentage, situationFc } from '../../../accueil/fc-consommation';
 import { FcBarreComponent } from '../../../accueil/views/fc-barre/fc-barre.component';
 import { ColonnePlan, PlanBanque } from '../../dtos/PlanTresorerie';
 import { montantCompact } from '../../format';
@@ -46,6 +46,7 @@ export class TableauBanqueComponent implements OnChanges {
   choix: CaseChoisie | null = null;
 
   readonly compact = montantCompact;
+  readonly libellePct = libellePourcentage;
 
   ngOnChanges(): void {
     if (!this.plan) {

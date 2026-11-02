@@ -1,4 +1,4 @@
-import { situationFc } from './fc-consommation';
+import { libellePourcentage, situationFc } from './fc-consommation';
 
 describe('situationFc', () => {
   it('solde positif : disponibilité = solde + plafond, FC intacte', () => {
@@ -19,6 +19,16 @@ describe('situationFc', () => {
     expect(s.largeur).toBe(40);
     expect(s.reste).toBe(6_000_000);
     expect(s.palier).toBe('faible');
+  });
+
+  it('découvert sous 1 % du plafond : une décimale et barre minimale visible, jamais 0 %', () => {
+    const s = situationFc(-14_556.78, 6_000_000);
+    expect(s.pourcentage).toBe(0.2);
+    expect(s.largeur).toBe(2);
+    expect(s.palier).toBe('faible');
+    expect(situationFc(-1, 6_000_000).pourcentage).toBe(0.1);
+    expect(libellePourcentage(0.2)).toBe('0,2');
+    expect(libellePourcentage(40)).toBe('40');
   });
 
   it('70 % pile : palier élevé ; 100 % pile : encore couvert', () => {

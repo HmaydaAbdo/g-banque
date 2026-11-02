@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "Frontend/src/app/portail/accueil/views/acceuil/acceuil.component.html"
+        ],
+        "createdAt": "2026-11-02T11:40:23.189Z",
+        "reason": "false positive: Angular [src] binding (data URI logo), not a missing src"
+      }
+    ]
+  }
+}

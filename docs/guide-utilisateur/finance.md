@@ -61,6 +61,10 @@ elle montre quelle part du plafond de la facilité de caisse est utilisée, d'ap
 - Au-dessus de la barre : le montant de facilité de caisse utilisé (ou « FC non utilisée ») et le pourcentage du
   plafond. Le plafond lui-même est sur la ligne **Facilité caisse** ; la ligne **FC disponible** indique ce qu'il en
   reste aujourd'hui.
+- Quand le découvert est très faible par rapport au plafond (moins de 1 %), le pourcentage s'affiche avec une
+  décimale (par exemple « 0,2 % ») et la barre garde une petite largeur visible : tant que la facilité de caisse est
+  entamée, l'affichage n'indique jamais « 0 % ».
+- Un **solde négatif** (actuel ou prévu) est affiché en rouge, précédé du signe **−**.
 - La ligne du bas annonce la situation : **Disponibilité** en vert, **Besoin — couvert par FC** en orange (le solde est
   négatif mais le plafond le couvre ; le montant est le découvert), **Besoin — dépassement** en rouge (le plafond ne
   suffit pas ; le montant est la part non couverte).

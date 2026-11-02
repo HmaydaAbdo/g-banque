@@ -3,6 +3,9 @@
 <!-- Montant au format comptable : 1 234,00 ou (1 234,00) -->
 <ng-template #montant let-v>{{ v < 0 ?  (0 - v | number:'1.2-2':'fr-FR')  : (v | number:'1.2-2':'fr-FR') }}</ng-template>
 
+<!-- Solde : le signe « − » précède le montant d'un solde négatif (découvert) -->
+<ng-template #montantSigne let-v>{{ v < 0 ? '−' : '' }}{{ (v < 0 ? 0 - v : v) | number:'1.2-2':'fr-FR' }}</ng-template>
+
 <!-- Barre de consommation de la facilité de caisse : palier faible (< 70 %), élevé (70 à 100 %), dépassé (> 100 %) -->
 <!-- Le plafond n'est pas répété ici : il figure sur la ligne « Facilité caisse » de la tuile Aujourd'hui. -->
 <ng-template #barreFc let-s>
@@ -107,7 +110,7 @@
               <div class="bank-card__hero"
                    [class.bank-card__hero--pos]="account.soldeActuel >= 0"
                    [class.bank-card__hero--neg]="account.soldeActuel < 0">
-                <ng-container [ngTemplateOutlet]="montant"
+                <ng-container [ngTemplateOutlet]="montantSigne"
                               [ngTemplateOutletContext]="{ $implicit: account.soldeActuel }"/>
               </div>
 
@@ -152,7 +155,7 @@
               <div class="bank-card__hero"
                    [class.bank-card__hero--pos]="account.soldePrevu >= 0"
                    [class.bank-card__hero--neg]="account.soldePrevu < 0">
-                <ng-container [ngTemplateOutlet]="montant"
+                <ng-container [ngTemplateOutlet]="montantSigne"
                               [ngTemplateOutletContext]="{ $implicit: account.soldePrevu }"/>
               </div>
 
