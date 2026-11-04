@@ -877,7 +877,7 @@ préfinancement rattachés à cette ligne.
 
 ### Exporter en PDF
 
-Bouton **Exporter PDF**, disponible sur la liste des préfinancements : génère un état complet selon les filtres actuellement appliqués sur l'écran — pas seulement la page affichée. L'export des encours se fait depuis **États des encours → Récapitulatifs** (bouton **Exporter PDF** du tableau).
+Bouton **Exporter PDF** : choisissez **Avec les filtres** pour exporter tous les résultats correspondant aux filtres de la liste, ou **Global** pour ignorer ces filtres. Le PDF global affiche une table par marché ayant des opérations, les déblocages avant les remboursements, puis les totaux débloqué, remboursé et le reste à payer (déblocages − remboursements). Les opérations prévues et payées sont incluses dans ces totaux.
 
 ---
 
@@ -929,7 +929,7 @@ factoring rattachés à cette ligne.
 
 ### Exporter en PDF
 
-Bouton **Exporter PDF**, disponible sur la liste des factorings : génère un état complet selon les filtres actuellement appliqués sur l'écran — pas seulement la page affichée. L'export des encours se fait depuis **États des encours → Récapitulatifs** (bouton **Exporter PDF** du tableau).
+Bouton **Exporter PDF** : choisissez **Avec les filtres** pour exporter tous les résultats correspondant aux filtres de la liste, ou **Global** pour ignorer ces filtres. Le PDF global affiche une table par marché ayant des opérations, les déblocages avant les remboursements, puis les totaux débloqué, remboursé et le reste à payer (déblocages − remboursements). Les opérations prévues et payées sont incluses dans ces totaux.
 
 ---
 
@@ -984,7 +984,7 @@ constaté rattachés à cette ligne.
 
 ### Exporter en PDF
 
-Bouton **Exporter PDF**, disponible sur la liste des droits constatés : génère un état complet selon les filtres actuellement appliqués sur l'écran — pas seulement la page affichée. L'export des encours se fait depuis **États des encours → Récapitulatifs** (bouton **Exporter PDF** du tableau).
+Bouton **Exporter PDF** : choisissez **Avec les filtres** pour exporter tous les résultats correspondant aux filtres de la liste, ou **Global** pour ignorer ces filtres. Le PDF global affiche une table par marché ayant des opérations, les déblocages avant les remboursements, puis les totaux débloqué, remboursé et le reste à payer (déblocages − remboursements). Les opérations prévues et payées sont incluses dans ces totaux.
 
 ---
 

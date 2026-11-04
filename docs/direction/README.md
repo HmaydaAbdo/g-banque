@@ -443,7 +443,7 @@ marché, et consultables en encours par banque, avec une traçabilité complète
 - **Recherche par période** : les préfinancements se retrouvent instantanément sur une plage de
   dates d'émission, d'opération ou de valeur, au choix (nouveau, 2026-07-24) — utile pour tout
   rapprochement ou reporting périodique.
-- **Export PDF** : la liste est exportable en un clic, filtres appliqués, pour le reporting ou le partage externe ; les encours (déblocage, remboursement) s'exportent depuis le Récapitulatif des États des encours.
+- **Exports PDF** : un dialogue propose l'export avec filtres ou l'état global. Le global regroupe par marché les mouvements existants, déblocages d'abord puis remboursements, et affiche les totaux débloqué, remboursé et le reste à payer, tous statuts compris.
 .
 
 ## Chapitre 12 — Factoring
@@ -468,7 +468,7 @@ marché, et consultables en encours par banque, avec une traçabilité complète
 - **Recherche par période** : les opérations de factoring se retrouvent instantanément sur une
   plage de dates d'émission, d'opération ou de valeur, au choix (nouveau, 2026-07-24) — utile pour
   tout rapprochement ou reporting périodique.
-- **Export PDF** : la liste est exportable en un clic, filtres appliqués, pour le reporting ou le partage externe ; les encours (déblocage, remboursement) s'exportent depuis le Récapitulatif des États des encours.
+- **Exports PDF** : un dialogue propose l'export avec filtres ou l'état global. Le global regroupe par marché les mouvements existants, déblocages d'abord puis remboursements, et affiche les totaux débloqué, remboursé et le reste à payer, tous statuts compris.
 
 
 ## Chapitre 13 — Droits Constatés
@@ -496,7 +496,7 @@ marché, et consultables en encours par banque, avec une traçabilité complète
 - **Recherche par période** : les droits constatés se retrouvent instantanément sur une plage de
   dates d'émission, d'opération ou de valeur, au choix (nouveau, 2026-07-24) — utile pour tout
   rapprochement ou reporting périodique.
-- **Export PDF** : la liste est exportable en un clic, filtres appliqués, pour le reporting ou le partage externe ; les encours (déblocage, remboursement) s'exportent depuis le Récapitulatif des États des encours.
+- **Exports PDF** : un dialogue propose l'export avec filtres ou l'état global. Le global regroupe par marché les mouvements existants, déblocages d'abord puis remboursements, et affiche les totaux débloqué, remboursé et le reste à payer, tous statuts compris.
 
 
 ---

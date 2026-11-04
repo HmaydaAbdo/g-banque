@@ -987,6 +987,8 @@ mémoire). Détail dans `docs/modules/decomptes.md` et la mémoire `modules_swee
 <a id="chap8"></a>
 ## Chapitre 8 — Préfinancements
 
+Les exports `GET /prefinancements/export/pdf` (filtré) et `GET /prefinancements/export/pdf/global` (tous les marchés avec opérations) sont protégés par `FINANCE_OR_ADMIN`.
+
 Rôles utilisés dans ce document :
 
 ```java
@@ -1073,6 +1075,8 @@ par requête `SUM` (plus de somme en mémoire). `AgregatedSuiviePrefiLigneRespon
 <a id="chap9"></a>
 ## Chapitre 9 — Factoring
 
+Les exports `GET /factoring/export/pdf` (filtré) et `GET /factoring/export/pdf/global` (tous les marchés avec opérations) sont protégés par `FINANCE_OR_ADMIN`.
+
 Rôles utilisés dans ce document :
 
 ```java
@@ -1158,6 +1162,8 @@ par requête `SUM` (plus de somme en mémoire). `AgregatedSuivieFactoringLigneRe
 
 <a id="chap10"></a>
 ## Chapitre 10 — Droits Constatés
+
+Les exports `GET /droitsConstate/export/pdf` (filtré) et `GET /droitsConstate/export/pdf/global` (tous les marchés avec opérations) sont protégés par `FINANCE_OR_ADMIN`.
 
 Rôles utilisés dans ce document :
 

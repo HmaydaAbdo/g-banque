@@ -283,7 +283,9 @@ public class FactoringServiceImpl implements IFactoringService {
         try { return staportPdfReportService.generateReport("État global des Factorings", PageSize.A4.rotate(), (doc, writer) -> {
             try {
                 var groups = rows.stream().collect(java.util.stream.Collectors.groupingBy(Factoring::getMarche, java.util.LinkedHashMap::new, java.util.stream.Collectors.toList()));
+                int marcheIndex = 0;
                 for (var e : groups.entrySet()) {
+                    if (marcheIndex++ > 0) doc.newPage();
                     doc.add(new Paragraph("Marché " + e.getKey().getNumero() + " — " + e.getKey().getNom(), FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12)));
                     PdfPTable table = new PdfPTable(new float[]{17, 15, 14, 14, 18, 12}); table.setWidthPercentage(100); table.setSpacingBefore(6); table.setSpacingAfter(12);
                     Font h = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE), c = FontFactory.getFont(FontFactory.HELVETICA, 8), t = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.decode("#1e3a8a"));

@@ -1930,7 +1930,7 @@ re-résolue pour le nouveau marché.
   préfinancement est déjà Payé.
 - **Valider** un mouvement « Prévu » depuis le Récapitulatif des États des encours (chapitre 31).
 - **Consulter le suivi** des préfinancements d'une ligne fonctionnelle.
-- **Exporter en PDF** la liste des préfinancements — l'export contient l'intégralité des résultats correspondant aux filtres
+- **Exporter en PDF** : le dialogue propose l'export avec les filtres actifs ou l'export global. Le global ignore les filtres, regroupe uniquement les marchés comportant des mouvements, affiche les déblocages avant les remboursements et présente par marché le total des déblocages, le total des remboursements et le reste à payer (déblocages moins remboursements), tous statuts compris.
   actuellement appliqués, pas seulement la page affichée à l'écran.
 
 ---
@@ -2087,7 +2087,7 @@ pour le nouveau marché.
   factoring est déjà Payé.
 - **Valider** un mouvement « Prévu » depuis le Récapitulatif des États des encours (chapitre 31).
 - **Consulter le suivi** des factorings d'une ligne fonctionnelle.
-- **Exporter en PDF** la liste des factorings — l'export contient l'intégralité des résultats correspondant aux filtres
+- **Exporter en PDF** : le dialogue propose l'export avec les filtres actifs ou l'export global. Le global ignore les filtres, regroupe uniquement les marchés comportant des mouvements, affiche les déblocages avant les remboursements et présente par marché le total des déblocages, le total des remboursements et le reste à payer (déblocages moins remboursements), tous statuts compris.
   actuellement appliqués, pas seulement la page affichée à l'écran.
 
 ---
@@ -2256,7 +2256,7 @@ choisie sur le formulaire, qu'il y ait ou non changement de marché.
   droit constaté est déjà Payé.
 - **Valider** un mouvement « Prévu » depuis le Récapitulatif des États des encours (chapitre 31).
 - **Consulter le suivi** des droits constatés d'une ligne fonctionnelle.
-- **Exporter en PDF** la liste des droits constatés — l'export contient l'intégralité des résultats correspondant aux filtres
+- **Exporter en PDF** : le dialogue propose l'export avec les filtres actifs ou l'export global. Le global ignore les filtres, regroupe uniquement les marchés comportant des mouvements, affiche les déblocages avant les remboursements et présente par marché le total des déblocages, le total des remboursements et le reste à payer (déblocages moins remboursements), tous statuts compris.
   actuellement appliqués, pas seulement la page affichée à l'écran.
 
 ---

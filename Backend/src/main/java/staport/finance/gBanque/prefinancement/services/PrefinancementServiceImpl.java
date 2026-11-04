@@ -296,7 +296,9 @@ public class PrefinancementServiceImpl implements IPrefinancementService {
                 Font total = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.decode("#1e3a8a"));
                 try {
                     java.util.Map<Marche, List<Prefinancement>> groupes = rows.stream().collect(java.util.stream.Collectors.groupingBy(Prefinancement::getMarche, java.util.LinkedHashMap::new, java.util.stream.Collectors.toList()));
+                    int marcheIndex = 0;
                     for (var entry : groupes.entrySet()) {
+                        if (marcheIndex++ > 0) doc.newPage();
                         doc.add(new Paragraph("Marché " + entry.getKey().getNumero() + " — " + entry.getKey().getNom(), title));
                         PdfPTable table = new PdfPTable(new float[]{18, 16, 16, 14, 14, 12, 10}); table.setWidthPercentage(100); table.setSpacingBefore(6); table.setSpacingAfter(10);
                         for (String h : new String[]{"Type", "Montant (MAD)", "Date émission", "Date valeur", "Banque", "Statut", ""}) { PdfPCell c = new PdfPCell(new Phrase(h, head)); c.setBackgroundColor(Color.decode("#2563eb")); c.setPadding(4); table.addCell(c); }
