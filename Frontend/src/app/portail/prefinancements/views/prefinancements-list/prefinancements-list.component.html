@@ -1,5 +1,6 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
+<p-dialog header="Exporter le PDF" [(visible)]="exportDialogVisible" [modal]="true"><p>Choisissez le type d’export.</p><button pButton label="Avec les filtres" (click)="exportPdf(false)"></button><button pButton label="Global" class="p-button-outlined ml-2" (click)="exportPdf(true)"></button></p-dialog>
 
 <div class="card flex flex-column gap-2 p-2 w-full h-full overflow-y-scroll">
 
@@ -16,7 +17,7 @@
     </div>
 
     <button pButton pRipple label="Exporter PDF" class="h-fit p-button-outlined p-button-danger" size="small"
-            icon="pi pi-file-pdf" [loading]="exporting" (click)="exportPdf()"></button>
+            icon="pi pi-file-pdf" [loading]="exporting" (click)="exportDialogVisible = true"></button>
     <button pButton pRipple label="Ajouter Préfinancement" class="h-fit" size="small" icon="pi pi-plus"
             severity="primary" routerLink="/portail/préfinancements/new"></button>
   </div>

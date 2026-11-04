@@ -1507,6 +1507,18 @@ Les frais bancaires « Prévu » dont la date d'émission est antérieure ou ég
 
 ## Module Agios
 
+**Reprise T4 2025 préparée, non encore mise en service.** À sa livraison, les ventilations seront
+visibles dans la liste Agios et dans le détail du rapprochement : trois agios pour le débit CDM
+de 105 370,74 DH, trois agios et une commission consultable dans Commissions pour le débit BP
+de 178 458,60 DH. Chaque ligne payée aura sa transaction propre ; additionnez les composantes
+pour retrouver le débit du relevé. Les dates de paiement restent celles de janvier 2026, tandis
+que la période des charges reste 2025. Aucun détail journalier 2025 ne sera ajouté.
+
+Le futur écran commun affichera un écart signé en DH : facturé moins calculé. La mention sera
+« Réclamation » si l'écart est positif, « Bénéfique » s'il est négatif et « Aucun écart » à zéro.
+Sans montant facturé, l'écart ne sera pas disponible. Ces nouveaux champs ne figurent pas encore
+dans les écrans actuels décrits ci-dessous.
+
 *Accès : sidebar → Agios*
 
 Les agios sont des charges facturées par la banque (pénalités de découvert, commissions sur facilité de caisse, etc.). Chaque agios est rattaché à une banque et passe par deux états : **À payer (PREVU)** et **Payé (PAYE)**.

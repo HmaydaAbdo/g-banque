@@ -30,7 +30,8 @@ class Transaction63MigrationTest extends AbstractMigrationTest {
                     + "(63, 2, 1, 'INTERET DEBITEURS', 'INTERET DEBITEURS', 'AGIOS', 4, 85784.02, 0.00)");
         }
 
-        migrer(url, null);
+        // Fixture minimale V7 : elle ne représente pas la tranche complète de production requise par V22.
+        migrer(url, "7");
 
         try (var c = connexion(url); Statement st = c.createStatement()) {
             assertThat(texte(st, "SELECT referent FROM transaction WHERE id = 63")).isEqualTo("16");

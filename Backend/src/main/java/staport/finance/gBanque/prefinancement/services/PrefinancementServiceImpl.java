@@ -278,6 +278,42 @@ public class PrefinancementServiceImpl implements IPrefinancementService {
         return generatePrefinancementPdf("État des Préfinancements", prefinancements, totalMontant, filterLines);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportGlobalPdf() {
+        List<Prefinancement> all = prefinancementRepository.findAll(
+                Sort.by(Sort.Direction.ASC, "marche.numero").and(Sort.by(Sort.Direction.ASC, "type")).and(Sort.by(Sort.Direction.DESC, "dateEmission")));
+        List<Prefinancement> rows = all.stream().filter(x -> x.getMarche() != null).toList();
+        return generatePrefinancementGlobalPdf(rows);
+    }
+
+    private byte[] generatePrefinancementGlobalPdf(List<Prefinancement> rows) {
+        try {
+            return staportPdfReportService.generateReport("État global des Préfinancements", PageSize.A4.rotate(), (doc, writer) -> {
+                Font title = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
+                Font head = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+                Font cell = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
+                Font total = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.decode("#1e3a8a"));
+                try {
+                    java.util.Map<Marche, List<Prefinancement>> groupes = rows.stream().collect(java.util.stream.Collectors.groupingBy(Prefinancement::getMarche, java.util.LinkedHashMap::new, java.util.stream.Collectors.toList()));
+                    for (var entry : groupes.entrySet()) {
+                        doc.add(new Paragraph("Marché " + entry.getKey().getNumero() + " — " + entry.getKey().getNom(), title));
+                        PdfPTable table = new PdfPTable(new float[]{18, 16, 16, 14, 14, 12, 10}); table.setWidthPercentage(100); table.setSpacingBefore(6); table.setSpacingAfter(10);
+                        for (String h : new String[]{"Type", "Montant (MAD)", "Date émission", "Date valeur", "Banque", "Statut", ""}) { PdfPCell c = new PdfPCell(new Phrase(h, head)); c.setBackgroundColor(Color.decode("#2563eb")); c.setPadding(4); table.addCell(c); }
+                        BigDecimal deb = BigDecimal.ZERO, remb = BigDecimal.ZERO;
+                        for (Prefinancement x : entry.getValue()) {
+                            BigDecimal m = x.getMontant() == null ? BigDecimal.ZERO : x.getMontant();
+                            if (x.getType() == Type.DEBLOCAGE) deb = deb.add(m); else remb = remb.add(m);
+                            for (String value : new String[]{x.getType() == Type.DEBLOCAGE ? "Déblocage" : "Remboursement", MontantFormatter.format(m), x.getDateEmission() == null ? "—" : x.getDateEmission().format(DATE_FMT), x.getDateValeur() == null ? "—" : x.getDateValeur().format(DATE_FMT), x.getMarche().getBanque() == null ? "—" : x.getMarche().getBanque().getNom(), x.getStatus() == Status.PAYE ? "PAYÉ" : "PRÉVU", ""}) table.addCell(new Phrase(value, cell));
+                        }
+                        for (String value : new String[]{"TOTAL DÉBLOCAGES", MontantFormatter.format(deb) + " MAD", "TOTAL REMBOURSEMENTS", MontantFormatter.format(remb) + " MAD", "RESTE À PAYER", MontantFormatter.format(deb.subtract(remb)) + " MAD", ""}) { PdfPCell c = new PdfPCell(new Phrase(value, total)); c.setBackgroundColor(Color.decode("#dbeafe")); c.setPadding(5); table.addCell(c); }
+                        doc.add(table);
+                    }
+                } catch (DocumentException e) { throw new RuntimeException(e); }
+            });
+        } catch (DocumentException e) { throw new RuntimeException("Erreur génération PDF global préfinancements", e); }
+    }
+
     /**
      * Génère le contenu PDF utilisé par {@link #exportPdf}.
      */

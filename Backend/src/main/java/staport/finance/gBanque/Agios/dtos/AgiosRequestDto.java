@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import staport.finance.gBanque.Agios.enums.TypeAgios;
 
 /**
  * DTO de création / modification d'un agios.
@@ -27,6 +28,17 @@ public record AgiosRequestDto(
         Long banqueId,
 
         @NotNull(message = "La date d'émission est obligatoire")
-        LocalDate dateEmission
+        LocalDate dateEmission,
+        TypeAgios typeAgios,
+        String periodicite,
+        Integer periodeNumero,
+        Integer annee,
+        BigDecimal montantCalcule
 
-) {}
+) {
+    /** Compatibilité des créations ponctuelles et des charges fixes. */
+    public AgiosRequestDto(String libelle, String observation, BigDecimal montant,
+                           Long banqueId, LocalDate dateEmission) {
+        this(libelle, observation, montant, banqueId, dateEmission, null, null, null, null, null);
+    }
+}

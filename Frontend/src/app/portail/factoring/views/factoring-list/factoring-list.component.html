@@ -1,5 +1,6 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
+<p-dialog header="Exporter le PDF" [(visible)]="exportDialogVisible" [modal]="true"><p>Choisissez le type d’export.</p><button pButton label="Avec les filtres" (click)="exportPdf(false)"></button><button pButton label="Global" class="p-button-outlined ml-2" (click)="exportPdf(true)"></button></p-dialog>
 
 <div class="card flex flex-column gap-2 p-2 w-full h-full overflow-y-scroll">
 
@@ -12,7 +13,7 @@
         </a>
       </ng-template>
     </p-breadcrumb>
-    <button pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf" size="small" class="h-fit p-button-outlined p-button-danger" [loading]="exporting" (click)="exportPdf()"></button>
+    <button pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf" size="small" class="h-fit p-button-outlined p-button-danger" [loading]="exporting" (click)="exportDialogVisible = true"></button>
     <button pButton pRipple label="Ajouter" icon="pi pi-plus" size="small" class="h-fit" routerLink="/portail/factoring/new"></button>
   </div>
 

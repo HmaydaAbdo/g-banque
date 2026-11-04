@@ -139,4 +139,6 @@ export class DroitConstateService {
 
     return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
   }
+
+  exportGlobalPdf(): Observable<Blob> { return this.http.get(`${this.apiUrl}/export/pdf/global`, { responseType: 'blob' }); }
 }

@@ -96,6 +96,11 @@ public class AgiosService implements IAgiosService {
         agios.setMontant(dto.montant());
         agios.setBanque(banque);
         agios.setDateEmission(dto.dateEmission());
+        if (dto.typeAgios() != null) agios.setTypeAgios(dto.typeAgios());
+        if (dto.periodicite() != null) agios.setPeriodicite(dto.periodicite());
+        if (dto.periodeNumero() != null) agios.setPeriodeNumero(dto.periodeNumero());
+        if (dto.annee() != null) agios.setAnnee(dto.annee());
+        if (dto.montantCalcule() != null) agios.setMontantCalcule(dto.montantCalcule());
 
         Agios saved = agiosRepository.save(agios);
         log.info("Agios créé — id: {}, statut: {}", saved.getId(), saved.getStatus());
@@ -145,6 +150,11 @@ public class AgiosService implements IAgiosService {
         agios.setBanque(banque);
         agios.setDateEmission(dto.dateEmission());
         agios.setObservation(dto.observation());
+        if (dto.typeAgios() != null) agios.setTypeAgios(dto.typeAgios());
+        if (dto.periodicite() != null) agios.setPeriodicite(dto.periodicite());
+        if (dto.periodeNumero() != null) agios.setPeriodeNumero(dto.periodeNumero());
+        if (dto.annee() != null) agios.setAnnee(dto.annee());
+        if (dto.montantCalcule() != null) agios.setMontantCalcule(dto.montantCalcule());
 
         Agios updated = agiosRepository.save(agios);
         log.info("Agios mis à jour — id: {}", updated.getId());

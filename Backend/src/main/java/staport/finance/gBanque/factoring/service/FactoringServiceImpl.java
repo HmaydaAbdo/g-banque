@@ -270,6 +270,34 @@ public class FactoringServiceImpl implements IFactoringService {
         return generateFactoringPdf("État des Factorings", factorings, totalMontant, filterLines);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportGlobalPdf() {
+        List<Factoring> all = factoringRepository.findAll(
+                Sort.by(Sort.Direction.ASC, "marche.numero").and(Sort.by(Sort.Direction.ASC, "type")).and(Sort.by(Sort.Direction.DESC, "dateEmission")));
+        List<Factoring> rows = all.stream().filter(x -> x.getMarche() != null).toList();
+        return generateFactoringGlobalPdf(rows);
+    }
+
+    private byte[] generateFactoringGlobalPdf(List<Factoring> rows) {
+        try { return staportPdfReportService.generateReport("État global des Factorings", PageSize.A4.rotate(), (doc, writer) -> {
+            try {
+                var groups = rows.stream().collect(java.util.stream.Collectors.groupingBy(Factoring::getMarche, java.util.LinkedHashMap::new, java.util.stream.Collectors.toList()));
+                for (var e : groups.entrySet()) {
+                    doc.add(new Paragraph("Marché " + e.getKey().getNumero() + " — " + e.getKey().getNom(), FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12)));
+                    PdfPTable table = new PdfPTable(new float[]{17, 15, 14, 14, 18, 12}); table.setWidthPercentage(100); table.setSpacingBefore(6); table.setSpacingAfter(12);
+                    Font h = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE), c = FontFactory.getFont(FontFactory.HELVETICA, 8), t = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.decode("#1e3a8a"));
+                    for (String v : new String[]{"Type", "Montant (MAD)", "Date émission", "Date valeur", "Banque", "Statut"}) { PdfPCell cell = new PdfPCell(new Phrase(v, h)); cell.setBackgroundColor(Color.decode("#2563eb")); table.addCell(cell); }
+                    BigDecimal deb = BigDecimal.ZERO, remb = BigDecimal.ZERO;
+                    for (Factoring x : e.getValue()) { BigDecimal m=x.getMontant()==null?BigDecimal.ZERO:x.getMontant(); if(x.getType()==Type.DEBLOCAGE) deb=deb.add(m); else remb=remb.add(m);
+                        for(String v:new String[]{x.getType()==Type.DEBLOCAGE?"Déblocage":"Remboursement",MontantFormatter.format(m),x.getDateEmission()==null?"—":x.getDateEmission().format(DATE_FMT),x.getDateValeur()==null?"—":x.getDateValeur().format(DATE_FMT),x.getMarche().getBanque()==null?"—":x.getMarche().getBanque().getNom(),x.getStatus()==Status.PAYE?"PAYÉ":"PRÉVU"}) table.addCell(new Phrase(v,c)); }
+                    for(String v:new String[]{"Total déblocages",MontantFormatter.format(deb)+" MAD","Total remboursements",MontantFormatter.format(remb)+" MAD","Reste à payer",MontantFormatter.format(deb.subtract(remb))+" MAD"}) { PdfPCell cell=new PdfPCell(new Phrase(v,t)); cell.setBackgroundColor(Color.decode("#dbeafe")); table.addCell(cell); }
+                    doc.add(table);
+                }
+            } catch(DocumentException ex){throw new RuntimeException(ex);}
+        }); } catch(DocumentException ex){throw new RuntimeException("Erreur PDF global factoring",ex);}
+    }
+
     /**
      * Génère le contenu PDF utilisé par {@link #exportPdf}.
      */

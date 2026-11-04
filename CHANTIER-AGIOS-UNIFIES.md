@@ -2,8 +2,83 @@
 
 > Plan de travail du module Agios. Écrit le 09/10/2026 pour une **session dédiée** : ce fichier doit suffire
 > pour reprendre sans l'historique de la session qui l'a produit. Les décisions déjà prises par HMAYDA sont
-> marquées **[DÉCIDÉ]**, celles qui restent à trancher **[À TRANCHER]**. Aucune modification de code ni de
-> base n'a encore été faite pour ce chantier.
+> marquées **[DÉCIDÉ]**, celles qui restent à trancher **[À TRANCHER]**. La reprise T4/2025 a été préparée
+> le 26/10/2026 dans V22 et répétée sur une copie isolée de la sauvegarde ; aucun déploiement effectué.
+
+## Reprise validée le 26/10/2026 — première tranche
+
+La référence courante est `gbanque-20261026.sql.gz` (production V20). Le traitement suit strictement
+les IDs ; les IDs 4 à 10 ont été arbitrés avec Finance. La V21 du dépôt est un préalable indépendant.
+Les constats du 09/10 ci-dessous restent des constats historiques, remplacés par les décisions de
+cette section pour cette tranche.
+
+| ID initial | Transaction initiale | Banque | Nature et montant facturé = calculé (DH) | Période |
+|---|---|---|---|---|
+| 4 | 20 | SAHAM | Facilité de caisse 22 856,98 | T4 2025 |
+| 5 | 19 | SAHAM | Préfinancement 64 858,79 | T4 2025 |
+| 6 | 62 | AWB | Droits constatés 19 389,83 | T4 2025 |
+| 7 | 68 | BMCI | Factoring 230 935,73 | M12 2025 |
+| 8 | 125 | BP | FC 11 902,06 ; droits constatés 45 172,50 ; préfinancement 70 818,60 ; commission sur caution 50 565,44 | T4 2025 |
+| 9 | 136 | CDM | FC 30 122,29 ; préfinancement 43 570,08 ; droits constatés 31 678,37 | T4 2025 |
+| 10 | 468 | BMCI | Préfinancement 39 469,20 | T4 2025 |
+
+- **V22 préparée** : enrichit `agios` et `agios_aud` de `type_agios`, `periodicite`, `periode_numero`,
+  `annee`, `montant_calcule`, `montant_facture`. L'ancien `montant` continue de porter le facturé
+  pour ces opérations payées et reste compatible avec l'application actuelle.
+- Les IDs 8 et 9 et leurs transactions 125 et 136 sont conservés pour la FC. Quatre agios, une
+  commission et cinq transactions sont créés avec leurs identités automatiques. Chaque agios
+  repris possède exactement sa transaction, de même que la commission. La commission est une
+  saisie manuelle agrégée `CAUTION`, sans `caution_id` individuel inventé.
+- **TVA** : `AgiosValidationService` et `CommissionValidationService` utilisent `TvaResolver`,
+  qui extrait la TVA du TTC via `TVAUtils`. Il n'existe pas de taux unique imposé par domaine.
+  Les deux débits ventilés ont historiquement 10 % ; la V22 reprend ce taux sur chaque composante
+  (arrondi à deux décimales). Totaux conservés : 16 223,51 pour BP, 9 579,16 pour CDM.
+  Les autres transactions gardent leur TVA historique, y compris zéro pour les IDs 6 et 7.
+- **Champs requis** : les IDs 4–10 et les lignes enrichies créées portent type, périodicité, numéro
+  de période, année et calculé. Une contrainte validée interdit toute métadonnée partielle : une
+  ligne est entièrement classée ou reste à reprendre ; le facturé reste nullable. Les autres IDs
+  ne sont pas encore classés : le `NOT NULL` global est différé jusqu'à leur reprise, sans valeur
+  métier de remplacement. L'API actuelle ne lit pas encore ces nouvelles colonnes.
+- **Historique 2025** : le calculé est une valeur de reprise fournie par Finance, égale au facturé,
+  et ne constitue pas une reconstitution journalière. Aucune ligne journalière 2025 n'est créée.
+- **Écart décidé le 26/10** : `facturé − calculé`, exprimé en DH avec son signe, calculé à la lecture,
+  jamais stocké. Positif : **Réclamation** ; négatif : **Bénéfique** ; zéro : **Aucun écart**.
+  Sans facturé : écart indisponible, sans classification. La V22 ne crée aucune colonne d'écart.
+- **Clôtures** : Finance autorise les ventilations en rapprochements définitivement clôturés si
+  les totaux restent identiques. La migration contrôle l'état initial, le lien individuel des
+  sources, les montants, les totaux débit/crédit/TVA et les données des rapprochements. Toute
+  divergence annule la migration entière. Les révisions Envers historiques sont préservées ;
+  la correction SQL n'en crée pas, selon la décision documentée dans V21.
+- **Vérifications locales** : `AgiosT42025MigrationTest`, trois tests réussis (cas métier, base
+  vierge compatible avec l'application actuelle, refus atomique d'un montant divergent), compilation
+  backend réussie. Les 26 tests de migrations ont réussi ; les trois tests V22 ont ensuite été
+  rejoués avec succès sur la contrainte transitoire finale. Les fixtures minimales V7 et V11 ciblent
+  désormais leurs versions propres, sans les soumettre aux garde-fous du lot complet exigé par V22.
+  Répétition SQL
+  transactionnelle V21 puis V22 sur une base locale isolée restaurée depuis la sauvegarde :
+  après V21, 87 → 91 agios, 5 949 → 5 954 transactions, 6 013 → 6 014 commissions.
+  Les 8 581 lignes journalières, les périodes calculées, les rapprochements, tous leurs totaux et
+  les lignes initiales hors tranche sont identiques par empreinte avant/après V22.
+  La base utilisée par l'application et la production n'ont pas reçu V22.
+
+### Suite backend/frontend à présenter et confirmer avant réalisation
+
+1. Faire porter les champs unifiés par l'entité, les DTO, la validation et les lectures API ; exiger
+   les champs métier, garder le facturé absent tant que l'agios n'est pas facturé et l'exiger à la
+   validation. Le débit de la transaction prend le facturé, avec une transaction propre par agios payé.
+   Le service calcule l'écart et sa qualification dans la réponse de lecture, sans colonne persistée ;
+   le frontend les affiche sans dupliquer la règle métier. « Réclamation » est une qualification
+   de l'écart, sans création automatique d'une démarche de réclamation supplémentaire.
+   L'ancien champ `montant`, conservé seulement pour la compatibilité de V22, sera retiré après
+   adaptation de tous ses consommateurs pour éviter une duplication durable du facturé.
+2. Raccorder l'orchestrateur et les détails journaliers 2026 à l'objet unifié, préserver les données
+   2025 sans recalcul, puis retirer l'ancienne double alimentation sans doublon de transactions.
+3. Présenter un seul écran Agios : type, période, calculé, facturé, écart signé en DH et qualification,
+   validation avec saisie du facturé, détail journalier quand il existe. Ne pas déduire zéro d'un
+   facturé absent ; afficher l'attente de facturation. Tous les agios repris 2025 auront « Aucun écart ».
+4. Reprendre les IDs suivants dans l'ordre, puis appliquer une nouvelle migration de contraintes
+   globales et terminer la fusion des périodes calculées. Synchroniser les quatre niveaux de
+   documentation et vérifier backend, frontend et parcours navigateur lors de cette bascule.
 
 ---
 
@@ -17,7 +92,8 @@
 - Les **encours** affichent le **cumul calculé à ce jour** ; le **facturé remplace le calculé** dès qu'il est
   saisi (c'est ce que la banque débite réellement). **[DÉCIDÉ]**
 - Le montant facturé exact est **précisé à la validation** (rapprochement), en regard du calculé affiché.
-  L'**écart** (MAD et %) est recalculé à l'affichage, **jamais enregistré**. **[DÉCIDÉ]**
+  L'**écart signé en DH** (facturé moins calculé) est recalculé à l'affichage, **jamais enregistré**.
+  Positif : Réclamation ; négatif : Bénéfique ; zéro : Aucun écart. **[DÉCIDÉ, 26/10/2026]**
 - Modèle : **option A** (une ligne par banque, type et période, avec calculé + facturé). **[DÉCIDÉ]**
 - Les deux lignes `PREVU` (BMCI 300 000, AWB 23 251,30) sont remplacées par le calcul détaillé en **dernière
   étape**. **[DÉCIDÉ]**
@@ -100,7 +176,8 @@ Une seule table métier `agios`, une ligne par **(banque, type_agios, période)*
 | `statut` | voir cycle de vie ci-dessous |
 | `date_operation`, `date_valeur`, `libelle`, `observation` | alimentés par la validation (comme les autres sources) |
 
-- **Écart** (MAD et %) : calculé à l'affichage, jamais stocké.
+- **Écart signé en DH** : facturé moins calculé, calculé à l'affichage, jamais stocké.
+  Réclamation si positif, Bénéfique si négatif, Aucun écart à zéro ; absent si le facturé est absent.
 - **Montant retenu pour les encours** : `montant_facture` s'il existe, sinon `montant_calcule_ttc`.
 - **Cycle de vie proposé** : `OUVERT` (période en cours, cumul recalculé chaque nuit) → `CLOTURE` (période
   terminée, calcul figé, prêt à valider) → `PAYE` (validé dans un rapprochement avec le montant facturé). Le
@@ -176,7 +253,7 @@ Finance + comparaison avec la matrice. Ordre par enjeu financier :
 4. Retrait de la **création manuelle** (`POST /agios`) et du type `AGIOS` dans les charges fixes
    (`ChargesFixesScheduler`, écran de configuration) — **en dernière étape**, avec le remplacement des deux
    lignes `PREVU`.
-5. Frontend : un écran unique (liste par période avec calculé, facturé, écart MAD/%), détail journalier
+5. Frontend : un écran unique (liste par période avec calculé, facturé, écart signé en DH et qualification), détail journalier
    conservé, formulaire de validation avec calculé affiché et facturé saisi, adaptation des encours.
 6. RBAC : revoir les `@PreAuthorize` et les guards ; mettre à jour `docs/rbac` dans le même changement.
 

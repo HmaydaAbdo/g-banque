@@ -752,6 +752,13 @@ automatique des charges récurrentes connues à l'avance.
 
 ## Chapitre 23 — Agios bancaires
 
+La préparation de la reprise du quatrième trimestre 2025 individualise chaque nature d'agios et
+les commissions sur caution, en préservant les totaux bancaires et leur rapprochement. Cette
+livraison, préparée le 26/10/2026 et non encore mise en service, constitue une étape vers une
+lecture commune du calculé et du facturé. La présentation prévue qualifiera l'écart signé en DH :
+réclamation si le facturé dépasse le calculé, bénéfique s'il est inférieur, aucun écart s'ils sont
+égaux. Pour 2025, les montants de référence sont fournis par Finance, sans calcul journalier recréé.
+
 ### Ce que ce module résout
 
 G-Banque automatise l'intégralité du suivi des agios bancaires de Staport : calcul quotidien,

@@ -1946,6 +1946,13 @@ l'écran — pas de restriction supplémentaire au-delà de `departmentGuard('Fi
 <a id="chap20"></a>
 ## Chapitre 20 — Agios
 
+**26/10/2026 — préparation historique V22.** Cette migration de données n'ajoute ni endpoint,
+ni guard, ni autorité ni action UI. Les agios ventilés et la commission agrégée restent couverts
+par les accès des modules Agios, Commissions et Transactions décrits ici. Les colonnes métier
+préparées ne sont pas encore exposées par les DTO existants. L'unification backend/frontend et
+l'affichage de l'écart restent à réaliser ; leur livraison devra actualiser ce chapitre si un
+endpoint, un guard ou une autorisation évolue.
+
 Rôles utilisés dans ce document :
 
 ```java

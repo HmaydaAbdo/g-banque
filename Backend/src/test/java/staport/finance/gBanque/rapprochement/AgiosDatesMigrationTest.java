@@ -39,7 +39,8 @@ class AgiosDatesMigrationTest extends AbstractMigrationTest {
             st.execute(transaction(126, 999));
         }
 
-        migrer(url, null);
+        // Fixture minimale V11 : elle ne représente pas la tranche complète de production requise par V22.
+        migrer(url, "11");
 
         try (var c = connexion(url); Statement st = c.createStatement()) {
             assertThat(dates(st, "SELECT date_operation FROM agios WHERE id = 8")).containsExactly(LocalDate.of(2026, 3, 31));

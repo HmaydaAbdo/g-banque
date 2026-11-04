@@ -403,6 +403,13 @@ d'opération et de valeur, observation, libellé). Une échéance déjà **Payé
 
 ## Consulter le journal d'audit
 
+La reprise des agios T4 2025 préparée le 26/10/2026 n'est pas encore mise en service. À sa
+livraison, les lignes ventilées seront consultables dans Agios, Commissions et les rapprochements
+avec les droits habituels ; les soldes et clôtures resteront identiques. Cette reprise conserve
+l'historique du journal et n'y ajoute pas de nouvelles entrées. Il ne faut donc pas utiliser
+l'absence d'une nouvelle entrée du journal pour conclure qu'une ventilation historique n'a pas
+été livrée. Les détails de consultation des charges figurent dans le guide Finance.
+
 *Accès : sidebar → Paramètres → Les Journaux du portail — réservé à l'administrateur système*
 
 ### Consulter les entrées du journal

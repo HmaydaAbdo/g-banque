@@ -615,7 +615,12 @@ public class AgiosOrchestrateurService {
                             trimestre.getNbJoursCalcules(), trimestre.getNbJoursTotal()),
                     trimestre.getTotalAgiosTTC(),
                     banqueId,
-                    LocalDate.now(ZONE_MAROC)
+                    LocalDate.now(ZONE_MAROC),
+                    type,
+                    type.getPeriodeCalcul().name(),
+                    trimNum,
+                    annee,
+                    trimestre.getTotalAgiosTTC()
             );
             var agiosCree = agiosService.createAgios(req);
             trimestre.setAgiosDefinitifId(agiosCree.id());

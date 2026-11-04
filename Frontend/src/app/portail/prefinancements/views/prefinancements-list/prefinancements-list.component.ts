@@ -15,6 +15,7 @@ import { ButtonModule } from "primeng/button";
 import { RippleModule } from "primeng/ripple";
 import { TooltipModule } from "primeng/tooltip";
 import { CalendarModule } from "primeng/calendar";
+import { DialogModule } from "primeng/dialog";
 
 // Services & Enums
 import { PrefinancementService } from '../../service/PrefinancementService';
@@ -50,7 +51,8 @@ import { PrefinancementSearchDTO } from '../../dtos/PrefinancementSearchDTO';
     RouterLink,
     DatePipe,
     DecimalPipe,
-    CalendarModule
+    CalendarModule,
+    DialogModule
   ],
   providers: [MessageService, ConfirmationService]
 })
@@ -84,6 +86,7 @@ export class PrefinancementsListComponent implements OnInit {
 
   /** Indicateur de chargement du bouton "Exporter PDF". */
   exporting = false;
+  exportDialogVisible = false;
 
   /** Affiche/masque le panneau de recherche par période (fermé par défaut pour ne pas surcharger la barre de filtres). */
   showDatePanel = false;
@@ -288,10 +291,11 @@ export class PrefinancementsListComponent implements OnInit {
    * Exporte en PDF l'intégralité des préfinancements correspondant aux filtres actuellement
    * appliqués — pas seulement la page affichée à l'écran.
    */
-  exportPdf(): void {
+  exportPdf(global = false): void {
+    this.exportDialogVisible = false;
     this.exporting = true;
     const searchCriteria: PrefinancementSearchDTO = { ...this.searchForm.value };
-    this.prefinancementService.exportPdf(searchCriteria).subscribe({
+    (global ? this.prefinancementService.exportGlobalPdf() : this.prefinancementService.exportPdf(searchCriteria)).subscribe({
       next: blob => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');

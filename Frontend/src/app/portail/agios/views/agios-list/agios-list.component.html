@@ -147,6 +147,11 @@
                {field: 'libelle',      header: 'Libellé',          sortable: true},
                {field: 'banque.nom',    header: 'Banque',            sortable: true},
                {field: 'montant',      header: 'Montant',           sortable: true},
+               {field: 'typeAgios',    header: 'Type',              sortable: false},
+               {field: 'annee',        header: 'Période',           sortable: false},
+               {field: 'montantFacture', header: 'Facturé',          sortable: false},
+               {field: 'montantCalcule', header: 'Calculé',          sortable: false},
+               {field: 'ecart',         header: 'Écart',             sortable: false},
                {field: 'dateEmission', header: 'Date d\'émission',  sortable: true},
                {field: 'dateOperation',header: 'Date d\'opération', sortable: true},
                {field: 'dateValeur',   header: 'Date de valeur',    sortable: true},
@@ -177,6 +182,22 @@
           <td>{{ agios.libelle }}</td>
           <td>{{ agios.banqueNom }}</td>
           <td>{{ agios.montant | number:'1.2-2' }} MAD</td>
+          <td>{{ agios.typeAgios ?? '—' }}</td>
+          <td>{{ agios.annee ? (agios.periodicite === 'MENSUEL' ? 'M' : 'T') + agios.periodeNumero + ' ' + agios.annee : '—' }}</td>
+          <td>{{ agios.montantFacture == null ? '—' : (agios.montantFacture | number:'1.2-2') + ' DH' }}</td>
+          <td>{{ agios.montantCalcule == null ? '—' : (agios.montantCalcule | number:'1.2-2') + ' DH' }}</td>
+          <td>
+            @if (agios.ecart == null) {
+              —
+            } @else if (agios.natureEcart === 'AUCUN_ECART') {
+              Aucun écart
+            } @else {
+              <span [ngClass]="agios.ecart > 0 ? 'text-red-600' : 'text-green-600'">
+                {{ agios.ecart > 0 ? '+' : '' }}{{ agios.ecart | number:'1.2-2' }} DH
+                ({{ agios.natureEcart === 'RECLAMATION' ? 'Réclamation' : 'Bénéfique' }})
+              </span>
+            }
+          </td>
           <td>{{ agios.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>{{ agios.dateOperation ? (agios.dateOperation | date:'dd/MM/yyyy') : 'N/A' }}</td>
           <td>{{ agios.dateValeur ? (agios.dateValeur | date:'dd/MM/yyyy') : 'N/A' }}</td>

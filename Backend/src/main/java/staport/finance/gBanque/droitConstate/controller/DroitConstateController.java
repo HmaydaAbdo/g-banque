@@ -96,6 +96,13 @@ public class DroitConstateController {
         return pdfResponse(pdf, "droits_constates");
     }
 
+    @Operation(summary = "Exporter tous les droits constatés par marché")
+    @GetMapping("/export/pdf/global")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exportGlobalPdf() {
+        return pdfResponse(droitConstateService.exportGlobalPdf(), "droits_constates_global");
+    }
+
     @Operation(summary = "Changer le statut PREVU/PAYE", description = "Réservé SYSTEM_ADMIN — cohérent avec la " +
             "correction déjà appliquée aux modules Moyens de paiement/CMT sur ce type d'action.")
     @PatchMapping("/{id}/status/toggle")

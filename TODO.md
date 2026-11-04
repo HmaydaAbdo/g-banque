@@ -93,6 +93,18 @@ Cf. `docs/infra/ci-cd.md` § « Passage au déploiement continu ». Préalables 
 
 ### Chantier — Agios unifiés : calculé vs facturé, tout calculé (lancé le 09/10/2026)
 
+**26/10/2026 — tranche T4/2025 préparée, non déployée.** V22 reprend les IDs 4–10 sur la sauvegarde
+`gbanque-20261026.sql.gz` : type/période/facturé/calculé, factoring ID 7 en M12/2025, calculé = facturé
+fourni par Finance sans détail journalier 2025. ID 8 : trois agios et une commission sur caution,
+quatre transactions ; ID 9 : trois agios et trois transactions. Une transaction propre par source,
+débits/crédits/TVA et rapprochements clôturés conservés. Les 26 tests de migrations ont réussi,
+puis les trois tests ciblés V22 sur la version finale ; répétition
+sur copie isolée de la sauvegarde réussie (8 581 lignes journalières inchangées).
+Champs requis sur la tranche ; NOT NULL global après classement des autres IDs. Backend/frontend
+unifiés restent à réaliser après présentation/confirmation : facturé optionnel jusqu'à validation,
+écart facturé − calculé signé en DH, non stocké ; positif Réclamation, négatif Bénéfique, zéro Aucun
+écart, indisponible sans facturé. Détails et montants dans `CHANTIER-AGIOS-UNIFIES.md`.
+
 > **Plan détaillé : `CHANTIER-AGIOS-UNIFIES.md`** (racine du dépôt) — à lire en premier dans la session dédiée.
 
 **Objectif (HMAYDA, 09/10/2026).** Fusionner `agios` (saisie manuelle), `agios_trimestriel` (périodes

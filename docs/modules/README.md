@@ -3552,6 +3552,20 @@ génération automatique mensuelle produit également un événement journalisé
 
 > Source de vérité métier pour le module Agios.
 
+**Reprise historique T4 2025 — livraison préparée le 26/10/2026, non mise en service.** Les charges
+validées sont classées par type et période ; le factoring de décembre conserve sa période mensuelle.
+Le débit BP de 178 458,60 DH est ventilé en trois agios et une commission sur caution ; le débit CDM
+de 105 370,74 DH en trois agios. Chaque charge payée possède sa propre transaction. Les totaux
+bancaires, la TVA, les dates de paiement et les rapprochements clôturés sont conservés. Pour 2025,
+le calculé est la valeur historique fournie par Finance, égale au facturé : aucun détail journalier
+n'est reconstitué. Les écrans actuels restent ceux décrits dans ce chapitre.
+
+**Règle validée pour l'écran unifié à venir.** Type, période et calculé seront requis ; le facturé
+sera facultatif avant facturation et exigé lors de la validation. L'écart en DH sera obtenu par
+facturé moins calculé, avec son signe, sans être mémorisé : positif « Réclamation », négatif
+« Bénéfique », zéro « Aucun écart ». Tant que le facturé est absent, aucun écart ni qualification
+n'est présenté. Cette présentation reste à mettre en service avec l'écran unifié.
+
 ---
 
 ### 1. Périmètre du module
@@ -5446,6 +5460,9 @@ consommation de la facilité de caisse** et par une ligne de total.
 - **Couleur de la barre** : bleue sous 70 % du plafond, orange de 70 % à 100 %, rouge au-delà du plafond (la barre
   est alors pleine). Au-dessus de la barre : le montant utilisé (« FC non utilisée » si rien ne l'est) et le
   pourcentage ; le plafond n'est pas répété, il figure sur la ligne « Facilité caisse ».
+- **Découvert inférieur à 1 % du plafond** : le pourcentage est affiché avec une décimale (« 0,2 % »), jamais
+  arrondi à 0 % tant que la facilité de caisse est entamée, et la barre garde une largeur minimale visible (2 %).
+- **Signe du solde** : un solde actuel ou prévu négatif est affiché en rouge, précédé du signe « − ».
 - **Banque sans facilité de caisse** : « Facilité caisse : Aucune », « FC disponible : — » et, à la place de la barre,
   un emplacement en pointillés « Sans facilité de caisse », pour que les deux tuiles gardent les mêmes rubriques à la
   même hauteur.
@@ -5460,9 +5477,6 @@ consommation de la facilité de caisse** et par une ligne de total.
 - **Récap global** (bouton d'en-tête) : rapport consolidé de trésorerie pour l'ensemble des banques.
   Un choix de période est demandé avant le téléchargement, dans une fenêtre à trois cartes (un seul
   choix, chacune rappelant sa date de fin) — **à ce jour**, **fin de mois** ou **fin de trimestre**
-- **Découvert inférieur à 1 % du plafond** : le pourcentage est affiché avec une décimale (« 0,2 % »), jamais
-  arrondi à 0 % tant que la facilité de caisse est entamée, et la barre garde une largeur minimale visible (2 %).
-- **Signe du solde** : un solde actuel ou prévu négatif est affiché en rouge, précédé du signe « − ».
   (présélection : l'horizon du tableau de bord).
 - **Récap détaillé** (bouton d'en-tête) : récapitulatif général détaillé pour l'ensemble des
   banques, jusqu'à l'horizon du tableau de bord. Les catégories à 0,00 pour toutes les banques n'y

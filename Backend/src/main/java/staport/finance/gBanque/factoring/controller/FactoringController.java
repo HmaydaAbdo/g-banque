@@ -96,6 +96,13 @@ public class FactoringController {
         return pdfResponse(pdf, "factoring");
     }
 
+    @Operation(summary = "Exporter tous les factorings par marché")
+    @GetMapping("/export/pdf/global")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exportGlobalPdf() {
+        return pdfResponse(factoringService.exportGlobalPdf(), "factoring_global");
+    }
+
     @Operation(summary = "Changer le statut PREVU/PAYE", description = "Réservé SYSTEM_ADMIN — cohérent avec la " +
             "correction déjà appliquée aux modules Moyens de paiement/CMT sur ce type d'action.")
     @PatchMapping("/{id}/toggleStatus")

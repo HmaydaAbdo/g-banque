@@ -18,6 +18,7 @@ import { TagModule } from "primeng/tag";
 import { InputSwitchModule } from "primeng/inputswitch";
 import { TooltipModule } from "primeng/tooltip";
 import { CalendarModule } from "primeng/calendar";
+import { DialogModule } from "primeng/dialog";
 
 // Services & Enums
 import { FactoringService } from "../../service/FactoringService";
@@ -35,7 +36,7 @@ import { Type } from "../../../prefinancements/enums/Type";
     CommonModule, FormsModule, ReactiveFormsModule, RouterLink,
     TableModule, DropdownModule, BreadcrumbModule, ConfirmDialogModule,
     ToastModule, ButtonModule, RippleModule, TagModule, InputSwitchModule,
-    TooltipModule, DatePipe, DecimalPipe, CalendarModule
+    TooltipModule, DatePipe, DecimalPipe, CalendarModule, DialogModule
   ],
   providers: [MessageService, ConfirmationService]
 })
@@ -67,6 +68,7 @@ export class FactoringListComponent implements OnInit {
 
   /** Indicateur de chargement du bouton "Exporter PDF". */
   exporting = false;
+  exportDialogVisible = false;
 
   /** Affiche/masque le panneau de recherche par période (fermé par défaut pour ne pas surcharger la barre de filtres). */
   showDatePanel = false;
@@ -244,10 +246,11 @@ export class FactoringListComponent implements OnInit {
    * Exporte en PDF l'intégralité des factorings correspondant aux filtres actuellement
    * appliqués — pas seulement la page affichée à l'écran.
    */
-  exportPdf(): void {
+  exportPdf(global = false): void {
+    this.exportDialogVisible = false;
     this.exporting = true;
     const criteria = this.searchForm.value;
-    this.factoringService.exportPdf(criteria).subscribe({
+    (global ? this.factoringService.exportGlobalPdf() : this.factoringService.exportPdf(criteria)).subscribe({
       next: blob => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');

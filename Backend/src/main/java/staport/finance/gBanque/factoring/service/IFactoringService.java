@@ -32,4 +32,6 @@ public interface IFactoringService {
      * filtres que {@link #findAll}) — sans pagination.
      */
     byte[] exportPdf(FactoringSearchDto searchDTO);
+
+    byte[] exportGlobalPdf();
 }

@@ -32,4 +32,6 @@ public interface IPrefinancementService {
      * (mêmes filtres que {@link #findAll}) — sans pagination.
      */
     byte[] exportPdf(PrefinancementSearchDTO searchDTO);
+
+    byte[] exportGlobalPdf();
 }

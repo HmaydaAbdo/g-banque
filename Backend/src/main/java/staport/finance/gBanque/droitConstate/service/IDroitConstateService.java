@@ -32,4 +32,6 @@ public interface IDroitConstateService {
      * (mêmes filtres que {@link #findAll}) — sans pagination.
      */
     byte[] exportPdf(DroitConstateSearchDto searchDTO);
+
+    byte[] exportGlobalPdf();
 }

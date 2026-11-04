@@ -18,6 +18,7 @@ import { TagModule } from "primeng/tag";
 import { InputSwitchModule } from "primeng/inputswitch";
 import { TooltipModule } from 'primeng/tooltip';
 import { CalendarModule } from 'primeng/calendar';
+import { DialogModule } from 'primeng/dialog';
 
 // Services & DTOs
 import { DroitConstateService } from "../../service/DroitConstateService";
@@ -36,7 +37,7 @@ import {DroitConstateResponseDto} from "../../dtos/DroitConstateResponseDto";
     CommonModule, FormsModule, ReactiveFormsModule, RouterLink,
     TableModule, ButtonModule, RippleModule, DropdownModule,
     BreadcrumbModule, ConfirmDialogModule, ToastModule,
-    TagModule, InputSwitchModule, TooltipModule, DatePipe, DecimalPipe, CalendarModule
+    TagModule, InputSwitchModule, TooltipModule, DatePipe, DecimalPipe, CalendarModule, DialogModule
   ],
   providers: [MessageService, ConfirmationService]
 })
@@ -68,6 +69,7 @@ export class DroitConstateListComponent implements OnInit {
 
   /** Indicateur de chargement du bouton "Exporter PDF". */
   exporting = false;
+  exportDialogVisible = false;
 
   /** Affiche/masque le panneau de recherche par période (fermé par défaut pour ne pas surcharger la barre de filtres). */
   showDatePanel = false;
@@ -254,10 +256,11 @@ export class DroitConstateListComponent implements OnInit {
    * Exporte en PDF l'intégralité des droits constatés correspondant aux filtres actuellement
    * appliqués — pas seulement la page affichée à l'écran.
    */
-  exportPdf(): void {
+  exportPdf(global = false): void {
+    this.exportDialogVisible = false;
     this.exporting = true;
     const criteria = this.searchForm.value;
-    this.droitConstateService.exportPdf(criteria).subscribe({
+    (global ? this.droitConstateService.exportGlobalPdf() : this.droitConstateService.exportPdf(criteria)).subscribe({
       next: blob => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');

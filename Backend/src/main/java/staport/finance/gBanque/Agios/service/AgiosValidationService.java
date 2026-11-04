@@ -91,6 +91,7 @@ public class AgiosValidationService implements IAgiosValidationService {
                 dto.rapprochementId());
 
         agios.setStatus(Status.PAYE);
+        agios.setMontantFacture(agios.getMontant());
         agios.setObservation(savedTransaction.getObservation());
         agios.setLibelle(savedTransaction.getLibelle());
         agios.setDateValeur(savedTransaction.getDateValeur());
