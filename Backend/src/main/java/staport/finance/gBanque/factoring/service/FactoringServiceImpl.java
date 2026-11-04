@@ -260,14 +260,7 @@ public class FactoringServiceImpl implements IFactoringService {
                 FactoringSpec.searchByCriteria(searchDTO),
                 Sort.by(Sort.Direction.DESC, "dateEmission"));
 
-        BigDecimal totalMontant = factorings.stream()
-                .map(Factoring::getMontant)
-                .filter(java.util.Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        List<String> filterLines = buildFilterSummary(searchDTO);
-
-        return generateFactoringPdf("État des Factorings", factorings, totalMontant, filterLines);
+        return generateFactoringGlobalPdf(factorings, "État des Factorings — filtres appliqués");
     }
 
     @Override
@@ -276,11 +269,11 @@ public class FactoringServiceImpl implements IFactoringService {
         List<Factoring> all = factoringRepository.findAll(
                 Sort.by(Sort.Direction.ASC, "marche.numero").and(Sort.by(Sort.Direction.ASC, "type")).and(Sort.by(Sort.Direction.DESC, "dateEmission")));
         List<Factoring> rows = all.stream().filter(x -> x.getMarche() != null).toList();
-        return generateFactoringGlobalPdf(rows);
+        return generateFactoringGlobalPdf(rows, "État global des Factorings");
     }
 
-    private byte[] generateFactoringGlobalPdf(List<Factoring> rows) {
-        try { return staportPdfReportService.generateReport("État global des Factorings", PageSize.A4.rotate(), (doc, writer) -> {
+    private byte[] generateFactoringGlobalPdf(List<Factoring> rows, String reportTitle) {
+        try { return staportPdfReportService.generateReport(reportTitle, PageSize.A4.rotate(), (doc, writer) -> {
             try {
                 var groups = rows.stream().collect(java.util.stream.Collectors.groupingBy(Factoring::getMarche, java.util.LinkedHashMap::new, java.util.stream.Collectors.toList()));
                 int marcheIndex = 0;

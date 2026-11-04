@@ -264,14 +264,7 @@ public class DroitConstateServiceImpl implements IDroitConstateService {
                 DroitConstateSpec.searchByCriteria(searchDTO),
                 Sort.by(Sort.Direction.DESC, "dateEmission"));
 
-        BigDecimal totalMontant = droitConstates.stream()
-                .map(DroitConstate::getMontant)
-                .filter(java.util.Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        List<String> filterLines = buildFilterSummary(searchDTO);
-
-        return generateDroitConstatePdf("État des Droits Constatés", droitConstates, totalMontant, filterLines);
+        return generateDroitConstateGlobalPdf(droitConstates, "État des Droits Constatés — filtres appliqués");
     }
 
     @Override
@@ -280,11 +273,11 @@ public class DroitConstateServiceImpl implements IDroitConstateService {
         List<DroitConstate> all = droitConstateRepository.findAll(
                 Sort.by(Sort.Direction.ASC, "marche.numero").and(Sort.by(Sort.Direction.ASC, "type")).and(Sort.by(Sort.Direction.DESC, "dateEmission")));
         List<DroitConstate> rows = all.stream().filter(x -> x.getMarche() != null).toList();
-        return generateDroitConstateGlobalPdf(rows);
+        return generateDroitConstateGlobalPdf(rows, "État global des Droits Constatés");
     }
 
-    private byte[] generateDroitConstateGlobalPdf(List<DroitConstate> rows) {
-        try { return staportPdfReportService.generateReport("État global des Droits Constatés", PageSize.A4.rotate(), (doc, writer) -> {
+    private byte[] generateDroitConstateGlobalPdf(List<DroitConstate> rows, String reportTitle) {
+        try { return staportPdfReportService.generateReport(reportTitle, PageSize.A4.rotate(), (doc, writer) -> {
             try {
                 var groups=rows.stream().collect(java.util.stream.Collectors.groupingBy(DroitConstate::getMarche,java.util.LinkedHashMap::new,java.util.stream.Collectors.toList()));
                 int marcheIndex=0;
