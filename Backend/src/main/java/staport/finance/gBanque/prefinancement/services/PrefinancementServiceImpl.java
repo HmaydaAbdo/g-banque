@@ -293,17 +293,26 @@ public class PrefinancementServiceImpl implements IPrefinancementService {
                         Paragraph marcheTitle = new Paragraph("Marché " + entry.getKey().getNumero() + " — " + entry.getKey().getNom(), title);
                         marcheTitle.setSpacingBefore(14f);
                         doc.add(marcheTitle);
-                        PdfPTable table = new PdfPTable(new float[]{18, 16, 16, 14, 14, 12}); table.setWidthPercentage(100); table.setSpacingBefore(6); table.setSpacingAfter(10);
-                        for (String h : new String[]{"Type", "Montant (MAD)", "Date émission", "Date valeur", "Banque", "Statut"}) { PdfPCell c = new PdfPCell(new Phrase(h, head)); c.setBackgroundColor(Color.decode("#2563eb")); c.setPadding(4); table.addCell(c); }
+                        PdfPTable table = new PdfPTable(new float[]{17, 14, 13, 13, 14, 14, 11}); table.setWidthPercentage(100); table.setSpacingBefore(6); table.setSpacingAfter(4);
+                        for (String h : new String[]{"Banque", "Type", "Débit (MAD)", "Crédit (MAD)", "Date valeur", "Date émission", "Statut"}) { PdfPCell c = new PdfPCell(new Phrase(h, head)); c.setBackgroundColor(Color.decode("#2563eb")); c.setPadding(4); table.addCell(c); }
                         BigDecimal deb = BigDecimal.ZERO, remb = BigDecimal.ZERO;
                         for (Prefinancement x : entry.getValue().stream().sorted(java.util.Comparator
                                 .comparing(Prefinancement::getDateValeur, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()))).toList()) {
                             BigDecimal m = x.getMontant() == null ? BigDecimal.ZERO : x.getMontant();
                             if (x.getType() == Type.DEBLOCAGE) deb = deb.add(m); else remb = remb.add(m);
-                            for (String value : new String[]{x.getType() == Type.DEBLOCAGE ? "Déblocage" : "Remboursement", MontantFormatter.format(m), x.getDateEmission() == null ? "—" : x.getDateEmission().format(DATE_FMT), x.getDateValeur() == null ? "—" : x.getDateValeur().format(DATE_FMT), x.getMarche().getBanque() == null ? "—" : x.getMarche().getBanque().getNom(), x.getStatus() == Status.PAYE ? "PAYÉ" : "PRÉVU"}) table.addCell(new Phrase(value, cell));
+                            addPdfCell(table, x.getMarche().getBanque() == null ? "—" : x.getMarche().getBanque().getNom(), cell, Color.WHITE, Color.decode("#e5e7eb"), Element.ALIGN_LEFT);
+                            addPdfCell(table, x.getType() == Type.DEBLOCAGE ? "Déblocage" : "Remboursement", cell, Color.WHITE, Color.decode("#e5e7eb"), Element.ALIGN_LEFT);
+                            PdfPCell debitCell = new PdfPCell(new Phrase(x.getType() == Type.REMBOURSEMENT ? MontantFormatter.format(m) : "—", FontFactory.getFont(FontFactory.HELVETICA, 8, Color.decode("#dc2626")))); debitCell.setHorizontalAlignment(Element.ALIGN_RIGHT); table.addCell(debitCell);
+                            PdfPCell creditCell = new PdfPCell(new Phrase(x.getType() == Type.DEBLOCAGE ? MontantFormatter.format(m) : "—", FontFactory.getFont(FontFactory.HELVETICA, 8, Color.decode("#16a34a")))); creditCell.setHorizontalAlignment(Element.ALIGN_RIGHT); table.addCell(creditCell);
+                            addPdfCell(table, x.getDateValeur() == null ? "—" : x.getDateValeur().format(DATE_FMT), cell, Color.WHITE, Color.decode("#e5e7eb"), Element.ALIGN_CENTER);
+                            addPdfCell(table, x.getDateEmission() == null ? "—" : x.getDateEmission().format(DATE_FMT), cell, Color.WHITE, Color.decode("#e5e7eb"), Element.ALIGN_CENTER);
+                            addPdfCell(table, x.getStatus() == Status.PAYE ? "PAYÉ" : "PRÉVU", cell, Color.WHITE, Color.decode("#e5e7eb"), Element.ALIGN_CENTER);
                         }
-                        for (String value : new String[]{"TOTAL DÉBLOCAGES", MontantFormatter.format(deb) + " MAD", "TOTAL REMBOURSEMENTS", MontantFormatter.format(remb) + " MAD", "RESTE À PAYER", MontantFormatter.format(deb.subtract(remb)) + " MAD"}) { PdfPCell c = new PdfPCell(new Phrase(value, total)); c.setBackgroundColor(Color.decode("#dbeafe")); c.setPadding(5); table.addCell(c); }
                         doc.add(table);
+                        PdfPTable totals = new PdfPTable(new float[]{1, 1, 1}); totals.setWidthPercentage(100);
+                        Font creditFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.decode("#16a34a")); Font debitFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.decode("#dc2626"));
+                        for (String value : new String[]{"Somme crédit\n" + MontantFormatter.format(deb) + " MAD", "Somme débit\n" + MontantFormatter.format(remb) + " MAD", "Reste à payer\n" + MontantFormatter.format(deb.subtract(remb)) + " MAD"}) { PdfPCell c = new PdfPCell(new Phrase(value, value.startsWith("Somme crédit") ? creditFont : value.startsWith("Somme débit") ? debitFont : total)); c.setBackgroundColor(Color.decode("#dbeafe")); c.setPadding(7); totals.addCell(c); }
+                        doc.add(totals);
                     }
                 } catch (DocumentException e) { throw new RuntimeException(e); }
             });
