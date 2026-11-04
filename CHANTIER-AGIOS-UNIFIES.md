@@ -12,6 +12,10 @@ les IDs ; les IDs 4 à 10 ont été arbitrés avec Finance. La V21 du dépôt es
 Les constats du 09/10 ci-dessous restent des constats historiques, remplacés par les décisions de
 cette section pour cette tranche.
 
+- **Alignement JPA/PostgreSQL** : V22 créait `periode_numero` et `annee` en `SMALLINT`, tandis que
+  l'entité `Agios` les expose en `Integer`. V23 élargit ces deux colonnes en `INTEGER` dans `agios`
+  et `agios_aud`, sans modifier une migration déjà publiée.
+
 | ID initial | Transaction initiale | Banque | Nature et montant facturé = calculé (DH) | Période |
 |---|---|---|---|---|
 | 4 | 20 | SAHAM | Facilité de caisse 22 856,98 | T4 2025 |
