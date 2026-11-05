@@ -9,6 +9,8 @@ package staport.finance.gBanque.transactions.enums;
  *   <li>motif d'une {@code Provision}, d'un {@code Impayee} ou d'une {@code OperationErrone} ;</li>
  *   <li>opération rattachée à une {@code Commission}.</li>
  * </ol>
+ * <p>Les valeurs de cet enum utilisées comme motif de Provision doivent aussi être présentes dans
+ * les contraintes CHECK de {@code provision} et {@code provision_aud}, mises à jour par migration Flyway.</p>
  *
  * <p>Le partage entre ces trois rôles est un choix assumé (07/09/2026) : il évite une migration
  * sur trois entités, au prix de listes de motifs qui proposent des valeurs sans objet pour elles.

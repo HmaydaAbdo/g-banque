@@ -1922,7 +1922,8 @@ date de valeur (du/au).
 
 Bouton **Ajouter provision**. Champs requis : banque, motif, sens (Encaissement ou Décaissement),
 montant (toujours positif — c'est le sens qui détermine si la provision augmente ou diminue le
-solde une fois validée), date d'émission, libellé, observation.
+solde une fois validée), date d'émission, libellé, observation. Le champ Motif propose toutes les
+origines disponibles dans G-Banque, dont Importation.
 
 ### Modifier une provision
 

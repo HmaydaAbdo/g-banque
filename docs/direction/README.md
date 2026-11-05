@@ -928,6 +928,7 @@ soit constatée sur le relevé bancaire, avec une traçabilité complète de cha
   encaissement qu'un décaissement à venir, selon le sens choisi à la création.
 - **Suivi centralisé** : toutes les provisions suivies dans un écran unique, avec un état (prévue,
   réglée) toujours à jour, filtrable par banque, motif, sens et libellé.
+- **Catégorisation complète** : les motifs disponibles incluent les opérations d'importation.
 - **Recherche par période** : chacune des trois dates d'une provision (émission, opération, valeur)
   peut être filtrée indépendamment sur une plage précise.
 - **Vue des encours par banque, par sens** : montant total non encore régularisé consultable

@@ -4705,7 +4705,7 @@ observation, un montant, une date d'émission et un sens.
 
 **Motif** : origine ou nature de la provision (même liste que les sources de transaction utilisées
 ailleurs dans G-Banque — Chèque, LCN, Virement, Frais bancaires, etc.), à titre de catégorisation
-uniquement.
+uniquement. Tous les motifs de cette liste sont disponibles, y compris Importation.
 
 **Sens de l'opération** : ENCAISSEMENT ou DECAISSEMENT — détermine l'impact de la provision sur le
 solde de la banque une fois validée. Le montant d'une provision est toujours saisi positif ; c'est
