@@ -113,6 +113,10 @@ export class CommissionCautionListComponent implements OnInit {
 
   get selectionCount(): number { return this.selectionMap.size; }
 
+  openCatchUp(): void {
+    void this.router.navigate(['/portail/cautions/commissions/rattrapage']);
+  }
+
   /** Vrai quand TOUTES les commissions filtrées sont sélectionnées. */
   get isAllSelected(): boolean {
     return this.selectionMap.size === this.totalRecords && this.totalRecords > 0;

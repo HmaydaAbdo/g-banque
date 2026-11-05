@@ -13,6 +13,32 @@ export interface ChargeFixeConfigSearchCriteria {
   search?: string | null;
 }
 
+export interface GenerationChargeFixeLine {
+  configurationId: number;
+  banque: string;
+  type: TypeChargeFixe;
+  libelle: string;
+  montant: number;
+  dateEmission: string;
+  statut: 'A_GENERER' | 'DEJA_PRESENTE' | 'DOUBLON_CONFIGURATION' | 'GENEREE';
+  motif: string | null;
+}
+
+export interface GenerationChargeFixeRequest {
+  annee: number;
+  mois: number;
+  configurationIds?: number[] | null;
+}
+
+export interface GenerationChargeFixeResult {
+  moisGeneration: string;
+  candidates: number;
+  generees: number;
+  dejaPresentes: number;
+  excluesTrimestrielles: number;
+  lignes: GenerationChargeFixeLine[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ChargeFixeConfigService {
   private http   = inject(HttpClient);
@@ -53,5 +79,13 @@ export class ChargeFixeConfigService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  previewGeneration(request: GenerationChargeFixeRequest): Observable<GenerationChargeFixeResult> {
+    return this.http.post<GenerationChargeFixeResult>(`${this.apiUrl}/generations/preview`, request);
+  }
+
+  generateSelected(request: GenerationChargeFixeRequest): Observable<GenerationChargeFixeResult> {
+    return this.http.post<GenerationChargeFixeResult>(`${this.apiUrl}/generations`, request);
   }
 }

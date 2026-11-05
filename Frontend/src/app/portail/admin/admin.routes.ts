@@ -51,5 +51,10 @@ export const ADMIN_ROUTES: Routes = [
     path: 'charges-fixes-config',
     loadComponent: () => import('./charges-fixes-config/views/charge-fixe-config-list/charge-fixe-config-list.component')
       .then(m => m.ChargeFixeConfigListComponent)
+  },
+  {
+    path: 'charges-fixes-rattrapage',
+    loadComponent: () => import('./charges-fixes-config/views/charge-fixe-rattrapage/charge-fixe-rattrapage.component')
+      .then(m => m.ChargeFixeRattrapageComponent)
   }
 ];

@@ -740,6 +740,9 @@ automatique des charges récurrentes connues à l'avance.
 - **Génération automatique des charges récurrentes** : les charges fixes connues à l'avance
   (abonnements, commissions de tenue de compte, etc.) sont créées automatiquement chaque mois, par
   banque, sans ressaisie ni risque de doublon.
+- **Rattrapage contrôlé** : l'administrateur système peut prévisualiser les charges mensuelles
+  manquantes et les sélectionner avant création; les charges trimestrielles restent hors de ce
+  parcours.
 - **Paramétrage centralisé** : la liste des charges récurrentes est administrable directement dans
   l'application, sans intervention technique pour ajuster un montant ou ajouter une charge.
 - **Vue des encours par banque** : montant total non encore réglé consultable instantanément.

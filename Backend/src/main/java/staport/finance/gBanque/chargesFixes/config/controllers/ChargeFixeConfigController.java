@@ -17,6 +17,9 @@ import staport.finance.gBanque.chargesFixes.config.dtos.request.ChargeFixeConfig
 import staport.finance.gBanque.chargesFixes.config.dtos.request.ChargeFixeConfigSearchCriteria;
 import staport.finance.gBanque.chargesFixes.config.dtos.response.ChargeFixeConfigResponseDTO;
 import staport.finance.gBanque.chargesFixes.config.services.interfaces.IChargeFixeConfigService;
+import staport.finance.gBanque.chargesFixes.GenerationChargeFixeRequest;
+import staport.finance.gBanque.chargesFixes.GenerationChargeFixeResultDto;
+import staport.finance.gBanque.chargesFixes.GenerationChargeFixeService;
 
 /**
  * Endpoints d'administration des charges fixes bancaires (frais/impôts-taxes/agios/prélèvements
@@ -33,9 +36,12 @@ public class ChargeFixeConfigController {
     private static final Logger log = LoggerFactory.getLogger(ChargeFixeConfigController.class);
 
     private final IChargeFixeConfigService service;
+    private final GenerationChargeFixeService generationService;
 
-    public ChargeFixeConfigController(IChargeFixeConfigService service) {
+    public ChargeFixeConfigController(IChargeFixeConfigService service,
+                                      GenerationChargeFixeService generationService) {
         this.service = service;
+        this.generationService = generationService;
     }
 
     @Operation(summary = "Lister les charges fixes (paginé, triable, filtrable)")
@@ -71,5 +77,19 @@ public class ChargeFixeConfigController {
         log.info("DELETE /charge-fixe-config/{}", id);
         service.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Prévisualiser le rattrapage des charges fixes mensuelles")
+    @PostMapping("/generations/preview")
+    public ResponseEntity<GenerationChargeFixeResultDto> previewGeneration(
+            @Valid @RequestBody GenerationChargeFixeRequest request) {
+        return ResponseEntity.ok(generationService.apercu(request));
+    }
+
+    @Operation(summary = "Exécuter le rattrapage des charges fixes mensuelles sélectionnées")
+    @PostMapping("/generations")
+    public ResponseEntity<GenerationChargeFixeResultDto> genererSelection(
+            @Valid @RequestBody GenerationChargeFixeRequest request) {
+        return ResponseEntity.ok(generationService.generer(request));
     }
 }

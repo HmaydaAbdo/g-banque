@@ -81,6 +81,8 @@ public interface ICommissionService {
     /** Garde d'idempotence : une commission existe déjà pour cette caution à cette date exacte. */
     boolean existsByCautionAndDateEmission(Long cautionId, LocalDate dateEmission);
 
+    boolean existsCautionCommissionSansProvenance(Long banqueId, LocalDate debut, LocalDate fin);
+
     /** Garde d'idempotence : une commission existe déjà pour cette caution dans cette période. */
     boolean existsByCautionAndDateEmissionBetween(Long cautionId, LocalDate debutPeriode, LocalDate finPeriode);
 

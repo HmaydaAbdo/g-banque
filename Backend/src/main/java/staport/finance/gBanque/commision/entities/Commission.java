@@ -72,6 +72,9 @@ public class Commission {
     @JoinColumn(name = "caution_id")
     private Caution caution;
 
+    @Column(name = "fusion_provenance_incomplete", nullable = false, columnDefinition = "boolean default false")
+    private boolean fusionProvenanceIncomplete;
+
     /**
      * Impôt/taxe à l'origine de cette commission — nullable.
      * Renseigné uniquement pour les commissions générées automatiquement à la création
@@ -190,6 +193,9 @@ public class Commission {
     public void setCaution(Caution caution) {
         this.caution = caution;
     }
+
+    public boolean isFusionProvenanceIncomplete() { return fusionProvenanceIncomplete; }
+    public void setFusionProvenanceIncomplete(boolean value) { this.fusionProvenanceIncomplete = value; }
 
     public ImpotEtTaxe getImpotEtTaxe() {
         return impotEtTaxe;

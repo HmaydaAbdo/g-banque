@@ -126,6 +126,15 @@
               (click)="exportPdf()">
       </button>
 
+      @if (isAdmin) {
+        <button pButton pRipple type="button"
+                label="Rattraper les générations manquantes"
+                icon="pi pi-history"
+                class="p-button-outlined p-button-warning"
+                (click)="openCatchUp()">
+        </button>
+      }
+
     </form>
   </div>
 

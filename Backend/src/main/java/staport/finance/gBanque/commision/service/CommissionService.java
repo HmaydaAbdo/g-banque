@@ -28,9 +28,11 @@ import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.commision.dtos.*;
 import staport.finance.gBanque.commision.entities.Commission;
+import staport.finance.gBanque.commision.entities.CommissionFusionSource;
 import staport.finance.gBanque.commision.enums.TypeCommission;
 import staport.finance.gBanque.commision.mapper.CommissionMapper;
 import staport.finance.gBanque.commision.repository.CommisionRepository;
+import staport.finance.gBanque.commision.repository.CommissionFusionSourceRepository;
 import staport.finance.gBanque.commision.specs.CommissionSpecifications;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
@@ -55,7 +57,9 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -70,6 +74,7 @@ public class CommissionService implements ICommissionService {
     private EntityManager entityManager;
 
     private final CommisionRepository       commissionRepository;
+    private final CommissionFusionSourceRepository fusionSourceRepository;
     private final IBanqueService            banqueService;
     private final CommissionMapper          commissionMapper;
     private final IImpotEtTaxeService       impotEtTaxeService;
@@ -81,6 +86,7 @@ public class CommissionService implements ICommissionService {
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public CommissionService(CommisionRepository commissionRepository,
+                             CommissionFusionSourceRepository fusionSourceRepository,
                              IBanqueService banqueService,
                              CommissionMapper commissionMapper,
                              IImpotEtTaxeService impotEtTaxeService,
@@ -90,6 +96,7 @@ public class CommissionService implements ICommissionService {
                              ReverseTransactionService reverseTransactionService) {
         this.reverseTransactionService = reverseTransactionService;
         this.commissionRepository   = commissionRepository;
+        this.fusionSourceRepository = fusionSourceRepository;
         this.banqueService          = banqueService;
         this.commissionMapper       = commissionMapper;
         this.impotEtTaxeService     = impotEtTaxeService;
@@ -113,6 +120,9 @@ public class CommissionService implements ICommissionService {
         Banque banque = banqueService.findOrThrow(requestDto.banqueId());
 
         Commission commission = commissionMapper.toEntity(requestDto, banque);
+        if (TransactionSource.CAUTION.equals(requestDto.operation()) && commission.getCaution() == null) {
+            commission.setFusionProvenanceIncomplete(true);
+        }
         commissionRepository.save(commission);
 
         log.info("Commission created with id={}", commission.getId());
@@ -172,6 +182,11 @@ public class CommissionService implements ICommissionService {
         commission.setBanque(banque);
         commission.setOperation(requestDto.operation());
         commission.setDateEmission(requestDto.dateEmission());
+        if (TransactionSource.CAUTION.equals(requestDto.operation()) && commission.getCaution() == null) {
+            commission.setFusionProvenanceIncomplete(true);
+        } else if (!TransactionSource.CAUTION.equals(requestDto.operation())) {
+            commission.setFusionProvenanceIncomplete(false);
+        }
 
         commissionRepository.save(commission);
         log.info("Commission updated successfully id={}", commission.getId());
@@ -487,6 +502,16 @@ public class CommissionService implements ICommissionService {
             }
         }
 
+        // Lire la provenance avant la suppression : une fusion précédente est référencée avec
+        // ON DELETE CASCADE et ses lignes de provenance disparaissent avec sa commission.
+        Map<Long, List<SourceCaution>> provenanceParSource = new HashMap<>();
+        for (Commission source : sources) {
+            List<SourceCaution> provenances = fusionSourceRepository.findByCommissionFusion_Id(source.getId())
+                    .stream().map(item -> new SourceCaution(item.getSourceCommissionId(), item.getCautionId()))
+                    .toList();
+            provenanceParSource.put(source.getId(), provenances);
+        }
+
         // Même banque
         long nbBanques = sources.stream().map(c -> c.getBanque().getId()).distinct().count();
         if (nbBanques > 1) {
@@ -532,12 +557,33 @@ public class CommissionService implements ICommissionService {
         fusionnee.setOperation(TransactionSource.CAUTION);
         fusionnee.setDateEmission(dateEmission);
         fusionnee.setStatus(Status.PREVU);
+        Commission fusionTarget = fusionnee;
+        List<CommissionFusionSource> provenance = new ArrayList<>();
+        boolean provenanceIncomplete = false;
+        for (Commission source : sources) {
+            List<SourceCaution> sourcesPrecedentes = provenanceParSource.getOrDefault(source.getId(), List.of());
+            if (!sourcesPrecedentes.isEmpty()) {
+                sourcesPrecedentes.forEach(item -> provenance.add(new CommissionFusionSource(
+                        fusionTarget, item.sourceCommissionId(), item.cautionId())));
+            } else if (source.getCaution() != null) {
+                provenance.add(new CommissionFusionSource(fusionTarget, source.getId(), source.getCaution().getId()));
+            } else {
+                provenanceIncomplete = true;
+            }
+            provenanceIncomplete |= source.isFusionProvenanceIncomplete();
+        }
+        fusionTarget.setFusionProvenanceIncomplete(provenanceIncomplete);
         fusionnee = commissionRepository.save(fusionnee);
+        if (!provenance.isEmpty()) {
+            fusionSourceRepository.saveAll(provenance);
+        }
         log.info("Commission fusionnée créée — id={}, montant={}", fusionnee.getId(), montantFusionne);
 
         // Aucune TVA créée après fusion
         return new CommissionFusionResponse(commissionMapper.toResponseDto(fusionnee));
     }
+
+    private record SourceCaution(Long sourceCommissionId, Long cautionId) {}
 
     // ── Aggregate helper ──────────────────────────────────────────────────────
     /**
@@ -879,13 +925,23 @@ public class CommissionService implements ICommissionService {
     @Override
     @Transactional(readOnly = true)
     public boolean existsByCautionAndDateEmission(Long cautionId, LocalDate dateEmission) {
-        return commissionRepository.existsByCaution_IdAndDateEmission(cautionId, dateEmission);
+        return commissionRepository.existsByCaution_IdAndDateEmission(cautionId, dateEmission)
+                || fusionSourceRepository.existsByCautionIdAndCommissionFusion_DateEmission(cautionId, dateEmission);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsCautionCommissionSansProvenance(Long banqueId, LocalDate debut, LocalDate fin) {
+        return commissionRepository.existsByOperationAndBanque_IdAndDateEmissionBetweenAndCautionIsNullAndFusionProvenanceIncompleteTrue(
+                TransactionSource.CAUTION, banqueId, debut, fin);
     }
 
     @Override
     @Transactional(readOnly = true)
     public boolean existsByCautionAndDateEmissionBetween(Long cautionId, LocalDate debutPeriode, LocalDate finPeriode) {
-        return commissionRepository.existsByCaution_IdAndDateEmissionBetween(cautionId, debutPeriode, finPeriode);
+        return commissionRepository.existsByCaution_IdAndDateEmissionBetween(cautionId, debutPeriode, finPeriode)
+                || fusionSourceRepository.existsByCautionIdAndCommissionFusion_DateEmissionBetween(
+                        cautionId, debutPeriode, finPeriode);
     }
 
     @Override

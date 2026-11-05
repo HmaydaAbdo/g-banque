@@ -808,6 +808,8 @@ private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
 | DELETE | `/cautions/{id}` | `SYSTEM_ADMIN` | Règle transverse (`conventions/security.md`) : suppression toujours `SYSTEM_ADMIN`. Bloquée en service si la caution est clôturée. |
 | POST | `/cautions/{id}/cloturer` | `FINANCE_OR_ADMIN` | Clôture (main levée) — génère la commission de clôture (+ TVA si requise par la banque). |
 | POST | `/cautions/generer-commissions` | `FINANCE_OR_ADMIN` | Déclenchement manuel de la génération mensuelle des commissions. |
+| POST | `/cautions/generer-commissions/rattrapage/preview` | `SYSTEM_ADMIN` | Aperçu des commissions automatiques manquantes. |
+| POST | `/cautions/generer-commissions/rattrapage` | `SYSTEM_ADMIN` | Génération des lignes de rattrapage sélectionnées. |
 
 > **Écran "TVA sur cautions"** : n'a pas de contrôleur dédié — il consomme `ImpotEtTaxeController`
 > (filtre `motif=TVA_COMMISSION_CAUTION`), y compris son bouton "Exporter PDF" (nouveau,
@@ -857,6 +859,7 @@ déroulant (contrainte d'unicité backend — une configuration par banque).
 | `/portail/cautions/new` | `departmentGuard('Finance')` | Idem. |
 | `/portail/cautions/edit/:id` | `departmentGuard('Finance')` | Idem. |
 | `/portail/cautions/commissions` | `departmentGuard('Finance')` | Idem. |
+| `/portail/cautions/commissions/rattrapage` | `systemAdminGuard` | `SYSTEM_ADMIN` uniquement. |
 | `/portail/cautions/tva` | `departmentGuard('Finance')` | Idem. |
 
 **Corrigé pendant ce sweep** : les routes utilisaient auparavant `systemAdminGuard` (importé mais
@@ -873,6 +876,7 @@ non appliqué) au lieu de `departmentGuard('Finance')` — incohérent avec le r
 | "Les Cautions" (section) | `['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR']` (`SYSTEM_ADMIN` voit toujours tout) |
 | "Liste des cautions" | idem |
 | "Commissions sur cautions" | idem |
+| Bouton « Rattraper les générations manquantes » dans la liste des commissions | `isAdmin` (`SYSTEM_ADMIN`) |
 | "TVA sur cautions" | idem |
 
 ---
@@ -1892,8 +1896,10 @@ historiquement à ce module. Remplace `ChargesFixesRegistry` (Java codé en dur)
 | POST | `/charge-fixe-config` | `SYSTEM_ADMIN` (classe) | Création d'une charge réservée à l'admin système. |
 | PUT | `/charge-fixe-config/{id}` | `SYSTEM_ADMIN` (classe) | Modification d'une charge réservée à l'admin système. |
 | DELETE | `/charge-fixe-config/{id}` | `SYSTEM_ADMIN` (classe) | Suppression d'une charge réservée à l'admin système. |
+| POST | `/charge-fixe-config/generations/preview` | `SYSTEM_ADMIN` (classe) | Aperçu du rattrapage mensuel. |
+| POST | `/charge-fixe-config/generations` | `SYSTEM_ADMIN` (classe) | Génération des configurations mensuelles sélectionnées. |
 
-La route Angular `/portail/admin/charges-fixes-config` n'a pas de guard propre — elle hérite de
+Les routes Angular `/portail/admin/charges-fixes-config` et `/portail/admin/charges-fixes-rattrapage` n'ont pas de guard propre — elles héritent de
 `systemAdminGuard` posé au niveau parent (`portail/admin`), comme toutes les routes du module
 Administration. Sidebar : item "Charges fixes bancaires" sous le groupe "Administration"
 (`requiredAuthority: SYSTEM_ADMIN` hérité du groupe).

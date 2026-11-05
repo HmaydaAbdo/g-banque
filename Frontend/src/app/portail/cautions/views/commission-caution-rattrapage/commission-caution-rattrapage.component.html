@@ -1,0 +1,83 @@
+<main class="generation-page">
+  <header class="pg-header">
+    <div>
+      <h1 class="pg-header__title">Rattrapage des commissions sur cautions</h1>
+      <p class="text-secondary">Sélectionnez le cycle et les banques; l’aperçu marque les commissions déjà présentes.</p>
+    </div>
+    <button pButton label="Retour aux commissions" icon="pi pi-arrow-left" class="p-button-text" (click)="backToCommissions()"></button>
+  </header>
+
+  <ol class="wizard-steps" aria-label="Étapes du rattrapage">
+    <li [class.current]="step === 0">1. Cycle</li>
+    <li [class.current]="step === 1">2. Aperçu et sélection</li>
+    <li [class.current]="step === 2">3. Résultat</li>
+  </ol>
+
+  @if (step === 0) {
+    <section class="wizard-card">
+      <h2>Quel cycle automatique voulez-vous rattraper?</h2>
+      <p class="info">Le mois demandé est le mois d'exécution. Pour BMCI, le cycle d'octobre émet le 31/10 et couvre novembre; choisissez donc octobre pour rattraper la commission BMCI de novembre.</p>
+      <p class="info">Un cycle futur, ou un lot dont l'échéance automatique n'est pas passée, ne peut pas être généré en avance.</p>
+      <p class="info">L'analyse reprend les cautions actives et les stratégies bancaires configurées. BP n'est éligible qu'en fin de trimestre; les banques sans stratégie applicable et les cautions clôturées ne produisent pas de ligne.</p>
+      <form [formGroup]="form" (ngSubmit)="preview()" class="form-grid">
+        <label for="mois-cycle">Mois de génération</label>
+        <input id="mois-cycle" type="month" formControlName="mois" />
+        <label for="lot-cycle">Lot automatique</label>
+        <select id="lot-cycle" formControlName="debutMois">
+          <option [ngValue]="false">Fin de mois — AWB, BMCI, SAHAM BANK, BP en fin de trimestre</option>
+          <option [ngValue]="true">Début de mois — CDM</option>
+        </select>
+        <label for="banques-cycle">Banques</label>
+        <p-multiSelect inputId="banques-cycle" formControlName="banqueIds" [options]="banqueOptions"
+                       optionLabel="label" optionValue="value" placeholder="Toutes les banques"
+                       [filter]="true" [showClear]="true" appendTo="body" />
+        <div class="form-actions">
+          <button pButton type="submit" label="Détecter les commissions manquantes" icon="pi pi-search" [loading]="busy" [disabled]="form.invalid || busy"></button>
+        </div>
+      </form>
+    </section>
+  }
+
+  @if (step === 1 && result) {
+    <section class="wizard-card">
+      <h2>Aperçu — cycle {{ result.moisReference }} / {{ result.debutMois ? 'début' : 'fin' }} de mois</h2>
+      @if (result.cautionsInactivesNonAnalysees > 0) {
+        <p class="warning">{{ result.cautionsInactivesNonAnalysees }} caution(s) actuellement inactive(s) ne sont pas analysées. Le rattrapage reprend le périmètre du batch, qui traite les cautions actives.</p>
+      }
+      @if (result.commissionsSansProvenanceAControler > 0) {
+        <p class="warning">Des commissions CAUTION historiques sans rattachement à leur caution ont été trouvées. Les lignes concernées sont bloquées pour éviter un doublon; vérifiez-les manuellement.</p>
+      }
+      <p>{{ result.candidates }} commission(s) manquante(s), {{ result.dejaPresentees }} déjà présente(s).</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Sélection</th><th>Banque</th><th>N° caution</th><th>Type</th><th>Émise le</th><th>Période couverte</th><th>Montant</th><th>État</th></tr></thead>
+          <tbody>
+            @for (line of result.lignes; track line.cautionId + '-' + line.typeCommission; let i = $index) {
+              <tr>
+                <td><input type="checkbox" [formControl]="selection.at(i)" [attr.aria-label]="'Sélectionner la caution ' + line.numeroCaution" /></td>
+                <td>{{ line.banque }}</td><td>{{ line.numeroCaution }}</td><td>{{ line.typeCommission }}</td>
+                <td>{{ line.dateEmission }}</td><td>{{ line.periodeCouverte }}</td><td>{{ line.montant | number:'1.2-2' }} MAD</td>
+                <td>{{ statusLabel(line) }}@if (line.detail) {<small>{{ line.detail }}</small>}</td>
+              </tr>
+            } @empty { <tr><td colspan="8">Aucune commission manquante détectée pour ce cycle.</td></tr> }
+          </tbody>
+        </table>
+      </div>
+      <p class="warning">Les calculs utilisent les valeurs actuelles des cautions et configurations de commission. Vérifiez les montants affichés avant l’exécution.</p>
+      @if (!cycleEchu) { <p class="warning">L'échéance automatique de ce lot n'est pas encore passée. Le rattrapage sera disponible après cette échéance.</p> }
+      <div class="wizard-actions">
+        <button pButton label="Modifier les choix" class="p-button-text" (click)="step = 0"></button>
+        <button pButton label="Générer {{ selectedIds.length }} commission(s)" icon="pi pi-check" severity="warning" [loading]="busy" [disabled]="!selectedIds.length || !cycleEchu || busy" (click)="run()"></button>
+      </div>
+    </section>
+  }
+
+  @if (step === 2 && result) {
+    <section class="wizard-card result-card">
+      <i class="pi pi-check-circle" aria-hidden="true"></i>
+      <h2>Rattrapage terminé</h2>
+      <p>{{ result.generees }} commission(s) créée(s); {{ result.dejaPresentees }} déjà présente(s).</p>
+      <button pButton label="Terminer" icon="pi pi-arrow-left" (click)="backToCommissions()"></button>
+    </section>
+  }
+</main>

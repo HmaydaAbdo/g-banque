@@ -19,10 +19,13 @@ import staport.finance.gBanque.impot_taxes.service.IImpotEtTaxeService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Implémentation du service de génération mensuelle des commissions sur cautions.
@@ -185,6 +188,173 @@ public class GenerationCommissionCautionServiceImpl implements IGenerationCommis
                 commissionsCreees.size(), ignorees, moisReference.plusMonths(1));
 
         return new ResultatGenerationCommissionDto(commissionsCreees.size(), ignorees, moisReference);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public RattrapageCommissionCautionResultDto apercuRattrapage(RattrapageCommissionCautionRequest request) {
+        return analyserRattrapage(request, false);
+    }
+
+    @Override
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public RattrapageCommissionCautionResultDto rattraper(RattrapageCommissionCautionRequest request) {
+        if (request.lignesSelectionnees() == null || request.lignesSelectionnees().isEmpty()) {
+            throw new staport.finance.gBanque.exception.customExceptions.ValidationException(
+                    "Sélectionnez au moins une caution à rattraper depuis l'aperçu.");
+        }
+        YearMonth cycle = YearMonth.of(request.annee(), request.mois());
+        ZoneId zone = ZoneId.of("Africa/Casablanca");
+        LocalDateTime maintenant = LocalDateTime.now(zone);
+        YearMonth moisCourant = YearMonth.from(maintenant);
+        if (cycle.isAfter(moisCourant)) {
+            throw new staport.finance.gBanque.exception.customExceptions.ValidationException(
+                    "Un cycle futur ne peut pas être rattrapé.");
+        }
+        if (cycle.equals(moisCourant)) {
+            LocalDateTime echeance = request.debutMois()
+                    ? cycle.atDay(1).atTime(3, 0)
+                    : cycle.atEndOfMonth().atTime(20, 0);
+            if (maintenant.isBefore(echeance)) {
+                throw new staport.finance.gBanque.exception.customExceptions.ValidationException(
+                        "L'exécution automatique de ce lot n'est pas encore échue.");
+            }
+        }
+        return analyserRattrapage(request, true);
+    }
+
+    private RattrapageCommissionCautionResultDto analyserRattrapage(
+            RattrapageCommissionCautionRequest request, boolean enregistrer) {
+        YearMonth moisReference = YearMonth.of(request.annee(), request.mois());
+        Set<Long> banquesSelectionnees = request.banqueIds() == null || request.banqueIds().isEmpty()
+                ? null : Set.copyOf(request.banqueIds());
+        Set<String> lignesSelectionnees = request.lignesSelectionnees() == null
+                ? Set.of() : new java.util.HashSet<>(request.lignesSelectionnees());
+        Set<String> lignesEligiblesSelectionnees = new java.util.HashSet<>();
+        List<RattrapageCommissionCautionLineDto> lignes = new ArrayList<>();
+        List<Caution> cautions = cautionRepository.findActivesAvecBanqueEtNature();
+        int generees = 0;
+        int commissionsSansProvenance = 0;
+
+        for (Caution caution : cautions) {
+            Long banqueId = caution.getBanque().getId();
+            if (banquesSelectionnees != null && !banquesSelectionnees.contains(banqueId)) continue;
+
+            Optional<CommissionCautionStrategie> strategieOpt = strategieFactory.trouver(caution.getBanque().getNom());
+            if (strategieOpt.isEmpty()) continue;
+            CommissionCautionStrategie strategie = strategieOpt.get();
+            if (strategie.executerEnDebutMois() != request.debutMois()) continue;
+            if (moisReference.getMonthValue() % strategie.periodiciteMois() != 0) continue;
+
+            boolean prorataAVenir = false;
+            if (strategie.supporteProrataEntree() && caution.getDateDePrise() != null
+                    && estDansPeriode(caution.getDateDePrise(), periodeProrata(strategie, moisReference,
+                    request.debutMois()))) {
+                Commission prorata = strategie.calculerProrataEntree(caution);
+                boolean origineInconnue = commissionService.existsCautionCommissionSansProvenance(
+                        banqueId, prorata.getDateEmission(), prorata.getDateEmission());
+                boolean existe = commissionService.existsByCautionAndDateEmission(
+                        caution.getId(), prorata.getDateEmission());
+                String statut = origineInconnue ? "ORIGINE_HISTORIQUE_A_CONTROLER"
+                        : existe ? "DEJA_PRESENTE" : "A_GENERER";
+                prorataAVenir = !origineInconnue && !existe;
+                String cleProrata = cleLigne(caution.getId(), "PRORATA_ENTREE");
+                if ("A_GENERER".equals(statut) && lignesSelectionnees.contains(cleProrata)) {
+                    lignesEligiblesSelectionnees.add(cleProrata);
+                }
+                if (origineInconnue) commissionsSansProvenance++;
+                if (enregistrer && "A_GENERER".equals(statut) && lignesSelectionnees.contains(cleProrata)) {
+                    genererProrataEntree(caution, strategie, new ArrayList<>());
+                    generees++;
+                    statut = "GENEREE";
+                }
+                lignes.add(ligne(caution, prorata, strategie, moisReference, "PRORATA_ENTREE", statut,
+                        origineInconnue ? "Une commission CAUTION sans rattachement à sa caution existe pour cette date. Vérification requise."
+                                : null));
+            }
+
+            Commission commission = strategie.calculer(caution, moisReference);
+            LocalDate[] periodeCourante = periodeFacturation(strategie, moisReference);
+            boolean prorataCourantPresent = !strategie.facturerMoisSuivant()
+                    && commissionService.existsByCautionAndDateEmissionBetween(
+                    caution.getId(), periodeCourante[0], periodeCourante[1]);
+            prorataCourantPresent |= prorataAVenir && !strategie.facturerMoisSuivant();
+            LocalDate[] plageEmission = strategie.executerEnDebutMois()
+                    ? new LocalDate[]{moisReference.atDay(1), moisReference.atEndOfMonth()}
+                    : new LocalDate[]{moisReference.atDay(1), moisReference.atEndOfMonth()};
+            boolean origineInconnue = commissionService.existsCautionCommissionSansProvenance(
+                    banqueId, plageEmission[0], plageEmission[1]);
+            boolean existe = commissionService.existsByCautionAndDateEmission(
+                    caution.getId(), commission.getDateEmission());
+            String statut = origineInconnue ? "ORIGINE_HISTORIQUE_A_CONTROLER"
+                    : (existe || prorataCourantPresent) ? "DEJA_PRESENTE" : "A_GENERER";
+            String detail = origineInconnue
+                    ? "Une commission CAUTION sans rattachement à sa caution existe pour cette banque et cette période. Vérification requise."
+                    : prorataCourantPresent ? "Un prorata existe déjà dans la période de facturation."
+                    : null;
+            if (origineInconnue) commissionsSansProvenance++;
+            String cleCommission = cleLigne(caution.getId(), strategie.typeCommissionPeriodique().name());
+            if ("A_GENERER".equals(statut) && lignesSelectionnees.contains(cleCommission)) {
+                lignesEligiblesSelectionnees.add(cleCommission);
+            }
+            if (enregistrer && "A_GENERER".equals(statut) && lignesSelectionnees.contains(cleCommission)) {
+                creerCommissionEtTva(caution, strategie, commission);
+                generees++;
+                statut = "GENEREE";
+            }
+            lignes.add(ligne(caution, commission, strategie, moisReference,
+                    strategie.typeCommissionPeriodique().name(), statut, detail));
+        }
+
+        if (enregistrer && !lignesEligiblesSelectionnees.containsAll(lignesSelectionnees)) {
+            throw new staport.finance.gBanque.exception.customExceptions.ValidationException(
+                    "Une ou plusieurs lignes sélectionnées ne sont plus éligibles. Actualisez l'aperçu.");
+        }
+
+        int candidates = (int) lignes.stream().filter(l -> "A_GENERER".equals(l.statut()) || "GENEREE".equals(l.statut())).count();
+        int presentes = (int) lignes.stream().filter(l -> "DEJA_PRESENTE".equals(l.statut())).count();
+        return new RattrapageCommissionCautionResultDto(moisReference, request.debutMois(), candidates,
+                generees, presentes, commissionsSansProvenance, cautionRepository.countByActif(false), List.copyOf(lignes));
+    }
+
+    private static String cleLigne(Long cautionId, String typeCommission) {
+        return cautionId + ":" + typeCommission;
+    }
+
+    private void creerCommissionEtTva(Caution caution, CommissionCautionStrategie strategie,
+                                      Commission commission) {
+        CommissionResponseDto persistee = commissionService.creerCommissionCaution(
+                caution.getId(), caution.getBanque().getId(), commission.getMontant(),
+                commission.getDateEmission(), commission.getLibelle(), commission.getObservation(),
+                strategie.typeCommissionPeriodique());
+        if (strategie.genererTva()) {
+            BigDecimal tva = persistee.montant().multiply(TAUX_TVA_COMMISSION_CAUTION)
+                    .setScale(2, RoundingMode.HALF_UP);
+            impotEtTaxeService.creerTvaSurCommission(caution.getBanque().getId(), tva,
+                    Motif.TVA_COMMISSION_CAUTION, persistee.dateEmission(), "TVA " + persistee.libelle(),
+                    "TVA/commission/caution", persistee.id(), caution.getId());
+        }
+    }
+
+    private RattrapageCommissionCautionLineDto ligne(Caution caution, Commission commission,
+                                                     CommissionCautionStrategie strategie, YearMonth reference,
+                                                     String type, String statut, String detail) {
+        YearMonth debut;
+        YearMonth fin;
+        if (strategie.periodiciteMois() == 3) {
+            fin = reference;
+            debut = reference.minusMonths(2);
+        } else if (strategie.facturerMoisSuivant()) {
+            debut = reference.plusMonths(1);
+            fin = debut;
+        } else {
+            debut = reference;
+            fin = reference;
+        }
+        String periode = debut.equals(fin) ? debut.toString() : debut + " – " + fin;
+        return new RattrapageCommissionCautionLineDto(caution.getId(), caution.getNumeroCaution(),
+                caution.getBanque().getId(), caution.getBanque().getNom(), type,
+                commission.getDateEmission(), periode, commission.getMontant(), statut, detail);
     }
 
     // ── Périodes et prorata d'entrée ──────────────────────────────────────────

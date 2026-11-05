@@ -9,6 +9,38 @@ import { CloturerCautionRequest }  from '../dtos/CloturerCautionRequest';
 import { CloturerCautionResponse } from '../dtos/CloturerCautionResponse';
 import { PageResponse }            from '../../global/types/PageResponse';
 
+export interface RattrapageCommissionCautionRequest {
+  annee: number;
+  mois: number;
+  debutMois: boolean;
+  banqueIds?: number[] | null;
+  lignesSelectionnees?: string[] | null;
+}
+
+export interface RattrapageCommissionCautionLine {
+  cautionId: number;
+  numeroCaution: string;
+  banqueId: number;
+  banque: string;
+  typeCommission: string;
+  dateEmission: string;
+  periodeCouverte: string;
+  montant: number;
+  statut: 'A_GENERER' | 'DEJA_PRESENTE' | 'ORIGINE_HISTORIQUE_A_CONTROLER' | 'GENEREE';
+  detail: string | null;
+}
+
+export interface RattrapageCommissionCautionResult {
+  moisReference: string;
+  debutMois: boolean;
+  candidates: number;
+  generees: number;
+  dejaPresentees: number;
+  commissionsSansProvenanceAControler: number;
+  cautionsInactivesNonAnalysees: number;
+  lignes: RattrapageCommissionCautionLine[];
+}
+
 /**
  * Service HTTP + état réactif pour le module Caution.
  *
@@ -24,6 +56,16 @@ export class CautionService {
   private readonly http = inject(HttpClient);
 
   private readonly apiUrl = `${environment.apiUrl}cautions`;
+
+  previewCommissionCatchUp(request: RattrapageCommissionCautionRequest): Observable<RattrapageCommissionCautionResult> {
+    return this.http.post<RattrapageCommissionCautionResult>(
+      `${this.apiUrl}/generer-commissions/rattrapage/preview`, request);
+  }
+
+  runCommissionCatchUp(request: RattrapageCommissionCautionRequest): Observable<RattrapageCommissionCautionResult> {
+    return this.http.post<RattrapageCommissionCautionResult>(
+      `${this.apiUrl}/generer-commissions/rattrapage`, request);
+  }
 
   // ── État réactif ──────────────────────────────────────────────────────────
 

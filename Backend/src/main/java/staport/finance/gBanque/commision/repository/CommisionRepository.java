@@ -55,6 +55,9 @@ public interface CommisionRepository extends JpaRepository<Commission, Long>, Jp
      */
     boolean existsByCaution_IdAndDateEmission(Long cautionId, LocalDate dateEmission);
 
+    boolean existsByOperationAndBanque_IdAndDateEmissionBetweenAndCautionIsNullAndFusionProvenanceIncompleteTrue(
+            TransactionSource operation, Long banqueId, LocalDate debut, LocalDate fin);
+
     /**
      * Vérifie si une commission existe pour cette caution dans une plage de dates.
      * Utilisé par le batch pour détecter qu'un prorata d'entrée a déjà été créé

@@ -1,0 +1,64 @@
+<main class="generation-page">
+  <header class="pg-header">
+    <div>
+      <h1 class="pg-header__title">Rattrapage des charges fixes</h1>
+      <p class="text-secondary">Choisissez le mois du cycle à rattraper. Les configurations trimestrielles sont exclues.</p>
+    </div>
+    <button pButton label="Retour à la configuration" icon="pi pi-arrow-left" class="p-button-text" (click)="backToConfig()"></button>
+  </header>
+
+  <ol class="wizard-steps" aria-label="Étapes du rattrapage">
+    <li [class.current]="step === 0">1. Période</li>
+    <li [class.current]="step === 1">2. Aperçu et sélection</li>
+    <li [class.current]="step === 2">3. Résultat</li>
+  </ol>
+
+  @if (step === 0) {
+    <section class="wizard-card">
+      <h2>Quel mois voulez-vous rattraper?</h2>
+      <p>Le mois choisi correspond au cycle de génération. Le tableau indique la date d’émission calculée pour chaque configuration.</p>
+      <p class="info">Le rattrapage est disponible après le mois où le batch devait s’exécuter; un mois courant ou futur ne peut pas être généré en avance.</p>
+      <form [formGroup]="form" (ngSubmit)="preview()" class="form-row">
+        <label for="mois-generation">Mois du cycle</label>
+        <input id="mois-generation" type="month" formControlName="mois" />
+        <button pButton type="submit" label="Afficher l’aperçu" icon="pi pi-eye" [loading]="busy" [disabled]="form.invalid || busy"></button>
+      </form>
+    </section>
+  }
+
+  @if (step === 1 && result) {
+    <section class="wizard-card">
+      <h2>Aperçu — {{ result.moisGeneration }}</h2>
+      <p class="warning">Calcul avec les montants et libellés de la configuration actuellement enregistrée. Vérifiez les lignes avant de confirmer.</p>
+      <p>{{ result.excluesTrimestrielles }} configuration(s) trimestrielle(s) exclue(s). {{ result.dejaPresentes }} écriture(s) déjà présente(s).</p>
+      @if (!cycleEchu) { <p class="warning">L'échéance automatique de ce mois n'est pas encore passée. Choisissez un mois antérieur.</p> }
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Sélection</th><th>Banque</th><th>Type</th><th>Libellé</th><th>Émission</th><th>Montant</th><th>État</th></tr></thead>
+          <tbody>
+            @for (line of result.lignes; track line.configurationId; let i = $index) {
+              <tr>
+                <td><input type="checkbox" [formControl]="selection.at(i)" [attr.aria-label]="'Sélectionner ' + line.libelle" /></td>
+                <td>{{ line.banque }}</td><td>{{ line.type }}</td><td>{{ line.libelle }}</td>
+                <td>{{ line.dateEmission }}</td><td>{{ line.montant | number:'1.2-2' }} MAD</td><td>{{ statusLabel(line) }}@if (line.motif && line.statut === 'DOUBLON_CONFIGURATION') {<small>{{ line.motif }}</small>}</td>
+              </tr>
+            } @empty { <tr><td colspan="7">Aucune configuration mensuelle à générer pour ce mois.</td></tr> }
+          </tbody>
+        </table>
+      </div>
+      <div class="wizard-actions">
+        <button pButton label="Changer le mois" class="p-button-text" (click)="step = 0"></button>
+        <button pButton label="Générer {{ selectedIds.length }} charge(s)" icon="pi pi-check" [loading]="busy" [disabled]="!selectedIds.length || !cycleEchu || busy" (click)="run()"></button>
+      </div>
+    </section>
+  }
+
+  @if (step === 2 && result) {
+    <section class="wizard-card result-card">
+      <i class="pi pi-check-circle" aria-hidden="true"></i>
+      <h2>Rattrapage terminé</h2>
+      <p>{{ result.generees }} écriture(s) créée(s); {{ result.dejaPresentes }} déjà présente(s).</p>
+      <button pButton label="Terminer" icon="pi pi-arrow-left" (click)="backToConfig()"></button>
+    </section>
+  }
+</main>

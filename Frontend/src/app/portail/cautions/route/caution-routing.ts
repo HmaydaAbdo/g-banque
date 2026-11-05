@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { departmentGuard } from '../../../auth/guards/department.guard';
+import { systemAdminGuard } from '../../../auth/guards/system-admin.guard';
 
 /**
  * Routes du module Caution.
@@ -16,6 +17,12 @@ import { departmentGuard } from '../../../auth/guards/department.guard';
  * (isSystemAdmin()), pas par un guard de route dédié.
  */
 export const CAUTION_ROUTES: Routes = [
+  {
+    path: 'commissions/rattrapage',
+    canActivate: [systemAdminGuard],
+    loadComponent: () => import('../views/commission-caution-rattrapage/commission-caution-rattrapage.component')
+      .then(m => m.CommissionCautionRattrapageComponent),
+  },
   {
     path: '',
     canActivate: [departmentGuard('Finance')],

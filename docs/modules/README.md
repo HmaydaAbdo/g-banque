@@ -1526,6 +1526,7 @@ déclenche son recalcul automatique.
 | Commissions sur cautions | Liste des commissions générées (prorata d'entrée, mensuelles, clôture) — export PDF disponible |
 | TVA sur cautions | Liste des TVA générées sur les commissions (banques concernées uniquement) — export PDF disponible (nouveau, 2026-07-22) |
 | Export (PDF ou Excel) | Export de l'intégralité des cautions filtrées (pas seulement la page affichée) — format et colonnes du document sélectionnables à la demande (Excel : nouveau, 20/09/2026) |
+| Rattrapage des commissions | Assistant réservé à l'administrateur système : choix du mois de génération, lot début/fin et banques, aperçu des lignes manquantes et sélection avant création |
 
 #### Actions disponibles
 
@@ -1595,6 +1596,16 @@ banque :
 | **CDM** | Début de mois | Premier jour du mois de référence | Mois courant | Oui, par le traitement du 1er du mois suivant (`dateEmission = dateDePrise`) | Non (mois entier à la clôture) | Non |
 | **SAHAM BANK** | Fin de mois | Dernier jour du mois de référence | Mois suivant (M+1), sauf 1er mois | Oui, par le traitement de fin de mois (`dateEmission = dateDePrise`) | Non (mois entier à la clôture) | Non |
 | **BP** | Fin de trimestre civil (31/03, 30/06, 30/09, 31/12) | Dernier jour du trimestre | Trimestre civil entier (90 à 92 jours réels) | Oui, par le traitement de fin de trimestre (`dateEmission = dateDePrise`), du jour de prise (inclus) à la fin du trimestre | Oui (du début du trimestre — ou du jour de prise s'il est postérieur — jusqu'à la date de main levée incluse, `dateEmission = date de main levée`) | Non (montant TTC) |
+
+Le rattrapage manuel des commissions automatiques se fait dans l'écran **Commissions sur cautions**,
+réservé à `SYSTEM_ADMIN`. Le mois choisi est le mois du cycle d'exécution, et non nécessairement
+celui couvert : par exemple, un cycle BMCI d'octobre émet le 31/10 pour couvrir novembre. Le lot
+début de mois cible CDM; le lot fin de mois cible les autres stratégies, BP uniquement à la fin d'un
+trimestre. L'aperçu détecte les lignes déjà présentes et celles bloquées par une commission historique
+sans rattachement à sa caution source. Seules les lignes manquantes sélectionnées sont générées. Les
+valeurs courantes de la caution et de sa configuration sont utilisées; l'historique de ces valeurs
+n'est pas rejoué. Un cycle futur ou dont l'échéance automatique n'est pas passée ne peut pas être
+exécuté.
 
 **Particularité BP — facturation trimestrielle.** BP est la seule banque facturée par trimestre : le
 traitement automatique de fin de mois ne la traite qu'en mars, juin, septembre et décembre, pour le
@@ -3497,6 +3508,10 @@ Règles de génération :
   `docs/rbac/frais-bancaires.md`). Les charges historiques y ont été reprises telles quelles au moment
   de la migration.
 
+#### Rattrapage mensuel des charges fixes
+
+Un administrateur système peut lancer un rattrapage depuis Administration → Charges fixes bancaires → **Rattraper une génération**. Le mois choisi représente le mois du cycle d'émission. L'aperçu calcule les libellés, dates et montants à partir des configurations actuelles, puis signale les écritures déjà présentes et les configurations qui produiraient un doublon. Les configurations trimestrielles sont exclues de cet écran. Seules les lignes sélectionnées dans l'aperçu sont créées; une nouvelle vérification d'idempotence est faite au moment de l'exécution. Pour une période passée, les anciennes valeurs de configuration ne sont pas reconstituées : l'aperçu utilise les valeurs actuelles. L'exécution d'un cycle courant ou futur est refusée.
+
 ---
 
 ### 6. Encours
@@ -4349,6 +4364,11 @@ Effet de la fusion (opération atomique) :
 2. Suppression des commissions sources.
 3. Création d'une commission fusionnée : montant TTC = somme des montants HT des commissions sources × 1,10 (TVA 10 % incluse dans le nouveau montant).
 4. Aucune nouvelle TVA n'est créée après une fusion — le montant fusionné intègre déjà la TVA.
+
+La fusion conserve également les références aux cautions sources afin que le rattrapage automatique
+ne recrée pas leurs commissions. Pour les anciennes commissions fusionnées dont les cautions sources
+ne peuvent pas être reconstituées avec certitude, le système bloque les lignes correspondantes et
+demande une vérification manuelle.
 
 ---
 

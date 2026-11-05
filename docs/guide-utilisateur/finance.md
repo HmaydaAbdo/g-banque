@@ -749,6 +749,14 @@ pour la date de prise (du/au) et la date de main levée (du/au).
 Liste de toutes les commissions générées pour les cautions (prorata d'entrée, commissions
 mensuelles, commissions de clôture), avec leur date d'émission et leur montant.
 
+Un bouton de rattrapage est visible uniquement pour l'administrateur système. Il ouvre un assistant
+qui demande le mois de référence, le lot début/fin de mois et éventuellement les banques, puis
+présente les commissions calculées et les lignes déjà présentes. Le mois de référence est le cycle
+de génération : pour BMCI, une émission au 31 octobre couvre novembre. Les anciennes fusions dont
+les cautions sources ne peuvent pas être identifiées avec certitude sont signalées pour contrôle
+manuel et ne sont pas régénérées automatiquement. Seules les lignes manquantes sélectionnées sont
+créées.
+
 ### Fusionner des commissions sur cautions
 
 Depuis cette même liste, sélectionner au moins deux commissions (cases à cocher) affiche le total
@@ -759,6 +767,11 @@ HT et TTC de la sélection et un bouton **Fusionner**. La fusion :
 - est **désactivée pour la banque BMCI** (sa TVA étant gérée séparément, une infobulle l'indique) ;
 - demande un libellé pour la commission fusionnée, puis remplace les commissions sources (et leur
   TVA éventuelle) par une commission unique, montant TTC = somme des montants HT × 1,10.
+
+Les fusions créées maintenant conservent leurs cautions sources pour éviter qu'un rattrapage ne
+recrée une commission déjà comprise dans la fusion. Une commission historique sans rattachement à
+sa caution source (fusion ancienne ou saisie sans lien) est signalée dans l'assistant et doit être
+vérifiée manuellement.
 
 ### Consulter la TVA sur cautions
 

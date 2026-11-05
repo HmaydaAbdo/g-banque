@@ -33,4 +33,8 @@ public interface IGenerationCommissionCautionService {
      *                      {@code false} → stratégies fin de mois (AWB, BMCI)
      */
     ResultatGenerationCommissionDto generer(YearMonth moisReference, boolean debutMois);
+
+    RattrapageCommissionCautionResultDto apercuRattrapage(RattrapageCommissionCautionRequest request);
+
+    RattrapageCommissionCautionResultDto rattraper(RattrapageCommissionCautionRequest request);
 }

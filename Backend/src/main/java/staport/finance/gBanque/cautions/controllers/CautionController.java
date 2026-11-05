@@ -18,6 +18,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.cautions.commissions.service.IGenerationCommissionCautionService;
 import staport.finance.gBanque.cautions.commissions.service.ResultatGenerationCommissionDto;
+import staport.finance.gBanque.cautions.commissions.service.RattrapageCommissionCautionRequest;
+import staport.finance.gBanque.cautions.commissions.service.RattrapageCommissionCautionResultDto;
 import staport.finance.gBanque.cautions.dtos.request.CautionCreateDto;
 import staport.finance.gBanque.cautions.dtos.response.CautionResponseDto;
 import staport.finance.gBanque.cautions.dtos.request.CautionSearchCriteria;
@@ -273,5 +275,21 @@ public class CautionController {
         log.info("Génération complète terminée — {} créée(s), {} ignorée(s)",
                 result.generees(), result.ignorees());
         return ResponseEntity.ok(result);
+    }
+
+    @Operation(summary = "Prévisualiser le rattrapage des commissions automatiques sur cautions")
+    @PostMapping("/generer-commissions/rattrapage/preview")
+    @PreAuthorize(SYSTEM_ADMIN)
+    public ResponseEntity<RattrapageCommissionCautionResultDto> previewRattrapage(
+            @Valid @RequestBody RattrapageCommissionCautionRequest request) {
+        return ResponseEntity.ok(generationService.apercuRattrapage(request));
+    }
+
+    @Operation(summary = "Exécuter le rattrapage sélectionné des commissions sur cautions")
+    @PostMapping("/generer-commissions/rattrapage")
+    @PreAuthorize(SYSTEM_ADMIN)
+    public ResponseEntity<RattrapageCommissionCautionResultDto> rattraperCommissions(
+            @Valid @RequestBody RattrapageCommissionCautionRequest request) {
+        return ResponseEntity.ok(generationService.rattraper(request));
     }
 }

@@ -16,6 +16,7 @@ import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { TagModule } from 'primeng/tag';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { debounceTime } from 'rxjs/operators';
+import { Router } from '@angular/router';
 
 import { ChargeFixeConfigService } from '../../service/charge-fixe-config.service';
 import { ChargeFixeConfigResponse } from '../../dtos/ChargeFixeConfigResponse';
@@ -50,6 +51,7 @@ export class ChargeFixeConfigListComponent implements OnInit {
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
   private fb              = inject(FormBuilder);
+  private router          = inject(Router);
 
   items: MenuItem[] = [
     { icon: 'pi pi-home',      route: '/portail/accueil',                       label: 'Accueil' },
@@ -113,6 +115,10 @@ export class ChargeFixeConfigListComponent implements OnInit {
         this.form.get('jourFixe')?.reset(null);
       }
     });
+  }
+
+  openCatchUp(): void {
+    void this.router.navigate(['/portail/admin/charges-fixes-rattrapage']);
   }
 
   private buildFilterForm(): void {

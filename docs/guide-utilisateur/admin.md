@@ -374,6 +374,23 @@ eu lieu.
   liste. Le nombre total de charges correspondant aux filtres appliqués est affiché en bas de la
   liste.
 
+### Rattraper une génération mensuelle manquante
+
+*Accès : bouton **Rattraper un mois manquant** sur cette page — administrateur système uniquement.*
+
+1. Choisir l'année et le mois du cycle d'émission manquant. Le système affiche la date prévue et
+   les périodes/libellés calculés à partir de la configuration actuelle.
+2. Examiner l'aperçu : les écritures déjà présentes ne sont pas sélectionnables; les collisions entre
+   configurations sont signalées et bloquées. Les charges trimestrielles ne figurent pas dans ce
+   rattrapage.
+3. Sélectionner les lignes manquantes puis cliquer sur **Générer la sélection**.
+4. Le résultat distingue les lignes créées des lignes déjà présentes. Si une configuration a changé
+   depuis l'aperçu, recharger celui-ci avant de relancer.
+
+Pour un mois historique, les montants et règles de période proviennent de la configuration actuelle;
+les anciennes versions ne sont pas reconstituées. L'exécution est désactivée tant que l'échéance
+automatique du cycle sélectionné n'est pas passée.
+
 ---
 
 ## Modifier une échéance de leasing ou de CMT
