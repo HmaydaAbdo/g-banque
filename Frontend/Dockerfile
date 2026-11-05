@@ -28,6 +28,7 @@ RUN apk upgrade --no-cache \
     && chown -R nginxuser:nginxgroup /var/cache/nginx /var/log/nginx
 
 COPY nginx.conf /etc/nginx/nginx.conf
+COPY proxy_params.conf /etc/nginx/proxy_params.conf
 COPY --from=build --chown=nginxuser:nginxgroup /app/dist/gbanque/browser /usr/share/nginx/html
 
 USER nginxuser
