@@ -18,7 +18,7 @@ npm start
 ```bash
 cd G-Banque
 docker-compose up -d frontend
-# Opens at http://localhost
+# Opens at http://localhost:8081
 ```
 
 ## 📋 Tech Stack
@@ -51,10 +51,10 @@ Frontend/
 apiUrl: 'http://localhost:8080/gBanque/api/'
 ```
 
-**Production API:**
+**API (same origin):**
 ```typescript
-// src/environments/environment.prod.ts
-apiUrl: '/gBanque/api/'  // Proxied by Nginx
+// src/environments/environment.ts
+apiUrl: '/gbanque/api/'  // Proxied by Nginx in Docker and production
 ```
 
 ## 🛠️ Commands
@@ -94,8 +94,9 @@ docker-compose stop frontend
 | Service | URL |
 |---------|-----|
 | Frontend (Dev) | http://localhost:4200 |
-| Frontend (Docker) | http://localhost |
-| Backend API | http://localhost/gBanque/api |
+| Frontend (Docker) | http://localhost:8081 |
+| Backend API (Docker internal proxy) | http://localhost:8081/gbanque/api |
+| Backend API (direct host access) | http://localhost:8080/gbanque/api |
 
 ## 🔧 Common Issues
 
